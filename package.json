@@ -7,7 +7,8 @@
   "scripts": {
     "build": "pnpm -r run build",
     "build:all": "pnpm -r run build",
-    "dev": "pnpm -r run dev",
+    "dev": "pnpm -r --parallel run dev",
+    "dev:packages": "pnpm --filter './packages/*' --parallel run dev",
     "test": "pnpm -r run test",
     "typecheck": "pnpm -r run typecheck",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
@@ -28,6 +29,7 @@
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.5.0",
+    "nodemon": "^3.1.11",
     "prettier": "^3.7.3",
     "tsdown": "0.17.0-beta.5",
     "typescript": "^5.9.3",
