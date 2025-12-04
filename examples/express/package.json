@@ -1,0 +1,22 @@
+{
+  "name": "@llmops/express-example",
+  "version": "1.0.0",
+  "description": "Minimal Express application using @llmops/sdk",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx server.ts"
+  },
+  "dependencies": {
+    "@llmops/sdk": "workspace:*",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
