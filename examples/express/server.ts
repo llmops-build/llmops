@@ -4,7 +4,7 @@ import { createLLMOpsMiddleware } from '@llmops/sdk/express';
 const app = express();
 const port = 3000;
 
-const llmops = createLLMOpsMiddleware();
+const llmops = createLLMOpsMiddleware({ basePath: '/llmops' });
 
 app.use('/llmops', llmops);
 app.get('/', (req, res) => {

@@ -1,0 +1,3 @@
+interface ContextVariableMap {
+  basePath: string;
+}

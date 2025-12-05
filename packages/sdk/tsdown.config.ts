@@ -7,4 +7,9 @@ export default defineConfig({
   },
   format: ['esm'],
   dts: true,
+  clean: false,
+  // Force bundling of workspace dependencies
+  // noExternal: ['@llmops/app', '@llmops/core', '@llmops/ui'],
+  // // Keep these external
+  // external: ['express', 'hono'],
 });
