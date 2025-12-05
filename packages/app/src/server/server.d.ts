@@ -1,3 +1,2 @@
-interface ContextVariableMap {
-  basePath: string;
-}
+// Move this to types.ts instead
+export {};

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
-import { chatCompletions } from './openai/chatCompletions';
+import chatCompletions from './openai/chatCompletions';
 import { completions } from './openai/completions';
 import models from './openai/models';
 import { requestValidator } from './requestValidator';
@@ -19,7 +19,7 @@ app
   // Models
   .route('/models', models)
   // Chat completions
-  .post('/chat/completions', chatCompletions)
+  .route('/chat/completions', chatCompletions)
   // Completions (legacy)
   .post('/completions', completions)
   // Error handling

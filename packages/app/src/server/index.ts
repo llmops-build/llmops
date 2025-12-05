@@ -1,3 +1,4 @@
+import './types'; // Import types for module augmentation
 import { Hono } from 'hono';
 import { renderer } from './ssr/renderer';
 import { serveStatic } from 'hono/serve-static';
@@ -23,10 +24,10 @@ app
   )
   .get('/health', (c) => c.json({ status: 'ok' }))
   .get('/', async (c) => {
+    const basePath = c.var.llmopsConfig.basePath || '';
     return c.html(
       renderer({
-        // @ts-expect-error Fix types
-        basePath: c.var.basePath || '',
+        basePath,
       })
     );
   })

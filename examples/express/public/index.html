@@ -90,6 +90,29 @@
         </div>
 
         <div class="api-section">
+            <h3>OpenAI API Integration</h3>
+            <p>Test OpenAI API calls through your server:</p>
+
+            <label for="openai-api-key">OpenAI API Key:</label>
+            <input type="password" id="openai-api-key" placeholder="sk-..." style="margin-bottom: 10px;">
+
+            <label for="openai-model">Model:</label>
+            <select id="openai-model" style="margin-bottom: 10px;">
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            </select>
+
+            <label for="openai-prompt">Prompt:</label>
+            <textarea id="openai-prompt" rows="3" placeholder="Hello, how are you?">Hello, how are you?</textarea>
+
+            <button onclick="testOpenAIChat()">Send Chat Request</button>
+            <button onclick="testOpenAICompletion()">Send Completion Request</button>
+            <div id="openai-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
             <h3>Custom API Call</h3>
             <p>Make a custom API call:</p>
             <label for="custom-method">Method:</label>
