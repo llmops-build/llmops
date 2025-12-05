@@ -13,6 +13,9 @@
     ".": {
       "import": "./src/index.ts"
     },
+    "./tokens.stylex": {
+      "import": "./src/tokens/index.ts"
+    },
     "./global.css": {
       "import": "./src/global.css"
     }

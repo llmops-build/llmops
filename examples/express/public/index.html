@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLMOps Express Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .api-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #005f8a;
+        }
+        .response {
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-left: 4px solid #007cba;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .error {
+            background-color: #ffe6e6;
+            border-left-color: #ff4444;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LLMOps Express API Demo</h1>
+
+        <div class="api-section">
+            <h3>Basic API Test</h3>
+            <p>Test the basic server endpoint:</p>
+            <button onclick="testBasicAPI()">GET /</button>
+            <div id="basic-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h3>LLMOps Health Check</h3>
+            <p>Test the LLMOps middleware health endpoint:</p>
+            <button onclick="testHealthAPI()">GET /llmops/health</button>
+            <div id="health-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="api-section">
+            <h3>Custom API Call</h3>
+            <p>Make a custom API call:</p>
+            <label for="custom-method">Method:</label>
+            <select id="custom-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+            </select>
+
+            <label for="custom-endpoint">Endpoint:</label>
+            <input type="text" id="custom-endpoint" placeholder="/api/endpoint" value="/">
+
+            <label for="custom-body">Request Body (JSON for POST/PUT):</label>
+            <textarea id="custom-body" rows="4" placeholder='{"key": "value"}'></textarea>
+
+            <label for="custom-headers">Custom Headers (JSON format):</label>
+            <textarea id="custom-headers" rows="3" placeholder='{"Authorization": "Bearer token", "X-Custom-Header": "value"}'></textarea>
+
+            <button onclick="makeCustomAPICall()">Send Request</button>
+            <div id="custom-response" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+</body>
+</html>

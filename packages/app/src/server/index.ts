@@ -4,6 +4,7 @@ import { serveStatic } from 'hono/serve-static';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFile } from 'fs/promises';
+import api from '@server/handlers/api';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +21,7 @@ app
       },
     })
   )
+  .get('/health', (c) => c.json({ status: 'ok' }))
   .get('/', async (c) => {
     return c.html(
       renderer({
@@ -27,6 +29,7 @@ app
         basePath: c.var.basePath || '',
       })
     );
-  });
+  })
+  .route('/api', api);
 
 export default app;

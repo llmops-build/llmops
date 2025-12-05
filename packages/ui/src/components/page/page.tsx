@@ -14,7 +14,7 @@ const outerStyles = create({
     justifyContent: 'stretch',
     alignItems: 'stretch',
     padding: spacing.sm,
-    backgroundColor: colors.gray3,
+    backgroundColor: colors.gray2,
   },
 });
 

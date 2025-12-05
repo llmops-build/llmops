@@ -31,10 +31,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.5",
     "@llmops/core": "workspace:*",
     "@llmops/ui": "workspace:*",
     "@rollup/plugin-url": "^8.0.2",
-    "hono": "^4.10.7"
+    "@stylexjs/stylex": "^0.17.2",
+    "hono": "^4.10.7",
+    "ky": "^1.14.0"
   },
   "peerDependencies": {
     "react": "^19.2.1",
