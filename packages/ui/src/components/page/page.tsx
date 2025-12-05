@@ -21,8 +21,10 @@ const outerStyles = create({
 const innerStyles = create({
   base: {
     flexGrow: 1,
-    backgroundColor: colors.background,
     borderRadius: spacing.xs,
+    display: 'grid',
+    gridTemplateColumns: 'var(--sidebar-width) repeat(8, 1fr)',
+    gridTemplateRows: `${spacing['2xl']} auto`,
   },
 });
 

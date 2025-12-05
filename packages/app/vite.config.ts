@@ -5,6 +5,7 @@ import { nodeAdapter } from '@hono/vite-dev-server/node';
 import build from '@hono/vite-build';
 import devServer from '@hono/vite-dev-server';
 import react from '@vitejs/plugin-react';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const alias = {
   '@': path.resolve(__dirname, './src'),
@@ -12,6 +13,35 @@ const alias = {
   '@client': path.resolve(__dirname, './src/client'),
   '@shared': path.resolve(__dirname, './src/shared'),
 };
+
+const commonPlugins = [
+  tanstackRouter({
+    target: 'react',
+    autoCodeSplitting: true,
+    routesDirectory: 'src/client/routes',
+    generatedRouteTree: 'src/client/routeTree.gen.ts',
+  }),
+  react({
+    jsxImportSource: 'react',
+    jsxRuntime: 'automatic',
+    babel: {
+      plugins: [
+        [
+          '@stylexjs/babel-plugin',
+          {
+            dev: process.env.NODE_ENV === 'development',
+            runtimeInjection: true,
+            treeshakeCompensation: true,
+            unstable_moduleResolution: {
+              type: 'commonJS',
+              rootDir: process.cwd(),
+            },
+          },
+        ],
+      ],
+    },
+  }),
+];
 
 export default defineConfig(({ mode }) => {
   if (mode === 'production') {
@@ -26,31 +56,10 @@ export default defineConfig(({ mode }) => {
         },
         manifest: true,
         rollupOptions: {
-          input: ['./src/client/index.tsx', './src/client/styles/global.css'],
+          input: ['./src/client/index.tsx', './src/client/styles/stylex.css'],
         },
       },
-      plugins: [
-        react({
-          jsxImportSource: 'react',
-          jsxRuntime: 'automatic',
-          babel: {
-            plugins: [
-              [
-                '@stylexjs/babel-plugin',
-                {
-                  dev: process.env.NODE_ENV === 'development',
-                  runtimeInjection: true,
-                  treeshakeCompensation: true,
-                  unstable_moduleResolution: {
-                    type: 'commonJS',
-                    rootDir: process.cwd(),
-                  },
-                },
-              ],
-            ],
-          },
-        }),
-      ],
+      plugins: commonPlugins,
     };
   }
 
@@ -64,7 +73,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       devServer({
-        entry: 'src/index.ts',
+        entry: 'src/dev.ts',
         adapter: nodeAdapter,
       }),
       build({
@@ -72,26 +81,7 @@ export default defineConfig(({ mode }) => {
         staticPaths: ['/assets/*'],
         preset: 'hono',
       }),
-      react({
-        jsxImportSource: 'react',
-        jsxRuntime: 'automatic',
-        babel: {
-          plugins: [
-            [
-              '@stylexjs/babel-plugin',
-              {
-                dev: process.env.NODE_ENV === 'development',
-                runtimeInjection: true,
-                treeshakeCompensation: true,
-                unstable_moduleResolution: {
-                  type: 'commonJS',
-                  rootDir: process.cwd(),
-                },
-              },
-            ],
-          ],
-        },
-      }),
+      ...commonPlugins,
     ],
   };
 });

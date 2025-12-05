@@ -290,6 +290,10 @@
   }
 }
 
+:root {
+  --sidebar-width: 220px;
+}
+
 :root,
 .light,
 .light-theme,
