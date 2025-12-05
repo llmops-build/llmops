@@ -1,8 +1,9 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import mainApp from './server';
 import type { LLMOpsConfig } from '@llmops/core';
+import { validateLLMOpsConfig, type ValidatedLLMOpsConfig } from '@llmops/core';
 
-const setConfigMiddleware = (config: LLMOpsConfig): MiddlewareHandler => {
+const setConfigMiddleware = (config: ValidatedLLMOpsConfig): MiddlewareHandler => {
   return async (c, next) => {
     c.set('llmopsConfig', config);
     await next();
@@ -10,15 +11,14 @@ const setConfigMiddleware = (config: LLMOpsConfig): MiddlewareHandler => {
 };
 
 export const createApp = (config: LLMOpsConfig) => {
-  let app;
-  if (config.basePath) {
-    app = new Hono()
-      .use('*', setConfigMiddleware(config))
-      .route('/', mainApp)
-      .basePath(config.basePath);
-  } else {
-    throw new Error('Base path is required in LLMOpsConfig');
-  }
+  // Validate the config immediately, this will throw and panic if invalid
+  const validatedConfig = validateLLMOpsConfig(config);
+
+  const app = new Hono()
+    .use('*', setConfigMiddleware(validatedConfig))
+    .route('/', mainApp)
+    .basePath(validatedConfig.basePath);
+
   return {
     app,
   };

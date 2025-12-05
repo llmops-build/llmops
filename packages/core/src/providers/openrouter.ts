@@ -9,7 +9,7 @@ import type {
 } from '@openrouter/sdk/models';
 import { chatCompletionCreateParamsBaseSchema } from '../schemas/openai';
 import { OpenRouter } from '@openrouter/sdk';
-import type { LLMOpsConfig } from '../types';
+import type { ValidatedLLMOpsConfig } from '../types';
 import type { SupportedProviders } from './supported-providers';
 
 export class OpenRouterProvider implements BaseProvider {
@@ -19,7 +19,7 @@ export class OpenRouterProvider implements BaseProvider {
   client: OpenRouter;
 
   constructor(
-    config: LLMOpsConfig['providers'][SupportedProviders.OPENROUTER]
+    config: ValidatedLLMOpsConfig['providers'][SupportedProviders.OPENROUTER]
   ) {
     this.client = new OpenRouter(config);
   }
@@ -77,7 +77,7 @@ export class OpenRouterProvider implements BaseProvider {
 }
 
 export const createOpenRouterProvider = (
-  config: LLMOpsConfig['providers'][SupportedProviders.OPENROUTER]
+  config: ValidatedLLMOpsConfig['providers'][SupportedProviders.OPENROUTER]
 ) => {
   return new OpenRouterProvider(config);
 };

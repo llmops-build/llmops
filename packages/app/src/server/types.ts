@@ -1,8 +1,8 @@
-import { providers, type LLMOpsConfig } from '@llmops/core';
+import { providers, type ValidatedLLMOpsConfig } from '@llmops/core';
 
 declare module 'hono' {
   interface ContextVariableMap {
-    llmopsConfig: LLMOpsConfig;
+    llmopsConfig: ValidatedLLMOpsConfig;
     providers: Record<
       keyof typeof providers,
       ReturnType<(typeof providers)[keyof typeof providers]['createProvider']>
