@@ -9,6 +9,14 @@
     "url": "https://github.com/author/library/issues"
   },
   "main": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    },
+    "./global.css": {
+      "import": "./src/global.css"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/author/library.git"
@@ -24,6 +32,7 @@
   "dependencies": {
     "@llmops/core": "workspace:*",
     "@stylexjs/stylex": "^0.17.2",
+    "clsx": "^2.1.1",
     "react-aria-components": "^1.13.0"
   },
   "peerDependencies": {

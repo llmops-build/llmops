@@ -1,9 +1,9 @@
-import { Button } from '@llmops/ui';
+import { Button, Page } from '@llmops/ui';
 
 export function App() {
   return (
-    <div>
+    <Page>
       <Button>Click</Button>
-    </div>
+    </Page>
   );
 }

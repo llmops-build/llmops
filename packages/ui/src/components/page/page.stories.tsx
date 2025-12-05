@@ -1,8 +1,8 @@
-import { Button } from './button';
+import { Page } from './page';
 
 const meta = {
-  title: 'Components/Button',
-  component: Button,
+  title: 'Components/Page',
+  component: Page,
   parameters: {
     layout: 'centered',
   },
@@ -13,6 +13,6 @@ export default meta;
 
 export const Primary = {
   args: {
-    children: 'Primary Button',
+    children: null,
   },
 };

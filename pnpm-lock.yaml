@@ -136,6 +136,9 @@ importers:
       '@stylexjs/stylex':
         specifier: ^0.17.2
         version: 0.17.2
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       react:
         specifier: ^19.2.1
         version: 19.2.1
