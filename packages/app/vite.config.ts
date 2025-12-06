@@ -6,6 +6,7 @@ import build from '@hono/vite-build';
 import devServer from '@hono/vite-dev-server';
 import react from '@vitejs/plugin-react';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 
 const alias = {
   '@': path.resolve(__dirname, './src'),
@@ -24,23 +25,8 @@ const commonPlugins = [
   react({
     jsxImportSource: 'react',
     jsxRuntime: 'automatic',
-    babel: {
-      plugins: [
-        [
-          '@stylexjs/babel-plugin',
-          {
-            dev: process.env.NODE_ENV === 'development',
-            runtimeInjection: true,
-            treeshakeCompensation: true,
-            unstable_moduleResolution: {
-              type: 'commonJS',
-              rootDir: process.cwd(),
-            },
-          },
-        ],
-      ],
-    },
   }),
+  vanillaExtractPlugin(),
 ];
 
 export default defineConfig(({ mode }) => {
@@ -56,7 +42,7 @@ export default defineConfig(({ mode }) => {
         },
         manifest: true,
         rollupOptions: {
-          input: ['./src/client/index.tsx', './src/client/styles/stylex.css'],
+          input: ['./src/client/index.tsx', './src/client/styles/styles.css'],
         },
       },
       plugins: commonPlugins,

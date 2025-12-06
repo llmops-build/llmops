@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { createApp } from './index';
 import { env } from 'node:process';
 

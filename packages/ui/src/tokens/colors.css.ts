@@ -1,6 +1,72 @@
-import * as stylex from '@stylexjs/stylex';
+import { createThemeContract, createTheme } from '@vanilla-extract/css';
 
-export const colors = stylex.defineVars({
+export const colors = createThemeContract({
+  accent1: null,
+  accent2: null,
+  accent3: null,
+  accent4: null,
+  accent5: null,
+  accent6: null,
+  accent7: null,
+  accent8: null,
+  accent9: null,
+  accent10: null,
+  accent11: null,
+  accent12: null,
+
+  accentA1: null,
+  accentA2: null,
+  accentA3: null,
+  accentA4: null,
+  accentA5: null,
+  accentA6: null,
+  accentA7: null,
+  accentA8: null,
+  accentA9: null,
+  accentA10: null,
+  accentA11: null,
+  accentA12: null,
+
+  accentContrast: null,
+  accentSurface: null,
+  accentIndicator: null,
+  accentTrack: null,
+
+  gray1: null,
+  gray2: null,
+  gray3: null,
+  gray4: null,
+  gray5: null,
+  gray6: null,
+  gray7: null,
+  gray8: null,
+  gray9: null,
+  gray10: null,
+  gray11: null,
+  gray12: null,
+
+  grayA1: null,
+  grayA2: null,
+  grayA3: null,
+  grayA4: null,
+  grayA5: null,
+  grayA6: null,
+  grayA7: null,
+  grayA8: null,
+  grayA9: null,
+  grayA10: null,
+  grayA11: null,
+  grayA12: null,
+
+  grayContrast: null,
+  graySurface: null,
+  grayIndicator: null,
+  grayTrack: null,
+
+  background: null
+});
+
+export const lightTheme = createTheme(colors, {
   accent1: '#fbfdff',
   accent2: '#f5f9ff',
   accent3: '#e9f3ff',
@@ -66,7 +132,7 @@ export const colors = stylex.defineVars({
   background: '#fff'
 });
 
-export const darkTheme = stylex.createTheme(colors, {
+export const darkTheme = createTheme(colors, {
   accent1: '#000',
   accent2: '#09121f',
   accent3: '#0c2246',

@@ -1,3 +1,3 @@
 // Export all UI components here
 export * from './components';
-export * from './tokens/spacing.stylex';
+export * from './tokens';

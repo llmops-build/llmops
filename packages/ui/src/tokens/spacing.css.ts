@@ -1,6 +1,4 @@
-import { defineVars } from '@stylexjs/stylex';
-
-export const spacing = defineVars({
+export const spacing = {
   none: '0px',
   xs: '0.25rem',
   sm: '0.5rem',
@@ -9,4 +7,4 @@ export const spacing = defineVars({
   xl: '2rem',
   '2xl': '3rem',
   '3xl': '4rem',
-});
+};

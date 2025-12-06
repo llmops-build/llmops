@@ -1,2 +1,2 @@
-export * from './colors.stylex';
-export * from './spacing.stylex';
+export * from './colors.css';
+export * from './spacing.css';

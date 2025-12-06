@@ -1,6 +1,6 @@
 import reactServer from 'react-dom/server';
 import client from '@client/index?url';
-import styles from '@client/styles/stylex.css?url';
+import styles from '@client/styles/styles.css?url';
 import { ReactRefresh } from './react-refresh';
 
 const { renderToString } = reactServer;

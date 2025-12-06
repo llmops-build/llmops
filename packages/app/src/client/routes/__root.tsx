@@ -1,6 +1,5 @@
-import * as React from 'react';
 import { Outlet, createRootRoute } from '@tanstack/react-router';
-import { Page, Sidebar } from '@llmops/ui';
+import { Page, Sidebar, lightTheme } from '@llmops/ui';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -8,11 +7,11 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <React.Fragment>
+    <div className={lightTheme}>
       <Page>
         <Sidebar />
         <Outlet />
       </Page>
-    </React.Fragment>
+    </div>
   );
 }
