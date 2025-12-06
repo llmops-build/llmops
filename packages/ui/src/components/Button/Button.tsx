@@ -1,14 +1,18 @@
-import { Button as RAButton, type ButtonProps } from 'react-aria-components';
+import { Button as RAButton, type ButtonProps as RAButtonProps } from 'react-aria-components';
 import clsx from 'clsx';
-import { base } from './button.css';
+import { buttonRecipe, type ButtonVariants } from './button.css';
 
-export const Button = (props: ButtonProps) => {
+export interface ButtonProps extends RAButtonProps {
+  variant?: ButtonVariants['variant'];
+  size?: ButtonVariants['size'];
+  fullWidth?: ButtonVariants['fullWidth'];
+}
+
+export const Button = ({ variant, size, fullWidth, className, ...props }: ButtonProps) => {
   return (
     <RAButton
       {...props}
-      className={clsx(base, props.className)}
+      className={clsx(buttonRecipe({ variant, size, fullWidth }), className)}
     />
   );
 };
-
-export type { ButtonProps };

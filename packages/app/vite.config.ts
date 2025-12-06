@@ -25,6 +25,9 @@ const commonPlugins = [
   react({
     jsxImportSource: 'react',
     jsxRuntime: 'automatic',
+    babel: {
+      plugins: ['babel-plugin-react-compiler'],
+    },
   }),
   vanillaExtractPlugin(),
 ];

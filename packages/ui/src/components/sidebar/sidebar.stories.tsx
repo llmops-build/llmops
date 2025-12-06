@@ -12,7 +12,11 @@ const meta = {
 export default meta;
 
 export const Primary = {
-  args: {
-    children: null,
-  },
+  render: () => (
+    <div style={{ height: '400px', width: '300px' }}>
+      <Sidebar style={{ '--sidebar-width': '300px' } as React.CSSProperties}>
+        Hello
+      </Sidebar>
+    </div>
+  ),
 };
