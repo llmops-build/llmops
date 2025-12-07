@@ -16,7 +16,8 @@ export const outer = style({
 export const inner = style({
   flexGrow: 1,
   borderRadius: spacing.xs,
-  display: 'grid',
-  gridTemplateColumns: 'var(--sidebar-width) repeat(8, 1fr)',
-  gridTemplateRows: `${spacing['2xl']} auto`,
+  display: 'flex',
+  flexDirection: 'row',
+  justifyContent: 'stretch',
+  alignItems: 'stretch',
 });

@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutLayoutRouteImport } from './routes/_layout/_layout'
 import { Route as LayoutLayoutIndexRouteImport } from './routes/_layout/_layout.index'
+import { Route as LayoutLayoutPromptsRouteImport } from './routes/_layout/_layout.prompts'
+import { Route as LayoutLayoutObservabilityRouteImport } from './routes/_layout/_layout.observability'
+import { Route as LayoutLayoutEvaluationsRouteImport } from './routes/_layout/_layout.evaluations'
 
 const LayoutLayoutRoute = LayoutLayoutRouteImport.update({
   id: '/_layout/_layout',
@@ -21,24 +24,55 @@ const LayoutLayoutIndexRoute = LayoutLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutLayoutRoute,
 } as any)
+const LayoutLayoutPromptsRoute = LayoutLayoutPromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => LayoutLayoutRoute,
+} as any)
+const LayoutLayoutObservabilityRoute =
+  LayoutLayoutObservabilityRouteImport.update({
+    id: '/observability',
+    path: '/observability',
+    getParentRoute: () => LayoutLayoutRoute,
+  } as any)
+const LayoutLayoutEvaluationsRoute = LayoutLayoutEvaluationsRouteImport.update({
+  id: '/evaluations',
+  path: '/evaluations',
+  getParentRoute: () => LayoutLayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/evaluations': typeof LayoutLayoutEvaluationsRoute
+  '/observability': typeof LayoutLayoutObservabilityRoute
+  '/prompts': typeof LayoutLayoutPromptsRoute
   '/': typeof LayoutLayoutIndexRoute
 }
 export interface FileRoutesByTo {
+  '/evaluations': typeof LayoutLayoutEvaluationsRoute
+  '/observability': typeof LayoutLayoutObservabilityRoute
+  '/prompts': typeof LayoutLayoutPromptsRoute
   '/': typeof LayoutLayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout/_layout': typeof LayoutLayoutRouteWithChildren
+  '/_layout/_layout/evaluations': typeof LayoutLayoutEvaluationsRoute
+  '/_layout/_layout/observability': typeof LayoutLayoutObservabilityRoute
+  '/_layout/_layout/prompts': typeof LayoutLayoutPromptsRoute
   '/_layout/_layout/': typeof LayoutLayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/evaluations' | '/observability' | '/prompts' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/_layout/_layout' | '/_layout/_layout/'
+  to: '/evaluations' | '/observability' | '/prompts' | '/'
+  id:
+    | '__root__'
+    | '/_layout/_layout'
+    | '/_layout/_layout/evaluations'
+    | '/_layout/_layout/observability'
+    | '/_layout/_layout/prompts'
+    | '/_layout/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -61,14 +95,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayoutIndexRouteImport
       parentRoute: typeof LayoutLayoutRoute
     }
+    '/_layout/_layout/prompts': {
+      id: '/_layout/_layout/prompts'
+      path: '/prompts'
+      fullPath: '/prompts'
+      preLoaderRoute: typeof LayoutLayoutPromptsRouteImport
+      parentRoute: typeof LayoutLayoutRoute
+    }
+    '/_layout/_layout/observability': {
+      id: '/_layout/_layout/observability'
+      path: '/observability'
+      fullPath: '/observability'
+      preLoaderRoute: typeof LayoutLayoutObservabilityRouteImport
+      parentRoute: typeof LayoutLayoutRoute
+    }
+    '/_layout/_layout/evaluations': {
+      id: '/_layout/_layout/evaluations'
+      path: '/evaluations'
+      fullPath: '/evaluations'
+      preLoaderRoute: typeof LayoutLayoutEvaluationsRouteImport
+      parentRoute: typeof LayoutLayoutRoute
+    }
   }
 }
 
 interface LayoutLayoutRouteChildren {
+  LayoutLayoutEvaluationsRoute: typeof LayoutLayoutEvaluationsRoute
+  LayoutLayoutObservabilityRoute: typeof LayoutLayoutObservabilityRoute
+  LayoutLayoutPromptsRoute: typeof LayoutLayoutPromptsRoute
   LayoutLayoutIndexRoute: typeof LayoutLayoutIndexRoute
 }
 
 const LayoutLayoutRouteChildren: LayoutLayoutRouteChildren = {
+  LayoutLayoutEvaluationsRoute: LayoutLayoutEvaluationsRoute,
+  LayoutLayoutObservabilityRoute: LayoutLayoutObservabilityRoute,
+  LayoutLayoutPromptsRoute: LayoutLayoutPromptsRoute,
   LayoutLayoutIndexRoute: LayoutLayoutIndexRoute,
 }
 

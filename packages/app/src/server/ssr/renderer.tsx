@@ -5,7 +5,7 @@ import { ReactRefresh } from './react-refresh';
 
 const { renderToString } = reactServer;
 
-export const renderer = ({ basePath = '' }) => {
+export const renderer = ({ basePath = '', dev = false }) => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
 
@@ -242,6 +242,13 @@ export const renderer = ({ basePath = '' }) => {
 
         `}</style>
         <link href={stylesPath} rel="stylesheet" />
+        <script>
+          {`
+            window.bootstrapData = {
+              basePath: "${basePath}",
+            };
+          `}
+        </script>
         <ReactRefresh />
       </head>
       <body>

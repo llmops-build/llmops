@@ -1,16 +1,17 @@
-import { sprinkles } from '@llmops/ui';
+import { easings, sprinkles } from '@llmops/ui';
 import { style } from '@vanilla-extract/css';
 
 export const gridElement = style({
-  gridColumn: '2 / -1',
-  gridRow: '2 / 3',
+  width: 'calc(100% - var(--sidebar-width))',
+  transitionProperty: 'width',
+  transitionTimingFunction: easings.easeInOutCubic,
+  transitionDuration: '300ms',
 });
 
 export const workingArea = style([
   sprinkles({
     backgroundColor: 'background',
     borderRadius: 'md',
-    height: '100%',
     borderWidth: '1',
     borderStyle: 'solid',
     borderColor: 'gray3',

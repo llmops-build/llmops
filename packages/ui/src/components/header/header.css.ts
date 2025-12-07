@@ -3,5 +3,5 @@ import { spacing } from '../../tokens/spacing.css';
 
 export const base = style({
   height: spacing['2xl'],
-  gridColumn: '2 / -1',
+  width: 'calc(100% - var(--sidebar-width))',
 });

@@ -1,6 +1,7 @@
 import { defineProperties, createSprinkles } from '@vanilla-extract/sprinkles';
 import { colors } from '../tokens/colors.css';
 import { spacing } from '../tokens/spacing.css';
+import { easings } from '../tokens/easings';
 
 const responsiveProperties = defineProperties({
   conditions: {
@@ -99,6 +100,7 @@ const unresponsiveProperties = defineProperties({
     overflow: ['visible', 'hidden', 'scroll', 'auto'],
     whiteSpace: ['normal', 'nowrap', 'pre', 'pre-wrap'],
     textOverflow: ['clip', 'ellipsis'],
+    transitionTimingFunction: easings,
   },
 });
 

@@ -35,6 +35,7 @@ const commonPlugins = [
 export default defineConfig(({ mode }) => {
   if (mode === 'production') {
     return {
+      base: './',
       resolve: {
         alias,
         noExternal: ['@llmops/ui'],

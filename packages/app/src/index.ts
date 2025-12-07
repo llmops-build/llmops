@@ -2,8 +2,11 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import mainApp from './server';
 import type { LLMOpsConfig } from '@llmops/core';
 import { validateLLMOpsConfig, type ValidatedLLMOpsConfig } from '@llmops/core';
+import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 
-const setConfigMiddleware = (config: ValidatedLLMOpsConfig): MiddlewareHandler => {
+const setConfigMiddleware = (
+  config: ValidatedLLMOpsConfig
+): MiddlewareHandler => {
   return async (c, next) => {
     c.set('llmopsConfig', config);
     await next();
@@ -15,6 +18,7 @@ export const createApp = (config: LLMOpsConfig) => {
   const validatedConfig = validateLLMOpsConfig(config);
 
   const app = new Hono()
+    .use('*', createEnvValidatorMiddleware())
     .use('*', setConfigMiddleware(validatedConfig))
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);

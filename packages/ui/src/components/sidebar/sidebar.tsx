@@ -1,10 +1,14 @@
 import type { HTMLAttributes } from 'react';
+import * as React from 'react';
 import clsx from 'clsx';
+import { Button } from 'react-aria-components';
+import { Slot } from '@radix-ui/react-slot';
 import {
   sidebarRecipe,
   headerRecipe,
   footerRecipe,
   contentRecipe,
+  sidebarItem,
   type SidebarVariants,
   type SidebarHeaderVariants,
   type SidebarFooterVariants,
@@ -16,12 +20,21 @@ export interface SidebarHeaderProps extends HTMLAttributes<HTMLDivElement> {
 export interface SidebarFooterProps extends HTMLAttributes<HTMLDivElement> {
   centered?: SidebarFooterVariants['centered'];
 }
-export interface SidebarContentProps extends HTMLAttributes<HTMLElement> {}
+export interface SidebarContentProps extends HTMLAttributes<HTMLDivElement> {}
 export interface SidebarProps extends HTMLAttributes<HTMLElement> {
   collapsed?: SidebarVariants['collapsed'];
   position?: SidebarVariants['position'];
   theme?: SidebarVariants['theme'];
 }
+
+export interface SidebarItemButtonProps {}
+
+export type SidebarItemProps = {
+  asChild?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  [key: string]: any; // Allow all other props to pass through
+};
 
 const SidebarHeader = ({
   centered,
@@ -52,7 +65,7 @@ const SidebarFooter = ({
 };
 
 const SidebarContent = ({ className, ...props }: SidebarContentProps) => {
-  return <aside {...props} className={clsx(contentRecipe(), className)} />;
+  return <div {...props} className={clsx(contentRecipe(), className)} />;
 };
 
 const Sidebar = ({
@@ -70,4 +83,21 @@ const Sidebar = ({
   );
 };
 
-export { Sidebar, SidebarHeader, SidebarFooter, SidebarContent };
+const SidebarItem = ({
+  className,
+  asChild = false,
+  children,
+  ...props
+}: SidebarItemProps) => {
+  const itemClassName = clsx(sidebarItem(), className);
+
+  const Comp = asChild ? Slot : Button;
+
+  return (
+    <Comp className={itemClassName} {...props}>
+      {children}
+    </Comp>
+  );
+};
+
+export { Sidebar, SidebarHeader, SidebarFooter, SidebarContent, SidebarItem };

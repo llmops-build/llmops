@@ -1,15 +1,35 @@
-import { Header } from '@llmops/ui';
+import { Button, Header } from '@llmops/ui';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { gridElement } from './-components/area.css';
+import { Icon } from '@client/components/icons';
+import { Columns2 } from 'lucide-react';
+import { iconContainer, headerStyle } from './-components/_layout.css';
+import {
+  SidebarWidthOptions,
+  useSidebarWidth,
+} from '@client/hooks/ui/useSidebarWidth';
 
 export const Route = createFileRoute('/_layout/_layout')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { sidebarWidth, setSidebarWidth } = useSidebarWidth();
   return (
     <>
-      <Header></Header>
+      <Header className={headerStyle}>
+        {sidebarWidth === SidebarWidthOptions.COLLAPSED && (
+          <div className={iconContainer}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarWidth(SidebarWidthOptions.EXTENDED)}
+            >
+              <Icon icon={Columns2} />
+            </Button>
+          </div>
+        )}
+      </Header>
       <div className={gridElement}>
         <Outlet />
       </div>

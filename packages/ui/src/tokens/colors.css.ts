@@ -63,7 +63,7 @@ export const colors = createThemeContract({
   grayIndicator: null,
   grayTrack: null,
 
-  background: null
+  background: null,
 });
 
 export const lightTheme = createTheme(colors, {
@@ -129,7 +129,7 @@ export const lightTheme = createTheme(colors, {
   grayIndicator: '#8c8c8c',
   grayTrack: '#8c8c8c',
 
-  background: '#fff'
+  background: '#fff',
 });
 
 export const darkTheme = createTheme(colors, {
@@ -195,5 +195,5 @@ export const darkTheme = createTheme(colors, {
   grayIndicator: '#6f6f6f',
   grayTrack: '#6f6f6f',
 
-  background: '#000'
+  background: '#000',
 });

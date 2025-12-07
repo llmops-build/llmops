@@ -18,7 +18,6 @@ export const buttonRecipe = recipe({
     transition: 'all 0.2s ease-in-out',
     ':focus': {
       outline: `2px solid ${colors.accent9}`,
-      outlineOffset: '2px',
     },
     ':disabled': {
       opacity: '0.5',
@@ -49,12 +48,17 @@ export const buttonRecipe = recipe({
       },
       ghost: {
         backgroundColor: 'transparent',
-        color: colors.accent11,
+        color: colors.gray9,
         ':hover': {
-          backgroundColor: colors.accent3,
+          backgroundColor: colors.gray3,
         },
         ':active': {
-          backgroundColor: colors.accent4,
+          backgroundColor: colors.gray3,
+          outline: 'none',
+        },
+        ':focus': {
+          backgroundColor: colors.gray3,
+          outline: 'none',
         },
       },
       danger: {
@@ -91,6 +95,9 @@ export const buttonRecipe = recipe({
         fontSize: '1rem',
         lineHeight: '1.5rem',
       },
+      icon: {
+        padding: spacing.sm,
+      },
     },
     fullWidth: {
       true: {
@@ -104,34 +111,4 @@ export const buttonRecipe = recipe({
   },
 });
 
-export const sidebarItem = recipe({
-  base: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: spacing.sm,
-    borderRadius: '0.25rem',
-    textDecoration: 'none',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease-in-out',
-  },
-  variants: {
-    active: {
-      true: {
-        backgroundColor: colors.accent3,
-        color: colors.accent11,
-      },
-      false: {
-        color: colors.gray11,
-        ':hover': {
-          backgroundColor: colors.gray3,
-        },
-      },
-    },
-  },
-  defaultVariants: {
-    active: false,
-  },
-});
-
 export type ButtonVariants = NonNullable<Parameters<typeof buttonRecipe>[0]>;
-export type SidebarItemVariants = NonNullable<Parameters<typeof sidebarItem>[0]>;

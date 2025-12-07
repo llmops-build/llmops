@@ -1,4 +1,5 @@
 import { recipe } from '@vanilla-extract/recipes';
+import { calc } from '@vanilla-extract/css-utils';
 import { sprinkles } from '../../styles/sprinkles.css';
 import { colors } from '../../tokens/colors.css';
 import { spacing } from '../../tokens/spacing.css';
@@ -9,12 +10,16 @@ export const sidebarRecipe = recipe({
       display: 'flex',
       flexDirection: 'column',
       backgroundColor: 'gray2',
+      transitionTimingFunction: 'easeInOutCubic',
     }),
     {
       width: 'var(--sidebar-width)',
       gridRow: '1 / 3',
       height: '100%',
       alignItems: 'stretch',
+      willChange: 'width',
+      transitionProperty: 'width',
+      transitionDuration: '200ms',
     },
   ],
   variants: {
@@ -59,6 +64,7 @@ export const headerRecipe = recipe({
   base: [
     sprinkles({
       borderColor: 'gray6',
+      padding: 'sm',
     }),
     {
       height: spacing['2xl'],
@@ -74,6 +80,7 @@ export const headerRecipe = recipe({
       false: sprinkles({
         display: 'flex',
         alignItems: 'center',
+        flexDirection: 'row-reverse',
       }),
     },
   },
@@ -122,6 +129,7 @@ export const contentRecipe = recipe({
     {
       flex: 1,
       overflowY: 'auto',
+      overflowX: 'clip',
     },
   ],
 });
@@ -129,8 +137,36 @@ export const contentRecipe = recipe({
 export const sidebarItem = recipe({
   base: [
     sprinkles({
+      display: 'flex',
       padding: 'xs',
+      fontSize: 'sm',
+      color: 'gray11',
     }),
+    {
+      lineHeight: calc.multiply(spacing.md, 1.25),
+      alignItems: 'center',
+      gap: spacing.md,
+      borderRadius: '0.25rem',
+      textDecoration: 'none',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease-in-out',
+      border: 'none',
+      fontFamily: 'inherit',
+      width: '100%',
+      fontWeight: 400,
+      textAlign: 'left',
+      color: colors.gray9,
+      backgroundColor: colors.gray2,
+      selectors: {
+        '&:hover': {
+          backgroundColor: colors.gray3,
+        },
+        '&.active': {
+          backgroundColor: colors.gray4,
+          color: colors.gray11,
+        },
+      },
+    },
   ],
 });
 
@@ -144,3 +180,8 @@ export type SidebarFooterVariants = NonNullable<
 export type SidebarContentVariants = NonNullable<
   Parameters<typeof contentRecipe>[0]
 >;
+export type SidebarItemVariants = NonNullable<
+  Parameters<typeof sidebarItem>[0]
+>;
+
+// Note: Icon styling is now handled by the app's centralized Icon component

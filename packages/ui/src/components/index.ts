@@ -7,6 +7,6 @@ export {
   SidebarFooter,
   SidebarHeader,
   SidebarContent,
-  sidebarItem,
+  SidebarItem,
 } from './sidebar';
 export { Header } from './header';

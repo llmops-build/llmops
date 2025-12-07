@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { readFile } from 'fs/promises';
 import api from '@server/handlers/api';
+import { env } from 'node:process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,13 +24,16 @@ app
     })
   )
   .get('/health', (c) => c.json({ status: 'ok' }))
-  .get('/', async (c) => {
-    const basePath = c.var.llmopsConfig.basePath || '';
-    return c.html(
-      renderer({
-        basePath,
-      })
-    );
+  .use('*', async (c) => {
+    if (!c.req.path.startsWith('/api')) {
+      const basePath = c.var.llmopsConfig.basePath || '';
+      return c.html(
+        renderer({
+          basePath,
+          dev: (env.LLMOPS_DEV as unknown) === 'true',
+        })
+      );
+    }
   })
   .route('/api', api);
 

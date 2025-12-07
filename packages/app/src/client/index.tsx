@@ -1,9 +1,12 @@
+import '@llmops/ui/global.css';
+import './styles/styles.css';
 import { routeTree } from '@client/routeTree.gen';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 const router = createRouter({
+  basepath: window.bootstrapData?.basePath || '/',
   routeTree,
 });
 

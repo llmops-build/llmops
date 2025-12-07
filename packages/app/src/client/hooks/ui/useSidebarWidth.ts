@@ -1,21 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
+import {
+  sidebarWidthAtom,
+  SidebarWidthOptions,
+} from '../../atoms/sidebarWidth';
 
 const SIDEBAR_WIDTH_CSS_VAR = '--sidebar-width';
-const DEFAULT_SIDEBAR_WIDTH = '200px';
+
+export { SidebarWidthOptions };
 
 export function useSidebarWidth() {
-  const [sidebarWidth, setSidebarWidthState] = useState<string>(() => {
-    if (typeof document !== 'undefined') {
-      return (
-        getComputedStyle(document.documentElement)
-          .getPropertyValue(SIDEBAR_WIDTH_CSS_VAR)
-          .trim() || DEFAULT_SIDEBAR_WIDTH
-      );
-    }
-    return DEFAULT_SIDEBAR_WIDTH;
-  });
+  const [sidebarWidth, setSidebarWidthState] = useAtom(sidebarWidthAtom);
 
-  const setSidebarWidth = (width: string) => {
+  const setSidebarWidth = (width: SidebarWidthOptions) => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty(SIDEBAR_WIDTH_CSS_VAR, width);
       setSidebarWidthState(width);
@@ -23,7 +20,7 @@ export function useSidebarWidth() {
   };
 
   const resetSidebarWidth = () => {
-    setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+    setSidebarWidth(SidebarWidthOptions.EXTENDED);
   };
 
   useEffect(() => {
@@ -35,7 +32,7 @@ export function useSidebarWidth() {
         setSidebarWidthState(currentWidth);
       }
     }
-  }, [sidebarWidth]);
+  }, [sidebarWidth, setSidebarWidthState]);
 
   return {
     sidebarWidth,
