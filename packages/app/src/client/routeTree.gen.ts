@@ -11,9 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LayoutLayoutRouteImport } from './routes/_layout/_layout'
 import { Route as LayoutLayoutIndexRouteImport } from './routes/_layout/_layout.index'
-import { Route as LayoutLayoutPromptsRouteImport } from './routes/_layout/_layout.prompts'
 import { Route as LayoutLayoutObservabilityRouteImport } from './routes/_layout/_layout.observability'
 import { Route as LayoutLayoutEvaluationsRouteImport } from './routes/_layout/_layout.evaluations'
+import { Route as LayoutLayoutConfigsRouteImport } from './routes/_layout/_layout.configs'
 
 const LayoutLayoutRoute = LayoutLayoutRouteImport.update({
   id: '/_layout/_layout',
@@ -22,11 +22,6 @@ const LayoutLayoutRoute = LayoutLayoutRouteImport.update({
 const LayoutLayoutIndexRoute = LayoutLayoutIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => LayoutLayoutRoute,
-} as any)
-const LayoutLayoutPromptsRoute = LayoutLayoutPromptsRouteImport.update({
-  id: '/prompts',
-  path: '/prompts',
   getParentRoute: () => LayoutLayoutRoute,
 } as any)
 const LayoutLayoutObservabilityRoute =
@@ -40,38 +35,43 @@ const LayoutLayoutEvaluationsRoute = LayoutLayoutEvaluationsRouteImport.update({
   path: '/evaluations',
   getParentRoute: () => LayoutLayoutRoute,
 } as any)
+const LayoutLayoutConfigsRoute = LayoutLayoutConfigsRouteImport.update({
+  id: '/configs',
+  path: '/configs',
+  getParentRoute: () => LayoutLayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/configs': typeof LayoutLayoutConfigsRoute
   '/evaluations': typeof LayoutLayoutEvaluationsRoute
   '/observability': typeof LayoutLayoutObservabilityRoute
-  '/prompts': typeof LayoutLayoutPromptsRoute
   '/': typeof LayoutLayoutIndexRoute
 }
 export interface FileRoutesByTo {
+  '/configs': typeof LayoutLayoutConfigsRoute
   '/evaluations': typeof LayoutLayoutEvaluationsRoute
   '/observability': typeof LayoutLayoutObservabilityRoute
-  '/prompts': typeof LayoutLayoutPromptsRoute
   '/': typeof LayoutLayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout/_layout': typeof LayoutLayoutRouteWithChildren
+  '/_layout/_layout/configs': typeof LayoutLayoutConfigsRoute
   '/_layout/_layout/evaluations': typeof LayoutLayoutEvaluationsRoute
   '/_layout/_layout/observability': typeof LayoutLayoutObservabilityRoute
-  '/_layout/_layout/prompts': typeof LayoutLayoutPromptsRoute
   '/_layout/_layout/': typeof LayoutLayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/evaluations' | '/observability' | '/prompts' | '/'
+  fullPaths: '/configs' | '/evaluations' | '/observability' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/evaluations' | '/observability' | '/prompts' | '/'
+  to: '/configs' | '/evaluations' | '/observability' | '/'
   id:
     | '__root__'
     | '/_layout/_layout'
+    | '/_layout/_layout/configs'
     | '/_layout/_layout/evaluations'
     | '/_layout/_layout/observability'
-    | '/_layout/_layout/prompts'
     | '/_layout/_layout/'
   fileRoutesById: FileRoutesById
 }
@@ -95,13 +95,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayoutIndexRouteImport
       parentRoute: typeof LayoutLayoutRoute
     }
-    '/_layout/_layout/prompts': {
-      id: '/_layout/_layout/prompts'
-      path: '/prompts'
-      fullPath: '/prompts'
-      preLoaderRoute: typeof LayoutLayoutPromptsRouteImport
-      parentRoute: typeof LayoutLayoutRoute
-    }
     '/_layout/_layout/observability': {
       id: '/_layout/_layout/observability'
       path: '/observability'
@@ -116,20 +109,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayoutEvaluationsRouteImport
       parentRoute: typeof LayoutLayoutRoute
     }
+    '/_layout/_layout/configs': {
+      id: '/_layout/_layout/configs'
+      path: '/configs'
+      fullPath: '/configs'
+      preLoaderRoute: typeof LayoutLayoutConfigsRouteImport
+      parentRoute: typeof LayoutLayoutRoute
+    }
   }
 }
 
 interface LayoutLayoutRouteChildren {
+  LayoutLayoutConfigsRoute: typeof LayoutLayoutConfigsRoute
   LayoutLayoutEvaluationsRoute: typeof LayoutLayoutEvaluationsRoute
   LayoutLayoutObservabilityRoute: typeof LayoutLayoutObservabilityRoute
-  LayoutLayoutPromptsRoute: typeof LayoutLayoutPromptsRoute
   LayoutLayoutIndexRoute: typeof LayoutLayoutIndexRoute
 }
 
 const LayoutLayoutRouteChildren: LayoutLayoutRouteChildren = {
+  LayoutLayoutConfigsRoute: LayoutLayoutConfigsRoute,
   LayoutLayoutEvaluationsRoute: LayoutLayoutEvaluationsRoute,
   LayoutLayoutObservabilityRoute: LayoutLayoutObservabilityRoute,
-  LayoutLayoutPromptsRoute: LayoutLayoutPromptsRoute,
   LayoutLayoutIndexRoute: LayoutLayoutIndexRoute,
 }
 

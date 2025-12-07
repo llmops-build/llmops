@@ -7,6 +7,8 @@ export const headerStyle = style({
   transitionProperty: 'width',
   transitionTimingFunction: easings.easeInOutCubic,
   transitionDuration: '300ms',
+  display: 'flex',
+  alignItems: 'center',
 });
 
 export const iconContainer = style({

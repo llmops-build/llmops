@@ -1,5 +1,5 @@
 import { Button, Header } from '@llmops/ui';
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, useMatches } from '@tanstack/react-router';
 import { gridElement } from './-components/area.css';
 import { Icon } from '@client/components/icons';
 import { Columns2 } from 'lucide-react';
@@ -15,6 +15,7 @@ export const Route = createFileRoute('/_layout/_layout')({
 
 function RouteComponent() {
   const { sidebarWidth, setSidebarWidth } = useSidebarWidth();
+  const matches = useMatches();
   return (
     <>
       <Header className={headerStyle}>
@@ -29,6 +30,10 @@ function RouteComponent() {
             </Button>
           </div>
         )}
+        {matches.map((match) => {
+          if (!match.staticData?.customData?.title) return null;
+          return <div>{match.staticData.customData.title}</div>;
+        })}
       </Header>
       <div className={gridElement}>
         <Outlet />

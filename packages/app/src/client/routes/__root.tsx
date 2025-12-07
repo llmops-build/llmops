@@ -10,7 +10,13 @@ import {
   lightTheme,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import { CircleGauge, Columns2, ScrollText, Telescope } from 'lucide-react';
+import {
+  CircleGauge,
+  Columns2,
+  ScrollText,
+  SlidersVertical,
+  Telescope,
+} from 'lucide-react';
 import {
   SidebarWidthOptions,
   useSidebarWidth,
@@ -43,9 +49,9 @@ function RootComponent() {
           </SidebarHeader>
           <SidebarContent>
             <SidebarItem asChild>
-              <Link to="/prompts">
-                <Icon icon={ScrollText} />
-                Prompts
+              <Link to="/configs">
+                <Icon icon={SlidersVertical} />
+                Configs
               </Link>
             </SidebarItem>
             <SidebarItem asChild>
