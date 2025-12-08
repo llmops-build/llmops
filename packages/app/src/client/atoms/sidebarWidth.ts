@@ -19,3 +19,9 @@ const getInitialSidebarWidth = (): string => {
 };
 
 export const sidebarWidthAtom = atom<string>(getInitialSidebarWidth());
+
+const getInitialIsCollapsed = (): boolean => {
+  return getInitialSidebarWidth() === SidebarWidthOptions.COLLAPSED;
+};
+
+export const isCollapsedAtom = atom<boolean>(getInitialIsCollapsed());

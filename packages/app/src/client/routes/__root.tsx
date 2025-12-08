@@ -24,22 +24,24 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const { toggleSidebar } = useSidebarWidth();
+  const { toggleSidebar, isCollapsed } = useSidebarWidth();
 
   return (
     <div className={lightTheme}>
       <Page>
         <Sidebar>
           <SidebarHeader>
-            <Button
-              onClick={() => {
-                toggleSidebar();
-              }}
-              variant="ghost"
-              size="icon"
-            >
-              <Icon icon={Columns2} />
-            </Button>
+            {!isCollapsed && (
+              <Button
+                onClick={() => {
+                  toggleSidebar();
+                }}
+                variant="ghost"
+                size="icon"
+              >
+                <Icon icon={Columns2} />
+              </Button>
+            )}
           </SidebarHeader>
           <SidebarContent>
             <SidebarItem asChild>
