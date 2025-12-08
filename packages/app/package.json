@@ -46,7 +46,8 @@
     "hono": "^4.10.7",
     "jotai": "^2.15.2",
     "ky": "^1.14.0",
-    "lucide-react": "^0.556.0"
+    "lucide-react": "^0.556.0",
+    "motion": "^12.23.25"
   },
   "peerDependencies": {
     "react": "^19.2.1",

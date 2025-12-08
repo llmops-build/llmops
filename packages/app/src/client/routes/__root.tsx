@@ -13,14 +13,10 @@ import { Icon } from '@client/components/icons';
 import {
   CircleGauge,
   Columns2,
-  ScrollText,
   SlidersVertical,
   Telescope,
 } from 'lucide-react';
-import {
-  SidebarWidthOptions,
-  useSidebarWidth,
-} from '@client/hooks/ui/useSidebarWidth';
+import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { contentLayout } from './-styles/root.css';
 
 export const Route = createRootRoute({
@@ -28,24 +24,22 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const { sidebarWidth, setSidebarWidth } = useSidebarWidth();
+  const { toggleSidebar } = useSidebarWidth();
 
   return (
     <div className={lightTheme}>
       <Page>
         <Sidebar>
           <SidebarHeader>
-            {sidebarWidth !== SidebarWidthOptions.COLLAPSED && (
-              <Button
-                onClick={() => {
-                  setSidebarWidth(SidebarWidthOptions.COLLAPSED);
-                }}
-                variant="ghost"
-                size="icon"
-              >
-                <Icon icon={Columns2} />
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                toggleSidebar();
+              }}
+              variant="ghost"
+              size="icon"
+            >
+              <Icon icon={Columns2} />
+            </Button>
           </SidebarHeader>
           <SidebarContent>
             <SidebarItem asChild>

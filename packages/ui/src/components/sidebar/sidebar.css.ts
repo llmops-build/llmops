@@ -17,9 +17,9 @@ export const sidebarRecipe = recipe({
       gridRow: '1 / 3',
       height: '100%',
       alignItems: 'stretch',
-      willChange: 'width',
-      transitionProperty: 'width',
-      transitionDuration: '200ms',
+      // willChange: 'width',
+      // transitionProperty: 'width',
+      // transitionDuration: '200ms',
     },
   ],
   variants: {

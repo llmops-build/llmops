@@ -32,6 +32,10 @@ export const configVariants = pgTable('config_variants', {
     .references(() => vairants.id, { onDelete: 'cascade' }),
 });
 
+/**
+ * @todo add config draft column
+ */
+
 export const environmentConfigVariants = pgTable(
   'environment_config_variants',
   {
