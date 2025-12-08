@@ -43,9 +43,6 @@ const urlImportPlugin = () => {
           filePath = cleanId.replace('@client/', './src/client/');
         }
 
-        console.log('cleanId:', cleanId);
-        console.log('filePath:', filePath);
-
         // Check if this file exists in Vite manifest
         if (viteManifest) {
           // Convert the path to match manifest keys
@@ -63,14 +60,9 @@ const urlImportPlugin = () => {
             manifestKey = cleanId;
           }
 
-          console.log('Looking for manifestKey:', manifestKey);
-          console.log('Available manifest keys:', Object.keys(viteManifest));
           const manifestEntry = viteManifest[manifestKey];
-          console.log('Found manifestEntry:', manifestEntry);
-
           if (manifestEntry && manifestEntry.file) {
             // Return the URL to the Vite-built file
-            console.log('Returning Vite file:', manifestEntry.file);
             return `export default "/${manifestEntry.file}";`;
           }
         }
