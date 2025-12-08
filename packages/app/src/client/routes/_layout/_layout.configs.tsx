@@ -26,8 +26,7 @@ function RouteComponent() {
     <div ref={containerRef} className={twinSplitContainer}>
       <div className={clsx(workingArea, leftTile)}>
         <button onClick={() => setTileWidth('100%')}>100/0</button>
-        <button onClick={() => setTileWidth('30%')}>30/70</button>
-        <button onClick={() => setTileWidth('50%')}>50/50</button>
+        <button onClick={() => setTileWidth('40%')}>40/60</button>
       </div>
       <div className={clsx(workingArea, rightTile)}></div>
     </div>

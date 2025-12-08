@@ -9,7 +9,7 @@ export const configs = pgTable('configs', {
   id: uuid('id').primaryKey().defaultRandom(),
 });
 
-export const vairants = pgTable('variants', {
+export const variants = pgTable('variants', {
   id: uuid('id').primaryKey().defaultRandom(),
   provider: providerEnums('provider').notNull(),
   modelName: text('model_name').notNull(),
@@ -22,6 +22,15 @@ export const environments = pgTable('environments', {
   slug: text('slug').notNull(),
 });
 
+export const environmentSecrets = pgTable('environment_secrets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  environmentId: uuid('environment_id')
+    .notNull()
+    .references(() => environments.id, { onDelete: 'cascade' }),
+  keyName: text('key_name').notNull(),
+  keyValue: text('key_value').notNull(),
+});
+
 export const configVariants = pgTable('config_variants', {
   id: uuid('id').primaryKey().defaultRandom(),
   configId: uuid('config_id')
@@ -29,7 +38,7 @@ export const configVariants = pgTable('config_variants', {
     .references(() => configs.id, { onDelete: 'cascade' }),
   variantId: uuid('variant_id')
     .notNull()
-    .references(() => vairants.id, { onDelete: 'cascade' }),
+    .references(() => variants.id, { onDelete: 'cascade' }),
 });
 
 /**
@@ -46,6 +55,5 @@ export const environmentConfigVariants = pgTable(
     configVariantId: uuid('config_variant_id')
       .notNull()
       .references(() => configVariants.id, { onDelete: 'cascade' }),
-    sdkKey: text('sdk_key').notNull(),
   }
 );
