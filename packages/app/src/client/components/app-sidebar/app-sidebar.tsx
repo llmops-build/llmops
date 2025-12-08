@@ -6,25 +6,20 @@ import {
   SidebarItem,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import { CircleGauge, SlidersVertical, Telescope } from 'lucide-react';
+import { Blocks, CircleGauge, SlidersVertical, Telescope } from 'lucide-react';
 
 export function AppSidebar() {
   return (
     <Sidebar>
-      <SidebarHeader>
-        {/*{!isCollapsed && (
-          <Button
-            onClick={() => {
-              toggleSidebar();
-            }}
-            variant="ghost"
-            size="icon"
-          >
-            <Icon icon={Columns2} />
-          </Button>
-        )}*/}
-      </SidebarHeader>
+      <SidebarHeader></SidebarHeader>
       <SidebarContent>
+        <SidebarItem asChild>
+          <Link to="/">
+            <Icon icon={Blocks} />
+            Overview
+          </Link>
+        </SidebarItem>
+        <br />
         <SidebarItem asChild>
           <Link to="/configs">
             <Icon icon={SlidersVertical} />

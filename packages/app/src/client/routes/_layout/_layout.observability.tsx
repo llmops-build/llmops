@@ -14,7 +14,5 @@ export const Route = createFileRoute('/_layout/_layout/observability')({
 });
 
 function RouteComponent() {
-  return (
-    <div className={workingArea}>Hello "/_layout/_layout/observability"!</div>
-  );
+  return <div className={workingArea}></div>;
 }

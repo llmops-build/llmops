@@ -1,4 +1,4 @@
-import { easings, spacing, sprinkles } from '@llmops/ui';
+import { spacing, sprinkles } from '@llmops/ui';
 import { style } from '@vanilla-extract/css';
 
 export const gridElement = style({

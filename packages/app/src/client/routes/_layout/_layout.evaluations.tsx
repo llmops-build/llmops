@@ -14,7 +14,5 @@ export const Route = createFileRoute('/_layout/_layout/evaluations')({
 });
 
 function RouteComponent() {
-  return (
-    <div className={workingArea}>Hello "/_layout/_layout/evaluations"!</div>
-  );
+  return <div className={workingArea}></div>;
 }

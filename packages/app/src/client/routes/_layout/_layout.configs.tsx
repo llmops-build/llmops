@@ -14,5 +14,5 @@ export const Route = createFileRoute('/_layout/_layout/configs')({
 });
 
 function RouteComponent() {
-  return <div className={workingArea}>Hello "/_layout/_layout/prompts"!</div>;
+  return <div className={workingArea}></div>;
 }
