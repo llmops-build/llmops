@@ -1,6 +1,5 @@
 import { Link, Outlet, createRootRoute } from '@tanstack/react-router';
 import {
-  Button,
   Page,
   Sidebar,
   SidebarContent,
@@ -10,13 +9,7 @@ import {
   lightTheme,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import {
-  CircleGauge,
-  Columns2,
-  SlidersVertical,
-  Telescope,
-} from 'lucide-react';
-import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
+import { CircleGauge, SlidersVertical, Telescope } from 'lucide-react';
 import { contentLayout } from './-styles/root.css';
 
 export const Route = createRootRoute({
@@ -24,14 +17,12 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const { toggleSidebar, isCollapsed } = useSidebarWidth();
-
   return (
-    <div className={lightTheme}>
+    <div className={darkTheme}>
       <Page>
         <Sidebar>
           <SidebarHeader>
-            {!isCollapsed && (
+            {/*{!isCollapsed && (
               <Button
                 onClick={() => {
                   toggleSidebar();
@@ -41,7 +32,7 @@ function RootComponent() {
               >
                 <Icon icon={Columns2} />
               </Button>
-            )}
+            )}*/}
           </SidebarHeader>
           <SidebarContent>
             <SidebarItem asChild>

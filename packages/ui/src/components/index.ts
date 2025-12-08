@@ -1,6 +1,9 @@
 export { Button } from './button';
 export type { ButtonProps } from './button';
 
+export { Breadcrumbs } from './breadcrumbs';
+export type { BreadcrumbsProps, BreadcrumbItem } from './breadcrumbs';
+
 export { Page } from './page';
 export {
   Sidebar,

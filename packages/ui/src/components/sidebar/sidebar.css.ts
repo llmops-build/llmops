@@ -141,6 +141,7 @@ export const sidebarItem = recipe({
       padding: 'xs',
       fontSize: 'sm',
       color: 'gray11',
+      fontFamily: 'mono',
     }),
     {
       lineHeight: calc.multiply(spacing.md, 1.25),
@@ -151,7 +152,6 @@ export const sidebarItem = recipe({
       cursor: 'pointer',
       transition: 'all 0.2s ease-in-out',
       border: 'none',
-      fontFamily: 'inherit',
       width: '100%',
       fontWeight: 400,
       textAlign: 'left',

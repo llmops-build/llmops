@@ -17,6 +17,7 @@ declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
     customData?: {
       title?: string;
+      icon?: React.ReactElement;
     };
   }
 }

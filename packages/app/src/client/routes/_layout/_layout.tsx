@@ -1,13 +1,19 @@
-import { Button, Header } from '@llmops/ui';
-import { createFileRoute, Outlet, useMatches } from '@tanstack/react-router';
+import { Breadcrumbs, Button, Header } from '@llmops/ui';
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useMatches,
+} from '@tanstack/react-router';
 import { gridElement } from './-components/area.css';
 import { Icon } from '@client/components/icons';
-import { Columns2 } from 'lucide-react';
-import { headerStyle } from './-components/_layout.css';
+import { ChevronRight, Columns2 } from 'lucide-react';
 import {
-  SidebarWidthOptions,
-  useSidebarWidth,
-} from '@client/hooks/ui/useSidebarWidth';
+  breadcrumbLink,
+  chevronStyle,
+  headerStyle,
+} from './-components/_layout.css';
+import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 
 export const Route = createFileRoute('/_layout/_layout')({
   component: RouteComponent,
@@ -15,25 +21,34 @@ export const Route = createFileRoute('/_layout/_layout')({
 
 function RouteComponent() {
   const matches = useMatches();
-  const { isCollapsed, toggleSidebar } = useSidebarWidth();
+  const { toggleSidebar } = useSidebarWidth();
+
+  const breadcrumbItems = matches
+    .filter((match) => Boolean(match.staticData.customData?.title))
+    .map((match) => ({
+      key: match.id,
+      label: (
+        <Link to={match.pathname} className={breadcrumbLink}>
+          {match.staticData.customData?.title as string}
+        </Link>
+      ),
+      prefix: match.staticData.customData?.icon,
+    }));
+
   return (
     <>
       <Header className={headerStyle}>
-        {isCollapsed ? (
-          <Button
-            onClick={() => {
-              toggleSidebar();
-            }}
-            size="icon"
-            variant="ghost"
-          >
-            <Icon icon={Columns2} />
-          </Button>
-        ) : null}
-        {matches.map((match) => {
-          if (!match.staticData?.customData?.title) return null;
-          return <div key={match.id}>{match.staticData.customData.title}</div>;
-        })}
+        <Button
+          onClick={() => {
+            toggleSidebar();
+          }}
+          size="icon"
+          variant="ghost"
+        >
+          <Icon icon={Columns2} />
+        </Button>
+        <Icon icon={ChevronRight} className={chevronStyle} />
+        <Breadcrumbs items={breadcrumbItems} />
       </Header>
       <div className={gridElement}>
         <Outlet />

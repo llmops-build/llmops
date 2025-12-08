@@ -53,6 +53,10 @@ const responsiveProperties = defineProperties({
       semibold: '600',
       bold: '700',
     },
+    fontFamily: {
+      sans: '"Geist", sans-serif',
+      mono: '"Geist Mono", monospace',
+    },
     textAlign: ['left', 'center', 'right'],
     position: ['static', 'relative', 'absolute', 'fixed', 'sticky'],
     top: spacing,
