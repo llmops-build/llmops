@@ -12,10 +12,10 @@ export const gridElement = style({
 export const workingArea = style([
   sprinkles({
     backgroundColor: 'background',
-    borderRadius: 'md',
+    borderRadius: 'sm',
     borderWidth: '1',
     borderStyle: 'solid',
-    borderColor: 'gray3',
+    borderColor: 'gray4',
     height: '100%',
   }),
 ]);
