@@ -1,13 +1,5 @@
-import { SupportedProviders } from '../providers';
+import type { ValidatedLLMOpsConfig } from '../schemas/config';
 
-export interface LLMOpsConfig {
-  basePath: string;
-  providers: {
-    [SupportedProviders.OPENROUTER]?: {
-      apiKey: string;
-    };
-  };
-}
+export type { ValidatedLLMOpsConfig };
 
-// Re-export the validated config type
-export type { ValidatedLLMOpsConfig } from '../schemas/config';
+export type LLMOpsConfig = ValidatedLLMOpsConfig;

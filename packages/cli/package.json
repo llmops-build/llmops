@@ -1,0 +1,41 @@
+{
+  "name": "cli",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "LLMOps CLI - A pluggable LLMOps toolkit for TypeScript teams",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "bin": {
+    "llmops": "./dist/index.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "start": "node ./dist/index.mjs",
+    "clean": "rm -rf dist",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "@drizzle-team/brocli": "^0.11.0",
+    "@llmops/core": "workspace:*",
+    "cross-spawn": "^7.0.3",
+    "mri": "^1.2.0",
+    "terminal-image": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/mri": "^1.1.5",
+    "@types/pg": "^8.15.6",
+    "pg": "^8.16.3"
+  }
+}

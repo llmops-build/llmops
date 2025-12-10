@@ -7,6 +7,7 @@ const app = express();
 const port = 3000;
 
 const llmops = createLLMOpsMiddleware({
+  database: null,
   basePath: '/llmops',
   providers: {
     openrouter: {

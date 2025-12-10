@@ -43,7 +43,7 @@ export function useSidebarWidth() {
         // Animate the CSS variable using Motion.dev API
         animationRef.current = animate(currentValue, targetValue, {
           duration: 0.3, // 300ms
-          ease: 'easeInOut',
+          ease: 'circInOut',
           onUpdate: (value: number) => {
             document.documentElement.style.setProperty(
               SIDEBAR_WIDTH_CSS_VAR,

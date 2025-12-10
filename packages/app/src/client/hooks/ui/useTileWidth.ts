@@ -21,9 +21,8 @@ export function useTileWidth() {
 
     // Get current width value for animation from CSS
     const currentWidth =
-      getComputedStyle(container)
-        .getPropertyValue(TILE_WIDTH_CSS_VAR)
-        .trim() || DEFAULT_TILE_WIDTH;
+      getComputedStyle(container).getPropertyValue(TILE_WIDTH_CSS_VAR).trim() ||
+      DEFAULT_TILE_WIDTH;
 
     // Extract numeric values for comparison and animation
     const currentValue = parseFloat(currentWidth.replace(/[^\d.]/g, ''));
@@ -36,7 +35,7 @@ export function useTileWidth() {
       // Animate the CSS variable using Motion.dev API
       animationRef.current = animate(currentValue, targetValue, {
         duration: 0.3, // 300ms
-        ease: 'easeInOut',
+        ease: 'circInOut',
         onUpdate: (value: number) => {
           container.style.setProperty(TILE_WIDTH_CSS_VAR, `${value}${unit}`);
         },
