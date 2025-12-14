@@ -3,11 +3,10 @@ import type {
   Response,
   NextFunction,
 } from 'express';
-import type { LLMOpsConfig } from '@llmops/core';
-import { createApp } from '@llmops/app';
+import type { LLMOpsClient } from '../../client';
 
-export function createLLMOpsMiddleware(options: LLMOpsConfig) {
-  const { basePath } = options;
+export function createLLMOpsMiddleware(client: LLMOpsClient) {
+  const basePath = client.getBasePath();
   return async (req: ExpressRequest, res: Response, next: NextFunction) => {
     let urlPath = req.originalUrl;
 
@@ -26,8 +25,7 @@ export function createLLMOpsMiddleware(options: LLMOpsConfig) {
         : JSON.stringify(req.body),
     });
 
-    const { app } = createApp(options);
-    const response = await app.fetch(request);
+    const response = await client.handler(request);
 
     // Check if response is 404, pass to next middleware
     if (response.status === 404) {

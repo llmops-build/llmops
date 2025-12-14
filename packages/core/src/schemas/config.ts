@@ -26,6 +26,50 @@ export const llmopsConfigSchema = z.object({
     );
     return hasAtLeastOneProvider;
   }, 'At least one provider must be configured'),
+  // experimental: z
+  //   .object({
+  //     joins: z.boolean().default(false).optional(),
+  //   })
+  //   .optional()
+  //   .default({}),
+  // rateLimit: z
+  //   .object({
+  //     enabled: z.boolean().default(false).optional(),
+  //     storage: z.literal('database').optional(),
+  //     modelName: z.string().optional().default('ratelimit'),
+  //     fields: z
+  //       .object({
+  //         key: z.string().optional(),
+  //         count: z.number().optional(),
+  //         lastRequest: z.bigint().optional(),
+  //       })
+  //       .optional(),
+  //   })
+  //   .optional(),
+  // secondaryStorage: z.unknown(), // Placeholder for redis,
+  // advanced: z
+  //   .object({
+  //     database: z
+  //       .object({
+  //         useNumberId: z.boolean().default(false).optional(),
+  //         generateId: z
+  //           // .union([
+  //           //   z.function({
+  //           //     input: z.object({
+  //           //       model: z.string(),
+  //           //     }),
+  //           //     output: z.unknown(),
+  //           //   }),
+  //           //   z.enum(['uuid', 'serial']),
+  //           //   z.literal(false),
+  //           // ])
+  //           .any(), // We can refine this later to be more specific
+  //         defaultFindManyLimit: z.number().min(1).optional().default(100),
+  //       })
+  //       .optional(),
+  //   })
+  //   .optional()
+  //   .default({}),
 });
 
 export type ValidatedLLMOpsConfig = z.infer<typeof llmopsConfigSchema>;

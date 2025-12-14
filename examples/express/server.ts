@@ -2,19 +2,11 @@ import 'dotenv/config';
 import express from 'express';
 import { createLLMOpsMiddleware } from '@llmops/sdk/express';
 import OpenAI from 'openai';
-
+import llmopsClient from './llmops';
 const app = express();
 const port = 3000;
 
-const llmops = createLLMOpsMiddleware({
-  database: null,
-  basePath: '/llmops',
-  providers: {
-    openrouter: {
-      apiKey: process.env.OPENROUTER_API_KEY || '',
-    },
-  },
-});
+const llmops = createLLMOpsMiddleware(llmopsClient);
 
 app.use(express.json());
 app.use(express.static('public'));
