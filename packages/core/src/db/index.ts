@@ -8,3 +8,4 @@ export type {
   ModelNames,
   SecondaryStorage,
 } from './type';
+export * from './get-tables';

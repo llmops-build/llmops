@@ -16,12 +16,6 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
   configs: {
     modelName: 'configs',
     fields: {
-      id: {
-        type: 'string',
-        required: true,
-        unique: true,
-        defaultValue: 'uuid()',
-      },
       createdAt: {
         type: 'date',
         required: true,
@@ -38,12 +32,6 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
   variants: {
     modelName: 'variants',
     fields: {
-      id: {
-        type: 'string',
-        required: true,
-        unique: true,
-        defaultValue: 'uuid()',
-      },
       provider: {
         type: 'string',
         required: true,
@@ -72,12 +60,6 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
   environments: {
     modelName: 'environments',
     fields: {
-      id: {
-        type: 'string',
-        required: true,
-        unique: true,
-        defaultValue: 'uuid()',
-      },
       name: {
         type: 'string',
         required: true,
@@ -103,12 +85,6 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
   environment_secrets: {
     modelName: 'environment_secrets',
     fields: {
-      id: {
-        type: 'string',
-        required: true,
-        unique: true,
-        defaultValue: 'uuid()',
-      },
       environmentId: {
         type: 'string',
         required: true,
@@ -141,12 +117,6 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
   config_variants: {
     modelName: 'config_variants',
     fields: {
-      id: {
-        type: 'string',
-        required: true,
-        unique: true,
-        defaultValue: 'uuid()',
-      },
       configId: {
         type: 'string',
         required: true,
@@ -179,12 +149,6 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
   environment_config_variants: {
     modelName: 'environment_config_variants',
     fields: {
-      id: {
-        type: 'string',
-        required: true,
-        unique: true,
-        defaultValue: 'uuid()',
-      },
       environmentId: {
         type: 'string',
         required: true,

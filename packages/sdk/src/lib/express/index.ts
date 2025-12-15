@@ -6,7 +6,7 @@ import type {
 import type { LLMOpsClient } from '../../client';
 
 export function createLLMOpsMiddleware(client: LLMOpsClient) {
-  const basePath = client.getBasePath();
+  const basePath = client.config.basePath;
   return async (req: ExpressRequest, res: Response, next: NextFunction) => {
     let urlPath = req.originalUrl;
 

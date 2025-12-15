@@ -31,10 +31,8 @@ export const initGetIdField = ({
     customModelName?: string;
     forceAllowId?: boolean;
   }) => {
-    const useNumberId =
-      options.advanced?.database?.useNumberId ||
-      options.advanced?.database?.generateId === 'serial';
-    const useUUIDs = options.advanced?.database?.generateId === 'uuid';
+    const useNumberId = false;
+    const useUUIDs = true;
 
     let shouldGenerateId: boolean = (() => {
       if (disableIdGeneration) {
@@ -58,13 +56,7 @@ export const initGetIdField = ({
         ? {
             defaultValue() {
               if (disableIdGeneration) return undefined;
-              let generateId = options.advanced?.database?.generateId;
-              if (generateId === false || useNumberId) return undefined;
-              if (typeof generateId === 'function') {
-                return generateId({
-                  model,
-                });
-              }
+              let generateId = 'uuid';
               if (customIdGenerator) {
                 return customIdGenerator({ model });
               }

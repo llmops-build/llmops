@@ -1,3 +1,12 @@
+import { command, string } from '@drizzle-team/brocli';
+import { logger } from '@llmops/core';
+import { existsSync } from 'node:fs';
+import yoctoSpinner from 'yocto-spinner';
+import chalk from 'chalk';
+import prompts from 'prompts';
+import { getConfig } from '../lib/get-config';
+import { getMigrations } from '../lib/get-migration';
+
 /**
  * @fileoverview This file defines the 'migrate' command for the CLI application.
  * Steps:
@@ -9,3 +18,87 @@
  * 6. Use zod to validate the existing configuration schema.
  * 7. If valid, get the db adapter from the config.
  */
+export const migrateCommand = command({
+  name: 'migrate',
+  desc: 'Run database migrations based on LLMOps configuration',
+  options: {
+    cwd: string()
+      .default(process.cwd())
+      .desc('Current working directory')
+      .alias('d'),
+    config: string()
+      .required()
+      .desc('Path to the LLMOps config file')
+      .alias('c'),
+    yes: string().desc('Automatic yes to prompts').alias('y'),
+  },
+  handler: async (opts) => {
+    const cwd = opts.cwd;
+    const configPath = opts.config;
+
+    if (!existsSync(cwd)) {
+      logger.error(`The specified directory does not exist: ${cwd}`);
+      process.exit(1);
+    }
+
+    if (configPath && !existsSync(configPath)) {
+      logger.error(`The specified config file does not exist: ${configPath}`);
+      process.exit(1);
+    }
+
+    const config = await getConfig({
+      configPath: configPath,
+      cwd,
+    });
+
+    if (!config) {
+      logger.error('No valid LLMOps configuration found.');
+      process.exit(1);
+    }
+
+    const spinner = yoctoSpinner({ text: 'preparing migration...' }).start();
+    const { toBeAdded, toBeCreated, runMigrations } =
+      await getMigrations(config);
+
+    if (!toBeAdded.length && !toBeCreated.length) {
+      spinner.stop();
+      console.log('🚀 No migrations needed.');
+      process.exit(0);
+    }
+
+    spinner.stop();
+    console.log(`🔑 The migration will affect the following:`);
+
+    for (const table of [...toBeCreated, ...toBeAdded]) {
+      console.log(
+        '->',
+        chalk.magenta(Object.keys(table.fields).join(', ')),
+        chalk.white('fields on'),
+        chalk.yellow(`${table.table}`),
+        chalk.white('table.')
+      );
+    }
+
+    let migrate = opts.yes;
+    if (!opts.yes) {
+      const response = await prompts({
+        type: 'confirm',
+        name: 'migrate',
+        message: 'Do you want to proceed with the migration?',
+        initial: false,
+      });
+      migrate = response.migrate;
+    }
+
+    if (!migrate) {
+      console.log('Migration cancelled.');
+      process.exit(0);
+    }
+    spinner.start('migrating...');
+    await runMigrations();
+    spinner.stop();
+    console.log('✅ Migration completed successfully.');
+
+    process.exit(0);
+  },
+});

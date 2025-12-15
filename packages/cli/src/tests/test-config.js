@@ -1,8 +1,9 @@
 import { Pool } from 'pg';
+import { llmops } from '@llmops/sdk';
 
-export default {
+export default llmops({
   database: new Pool({
-    connectionString: 'postgres://user:password@localhost:5432/database',
+    connectionString: 'postgres://postgres:password@localhost:5432/pg_llmops',
   }),
   basePath: '/llmops',
   providers: {
@@ -10,4 +11,4 @@ export default {
       apiKey: 'sk-yadayadayada',
     },
   },
-};
+});

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { run } from '@drizzle-team/brocli';
-import { generateCommand } from './commands/generate.js';
+import { generateCommand } from './commands/generate';
+import { migrateCommand } from './commands/migrate';
 
-const commands = [generateCommand];
+const commands = [generateCommand, migrateCommand];
 
 run(commands, {
   name: 'llmops',
