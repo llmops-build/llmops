@@ -16,6 +16,7 @@ import type {
 } from 'kysely';
 import { sql } from 'kysely';
 import type { KyselyDatabaseType } from './types';
+import type { Database, TableName } from '@/schemas';
 
 interface KyselyAdapterConfig {
   /**
@@ -45,12 +46,12 @@ interface KyselyAdapterConfig {
 }
 
 export const kyselyAdapter = (
-  db: Kysely<any>,
+  db: Kysely<Database>,
   config?: KyselyAdapterConfig | undefined
 ) => {
   let lazyOptions: LLMOpsConfig | null = null;
   const createCustomAdapter = (
-    db: Kysely<any>
+    db: Kysely<Database>
   ): AdapterFactoryCustomizeAdapterCreator => {
     return ({
       getFieldName,
@@ -97,7 +98,7 @@ export const kyselyAdapter = (
         builder:
           | InsertQueryBuilder<any, any, any>
           | UpdateQueryBuilder<any, string, string, any>,
-        model: string,
+        model: TableName,
         where: Where[]
       ) => {
         let res: any;
@@ -115,7 +116,7 @@ export const kyselyAdapter = (
             res = await db
               .selectFrom(model)
               .selectAll()
-              .orderBy(getFieldName({ model, field }), 'desc')
+              .orderBy(getFieldName({ model, field }) as any, 'desc')
               .limit(1)
               .executeTakeFirst();
             return res;
@@ -125,8 +126,8 @@ export const kyselyAdapter = (
           res = await db
             .selectFrom(model)
             .selectAll()
-            .orderBy(getFieldName({ model, field }), 'desc')
-            .where(getFieldName({ model, field }), '=', value)
+            .orderBy(getFieldName({ model, field }) as any, 'desc')
+            .where(getFieldName({ model, field }) as any, '=', value)
             .limit(1)
             .executeTakeFirst();
           return res;
@@ -370,7 +371,7 @@ export const kyselyAdapter = (
 
       return {
         async create({ data, model }) {
-          const builder = db.insertInto(model).values(data);
+          const builder = db.insertInto(model as TableName).values(data);
           const returned = await withReturning(data, builder, model, []);
           return returned;
         },
@@ -378,7 +379,7 @@ export const kyselyAdapter = (
           const { and, or } = convertWhereClause(model, where);
           let query: any = db
             .selectFrom((eb) => {
-              let b = eb.selectFrom(model);
+              let b = eb.selectFrom(model as TableName);
               if (and) {
                 b = b.where((eb: any) =>
                   eb.and(and.map((expr: any) => expr(eb)))
@@ -436,12 +437,12 @@ export const kyselyAdapter = (
           const { and, or } = convertWhereClause(model, where);
           let query: any = db
             .selectFrom((eb) => {
-              let b = eb.selectFrom(model);
+              let b = eb.selectFrom(model as TableName);
 
               if (config?.type === 'mssql') {
                 if (offset !== undefined) {
                   if (!sortBy) {
-                    b = b.orderBy(getFieldName({ model, field: 'id' }));
+                    b = b.orderBy(getFieldName({ model, field: 'id' }) as any);
                   }
                   b = b.offset(offset).fetch(limit || 100);
                 } else if (limit !== undefined) {
@@ -458,7 +459,7 @@ export const kyselyAdapter = (
 
               if (sortBy?.field) {
                 b = b.orderBy(
-                  `${getFieldName({ model, field: sortBy.field })}`,
+                  `${getFieldName({ model, field: sortBy.field })}` as any,
                   sortBy.direction
                 );
               }
@@ -518,7 +519,7 @@ export const kyselyAdapter = (
         async update({ model, where, update: values }) {
           const { and, or } = convertWhereClause(model, where);
 
-          let query = db.updateTable(model).set(values as any);
+          let query = db.updateTable(model as TableName).set(values as any);
           if (and) {
             query = query.where((eb) => eb.and(and.map((expr) => expr(eb))));
           }
@@ -529,7 +530,7 @@ export const kyselyAdapter = (
         },
         async updateMany({ model, where, update: values }) {
           const { and, or } = convertWhereClause(model, where);
-          let query = db.updateTable(model).set(values as any);
+          let query = db.updateTable(model as TableName).set(values as any);
           if (and) {
             query = query.where((eb) => eb.and(and.map((expr) => expr(eb))));
           }
@@ -544,7 +545,7 @@ export const kyselyAdapter = (
         async count({ model, where }) {
           const { and, or } = convertWhereClause(model, where);
           let query = db
-            .selectFrom(model)
+            .selectFrom(model as TableName)
             // a temporal solution for counting other than "*" - see more - https://www.sqlite.org/quirks.html#double_quoted_string_literals_are_accepted
             .select(db.fn.count('id').as('count'));
           if (and) {
@@ -564,7 +565,7 @@ export const kyselyAdapter = (
         },
         async delete({ model, where }) {
           const { and, or } = convertWhereClause(model, where);
-          let query = db.deleteFrom(model);
+          let query = db.deleteFrom(model as TableName);
           if (and) {
             query = query.where((eb) => eb.and(and.map((expr) => expr(eb))));
           }
@@ -576,7 +577,7 @@ export const kyselyAdapter = (
         },
         async deleteMany({ model, where }) {
           const { and, or } = convertWhereClause(model, where);
-          let query = db.deleteFrom(model);
+          let query = db.deleteFrom(model as TableName);
           if (and) {
             query = query.where((eb) => eb.and(and.map((expr) => expr(eb))));
           }

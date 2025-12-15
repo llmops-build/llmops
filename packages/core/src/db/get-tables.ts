@@ -1,5 +1,7 @@
 import type { LLMOpsConfig } from '@/types';
 import type { LLMOpsDBSchema, DBFieldAttribute } from './type';
+import { tableSchemas, tableMetadata } from './schema';
+import { zodSchemasToDBSchema } from './schema/zod-to-db-schema';
 
 export interface DBLLMOpsOptions {
   database?: {
@@ -12,173 +14,13 @@ export interface DBLLMOpsOptions {
   }>;
 }
 
-const getDefaultSchema = (): LLMOpsDBSchema => ({
-  configs: {
-    modelName: 'configs',
-    fields: {
-      createdAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-      updatedAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-    },
-    order: 1,
-  },
-  variants: {
-    modelName: 'variants',
-    fields: {
-      provider: {
-        type: 'string',
-        required: true,
-      },
-      modelName: {
-        type: 'string',
-        required: true,
-      },
-      jsonData: {
-        type: 'json',
-        required: true,
-      },
-      createdAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-      updatedAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-    },
-    order: 2,
-  },
-  environments: {
-    modelName: 'environments',
-    fields: {
-      name: {
-        type: 'string',
-        required: true,
-      },
-      slug: {
-        type: 'string',
-        required: true,
-        unique: true,
-      },
-      createdAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-      updatedAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-    },
-    order: 3,
-  },
-  environment_secrets: {
-    modelName: 'environment_secrets',
-    fields: {
-      environmentId: {
-        type: 'string',
-        required: true,
-        references: {
-          model: 'environments',
-          field: 'id',
-        },
-      },
-      keyName: {
-        type: 'string',
-        required: true,
-      },
-      keyValue: {
-        type: 'string',
-        required: true,
-      },
-      createdAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-      updatedAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-    },
-    order: 4,
-  },
-  config_variants: {
-    modelName: 'config_variants',
-    fields: {
-      configId: {
-        type: 'string',
-        required: true,
-        references: {
-          model: 'configs',
-          field: 'id',
-        },
-      },
-      variantId: {
-        type: 'string',
-        required: true,
-        references: {
-          model: 'variants',
-          field: 'id',
-        },
-      },
-      createdAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-      updatedAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-    },
-    order: 5,
-  },
-  environment_config_variants: {
-    modelName: 'environment_config_variants',
-    fields: {
-      environmentId: {
-        type: 'string',
-        required: true,
-        references: {
-          model: 'environments',
-          field: 'id',
-        },
-      },
-      configVariantId: {
-        type: 'string',
-        required: true,
-        references: {
-          model: 'config_variants',
-          field: 'id',
-        },
-      },
-      createdAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-      updatedAt: {
-        type: 'date',
-        required: true,
-        defaultValue: 'now()',
-      },
-    },
-    order: 6,
-  },
-});
+/**
+ * Get the default schema by converting Zod schemas to LLMOpsDBSchema
+ * This ensures Zod schemas are the single source of truth
+ */
+const getDefaultSchema = (): LLMOpsDBSchema => {
+  return zodSchemasToDBSchema(tableSchemas, tableMetadata);
+};
 
 export const getTables = (
   config: LLMOpsConfig,

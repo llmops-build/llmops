@@ -8,6 +8,7 @@ import {
   SqliteDialect,
 } from 'kysely';
 import type { KyselyDatabaseType } from './types';
+import type { Database } from '@/db/schema';
 
 export function getKyselyDatabaseType(
   db: LLMOpsConfig['database']
@@ -72,7 +73,7 @@ export const createKyselyAdapter = async (config: LLMOpsConfig) => {
 
   if ('dialect' in db) {
     return {
-      kysely: new Kysely<any>({ dialect: db.dialect }),
+      kysely: new Kysely<Database>({ dialect: db.dialect }),
       databaseType: db.type,
       transaction: db.transaction,
     };
@@ -140,7 +141,7 @@ export const createKyselyAdapter = async (config: LLMOpsConfig) => {
   }
 
   return {
-    kysely: dialect ? new Kysely<any>({ dialect }) : null,
+    kysely: dialect ? new Kysely<Database>({ dialect }) : null,
     databaseType,
     transaction: undefined,
   };

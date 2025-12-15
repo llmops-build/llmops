@@ -25,6 +25,7 @@ import {
   DefaultQueryCompiler,
   sql,
 } from 'kysely';
+import type { Database } from '@/schemas';
 
 class NodeSqliteAdapter implements DialectAdapterBase {
   get supportsCreateIfNotExists(): boolean {
@@ -296,7 +297,7 @@ export class NodeSqliteDialect implements Dialect {
     return new NodeSqliteAdapter();
   }
 
-  createIntrospector(db: Kysely<any>): DatabaseIntrospector {
-    return new NodeSqliteIntrospector(db);
+  createIntrospector(db: Kysely<Database>): DatabaseIntrospector {
+    return new NodeSqliteIntrospector(db as Kysely<unknown>);
   }
 }

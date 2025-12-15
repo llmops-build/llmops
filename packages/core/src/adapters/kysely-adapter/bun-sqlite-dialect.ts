@@ -25,6 +25,7 @@ import {
   DefaultQueryCompiler,
   sql,
 } from 'kysely';
+import type { Database as DatabaseTables } from '@/db/schema';
 
 class BunSqliteAdapter implements DialectAdapterBase {
   get supportsCreateIfNotExists(): boolean {
@@ -167,9 +168,9 @@ class ConnectionMutex {
 }
 
 class BunSqliteIntrospector implements DatabaseIntrospector {
-  readonly #db: Kysely<unknown>;
+  readonly #db: Kysely<DatabaseTables>;
 
-  constructor(db: Kysely<unknown>) {
+  constructor(db: Kysely<DatabaseTables>) {
     this.#db = db;
   }
 
@@ -186,16 +187,13 @@ class BunSqliteIntrospector implements DatabaseIntrospector {
       .selectFrom('sqlite_schema')
       // @ts-expect-error
       .where('type', '=', 'table')
-      // @ts-expect-error
       .where('name', 'not like', 'sqlite_%')
       .select('name')
       .$castTo<{ name: string }>();
 
     if (!options.withInternalKyselyTables) {
       query = query
-        // @ts-expect-error
         .where('name', '!=', DEFAULT_MIGRATION_TABLE)
-        // @ts-expect-error
         .where('name', '!=', DEFAULT_MIGRATION_LOCK_TABLE);
     }
 
@@ -294,7 +292,7 @@ export class BunSqliteDialect implements Dialect {
     return new BunSqliteAdapter();
   }
 
-  createIntrospector(db: Kysely<any>): DatabaseIntrospector {
+  createIntrospector(db: Kysely<DatabaseTables>): DatabaseIntrospector {
     return new BunSqliteIntrospector(db);
   }
 }

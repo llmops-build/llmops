@@ -1,3 +1,4 @@
+import type { TableName } from '../schema';
 import type { LLMOpsDBSchema } from '../type';
 import { initGetDefaultModelName } from './get-default-model-name';
 
@@ -17,7 +18,7 @@ export const initGetModelName = ({
    * Furthermore, if the user passes `usePlural` as true in their adapter config,
    * then we should return the model name ending with an `s`.
    */
-  const getModelName = (model: string) => {
+  const getModelName = (model: TableName | string) => {
     const defaultModelKey = getDefaultModelName(model);
     const useCustomModelName =
       schema &&
@@ -26,11 +27,11 @@ export const initGetModelName = ({
 
     if (useCustomModelName) {
       return usePlural
-        ? `${schema[defaultModelKey]!.modelName}s`
-        : schema[defaultModelKey]!.modelName;
+        ? (`${schema[defaultModelKey]!.modelName}s` as TableName)
+        : (schema[defaultModelKey]!.modelName as TableName);
     }
 
-    return usePlural ? `${model}s` : model;
+    return usePlural ? (`${model}s` as TableName) : (model as TableName);
   };
   return getModelName;
 };

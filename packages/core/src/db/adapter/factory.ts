@@ -24,6 +24,7 @@ import type {
   AdapterTestDebugLogs,
 } from './types';
 import { withApplyDefault } from './utils';
+import type { TableName } from '../schema';
 
 export {
   initGetDefaultModelName,
@@ -682,9 +683,9 @@ export const createAdapterFactory =
       joinModel,
       specificJoinConfig: joinConfig,
     }: {
-      baseModel: string;
+      baseModel: TableName | string;
       baseData: T;
-      joinModel: string;
+      joinModel: TableName | string;
       specificJoinConfig: JoinConfig[number];
     }) => {
       if (!baseData) return baseData;
@@ -775,8 +776,8 @@ export const createAdapterFactory =
         select,
         forceAllowId = false,
       }: {
-        model: string;
-        data: T;
+        model: TableName | string;
+        data: Omit<T, 'id'>;
         select?: string[];
         forceAllowId?: boolean;
       }): Promise<R> => {
@@ -828,7 +829,10 @@ export const createAdapterFactory =
           `${formatMethod('create')} ${formatAction('Parsed Input')}:`,
           { model, data }
         );
-        const res = await adapterInstance.create<T>({ data, model });
+        const res = await adapterInstance.create<T>({
+          data: data as any,
+          model,
+        });
         debugLog(
           { method: 'create' },
           `${formatTransactionId(thisTransactionId)} ${formatStep(3, 4)}`,

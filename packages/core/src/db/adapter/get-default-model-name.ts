@@ -1,4 +1,5 @@
 import { LLMOpsError } from '../../error';
+import type { TableName } from '../schema';
 import type { LLMOpsDBSchema } from '../type';
 
 export const initGetDefaultModelName = ({
@@ -19,7 +20,7 @@ export const initGetDefaultModelName = ({
    * 2. When using a custom modelName, doing something like `schema[model]` will not work.
    * 3. Using this function helps us get the actual model name based on the user's defined custom modelName.
    */
-  const getDefaultModelName = (model: string) => {
+  const getDefaultModelName = (model: TableName | string) => {
     // It's possible this `model` could had applied `usePlural`.
     // Thus we'll try the search but without the trailing `s`.
     if (usePlural && model.charAt(model.length - 1) === 's') {
@@ -32,7 +33,7 @@ export const initGetDefaultModelName = ({
       }
 
       if (m) {
-        return m;
+        return m as TableName;
       }
     }
 
@@ -44,7 +45,7 @@ export const initGetDefaultModelName = ({
     if (!m) {
       throw new LLMOpsError(`Model "${model}" not found in schema`);
     }
-    return m;
+    return m as TableName;
   };
 
   return getDefaultModelName;

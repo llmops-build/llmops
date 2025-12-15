@@ -1,9 +1,9 @@
 import type { LLMOpsConfig } from '../../types';
 import type { Prettify } from '../../types/helper';
+import type { TableName } from '../schema';
 import type { LLMOpsDBSchema, DBFieldAttribute } from '../type';
 import type {
-  DBAdapterSchemaCreation as AdapterSchemaCreation,
-  CustomAdapter as CoreCustomAdapter,
+  CustomAdapter,
   DBAdapterFactoryConfig,
   JoinConfig,
   DBTransactionAdapter as TransactionAdapter,
@@ -117,25 +117,7 @@ export type AdapterFactoryCustomizeAdapterCreator = (config: {
     where: W;
     model: string;
   }) => W extends undefined ? undefined : CleanedWhere[];
-}) => CustomAdapter;
-
-/**
- * @deprecated Use `CustomAdapter` from `@better-auth/core/db/adapter` instead.
- */
-export interface CustomAdapter extends Omit<CoreCustomAdapter, 'createSchema'> {
-  createSchema?:
-    | ((props: {
-        /**
-         * The file the user may have passed in to the `generate` command as the expected schema file output path.
-         */
-        file?: string;
-        /**
-         * The tables from the user's Better-Auth instance schema.
-         */
-        tables: LLMOpsDBSchema;
-      }) => Promise<AdapterSchemaCreation>)
-    | undefined;
-}
+}) => CustomAdapter<TableName>;
 
 /**
  * @deprecated Use `CleanedWhere` from `@better-auth/core/db/adapter` instead.

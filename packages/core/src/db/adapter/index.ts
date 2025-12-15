@@ -1,4 +1,5 @@
 import type { LLMOpsConfig } from '../../types';
+import type { TableName } from '../schema';
 import type { LLMOpsDBSchema, DBFieldAttribute } from '../type';
 
 export type DBAdapterDebugLogOption =
@@ -376,7 +377,7 @@ export type DBTransactionAdapter<Options extends LLMOpsConfig = LLMOpsConfig> =
 export type DBAdapter<Options extends LLMOpsConfig = LLMOpsConfig> = {
   id: string;
   create: <T extends Record<string, any>, R = T>(data: {
-    model: string;
+    model: TableName | string;
     data: Omit<T, 'id'>;
     select?: string[] | undefined;
     /**
@@ -387,13 +388,13 @@ export type DBAdapter<Options extends LLMOpsConfig = LLMOpsConfig> = {
     forceAllowId?: boolean | undefined;
   }) => Promise<R>;
   findOne: <T>(data: {
-    model: string;
+    model: TableName | string;
     where: Where[];
     select?: string[] | undefined;
     join?: JoinOption | undefined;
   }) => Promise<T | null>;
   findMany: <T>(data: {
-    model: string;
+    model: TableName | string;
     where?: Where[] | undefined;
     limit?: number | undefined;
     sortBy?:
@@ -406,7 +407,7 @@ export type DBAdapter<Options extends LLMOpsConfig = LLMOpsConfig> = {
     join?: JoinOption | undefined;
   }) => Promise<T[]>;
   count: (data: {
-    model: string;
+    model: TableName | string;
     where?: Where[] | undefined;
   }) => Promise<number>;
   /**
@@ -414,17 +415,23 @@ export type DBAdapter<Options extends LLMOpsConfig = LLMOpsConfig> = {
    * if multiple where clauses are provided
    */
   update: <T>(data: {
-    model: string;
+    model: TableName | string;
     where: Where[];
     update: Record<string, any>;
   }) => Promise<T | null>;
   updateMany: (data: {
-    model: string;
+    model: TableName | string;
     where: Where[];
     update: Record<string, any>;
   }) => Promise<number>;
-  delete: <_T>(data: { model: string; where: Where[] }) => Promise<void>;
-  deleteMany: (data: { model: string; where: Where[] }) => Promise<number>;
+  delete: <_T>(data: {
+    model: TableName | string;
+    where: Where[];
+  }) => Promise<void>;
+  deleteMany: (data: {
+    model: TableName | string;
+    where: Where[];
+  }) => Promise<number>;
   /**
    * Execute multiple operations in a transaction.
    * If the adapter doesn't support transactions, operations will be executed sequentially.
@@ -449,23 +456,23 @@ export type DBAdapter<Options extends LLMOpsConfig = LLMOpsConfig> = {
 
 export type CleanedWhere = Required<Where>;
 
-export interface CustomAdapter {
+export interface CustomAdapter<Model = TableName | string> {
   create: <T extends Record<string, any>>({
     data,
     model,
     select,
   }: {
-    model: string;
+    model: Model;
     data: T;
     select?: string[] | undefined;
   }) => Promise<T>;
   update: <T>(data: {
-    model: string;
+    model: Model;
     where: CleanedWhere[];
     update: T;
   }) => Promise<T | null>;
   updateMany: (data: {
-    model: string;
+    model: Model;
     where: CleanedWhere[];
     update: Record<string, any>;
   }) => Promise<number>;
@@ -475,7 +482,7 @@ export interface CustomAdapter {
     select,
     join,
   }: {
-    model: string;
+    model: Model;
     where: CleanedWhere[];
     select?: string[] | undefined;
     join?: JoinConfig | undefined;
@@ -488,7 +495,7 @@ export interface CustomAdapter {
     offset,
     join,
   }: {
-    model: string;
+    model: Model;
     where?: CleanedWhere[] | undefined;
     limit: number;
     sortBy?: { field: string; direction: 'asc' | 'desc' } | undefined;
@@ -499,21 +506,21 @@ export interface CustomAdapter {
     model,
     where,
   }: {
-    model: string;
+    model: Model;
     where: CleanedWhere[];
   }) => Promise<void>;
   deleteMany: ({
     model,
     where,
   }: {
-    model: string;
+    model: Model;
     where: CleanedWhere[];
   }) => Promise<number>;
   count: ({
     model,
     where,
   }: {
-    model: string;
+    model: Model;
     where?: CleanedWhere[] | undefined;
   }) => Promise<number>;
   createSchema?:
