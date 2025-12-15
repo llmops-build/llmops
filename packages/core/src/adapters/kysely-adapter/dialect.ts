@@ -1,4 +1,4 @@
-import type { BetterAuthOptions } from '@better-auth/core';
+import type { LLMOpsConfig } from '@/types';
 import type { Dialect } from 'kysely';
 import {
   Kysely,
@@ -10,7 +10,7 @@ import {
 import type { KyselyDatabaseType } from './types';
 
 export function getKyselyDatabaseType(
-  db: BetterAuthOptions['database']
+  db: LLMOpsConfig['database']
 ): KyselyDatabaseType | null {
   if (!db) {
     return null;
@@ -51,7 +51,7 @@ export function getKyselyDatabaseType(
   return null;
 }
 
-export const createKyselyAdapter = async (config: BetterAuthOptions) => {
+export const createKyselyAdapter = async (config: LLMOpsConfig) => {
   const db = config.database;
 
   if (!db) {

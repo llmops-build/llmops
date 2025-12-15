@@ -1,6 +1,6 @@
 export type {
   BaseModelNames,
-  BetterAuthDBSchema,
+  LLMOpsDBSchema,
   DBFieldAttribute,
   DBFieldAttributeConfig,
   DBFieldType,

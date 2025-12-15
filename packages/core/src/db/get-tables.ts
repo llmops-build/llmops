@@ -1,18 +1,18 @@
 import type { LLMOpsConfig } from '@/types';
-import type { BetterAuthDBSchema, DBFieldAttribute } from './type';
+import type { LLMOpsDBSchema, DBFieldAttribute } from './type';
 
-export interface BetterAuthLLMOpsOptions {
+export interface DBLLMOpsOptions {
   database?: {
     customFields?: Record<string, Record<string, DBFieldAttribute>>;
     tablePrefix?: string;
   };
   plugins?: Array<{
     id: string;
-    schema?: BetterAuthDBSchema;
+    schema?: LLMOpsDBSchema;
   }>;
 }
 
-const getDefaultSchema = (): BetterAuthDBSchema => ({
+const getDefaultSchema = (): LLMOpsDBSchema => ({
   configs: {
     modelName: 'configs',
     fields: {
@@ -182,8 +182,8 @@ const getDefaultSchema = (): BetterAuthDBSchema => ({
 
 export const getTables = (
   config: LLMOpsConfig,
-  options: BetterAuthLLMOpsOptions = {}
-): BetterAuthDBSchema => {
+  options: DBLLMOpsOptions = {}
+): LLMOpsDBSchema => {
   const defaultSchema = getDefaultSchema();
 
   // Apply custom fields if provided
@@ -206,7 +206,7 @@ export const getTables = (
       return { ...acc, ...plugin.schema };
     }
     return acc;
-  }, {} as BetterAuthDBSchema);
+  }, {} as LLMOpsDBSchema);
 
   return {
     ...defaultSchema,

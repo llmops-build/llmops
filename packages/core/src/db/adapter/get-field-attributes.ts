@@ -1,6 +1,6 @@
 import { LLMOpsError } from '../../error';
 import type { LLMOpsConfig } from '../../types';
-import type { BetterAuthDBSchema } from '../type';
+import type { LLMOpsDBSchema } from '../type';
 import { initGetDefaultFieldName } from './get-default-field-name';
 import { initGetDefaultModelName } from './get-default-model-name';
 import { initGetIdField } from './get-id-field';
@@ -13,7 +13,7 @@ export const initGetFieldAttributes = ({
   disableIdGeneration,
 }: {
   usePlural?: boolean;
-  schema: BetterAuthDBSchema;
+  schema: LLMOpsDBSchema;
   options: LLMOpsConfig;
   disableIdGeneration?: boolean;
   customIdGenerator?: ((props: { model: string }) => string) | undefined;

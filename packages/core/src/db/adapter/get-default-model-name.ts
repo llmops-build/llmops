@@ -1,12 +1,12 @@
 import { LLMOpsError } from '../../error';
-import type { BetterAuthDBSchema } from '../type';
+import type { LLMOpsDBSchema } from '../type';
 
 export const initGetDefaultModelName = ({
   usePlural,
   schema,
 }: {
   usePlural: boolean | undefined;
-  schema: BetterAuthDBSchema;
+  schema: LLMOpsDBSchema;
 }) => {
   /**
    * This function helps us get the default model name from the schema defined by devs.

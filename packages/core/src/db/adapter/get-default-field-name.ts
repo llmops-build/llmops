@@ -1,12 +1,12 @@
 import { LLMOpsError } from '../../error';
-import type { BetterAuthDBSchema } from '../type';
+import type { LLMOpsDBSchema } from '../type';
 import { initGetDefaultModelName } from './get-default-model-name';
 
 export const initGetDefaultFieldName = ({
   schema,
   usePlural,
 }: {
-  schema: BetterAuthDBSchema;
+  schema: LLMOpsDBSchema;
   usePlural: boolean | undefined;
 }) => {
   const getDefaultModelName = initGetDefaultModelName({

@@ -1,6 +1,6 @@
 import type { LLMOpsConfig } from '../../types';
 import type { Prettify } from '../../types/helper';
-import type { BetterAuthDBSchema, DBFieldAttribute } from '../type';
+import type { LLMOpsDBSchema, DBFieldAttribute } from '../type';
 import type {
   DBAdapterSchemaCreation as AdapterSchemaCreation,
   CustomAdapter as CoreCustomAdapter,
@@ -39,7 +39,7 @@ export type AdapterFactoryCustomizeAdapterCreator = (config: {
   /**
    * The schema of the user's Better-Auth instance.
    */
-  schema: BetterAuthDBSchema;
+  schema: LLMOpsDBSchema;
   /**
    * The debug log function.
    *
@@ -132,7 +132,7 @@ export interface CustomAdapter extends Omit<CoreCustomAdapter, 'createSchema'> {
         /**
          * The tables from the user's Better-Auth instance schema.
          */
-        tables: BetterAuthDBSchema;
+        tables: LLMOpsDBSchema;
       }) => Promise<AdapterSchemaCreation>)
     | undefined;
 }

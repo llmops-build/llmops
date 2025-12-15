@@ -1,4 +1,4 @@
-import type { BetterAuthOptions } from '@better-auth/core';
+import type { LLMOpsConfig } from '@/types';
 import type {
   AdapterFactoryCustomizeAdapterCreator,
   AdapterFactoryOptions,
@@ -6,8 +6,8 @@ import type {
   DBAdapterDebugLogOption,
   JoinConfig,
   Where,
-} from '@better-auth/core/db/adapter';
-import { createAdapterFactory } from '@better-auth/core/db/adapter';
+} from '@/db/adapter';
+import { createAdapterFactory } from '@/db/adapter';
 import type {
   InsertQueryBuilder,
   Kysely,
@@ -48,7 +48,7 @@ export const kyselyAdapter = (
   db: Kysely<any>,
   config?: KyselyAdapterConfig | undefined
 ) => {
-  let lazyOptions: BetterAuthOptions | null = null;
+  let lazyOptions: LLMOpsConfig | null = null;
   const createCustomAdapter = (
     db: Kysely<any>
   ): AdapterFactoryCustomizeAdapterCreator => {
@@ -632,7 +632,7 @@ export const kyselyAdapter = (
 
   const adapter = createAdapterFactory(adapterOptions);
 
-  return (options: BetterAuthOptions): DBAdapter<BetterAuthOptions> => {
+  return (options: LLMOpsConfig): DBAdapter<LLMOpsConfig> => {
     lazyOptions = options;
     return adapter(options);
   };

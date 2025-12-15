@@ -1,5 +1,5 @@
 import type { LLMOpsConfig } from '../../types';
-import type { BetterAuthDBSchema, DBFieldAttribute } from '../type';
+import type { LLMOpsDBSchema, DBFieldAttribute } from '../type';
 
 export type DBAdapterDebugLogOption =
   | boolean
@@ -211,7 +211,7 @@ export interface DBAdapterFactoryConfig<
         /**
          * The schema of the user's Better-Auth instance.
          */
-        schema: BetterAuthDBSchema;
+        schema: LLMOpsDBSchema;
         /**
          * The options of the user's Better-Auth instance.
          */
@@ -245,7 +245,7 @@ export interface DBAdapterFactoryConfig<
         /**
          * The schema of the user's Better-Auth instance.
          */
-        schema: BetterAuthDBSchema;
+        schema: LLMOpsDBSchema;
         /**
          * The options of the user's Better-Auth instance.
          */
@@ -525,7 +525,7 @@ export interface CustomAdapter {
         /**
          * The tables from the user's Better-Auth instance schema.
          */
-        tables: BetterAuthDBSchema;
+        tables: LLMOpsDBSchema;
       }) => Promise<DBAdapterSchemaCreation>)
     | undefined;
   /**

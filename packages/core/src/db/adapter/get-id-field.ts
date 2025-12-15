@@ -1,7 +1,7 @@
 import { logger } from '../../utils/logger';
 import type { LLMOpsConfig } from '../../types';
 import { generateId as defaultGenerateId } from '../../utils/id';
-import type { BetterAuthDBSchema, DBFieldAttribute } from '../type';
+import type { LLMOpsDBSchema, DBFieldAttribute } from '../type';
 import { initGetDefaultModelName } from './get-default-model-name';
 
 export const initGetIdField = ({
@@ -13,7 +13,7 @@ export const initGetIdField = ({
   supportsUUIDs,
 }: {
   usePlural?: boolean;
-  schema: BetterAuthDBSchema;
+  schema: LLMOpsDBSchema;
   options: LLMOpsConfig;
   disableIdGeneration?: boolean;
   customIdGenerator?: ((props: { model: string }) => string) | undefined;

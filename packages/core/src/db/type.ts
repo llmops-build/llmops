@@ -129,7 +129,7 @@ export type DBFieldAttribute<T extends DBFieldType = DBFieldType> = {
   type: T;
 } & DBFieldAttributeConfig;
 
-export type BetterAuthDBSchema = Record<
+export type LLMOpsDBSchema = Record<
   string,
   {
     /**
