@@ -1,72 +1,35 @@
-import type { DBFieldAttribute, DBFieldType } from '@better-auth/core/db';
-import {
-  initGetFieldName,
-  initGetModelName,
-} from '@better-auth/core/db/adapter';
-import { logger, getTables } from '@llmops/core';
-import type {
-  AlterTableBuilder,
-  AlterTableColumnAlteringBuilder,
-  ColumnDataType,
-  CreateIndexBuilder,
-  CreateTableBuilder,
-  Kysely,
-  RawBuilder,
-} from 'kysely';
+import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
-import { createKyselyAdapter } from '@llmops/core/adapters/kysely-adapter';
-import type { KyselyDatabaseType } from '@llmops/core/adapters/kysely-adapter';
-import { getSchema } from './get-schema';
-import { LLMOpsConfig } from '@llmops/core';
+import type { Database, DatabaseType, SCHEMA_METADATA } from '@llmops/core/db';
+import { logger } from '@llmops/core';
 
 const postgresMap = {
-  string: ['character varying', 'varchar', 'text', 'uuid'],
-  number: [
-    'int4',
-    'integer',
-    'bigint',
-    'smallint',
-    'numeric',
-    'real',
-    'double precision',
-  ],
-  boolean: ['bool', 'boolean'],
-  date: ['timestamptz', 'timestamp', 'date'],
-  json: ['json', 'jsonb'],
+  uuid: ['character varying', 'varchar', 'text', 'uuid'],
+  text: ['character varying', 'varchar', 'text'],
+  timestamp: ['timestamptz', 'timestamp', 'date'],
+  jsonb: ['json', 'jsonb'],
 };
+
 const mysqlMap = {
-  string: ['varchar', 'text', 'uuid'],
-  number: [
-    'integer',
-    'int',
-    'bigint',
-    'smallint',
-    'decimal',
-    'float',
-    'double',
-  ],
-  boolean: ['boolean', 'tinyint'],
-  date: ['timestamp', 'datetime', 'date'],
-  json: ['json'],
+  text: ['varchar', 'text'],
+  timestamp: ['timestamp', 'datetime', 'date'],
+  jsonb: ['json'],
 };
 
 const sqliteMap = {
-  string: ['TEXT'],
-  number: ['INTEGER', 'REAL'],
-  boolean: ['INTEGER', 'BOOLEAN'], // 0 or 1
+  text: ['TEXT'],
   date: ['DATE', 'INTEGER'],
-  json: ['TEXT'],
+  integer: ['INTEGER', 'BOOLEAN'],
+  jsonb: ['TEXT'],
 };
 
 const mssqlMap = {
-  string: ['varchar', 'nvarchar', 'uniqueidentifier'],
-  number: ['int', 'bigint', 'smallint', 'decimal', 'float', 'double'],
-  boolean: ['bit', 'smallint'],
-  date: ['datetime2', 'date', 'datetime'],
-  json: ['varchar', 'nvarchar'],
+  varchar: ['varchar', 'nvarchar', 'uniqueidentifier'],
+  datetime2: ['datetime2', 'date', 'datetime'],
+  jsonb: ['varchar', 'nvarchar'],
 };
 
-const map = {
+const typeMap = {
   postgres: postgresMap,
   mysql: mysqlMap,
   sqlite: sqliteMap,
@@ -75,38 +38,35 @@ const map = {
 
 export function matchType(
   columnDataType: string,
-  fieldType: DBFieldType,
-  dbType: KyselyDatabaseType
-) {
-  function normalize(type: string) {
-    return type.toLowerCase().split('(')[0]!.trim();
+  fieldType: string,
+  dbType: DatabaseType
+): boolean {
+  const normalize = (type: string) => type.toLowerCase().split('(')[0]!.trim();
+  const types = typeMap[dbType] as any;
+
+  for (const [expectedType, variants] of Object.entries(types)) {
+    if (fieldType.toLowerCase().includes(expectedType.toLowerCase())) {
+      return (variants as string[]).some(
+        (variant) => variant.toLowerCase() === normalize(columnDataType)
+      );
+    }
   }
-  if (fieldType === 'string[]' || fieldType === 'number[]') {
-    return columnDataType.toLowerCase().includes('json');
-  }
-  const types = map[dbType]!;
-  const expected = Array.isArray(fieldType)
-    ? types['string'].map((t) => t.toLowerCase())
-    : types[fieldType]!.map((t) => t.toLowerCase());
-  return expected.includes(normalize(columnDataType));
+
+  return false;
 }
 
 /**
  * Get the current PostgreSQL schema (search_path) for the database connection
- * Returns the first schema in the search_path, defaulting to 'public' if not found
  */
-async function getPostgresSchema(db: Kysely<unknown>): Promise<string> {
+async function getPostgresSchema(db: Kysely<Database>): Promise<string> {
   try {
     const result = await sql<{ search_path: string }>`SHOW search_path`.execute(
       db
     );
     if (result.rows[0]?.search_path) {
-      // search_path can be a comma-separated list like "$user, public" or '"$user", public'
-      // We want the first non-variable schema
       const schemas = result.rows[0].search_path
         .split(',')
         .map((s) => s.trim())
-        // Remove quotes and filter out variables like $user
         .map((s) => s.replace(/^["']|["']$/g, ''))
         .filter((s) => !s.startsWith('$'));
       return schemas[0] || 'public';
@@ -117,51 +77,15 @@ async function getPostgresSchema(db: Kysely<unknown>): Promise<string> {
   return 'public';
 }
 
-export async function getMigrations(config: LLMOpsConfig) {
-  const betterAuthSchema = getSchema(config);
-
-  let { kysely: db, databaseType: dbType } = await createKyselyAdapter(config);
-
-  if (!dbType) {
-    logger.warn(
-      'Could not determine database type, defaulting to sqlite. Please provide a type in the database options to avoid this.'
-    );
-    dbType = 'sqlite';
-  }
-
-  if (!db) {
-    logger.error(
-      "Only kysely adapter is supported for migrations. You can use `generate` command to generate the schema, if you're using a different adapter."
-    );
-    process.exit(1);
-  }
-
+export async function getMigrations(
+  db: Kysely<Database>,
+  dbType: DatabaseType
+) {
   // For PostgreSQL, detect and log the current schema being used
   let currentSchema = 'public';
   if (dbType === 'postgres') {
     currentSchema = await getPostgresSchema(db);
-    logger.debug(
-      `PostgreSQL migration: Using schema '${currentSchema}' (from search_path)`
-    );
-
-    // Verify the schema exists
-    try {
-      const schemaCheck = await sql<{ schema_name: string }>`
-				SELECT schema_name
-				FROM information_schema.schemata
-				WHERE schema_name = ${currentSchema}
-			`.execute(db);
-
-      if (!schemaCheck.rows[0]) {
-        logger.warn(
-          `Schema '${currentSchema}' does not exist. Tables will be inspected from available schemas. Consider creating the schema first or checking your database configuration.`
-        );
-      }
-    } catch (error) {
-      logger.debug(
-        `Could not verify schema existence: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+    logger.debug(`PostgreSQL migration: Using schema '${currentSchema}'`);
   }
 
   const allTableMetadata = await db.introspection.getTables();
@@ -169,371 +93,222 @@ export async function getMigrations(config: LLMOpsConfig) {
   // For PostgreSQL, filter tables to only those in the target schema
   let tableMetadata = allTableMetadata;
   if (dbType === 'postgres') {
-    // Get tables with their schema information
     try {
-      const tablesInSchema = await sql<{
-        table_name: string;
-      }>`
-				SELECT table_name
-				FROM information_schema.tables
-				WHERE table_schema = ${currentSchema}
-				AND table_type = 'BASE TABLE'
-			`.execute(db);
+      const tablesInSchema = await sql<{ table_name: string }>`
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = ${currentSchema}
+        AND table_type = 'BASE TABLE'
+      `.execute(db);
 
       const tableNamesInSchema = new Set(
         tablesInSchema.rows.map((row) => row.table_name)
       );
 
-      // Filter to only tables that exist in the target schema
       tableMetadata = allTableMetadata.filter(
         (table) =>
           table.schema === currentSchema && tableNamesInSchema.has(table.name)
       );
 
       logger.debug(
-        `Found ${tableMetadata.length} table(s) in schema '${currentSchema}': ${tableMetadata.map((t) => t.name).join(', ') || '(none)'}`
+        `Found ${tableMetadata.length} table(s) in schema '${currentSchema}'`
       );
     } catch (error) {
       logger.warn(
-        `Could not filter tables by schema. Using all discovered tables. Error: ${error instanceof Error ? error.message : String(error)}`
+        'Could not filter tables by schema. Using all discovered tables.'
       );
-      // Fall back to using all tables if schema filtering fails
     }
   }
-  const toBeCreated: {
+
+  const metadata = (await import('@llmops/core/db')).SCHEMA_METADATA;
+  const schema = metadata.tables;
+
+  const toBeCreated: Array<{
     table: string;
-    fields: Record<string, DBFieldAttribute>;
+    fields: (typeof schema)[keyof typeof schema]['fields'];
     order: number;
-  }[] = [];
-  const toBeAdded: {
+  }> = [];
+
+  const toBeAdded: Array<{
     table: string;
-    fields: Record<string, DBFieldAttribute>;
+    fields: Partial<(typeof schema)[keyof typeof schema]['fields']>;
     order: number;
-  }[] = [];
+  }> = [];
 
-  for (const [key, value] of Object.entries(betterAuthSchema)) {
-    const table = tableMetadata.find((t) => t.name === key);
-    if (!table) {
-      const tIndex = toBeCreated.findIndex((t) => t.table === key);
-      const tableData = {
-        table: key,
-        fields: value.fields,
-        order: value.order || Infinity,
-      };
+  // Check which tables need to be created or have missing fields
+  for (const [tableName, tableConfig] of Object.entries(schema)) {
+    const existingTable = tableMetadata.find((t) => t.name === tableName);
 
-      const insertIndex = toBeCreated.findIndex(
-        (t) => (t.order || Infinity) > tableData.order
-      );
-
-      if (insertIndex === -1) {
-        if (tIndex === -1) {
-          toBeCreated.push(tableData);
-        } else {
-          toBeCreated[tIndex]!.fields = {
-            ...toBeCreated[tIndex]!.fields,
-            ...value.fields,
-          };
-        }
-      } else {
-        toBeCreated.splice(insertIndex, 0, tableData);
-      }
+    if (!existingTable) {
+      toBeCreated.push({
+        table: tableName,
+        fields: tableConfig.fields,
+        order: tableConfig.order,
+      });
       continue;
     }
-    let toBeAddedFields: Record<string, DBFieldAttribute> = {};
-    for (const [fieldName, field] of Object.entries(value.fields)) {
-      const column = table.columns.find((c) => c.name === fieldName);
-      if (!column) {
-        toBeAddedFields[fieldName] = field;
+
+    // Check for missing fields
+    const missingFields: Partial<typeof tableConfig.fields> = {};
+    for (const [fieldName, fieldConfig] of Object.entries(tableConfig.fields)) {
+      const existingColumn = existingTable.columns.find(
+        (c) => c.name === fieldName
+      );
+
+      if (!existingColumn) {
+        missingFields[fieldName] = fieldConfig;
         continue;
       }
 
-      if (matchType(column.dataType, field.type, dbType)) {
-        continue;
-      } else {
+      // Verify type matches
+      if (!matchType(existingColumn.dataType, fieldConfig.type, dbType)) {
         logger.warn(
-          `Field ${fieldName} in table ${key} has a different type in the database. Expected ${field.type} but got ${column.dataType}.`
+          `Field ${fieldName} in table ${tableName} has a different type. ` +
+            `Expected ${fieldConfig.type} but got ${existingColumn.dataType}.`
         );
       }
     }
-    if (Object.keys(toBeAddedFields).length > 0) {
+
+    if (Object.keys(missingFields).length > 0) {
       toBeAdded.push({
-        table: key,
-        fields: toBeAddedFields,
-        order: value.order || Infinity,
+        table: tableName,
+        fields: missingFields,
+        order: tableConfig.order,
       });
     }
   }
 
-  const migrations: (
-    | AlterTableColumnAlteringBuilder
-    | ReturnType<AlterTableBuilder['addIndex']>
-    | CreateTableBuilder<string, string>
-    | CreateIndexBuilder
-  )[] = [];
+  // Sort by order
+  toBeCreated.sort((a, b) => a.order - b.order);
+  toBeAdded.sort((a, b) => a.order - b.order);
 
-  const useUUIDs = true;
-  const useNumberId = false;
+  const migrations: any[] = [];
 
-  function getType(field: DBFieldAttribute, fieldName: string) {
-    const type = field.type;
-    const provider = dbType || 'sqlite';
-    type StringOnlyUnion<T> = T extends string ? T : never;
-    const typeMap: Record<
-      StringOnlyUnion<DBFieldType> | 'id' | 'foreignKeyId',
-      Record<KyselyDatabaseType, ColumnDataType | RawBuilder<unknown>>
+  // Helper to get the correct column type for each database
+  function getColumnType(
+    fieldConfig: any,
+    fieldName: string
+  ): ColumnDataType | RawBuilder<unknown> {
+    const { type } = fieldConfig;
+
+    const colTypeMap: Record<
+      string,
+      Record<DatabaseType, ColumnDataType | RawBuilder<unknown>>
     > = {
-      string: {
+      uuid: {
+        postgres: 'uuid',
+        mysql: 'varchar(36)',
         sqlite: 'text',
+        mssql: 'varchar(36)',
+      },
+      text: {
         postgres: 'text',
-        mysql: field.unique
-          ? 'varchar(255)'
-          : field.references
-            ? 'varchar(36)'
-            : field.sortable
-              ? 'varchar(255)'
-              : field.index
-                ? 'varchar(255)'
-                : 'text',
-        mssql:
-          field.unique || field.sortable
-            ? 'varchar(255)'
-            : field.references
-              ? 'varchar(36)'
-              : // mssql deprecated `text`, and the alternative is `varchar(max)`.
-                // Kysely type interface doesn't support `text`, so we set this to `varchar(8000)` as
-                // that's the max length for `varchar`
-                'varchar(8000)',
+        mysql: fieldConfig.unique ? 'varchar(255)' : 'text',
+        sqlite: 'text',
+        mssql: fieldConfig.unique ? 'varchar(255)' : 'varchar(8000)',
       },
-      boolean: {
-        sqlite: 'integer',
-        postgres: 'boolean',
-        mysql: 'boolean',
-        mssql: 'smallint',
-      },
-      number: {
-        sqlite: field.bigint ? 'bigint' : 'integer',
-        postgres: field.bigint ? 'bigint' : 'integer',
-        mysql: field.bigint ? 'bigint' : 'integer',
-        mssql: field.bigint ? 'bigint' : 'integer',
-      },
-      date: {
-        sqlite: 'date',
+      timestamp: {
         postgres: 'timestamptz',
         mysql: 'timestamp(3)',
+        sqlite: 'date',
         mssql: sql`datetime2(3)`,
       },
-      json: {
-        sqlite: 'text',
+      jsonb: {
         postgres: 'jsonb',
         mysql: 'json',
-        mssql: 'varchar(8000)',
-      },
-      id: {
-        postgres: useNumberId
-          ? sql`integer GENERATED BY DEFAULT AS IDENTITY`
-          : useUUIDs
-            ? 'uuid'
-            : 'text',
-        mysql: useNumberId
-          ? 'integer'
-          : useUUIDs
-            ? 'varchar(36)'
-            : 'varchar(36)',
-        mssql: useNumberId
-          ? 'integer'
-          : useUUIDs
-            ? 'varchar(36)'
-            : 'varchar(36)',
-        sqlite: useNumberId ? 'integer' : 'text',
-      },
-      foreignKeyId: {
-        postgres: useNumberId ? 'integer' : useUUIDs ? 'uuid' : 'text',
-        mysql: useNumberId
-          ? 'integer'
-          : useUUIDs
-            ? 'varchar(36)'
-            : 'varchar(36)',
-        mssql: useNumberId
-          ? 'integer'
-          : useUUIDs
-            ? 'varchar(36)' /* Should be using `UNIQUEIDENTIFIER` but Kysely doesn't support it */
-            : 'varchar(36)',
-        sqlite: useNumberId ? 'integer' : 'text',
-      },
-      'string[]': {
         sqlite: 'text',
-        postgres: 'jsonb',
-        mysql: 'json',
         mssql: 'varchar(8000)',
       },
-      'number[]': {
-        sqlite: 'text',
-        postgres: 'jsonb',
-        mysql: 'json',
-        mssql: 'varchar(8000)',
-      },
-    } as const;
-    if (fieldName === 'id' || field.references?.field === 'id') {
-      if (fieldName === 'id') {
-        return typeMap.id[provider];
-      }
-      return typeMap.foreignKeyId[provider];
-    }
-    if (Array.isArray(type)) {
-      return 'text';
-    }
-    if (!(type in typeMap)) {
-      throw new Error(
-        `Unsupported field type '${String(type)}' for field '${fieldName}'. Allowed types are: string, number, boolean, date, string[], number[]. If you need to store structured data, store it as a JSON string (type: "string") or split it into primitive fields. See https://better-auth.com/docs/advanced/schema#additional-fields`
-      );
-    }
-    return typeMap[type][provider];
-  }
-  const getModelName = initGetModelName({
-    schema: getTables(config),
-    usePlural: false,
-  });
-  const getFieldName = initGetFieldName({
-    schema: getTables(config),
-    usePlural: false,
-  });
+    };
 
-  // Helper function to safely resolve model and field names, falling back to
-  // user-supplied strings for external tables not in the BetterAuth schema
-  function getReferencePath(model: string, field: string): string {
-    try {
-      const modelName = getModelName(model);
-      const fieldName = getFieldName({ model, field });
-      return `${modelName}.${fieldName}`;
-    } catch {
-      // If resolution fails (external table), fall back to user-supplied references
-      return `${model}.${field}`;
+    return colTypeMap[type]?.[dbType] || 'text';
+  }
+
+  // Add missing columns to existing tables
+  for (const table of toBeAdded) {
+    for (const [fieldName, fieldConfig] of Object.entries(table.fields)) {
+      const type = getColumnType(fieldConfig, fieldName);
+      const builder = db.schema
+        .alterTable(table.table)
+        .addColumn(fieldName, type, (col) => {
+          let c = col;
+
+          if (fieldConfig.references) {
+            const refTable = fieldConfig.references.table;
+            const refColumn = fieldConfig.references.column;
+            c = c.references(`${refTable}.${refColumn}`).onDelete('cascade');
+          }
+
+          if (fieldConfig.unique) {
+            c = c.unique();
+          }
+
+          if (fieldConfig.default === 'now()' && dbType !== 'sqlite') {
+            if (dbType === 'mysql') {
+              c = c.defaultTo(sql`CURRENT_TIMESTAMP(3)`);
+            } else {
+              c = c.defaultTo(sql`CURRENT_TIMESTAMP`);
+            }
+          }
+
+          return c;
+        });
+
+      migrations.push(builder);
     }
   }
 
-  if (toBeAdded.length) {
-    for (const table of toBeAdded) {
-      for (const [fieldName, field] of Object.entries(table.fields)) {
-        const type = getType(field, fieldName);
-        let builder = db.schema.alterTable(table.table);
+  // Create new tables
+  for (const table of toBeCreated) {
+    let builder = db.schema.createTable(table.table);
 
-        if (field.index) {
-          const index = db.schema
-            .alterTable(table.table)
-            .addIndex(`${table.table}_${fieldName}_idx`);
-          migrations.push(index);
+    // Add all columns
+    for (const [fieldName, fieldConfig] of Object.entries(table.fields)) {
+      const type = getColumnType(fieldConfig, fieldName);
+
+      builder = builder.addColumn(fieldName, type, (col) => {
+        let c = col;
+
+        if (fieldName === 'id') {
+          if (dbType === 'postgres') {
+            c = c
+              .primaryKey()
+              .defaultTo(sql`gen_random_uuid()`)
+              .notNull();
+          } else {
+            c = c.primaryKey().notNull();
+          }
+        } else {
+          c = c.notNull();
         }
 
-        let built = builder.addColumn(fieldName, type, (col) => {
-          col = field.required !== false ? col.notNull() : col;
-          if (field.references) {
-            col = col
-              .references(
-                getReferencePath(field.references.model, field.references.field)
-              )
-              .onDelete(field.references.onDelete || 'cascade');
-          }
-          if (field.unique) {
-            col = col.unique();
-          }
-          if (
-            field.type === 'date' &&
-            typeof field.defaultValue === 'function' &&
-            (dbType === 'postgres' || dbType === 'mysql' || dbType === 'mssql')
-          ) {
-            if (dbType === 'mysql') {
-              col = col.defaultTo(sql`CURRENT_TIMESTAMP(3)`);
-            } else {
-              col = col.defaultTo(sql`CURRENT_TIMESTAMP`);
-            }
-          }
-          return col;
-        });
-        migrations.push(built);
-      }
-    }
-  }
-
-  let toBeIndexed: CreateIndexBuilder[] = [];
-
-  if (toBeCreated.length) {
-    for (const table of toBeCreated) {
-      const idType = getType({ type: useNumberId ? 'number' : 'string' }, 'id');
-      let dbT = db.schema
-        .createTable(table.table)
-        .addColumn('id', idType, (col) => {
-          if (useNumberId) {
-            if (dbType === 'postgres') {
-              // Identity column is already specified in the type via sql template tag
-              return col.primaryKey().notNull();
-            } else if (dbType === 'sqlite') {
-              return col.primaryKey().notNull();
-            } else if (dbType === 'mssql') {
-              return col.identity().primaryKey().notNull();
-            }
-            return col.autoIncrement().primaryKey().notNull();
-          }
-          if (useUUIDs) {
-            if (dbType === 'postgres') {
-              return col
-                .primaryKey()
-                .defaultTo(sql`pg_catalog.gen_random_uuid()`)
-                .notNull();
-            }
-            return col.primaryKey().notNull();
-          }
-          return col.primaryKey().notNull();
-        });
-
-      for (const [fieldName, field] of Object.entries(table.fields)) {
-        const type = getType(field, fieldName);
-        dbT = dbT.addColumn(fieldName, type, (col) => {
-          col = field.required !== false ? col.notNull() : col;
-          if (field.references) {
-            col = col
-              .references(
-                getReferencePath(field.references.model, field.references.field)
-              )
-              .onDelete(field.references.onDelete || 'cascade');
-          }
-
-          if (field.unique) {
-            col = col.unique();
-          }
-          if (
-            field.type === 'date' &&
-            typeof field.defaultValue === 'function' &&
-            (dbType === 'postgres' || dbType === 'mysql' || dbType === 'mssql')
-          ) {
-            if (dbType === 'mysql') {
-              col = col.defaultTo(sql`CURRENT_TIMESTAMP(3)`);
-            } else {
-              col = col.defaultTo(sql`CURRENT_TIMESTAMP`);
-            }
-          }
-          return col;
-        });
-
-        if (field.index) {
-          let builder = db.schema
-            .createIndex(
-              `${table.table}_${fieldName}_${field.unique ? 'uidx' : 'idx'}`
-            )
-            .on(table.table)
-            .columns([fieldName]);
-          toBeIndexed.push(field.unique ? builder.unique() : builder);
+        if (fieldConfig.references && fieldName !== 'id') {
+          const refTable = fieldConfig.references.table;
+          const refColumn = fieldConfig.references.column;
+          c = c.references(`${refTable}.${refColumn}`).onDelete('cascade');
         }
-      }
-      migrations.push(dbT);
-    }
-  }
 
-  // instead of adding the index straight to `migrations`,
-  // we do this at the end so that indexes are created after the table is created
-  if (toBeIndexed.length) {
-    for (const index of toBeIndexed) {
-      migrations.push(index);
+        if (fieldConfig.unique && fieldName !== 'id') {
+          c = c.unique();
+        }
+
+        if (
+          fieldConfig.default === 'now()' &&
+          fieldName !== 'id' &&
+          dbType !== 'sqlite'
+        ) {
+          if (dbType === 'mysql') {
+            c = c.defaultTo(sql`CURRENT_TIMESTAMP(3)`);
+          } else {
+            c = c.defaultTo(sql`CURRENT_TIMESTAMP`);
+          }
+        }
+
+        return c;
+      });
     }
+
+    migrations.push(builder);
   }
 
   async function runMigrations() {
@@ -541,9 +316,17 @@ export async function getMigrations(config: LLMOpsConfig) {
       await migration.execute();
     }
   }
+
   async function compileMigrations() {
     const compiled = migrations.map((m) => m.compile().sql);
     return compiled.join(';\n\n') + ';';
   }
-  return { toBeCreated, toBeAdded, runMigrations, compileMigrations };
+
+  return {
+    toBeCreated,
+    toBeAdded,
+    runMigrations,
+    compileMigrations,
+    migrations,
+  };
 }

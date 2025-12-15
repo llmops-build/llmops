@@ -2,7 +2,8 @@
  * @see {@link https://github.com/dylanblokhuis/kysely-bun-sqlite} - Fork of the original kysely-bun-sqlite package by @dylanblokhuis
  */
 
-import type { Database } from 'bun:sqlite';
+// @ts-ignore - bun:sqlite is only available in Bun runtime
+import type { Database as BunDatabase } from 'bun:sqlite';
 import type {
   DatabaseConnection,
   DatabaseIntrospector,
@@ -25,7 +26,7 @@ import {
   DefaultQueryCompiler,
   sql,
 } from 'kysely';
-import type { Database as DatabaseTables } from '@/db/schema';
+import type { Database } from './schema';
 
 class BunSqliteAdapter implements DialectAdapterBase {
   get supportsCreateIfNotExists(): boolean {
@@ -63,7 +64,7 @@ export interface BunSqliteDialectConfig {
   /**
    * An sqlite Database instance or a function that returns one.
    */
-  database: Database;
+  database: BunDatabase;
 
   /**
    * Called once when the first query is executed.
@@ -77,7 +78,7 @@ class BunSqliteDriver implements Driver {
   readonly #config: BunSqliteDialectConfig;
   readonly #connectionMutex = new ConnectionMutex();
 
-  #db?: Database;
+  #db?: BunDatabase;
   #connection?: DatabaseConnection;
 
   constructor(config: BunSqliteDialectConfig) {
@@ -123,9 +124,9 @@ class BunSqliteDriver implements Driver {
 }
 
 class BunSqliteConnection implements DatabaseConnection {
-  readonly #db: Database;
+  readonly #db: BunDatabase;
 
-  constructor(db: Database) {
+  constructor(db: BunDatabase) {
     this.#db = db;
   }
 
@@ -168,9 +169,9 @@ class ConnectionMutex {
 }
 
 class BunSqliteIntrospector implements DatabaseIntrospector {
-  readonly #db: Kysely<DatabaseTables>;
+  readonly #db: Kysely<Database>;
 
-  constructor(db: Kysely<DatabaseTables>) {
+  constructor(db: Kysely<Database>) {
     this.#db = db;
   }
 
@@ -198,7 +199,9 @@ class BunSqliteIntrospector implements DatabaseIntrospector {
     }
 
     const tables = await query.execute();
-    return Promise.all(tables.map(({ name }) => this.#getTableMetadata(name)));
+    return Promise.all(
+      tables.map(({ name }: { name: string }) => this.#getTableMetadata(name))
+    );
   }
 
   async getMetadata(
@@ -225,7 +228,7 @@ class BunSqliteIntrospector implements DatabaseIntrospector {
     // Try to find the name of the column that has `autoincrement` 🤦
     const autoIncrementCol = createSql[0]?.sql
       ?.split(/[\(\),]/)
-      ?.find((it) => it.toLowerCase().includes('autoincrement'))
+      ?.find((it: string) => it.toLowerCase().includes('autoincrement'))
       ?.split(/\s+/)?.[0]
       ?.replace(/["`]/g, '');
 
@@ -292,7 +295,7 @@ export class BunSqliteDialect implements Dialect {
     return new BunSqliteAdapter();
   }
 
-  createIntrospector(db: Kysely<DatabaseTables>): DatabaseIntrospector {
+  createIntrospector(db: Kysely<Database>): DatabaseIntrospector {
     return new BunSqliteIntrospector(db);
   }
 }

@@ -2,10 +2,7 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import mainApp from './server';
 import type { LLMOpsConfig } from '@llmops/core';
 import { validateLLMOpsConfig, type ValidatedLLMOpsConfig } from '@llmops/core';
-import {
-  createKyselyAdapter,
-  kyselyAdapter,
-} from '@llmops/core/adapters/kysely-adapter';
+import { createDatabaseFromConnection } from '@llmops/core/db';
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 
 const setConfigMiddleware = (
@@ -17,18 +14,15 @@ const setConfigMiddleware = (
   };
 };
 
-const createKyselyAdapterMiddleware = (
+const createDatabaseMiddleware = (
   validatedConfig: LLMOpsConfig
 ): MiddlewareHandler => {
   return async (c, next) => {
-    const { kysely, databaseType, transaction } =
-      await createKyselyAdapter(validatedConfig);
-    const adapter = kyselyAdapter(kysely, {
-      type: databaseType,
-      transaction,
-    });
-    const a = adapter(validatedConfig);
-    c.set('db', a);
+    const db = await createDatabaseFromConnection(validatedConfig.database);
+    if (!db) {
+      throw new Error('Failed to create database connection');
+    }
+    c.set('db', db);
     await next();
   };
 };
@@ -39,7 +33,7 @@ export const createApp = (config: LLMOpsConfig) => {
 
   const app = new Hono()
     .use('*', createEnvValidatorMiddleware())
-    .use('*', createKyselyAdapterMiddleware(validatedConfig))
+    .use('*', createDatabaseMiddleware(validatedConfig))
     .use('*', setConfigMiddleware(validatedConfig))
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);

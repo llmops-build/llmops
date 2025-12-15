@@ -25,7 +25,7 @@ import {
   DefaultQueryCompiler,
   sql,
 } from 'kysely';
-import type { Database } from '@/schemas';
+import type { Database } from './schema';
 
 class NodeSqliteAdapter implements DialectAdapterBase {
   get supportsCreateIfNotExists(): boolean {
@@ -170,9 +170,9 @@ class ConnectionMutex {
 }
 
 class NodeSqliteIntrospector implements DatabaseIntrospector {
-  readonly #db: Kysely<unknown>;
+  readonly #db: Kysely<Database>;
 
-  constructor(db: Kysely<unknown>) {
+  constructor(db: Kysely<Database>) {
     this.#db = db;
   }
 
@@ -185,25 +185,22 @@ class NodeSqliteIntrospector implements DatabaseIntrospector {
     options: DatabaseMetadataOptions = { withInternalKyselyTables: false }
   ): Promise<TableMetadata[]> {
     let query = this.#db
-      // @ts-expect-error
-      .selectFrom('sqlite_schema')
-      // @ts-expect-error
+      .selectFrom('sqlite_schema' as any)
       .where('type', '=', 'table')
-      // @ts-expect-error
       .where('name', 'not like', 'sqlite_%')
       .select('name')
       .$castTo<{ name: string }>();
 
     if (!options.withInternalKyselyTables) {
       query = query
-        // @ts-expect-error
         .where('name', '!=', DEFAULT_MIGRATION_TABLE)
-        // @ts-expect-error
         .where('name', '!=', DEFAULT_MIGRATION_LOCK_TABLE);
     }
 
     const tables = await query.execute();
-    return Promise.all(tables.map(({ name }) => this.#getTableMetadata(name)));
+    return Promise.all(
+      tables.map(({ name }: { name: string }) => this.#getTableMetadata(name))
+    );
   }
 
   async getMetadata(
@@ -227,10 +224,10 @@ class NodeSqliteIntrospector implements DatabaseIntrospector {
       .$castTo<{ sql: string | undefined }>()
       .execute();
 
-    // Try to find the name of the column that has `autoincrement` >&
+    // Try to find the name of the column that has `autoincrement` 🤦
     const autoIncrementCol = createSql[0]?.sql
       ?.split(/[\(\),]/)
-      ?.find((it) => it.toLowerCase().includes('autoincrement'))
+      ?.find((it: string) => it.toLowerCase().includes('autoincrement'))
       ?.split(/\s+/)?.[0]
       ?.replace(/["`]/g, '');
 
@@ -298,6 +295,6 @@ export class NodeSqliteDialect implements Dialect {
   }
 
   createIntrospector(db: Kysely<Database>): DatabaseIntrospector {
-    return new NodeSqliteIntrospector(db as Kysely<unknown>);
+    return new NodeSqliteIntrospector(db);
   }
 }

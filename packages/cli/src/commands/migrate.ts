@@ -1,5 +1,9 @@
 import { command, string } from '@drizzle-team/brocli';
 import { logger } from '@llmops/core';
+import {
+  createDatabaseFromConnection,
+  detectDatabaseType,
+} from '@llmops/core/db';
 import { existsSync } from 'node:fs';
 import yoctoSpinner from 'yocto-spinner';
 import chalk from 'chalk';
@@ -56,9 +60,29 @@ export const migrateCommand = command({
       process.exit(1);
     }
 
+    if (!config.database) {
+      logger.error('No database configuration found.');
+      process.exit(1);
+    }
+
+    // Create database connection
+    const db = await createDatabaseFromConnection(config.database);
+    if (!db) {
+      logger.error('Failed to create database connection.');
+      process.exit(1);
+    }
+
+    const dbType = detectDatabaseType(config.database);
+    if (!dbType) {
+      logger.error('Could not detect database type.');
+      process.exit(1);
+    }
+
     const spinner = yoctoSpinner({ text: 'preparing migration...' }).start();
-    const { toBeAdded, toBeCreated, runMigrations } =
-      await getMigrations(config);
+    const { toBeAdded, toBeCreated, runMigrations } = await getMigrations(
+      db,
+      dbType
+    );
 
     if (!toBeAdded.length && !toBeCreated.length) {
       spinner.stop();
