@@ -1,4 +1,4 @@
-import { BetterAuthError } from '../../error';
+import { LLMOpsError } from '../../error';
 import type { LLMOpsConfig } from '../../types';
 import type { BetterAuthDBSchema } from '../type';
 import { initGetDefaultFieldName } from './get-default-field-name';
@@ -53,7 +53,7 @@ export const initGetFieldAttributes = ({
     fields.id = idField({ customModelName: defaultModelName });
     const fieldAttributes = fields[defaultFieldName];
     if (!fieldAttributes) {
-      throw new BetterAuthError(`Field ${field} not found in model ${model}`);
+      throw new LLMOpsError(`Field ${field} not found in model ${model}`);
     }
     return fieldAttributes;
   };

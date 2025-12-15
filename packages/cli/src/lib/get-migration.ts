@@ -14,8 +14,8 @@ import type {
   RawBuilder,
 } from 'kysely';
 import { sql } from 'kysely';
-import { createKyselyAdapter } from '../adapters/kysely-adapter/dialect';
-import type { KyselyDatabaseType } from '../adapters/kysely-adapter/types';
+import { createKyselyAdapter } from '@llmops/core/adapters/kysely-adapter';
+import type { KyselyDatabaseType } from '@llmops/core/adapters/kysely-adapter';
 import { getSchema } from './get-schema';
 import { LLMOpsConfig } from '@llmops/core';
 

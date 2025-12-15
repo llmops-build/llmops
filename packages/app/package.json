@@ -58,11 +58,13 @@
     "@hono/vite-build": "^1.8.0",
     "@hono/vite-dev-server": "^0.23.0",
     "@tanstack/router-plugin": "^1.139.14",
+    "@types/pg": "^8.15.6",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.2.3",
+    "pg": "^8.16.3",
     "vite": "^7.2.6"
   }
 }

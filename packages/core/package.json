@@ -21,6 +21,7 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
+    "./adapters/kysely-adapter": "./dist/adapters/kysely-adapter/index.mjs",
     "./package.json": "./package.json"
   },
   "scripts": {

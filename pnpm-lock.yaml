@@ -155,6 +155,9 @@ importers:
       '@tanstack/router-plugin':
         specifier: ^1.139.14
         version: 1.139.14(@tanstack/react-router@1.139.14(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0))
+      '@types/pg':
+        specifier: ^8.15.6
+        version: 8.15.6
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -170,6 +173,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3
       vite:
         specifier: ^7.2.6
         version: 7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)

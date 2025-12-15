@@ -1,8 +1,12 @@
 import 'dotenv/config';
 import { createApp } from './index';
 import { env } from 'node:process';
+import { Pool } from 'pg';
 
 const { app } = createApp({
+  database: new Pool({
+    database: env.POSTGRES_URL || '',
+  }),
   basePath: '/',
   providers: {
     openrouter: {
