@@ -1,1 +1,0 @@
-Props to the @better-auth team for their open-source contributions. We have borrowed this directory from [better-auth](https://github.com/better-auth/better-auth/tree/canary/packages/core/src/db) repo.
