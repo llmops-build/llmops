@@ -13,7 +13,6 @@ export const twinSplitContainer = style({
 
 export const leftTile = style({
   flex: `0 0 var(--tile-width)`,
-  paddingTop: spacing.xl,
   overflowY: 'auto',
   overflowX: 'auto',
 });

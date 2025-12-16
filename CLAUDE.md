@@ -60,3 +60,57 @@
 - **Styling**: StyleX with component library and global styles
 - **Development**: Storybook for component development
 - **Build**: TypeScript with tsdown for optimized builds
+
+## API Development Workflow
+
+### Adding New API Endpoints and Client Hooks
+
+When adding new API functionality, follow this end-to-end workflow:
+
+1. **Data Layer** (`packages/core/src/datalayer/`)
+   - Add database methods with Zod validation schemas
+   - Methods should handle CRUD operations with proper error handling
+
+2. **Server Handler** (`packages/app/src/server/handlers/`)
+   - Create Hono routes with `zv` middleware for validation
+   - Use `successResponse()` and `internalServerError()` from `@shared/responses`
+   - Common patterns:
+     - `POST /` - Create new resource
+     - `GET /` - List resources
+     - `GET /:id` - Get single resource
+     - `PATCH /:id` - Update resource
+     - `DELETE /:id` - Delete resource
+
+3. **Client Hooks** (`packages/app/src/client/hooks/`)
+   - **Queries** (`queries/`): Use `useQuery` for GET requests
+   - **Mutations** (`mutations/`): Use `useMutation` for POST/PATCH/DELETE
+   - Import Hono client from `@client/lib/hc`
+   - Type responses using `Exclude<Awaited<ReturnType<typeof response.json>>, JSONValue>` to remove generic JSONValue type
+   - Extract `.data` field from API responses
+
+**Example Query Hook:**
+```typescript
+export const useConfigList = () => {
+  return useQuery({
+    queryKey: ['configs-list'],
+    queryFn: async () => {
+      const response = await hc.v1.configs.$get();
+      return (await response.json()).data;
+    },
+  });
+};
+```
+
+**Example Mutation Hook:**
+```typescript
+export const useCreateConfig = () => {
+  return useMutation({
+    mutationFn: async (data: { name: string }) => {
+      const response = await hc.v1.configs.$post({
+        form: { name: data.name },
+      });
+      return (await response.json()).data;
+    },
+  });
+};
+```

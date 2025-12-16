@@ -4,6 +4,7 @@ import { routeTree } from '@client/routeTree.gen';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Providers } from './providers';
 
 const router = createRouter({
   basepath: window.bootstrapData?.basePath || '/',
@@ -28,7 +29,11 @@ if (!container) {
 }
 
 const App = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <Providers>
+      <RouterProvider router={router} />
+    </Providers>
+  );
 };
 
 const root = createRoot(container);

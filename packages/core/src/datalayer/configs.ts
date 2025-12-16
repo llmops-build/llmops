@@ -94,7 +94,7 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { limit = 50, offset = 0 } = value.data;
+      const { limit = 100, offset = 0 } = value.data;
 
       return db
         .selectFrom('configs')

@@ -25,7 +25,16 @@ export const tableHeaderCell = style({
   fontWeight: 400,
   color: colors.gray8,
   border: `1px solid ${colors.gray3}`,
+  borderTop: 'none',
   userSelect: 'none',
+  selectors: {
+    '&:first-child': {
+      borderLeft: 'none',
+    },
+    '&:last-child': {
+      borderRight: 'none',
+    },
+  },
 });
 
 export const tableBody = style({

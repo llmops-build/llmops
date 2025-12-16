@@ -29,6 +29,7 @@ import {
   headerStyle,
 } from '../-components/_layout.css';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
+import { headerStyles } from './-components/configs.css';
 
 export const Route = createFileRoute('/_layout/_layout/configs/_configs')({
   component: RouteComponent,
@@ -99,6 +100,7 @@ function RouteComponent() {
       <div className={gridElement}>
         <div ref={containerRef} className={twinSplitContainer}>
           <div className={clsx(workingArea, leftTile)}>
+            <div className={headerStyles}></div>
             <ConfigsDataTable />
           </div>
           <div className={clsx(workingArea, rightTile)}>

@@ -21,6 +21,7 @@ import {
   TableCell,
 } from '@llmops/ui';
 import { useNavigate } from '@tanstack/react-router';
+import { useConfigList } from '@client/hooks/queries/useConfigList';
 
 type Config = {
   id: string;
@@ -31,23 +32,12 @@ type Config = {
 
 const columnHelper = createColumnHelper<Config>();
 
-const mockData: Config[] = Array.from({ length: 100 }, (_, i) => {
-  const id = (i + 1).toString();
-  const date = new Date();
-  date.setDate(date.getDate() - (100 - i)); // Create dates in the past
-  return {
-    id,
-    name: `Config ${id}`,
-    createdAt: date.toISOString(),
-    updatedAt: new Date(date.getTime() + 86400000).toISOString(), // Updated one day later
-  };
-});
-
 export function ConfigsDataTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const navigate = useNavigate();
+  const { data } = useConfigList();
 
   const columns = useMemo<ColumnDef<Config, any>[]>(
     () => [
@@ -66,7 +56,7 @@ export function ConfigsDataTable() {
   );
 
   const table = useReactTable({
-    data: mockData,
+    data: data || [],
     columns,
     state: {
       sorting,
