@@ -1,9 +1,12 @@
 import { hc } from '@client/lib/hc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKey } from '../queries/useConfigList';
+import { useNavigate } from '@tanstack/react-router';
 
 export const useCreateConfig = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: { name: string }) => {
       const response = await hc.v1.configs.$post({
@@ -12,10 +15,15 @@ export const useCreateConfig = () => {
         },
       });
       const result = await response.json();
-      return 'data' in result ? result.data : undefined;
+      return 'data' in result ? (result.data as { id: string }) : undefined;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKey });
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: queryKey });
+      if (!data?.id) return;
+      navigate({
+        to: '/configs/$id',
+        params: { id: data?.id },
+      });
     },
   });
 };

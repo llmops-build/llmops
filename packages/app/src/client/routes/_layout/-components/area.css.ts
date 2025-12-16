@@ -15,4 +15,7 @@ export const workingArea = style([
     borderColor: 'gray4',
     height: '100%',
   }),
+  {
+    position: 'relative',
+  },
 ]);

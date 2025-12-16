@@ -77,6 +77,98 @@ const app = new Hono()
         );
       }
     }
+  )
+  .get(
+    '/:configId/variants',
+    zv(
+      'param',
+      z.object({
+        configId: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const configId = c.req.valid('param').configId;
+
+      try {
+        const variants = await db.getConfigVariantsByConfigId({ configId });
+        return c.json(successResponse(variants, 200));
+      } catch (error) {
+        console.error('Error fetching config variants:', error);
+        return c.json(
+          internalServerError('Failed to fetch config variants', 500),
+          500
+        );
+      }
+    }
+  )
+  .post(
+    '/:configId/variants',
+    zv(
+      'param',
+      z.object({
+        configId: z.string().uuid(),
+      })
+    ),
+    zv(
+      'json',
+      z.object({
+        variantId: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const configId = c.req.valid('param').configId;
+      const { variantId } = c.req.valid('json');
+
+      try {
+        const value = await db.createConfigVariant({
+          configId,
+          variantId,
+        });
+        return c.json(successResponse(value, 200));
+      } catch (error) {
+        console.error('Error adding variant to config:', error);
+        return c.json(
+          internalServerError('Failed to add variant to config', 500),
+          500
+        );
+      }
+    }
+  )
+  .delete(
+    '/:configId/variants/:variantId',
+    zv(
+      'param',
+      z.object({
+        configId: z.string().uuid(),
+        variantId: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const { configId, variantId } = c.req.valid('param');
+
+      try {
+        const value = await db.deleteConfigVariantByIds({
+          configId,
+          variantId,
+        });
+        if (!value) {
+          return c.json(
+            clientErrorResponse('Config variant not found', 404),
+            404
+          );
+        }
+        return c.json(successResponse(value, 200));
+      } catch (error) {
+        console.error('Error removing variant from config:', error);
+        return c.json(
+          internalServerError('Failed to remove variant from config', 500),
+          500
+        );
+      }
+    }
   );
 
 export default app;

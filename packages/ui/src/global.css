@@ -294,6 +294,15 @@
   --sidebar-width: 192px;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Geist', sans-serif;
+}
+
 :root,
 .light,
 .light-theme,

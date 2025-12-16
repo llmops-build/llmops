@@ -18,6 +18,9 @@ import { Route as LayoutLayoutEvaluationsRouteImport } from './routes/_layout/_l
 import { Route as LayoutLayoutConfigsConfigsRouteImport } from './routes/_layout/_layout.configs/_configs'
 import { Route as LayoutLayoutConfigsConfigsIndexRouteImport } from './routes/_layout/_layout.configs/_configs.index'
 import { Route as LayoutLayoutConfigsConfigsIdRouteImport } from './routes/_layout/_layout.configs/_configs.$id'
+import { Route as LayoutLayoutConfigsConfigsIdIndexRouteImport } from './routes/_layout/_layout.configs/_configs.$id.index'
+import { Route as LayoutLayoutConfigsConfigsIdVariantsRouteImport } from './routes/_layout/_layout.configs/_configs.$id.variants'
+import { Route as LayoutLayoutConfigsConfigsIdSettingsRouteImport } from './routes/_layout/_layout.configs/_configs.$id.settings'
 
 const LayoutLayoutConfigsRouteImport = createFileRoute(
   '/_layout/_layout/configs',
@@ -65,21 +68,44 @@ const LayoutLayoutConfigsConfigsIdRoute =
     path: '/$id',
     getParentRoute: () => LayoutLayoutConfigsConfigsRoute,
   } as any)
+const LayoutLayoutConfigsConfigsIdIndexRoute =
+  LayoutLayoutConfigsConfigsIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
+  } as any)
+const LayoutLayoutConfigsConfigsIdVariantsRoute =
+  LayoutLayoutConfigsConfigsIdVariantsRouteImport.update({
+    id: '/variants',
+    path: '/variants',
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
+  } as any)
+const LayoutLayoutConfigsConfigsIdSettingsRoute =
+  LayoutLayoutConfigsConfigsIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/evaluations': typeof LayoutLayoutEvaluationsRoute
   '/observability': typeof LayoutLayoutObservabilityRoute
   '/': typeof LayoutLayoutIndexRoute
   '/configs': typeof LayoutLayoutConfigsConfigsRouteWithChildren
-  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdRoute
+  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdRouteWithChildren
   '/configs/': typeof LayoutLayoutConfigsConfigsIndexRoute
+  '/configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdSettingsRoute
+  '/configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdVariantsRoute
+  '/configs/$id/': typeof LayoutLayoutConfigsConfigsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/evaluations': typeof LayoutLayoutEvaluationsRoute
   '/observability': typeof LayoutLayoutObservabilityRoute
   '/': typeof LayoutLayoutIndexRoute
   '/configs': typeof LayoutLayoutConfigsConfigsIndexRoute
-  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdRoute
+  '/configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdSettingsRoute
+  '/configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdVariantsRoute
+  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,8 +115,11 @@ export interface FileRoutesById {
   '/_layout/_layout/': typeof LayoutLayoutIndexRoute
   '/_layout/_layout/configs': typeof LayoutLayoutConfigsRouteWithChildren
   '/_layout/_layout/configs/_configs': typeof LayoutLayoutConfigsConfigsRouteWithChildren
-  '/_layout/_layout/configs/_configs/$id': typeof LayoutLayoutConfigsConfigsIdRoute
+  '/_layout/_layout/configs/_configs/$id': typeof LayoutLayoutConfigsConfigsIdRouteWithChildren
   '/_layout/_layout/configs/_configs/': typeof LayoutLayoutConfigsConfigsIndexRoute
+  '/_layout/_layout/configs/_configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdSettingsRoute
+  '/_layout/_layout/configs/_configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdVariantsRoute
+  '/_layout/_layout/configs/_configs/$id/': typeof LayoutLayoutConfigsConfigsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,8 +130,18 @@ export interface FileRouteTypes {
     | '/configs'
     | '/configs/$id'
     | '/configs/'
+    | '/configs/$id/settings'
+    | '/configs/$id/variants'
+    | '/configs/$id/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/evaluations' | '/observability' | '/' | '/configs' | '/configs/$id'
+  to:
+    | '/evaluations'
+    | '/observability'
+    | '/'
+    | '/configs'
+    | '/configs/$id/settings'
+    | '/configs/$id/variants'
+    | '/configs/$id'
   id:
     | '__root__'
     | '/_layout/_layout'
@@ -113,6 +152,9 @@ export interface FileRouteTypes {
     | '/_layout/_layout/configs/_configs'
     | '/_layout/_layout/configs/_configs/$id'
     | '/_layout/_layout/configs/_configs/'
+    | '/_layout/_layout/configs/_configs/$id/settings'
+    | '/_layout/_layout/configs/_configs/$id/variants'
+    | '/_layout/_layout/configs/_configs/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,17 +219,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdRouteImport
       parentRoute: typeof LayoutLayoutConfigsConfigsRoute
     }
+    '/_layout/_layout/configs/_configs/$id/': {
+      id: '/_layout/_layout/configs/_configs/$id/'
+      path: '/'
+      fullPath: '/configs/$id/'
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdIndexRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+    }
+    '/_layout/_layout/configs/_configs/$id/variants': {
+      id: '/_layout/_layout/configs/_configs/$id/variants'
+      path: '/variants'
+      fullPath: '/configs/$id/variants'
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdVariantsRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+    }
+    '/_layout/_layout/configs/_configs/$id/settings': {
+      id: '/_layout/_layout/configs/_configs/$id/settings'
+      path: '/settings'
+      fullPath: '/configs/$id/settings'
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdSettingsRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+    }
   }
 }
 
+interface LayoutLayoutConfigsConfigsIdRouteChildren {
+  LayoutLayoutConfigsConfigsIdSettingsRoute: typeof LayoutLayoutConfigsConfigsIdSettingsRoute
+  LayoutLayoutConfigsConfigsIdVariantsRoute: typeof LayoutLayoutConfigsConfigsIdVariantsRoute
+  LayoutLayoutConfigsConfigsIdIndexRoute: typeof LayoutLayoutConfigsConfigsIdIndexRoute
+}
+
+const LayoutLayoutConfigsConfigsIdRouteChildren: LayoutLayoutConfigsConfigsIdRouteChildren =
+  {
+    LayoutLayoutConfigsConfigsIdSettingsRoute:
+      LayoutLayoutConfigsConfigsIdSettingsRoute,
+    LayoutLayoutConfigsConfigsIdVariantsRoute:
+      LayoutLayoutConfigsConfigsIdVariantsRoute,
+    LayoutLayoutConfigsConfigsIdIndexRoute:
+      LayoutLayoutConfigsConfigsIdIndexRoute,
+  }
+
+const LayoutLayoutConfigsConfigsIdRouteWithChildren =
+  LayoutLayoutConfigsConfigsIdRoute._addFileChildren(
+    LayoutLayoutConfigsConfigsIdRouteChildren,
+  )
+
 interface LayoutLayoutConfigsConfigsRouteChildren {
-  LayoutLayoutConfigsConfigsIdRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+  LayoutLayoutConfigsConfigsIdRoute: typeof LayoutLayoutConfigsConfigsIdRouteWithChildren
   LayoutLayoutConfigsConfigsIndexRoute: typeof LayoutLayoutConfigsConfigsIndexRoute
 }
 
 const LayoutLayoutConfigsConfigsRouteChildren: LayoutLayoutConfigsConfigsRouteChildren =
   {
-    LayoutLayoutConfigsConfigsIdRoute: LayoutLayoutConfigsConfigsIdRoute,
+    LayoutLayoutConfigsConfigsIdRoute:
+      LayoutLayoutConfigsConfigsIdRouteWithChildren,
     LayoutLayoutConfigsConfigsIndexRoute: LayoutLayoutConfigsConfigsIndexRoute,
   }
 
