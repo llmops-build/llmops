@@ -22,7 +22,7 @@ export const tableHeaderCell = style({
   padding: `0 ${spacing.sm}`,
   height: spacing.xl,
   textAlign: 'left',
-  fontWeight: 500,
+  fontWeight: 400,
   color: colors.gray8,
   border: `1px solid ${colors.gray3}`,
   userSelect: 'none',
@@ -79,7 +79,7 @@ export const sortButton = style({
   padding: 0,
   color: 'inherit',
   font: 'inherit',
-  fontWeight: 500,
+  fontWeight: 400,
   selectors: {
     '&:hover': {
       color: colors.gray12 as string,

@@ -7,6 +7,6 @@ const instance = ky.create({
   timeout: 150 * 1000, // 2.5 minutes timeout for API requests (AI operations can take time)
 });
 
-export const hc = _hc<APIType>(`${import.meta.env.VITE_HOST}/api`, {
+export const hc = _hc<APIType>(`${window.location.origin}/api`, {
   fetch: instance,
 });

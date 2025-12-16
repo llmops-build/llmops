@@ -1,7 +1,11 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import mainApp from './server';
 import type { LLMOpsConfig } from '@llmops/core';
-import { validateLLMOpsConfig, type ValidatedLLMOpsConfig } from '@llmops/core';
+import {
+  createDataLayer,
+  validateLLMOpsConfig,
+  type ValidatedLLMOpsConfig,
+} from '@llmops/core';
 import { createDatabaseFromConnection } from '@llmops/core/db';
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 
@@ -22,7 +26,8 @@ const createDatabaseMiddleware = (
     if (!db) {
       throw new Error('Failed to create database connection');
     }
-    c.set('db', db);
+    const dataLayer = await createDataLayer(db);
+    c.set('db', dataLayer);
     await next();
   };
 };

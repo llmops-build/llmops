@@ -6,6 +6,13 @@ export const headerStyle = style({
   paddingBottom: spacing.sm,
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: spacing.sm,
+});
+
+export const headerGroup = style({
+  display: 'flex',
+  alignItems: 'center',
   gap: spacing.sm,
 });
 

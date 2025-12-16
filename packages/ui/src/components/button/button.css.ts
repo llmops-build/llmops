@@ -6,6 +6,7 @@ export const buttonRecipe = recipe({
     borderRadius: spacing.xs,
     border: 'none',
     cursor: 'pointer',
+    fontWeight: 500,
   },
   variants: {
     size: {
@@ -15,6 +16,11 @@ export const buttonRecipe = recipe({
         paddingLeft: spacing.sm,
         paddingTop: 0,
         paddingBottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: spacing.xs,
+        fontSize: '0.875rem',
       },
       sm: {},
       lg: {},
@@ -163,7 +169,7 @@ export const buttonRecipe = recipe({
       style: {
         backgroundColor: colors.gray1,
         color: colors.gray9,
-        border: `1px solid ${colors.gray9}`,
+        border: `1px solid ${colors.gray4}`,
         selectors: {
           '&:hover': {
             backgroundColor: colors.gray2,

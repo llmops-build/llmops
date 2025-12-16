@@ -24,7 +24,7 @@ app
     })
   )
   .get('/health', (c) => c.json({ status: 'ok' }))
-  .use('*', async (c) => {
+  .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
       const basePath = c.var.llmopsConfig.basePath || '';
       return c.html(
@@ -34,6 +34,7 @@ app
         })
       );
     }
+    await next();
   })
   .route('/api', api);
 

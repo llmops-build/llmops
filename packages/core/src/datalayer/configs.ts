@@ -40,6 +40,8 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
         .values({
           id: randomUUID(),
           name,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
         .returningAll()
         .executeTakeFirst();
@@ -53,7 +55,10 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
 
       return db
         .updateTable('configs')
-        .set({ name: newName })
+        .set({
+          name: newName,
+          updatedAt: new Date().toISOString(),
+        })
         .where('id', '=', configId)
         .returningAll()
         .executeTakeFirst();

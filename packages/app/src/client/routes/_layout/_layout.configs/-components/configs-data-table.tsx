@@ -56,14 +56,10 @@ export function ConfigsDataTable() {
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor('createdAt', {
-        header: 'Creattion Date',
+        header: 'Creation Date',
         cell: (info) => {
           return formatDistance(subDays(new Date(), 5), new Date());
         },
-      }),
-      columnHelper.accessor('updatedAt', {
-        header: 'Updated At',
-        cell: (info) => new Date(info.getValue()).toLocaleDateString(),
       }),
     ],
     []

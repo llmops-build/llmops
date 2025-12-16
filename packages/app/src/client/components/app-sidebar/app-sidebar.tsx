@@ -6,7 +6,7 @@ import {
   SidebarItem,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import { Blocks, CircleGauge, SlidersVertical, Telescope } from 'lucide-react';
+import { Blocks, SlidersVertical, Telescope } from 'lucide-react';
 
 export function AppSidebar() {
   return (
@@ -26,12 +26,12 @@ export function AppSidebar() {
             Configs
           </Link>
         </SidebarItem>
-        <SidebarItem asChild>
+        {/*<SidebarItem asChild>
           <Link to="/evaluations">
             <Icon icon={CircleGauge} />
             Evaluations
           </Link>
-        </SidebarItem>
+        </SidebarItem>*/}
         <SidebarItem asChild>
           <Link to="/observability">
             <Icon icon={Telescope} />

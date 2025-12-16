@@ -5,7 +5,7 @@ import { Pool } from 'pg';
 
 const { app } = createApp({
   database: new Pool({
-    database: env.POSTGRES_URL || '',
+    connectionString: env.POSTGRES_URL || '',
   }),
   basePath: '/',
   providers: {
