@@ -257,17 +257,8 @@ export const renderer = ({ basePath = '', dev = false }) => {
             display: list-item;
           }
 
-          /*
-          Storybook customization
-          =======================
-          */
-
-          /**
-          Remove padding from storybook root element.
-          */
-
-          #storybook-root {
-            padding: 0;
+          .root {
+            isolation: isolate;
           }
 
         `}</style>
@@ -286,7 +277,7 @@ export const renderer = ({ basePath = '', dev = false }) => {
       </head>
       <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div id="root" className="h-[calc(100vh-(var(--version-height)))]" />
+        <div id="root" className="root" />
         <script type="module" src={clientPath}></script>
       </body>
     </html>

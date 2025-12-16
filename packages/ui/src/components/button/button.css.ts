@@ -1,113 +1,204 @@
 import { recipe } from '@vanilla-extract/recipes';
-import { colors } from '../../tokens/colors.css';
-import { spacing } from '../../tokens/spacing.css';
+import { colors, spacing } from '../../tokens';
 
 export const buttonRecipe = recipe({
   base: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: spacing.xs,
     border: 'none',
-    borderRadius: '0.25rem',
     cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '0.875rem',
-    lineHeight: '1.25rem',
-    textDecoration: 'none',
-    outline: 'none',
-    transition: 'all 0.2s ease-in-out',
-    ':focus': {
-      outline: `2px solid ${colors.accent9}`,
-    },
-    ':disabled': {
-      opacity: '0.5',
-      cursor: 'not-allowed',
-    },
   },
   variants: {
+    size: {
+      default: {
+        height: spacing['xl'],
+        paddingRight: spacing.sm,
+        paddingLeft: spacing.sm,
+        paddingTop: 0,
+        paddingBottom: 0,
+      },
+      sm: {},
+      lg: {},
+      icon: {
+        width: spacing['xl'],
+        height: spacing['xl'],
+        padding: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    },
     variant: {
       primary: {
         backgroundColor: colors.accent9,
-        color: colors.accentContrast,
-        ':hover': {
-          backgroundColor: colors.accent10,
-        },
-        ':active': {
-          backgroundColor: colors.accent11,
+        color: colors.accent1,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.accent10,
+          },
+          '&[data-disabled]': {
+            backgroundColor: colors.accent8,
+            cursor: 'not-allowed',
+          },
         },
       },
-      secondary: {
-        backgroundColor: colors.gray6,
-        color: colors.gray12,
-        ':hover': {
-          backgroundColor: colors.gray7,
-        },
-        ':active': {
-          backgroundColor: colors.gray8,
+      outline: {
+        backgroundColor: colors.accent1,
+        color: colors.accent9,
+        border: `1px solid ${colors.accent9}`,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.accent2,
+          },
+          '&[data-disabled]': {
+            color: colors.accent8,
+            borderColor: colors.accent8,
+            cursor: 'not-allowed',
+          },
         },
       },
       ghost: {
         backgroundColor: 'transparent',
-        color: colors.gray9,
-        ':hover': {
-          backgroundColor: colors.gray3,
-        },
-        ':active': {
-          backgroundColor: colors.gray3,
-          outline: 'none',
-        },
-        ':focus': {
-          backgroundColor: colors.gray3,
-          outline: 'none',
-        },
-      },
-      danger: {
-        backgroundColor: '#dc2626',
-        color: '#ffffff',
-        ':hover': {
-          backgroundColor: '#b91c1c',
-        },
-        ':active': {
-          backgroundColor: '#991b1b',
+        color: colors.accent9,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.accent2,
+          },
+          '&[data-disabled]': {
+            color: colors.accent8,
+            cursor: 'not-allowed',
+          },
         },
       },
     },
-    size: {
-      sm: {
-        paddingLeft: spacing.sm,
-        paddingRight: spacing.sm,
-        paddingTop: spacing.xs,
-        paddingBottom: spacing.xs,
-        fontSize: '0.75rem',
-        lineHeight: '1rem',
-      },
-      md: {
-        paddingLeft: spacing.md,
-        paddingRight: spacing.md,
-        paddingTop: spacing.sm,
-        paddingBottom: spacing.sm,
-      },
-      lg: {
-        paddingLeft: spacing.lg,
-        paddingRight: spacing.lg,
-        paddingTop: spacing.md,
-        paddingBottom: spacing.md,
-        fontSize: '1rem',
-        lineHeight: '1.5rem',
-      },
-      icon: {
-        padding: spacing.sm,
-      },
-    },
-    fullWidth: {
-      true: {
-        width: '100%',
-      },
+    scheme: {
+      default: {},
+      destructive: {},
+      gray: {},
     },
   },
+  compoundVariants: [
+    {
+      variants: {
+        variant: 'primary',
+        scheme: 'destructive',
+      },
+      style: {
+        backgroundColor: colors.error9,
+        color: colors.error1,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.error10,
+          },
+          '&[data-disabled]': {
+            backgroundColor: colors.error8,
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
+    {
+      variants: {
+        variant: 'outline',
+        scheme: 'destructive',
+      },
+      style: {
+        backgroundColor: colors.error1,
+        color: colors.error9,
+        border: `1px solid ${colors.error9}`,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.error2,
+          },
+          '&[data-disabled]': {
+            color: colors.error8,
+            borderColor: colors.error8,
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
+    {
+      variants: {
+        variant: 'ghost',
+        scheme: 'destructive',
+      },
+      style: {
+        backgroundColor: 'transparent',
+        color: colors.error9,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.error2,
+          },
+          '&[data-disabled]': {
+            color: colors.error8,
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
+    {
+      variants: {
+        variant: 'primary',
+        scheme: 'gray',
+      },
+      style: {
+        backgroundColor: colors.gray9,
+        color: colors.gray1,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.gray10,
+          },
+          '&[data-disabled]': {
+            backgroundColor: colors.gray8,
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
+    {
+      variants: {
+        variant: 'outline',
+        scheme: 'gray',
+      },
+      style: {
+        backgroundColor: colors.gray1,
+        color: colors.gray9,
+        border: `1px solid ${colors.gray9}`,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.gray2,
+          },
+          '&[data-disabled]': {
+            color: colors.gray8,
+            borderColor: colors.gray8,
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
+    {
+      variants: {
+        variant: 'ghost',
+        scheme: 'gray',
+      },
+      style: {
+        backgroundColor: 'transparent',
+        color: colors.gray9,
+        selectors: {
+          '&:hover': {
+            backgroundColor: colors.gray2,
+          },
+          '&[data-disabled]': {
+            color: colors.gray8,
+            cursor: 'not-allowed',
+          },
+        },
+      },
+    },
+  ],
   defaultVariants: {
+    size: 'default',
     variant: 'primary',
-    size: 'md',
   },
 });
 

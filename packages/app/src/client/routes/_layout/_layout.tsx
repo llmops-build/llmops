@@ -44,6 +44,7 @@ function RouteComponent() {
           }}
           size="icon"
           variant="ghost"
+          scheme="gray"
         >
           <Icon icon={Columns2} />
         </Button>
