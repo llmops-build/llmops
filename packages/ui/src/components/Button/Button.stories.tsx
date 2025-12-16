@@ -40,7 +40,6 @@ export const Primary: Story = {
     children: 'Button',
     size: 'default',
     variant: 'primary',
-    destructive: false,
   },
 };
 
@@ -65,7 +64,6 @@ export const DestructivePrimary: Story = {
     children: 'Delete',
     size: 'default',
     variant: 'primary',
-    destructive: true,
   },
 };
 
@@ -74,7 +72,6 @@ export const DestructiveOutline: Story = {
     children: 'Delete',
     size: 'default',
     variant: 'outline',
-    destructive: true,
   },
 };
 
@@ -83,6 +80,5 @@ export const DestructiveGhost: Story = {
     children: 'Delete',
     size: 'default',
     variant: 'ghost',
-    destructive: true,
   },
 };

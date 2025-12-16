@@ -67,7 +67,7 @@ function RouteComponent() {
 
   useEffect(() => {
     if (params?.id) {
-      setTileWidth('40%');
+      setTileWidth('35%');
     } else {
       setTileWidth('100%');
     }

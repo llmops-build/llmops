@@ -5,7 +5,7 @@ export const headerStyles = style({
   padding: `${spacing.sm} ${spacing.xs}`,
   height: spacing['2xl'],
   display: 'flex',
-  borderBottom: `1px solid ${colors.gray3}`,
+  borderBottom: `1px solid ${colors.gray4}`,
 });
 
 export const configsContainer = style([
@@ -33,7 +33,7 @@ export const configTitle = style([
   }),
   {
     height: '100%',
-    border: `1px solid ${colors.gray5}`,
+    border: `1px solid ${colors.gray4}`,
     outline: 'none',
     ':-moz-placeholder': {
       color: colors.gray7,
@@ -54,3 +54,10 @@ export const updateNameStatus = style({
   color: colors.gray9,
   fontSize: '0.875rem',
 });
+
+export const configTabsContainer = style([
+  {
+    borderBottom: `1px solid ${colors.gray4}`,
+    height: spacing['2xl'],
+  },
+]);
