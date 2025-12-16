@@ -10,6 +10,6 @@ export default llmops({
     },
   },
   database: new Pool({
-    database: env.POSTGRES_URL || '',
+    connectionString: env.POSTGRES_URL || '',
   }),
 });

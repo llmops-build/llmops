@@ -7,7 +7,7 @@ export const useCreateConfig = () => {
   return useMutation({
     mutationFn: async (data: { name: string }) => {
       const response = await hc.v1.configs.$post({
-        form: {
+        json: {
           name: data.name,
         },
       });

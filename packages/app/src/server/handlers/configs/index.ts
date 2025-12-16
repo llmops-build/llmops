@@ -11,7 +11,7 @@ const app = new Hono()
   .post(
     '/',
     zv(
-      'form',
+      'json',
       z.object({
         name: z.string().min(1),
       })
@@ -20,7 +20,7 @@ const app = new Hono()
       const db = c.get('db');
       try {
         const value = await db.createNewConfig({
-          name: c.req.valid('form').name,
+          name: c.req.valid('json').name,
         });
         return c.json(successResponse(value, 200));
       } catch (error) {
@@ -45,18 +45,25 @@ const app = new Hono()
   .patch(
     '/:id',
     zv(
-      'form',
+      'json',
       z.object({
         name: z.string().min(1),
       })
     ),
+    zv(
+      'param',
+      z.object({
+        id: z.string().min(1),
+      })
+    ),
     async (c) => {
       const db = c.get('db');
-      const id = c.req.param('id');
+      const id = c.req.valid('param').id;
+
       try {
         const value = await db.updateConfigName({
           configId: id,
-          newName: c.req.valid('form').name,
+          newName: c.req.valid('json').name,
         });
         if (!value) {
           return c.json(clientErrorResponse('Config not found', 404), 404);

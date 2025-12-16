@@ -7,6 +7,13 @@ const instance = ky.create({
   timeout: 150 * 1000, // 2.5 minutes timeout for API requests (AI operations can take time)
 });
 
-export const hc = _hc<APIType>(`${window.location.origin}/api`, {
+const url = new URL(
+  (window.bootstrapData?.basePath === '/'
+    ? ''
+    : window.bootstrapData?.basePath) + '/api',
+  window.location.origin
+);
+
+export const hc = _hc<APIType>(url.origin + url.pathname, {
   fetch: instance,
 });

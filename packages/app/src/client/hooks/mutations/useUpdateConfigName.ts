@@ -10,7 +10,7 @@ export const useUpdateConfigName = () => {
         param: {
           id: data.id,
         },
-        form: {
+        json: {
           name: data.name,
         },
       });
