@@ -17,4 +17,5 @@ export const leftTile = style({
 
 export const rightTile = style({
   flex: `1 1 calc(100% - var(--tile-width))`,
+  overflowX: 'auto',
 });
