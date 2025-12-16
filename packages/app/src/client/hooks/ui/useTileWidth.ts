@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { animate } from 'motion';
 
 const TILE_WIDTH_CSS_VAR = '--tile-width';
-const DEFAULT_TILE_WIDTH = '50%';
+const DEFAULT_TILE_WIDTH = '100%';
 
 export function useTileWidth() {
   const containerRef = useRef<HTMLDivElement>(null);

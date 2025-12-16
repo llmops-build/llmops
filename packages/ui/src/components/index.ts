@@ -13,3 +13,20 @@ export {
   SidebarItem,
 } from './sidebar';
 export { Header } from './header';
+
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHeaderCell,
+  TableCell,
+} from './table';
+export type {
+  TableProps,
+  TableHeaderProps,
+  TableBodyProps,
+  TableRowProps,
+  TableHeaderCellProps,
+  TableCellProps,
+} from './table';

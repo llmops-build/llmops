@@ -7,12 +7,15 @@ export const twinSplitContainer = style({
   display: 'flex',
   gap: spacing.xs,
   vars: {
-    '--tile-width': '40%',
+    '--tile-width': '100%',
   },
 });
 
 export const leftTile = style({
   flex: `0 0 var(--tile-width)`,
+  paddingTop: spacing.xl,
+  overflowY: 'auto',
+  overflowX: 'auto',
 });
 
 export const rightTile = style({
