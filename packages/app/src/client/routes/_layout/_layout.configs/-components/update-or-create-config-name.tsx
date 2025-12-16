@@ -33,13 +33,15 @@ const CreateConfig = ({
   }, [config?.name]);
 
   const onSubmit = async (data: { name: string }) => {
+    if (!data.name.trim()) {
+      return;
+    }
     try {
       isNew
         ? await createConfig({ name: data.name })
         : await updateConfigName({ id: config!.id, name: data.name });
-      console.log('Config created with name:', data.name);
     } catch (error) {
-      console.error('Failed to create config:', error);
+      console.error('Error in creating/updating config:', error);
     }
   };
 

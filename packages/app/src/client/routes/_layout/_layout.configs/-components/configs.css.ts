@@ -28,11 +28,19 @@ export const configTitle = style([
     borderRadius: 'xs',
     paddingLeft: 'sm',
     paddingRight: 'sm',
+    backgroundColor: 'gray1',
+    color: 'gray11',
   }),
   {
     height: '100%',
     border: `1px solid ${colors.gray5}`,
     outline: 'none',
+    ':-moz-placeholder': {
+      color: colors.gray7,
+    },
+    '::-webkit-input-placeholder': {
+      color: colors.gray7,
+    },
     '::placeholder': {
       color: colors.gray7,
     },
