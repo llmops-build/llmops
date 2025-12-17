@@ -1,4 +1,5 @@
 import { type UseFormReturn } from 'react-hook-form';
+import { useState } from 'react';
 import {
   variantFormContainer,
   variantPropertyRow,
@@ -39,6 +40,8 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
     formState: { errors },
   } = form;
 
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+
   return (
     <div className={variantFormContainer}>
       <div className={variantPropertyRow}>
@@ -71,6 +74,7 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
             items={providers}
             placeholder="Select provider"
             variant="inline"
+            onValueChange={setSelectedProvider}
           />
         </div>
       </div>
@@ -85,6 +89,7 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
             items={models}
             placeholder="Select model"
             variant="inline"
+            disabled={!selectedProvider}
           />
         </div>
       </div>

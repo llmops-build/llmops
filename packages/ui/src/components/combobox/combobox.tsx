@@ -125,12 +125,20 @@ export function Combobox<T = string>({
   const labelClass = isInline
     ? styles.comboboxLabelInline
     : styles.comboboxLabel;
-  const wrapperClass = isInline
-    ? styles.comboboxInputWrapperInline
-    : styles.comboboxInputWrapper;
-  const inputClass = isInline
-    ? styles.comboboxInputInline
-    : styles.comboboxInput;
+  const wrapperClass = clsx(
+    isInline ? styles.comboboxInputWrapperInline : styles.comboboxInputWrapper,
+    disabled &&
+      (isInline
+        ? styles.comboboxInputWrapperInlineDisabled
+        : styles.comboboxInputWrapperDisabled)
+  );
+  const inputClass = clsx(
+    isInline ? styles.comboboxInputInline : styles.comboboxInput,
+    disabled &&
+      (isInline
+        ? styles.comboboxInputInlineDisabled
+        : styles.comboboxInputDisabled)
+  );
 
   return (
     <BaseCombobox.Root

@@ -6,6 +6,8 @@ export const Route = createFileRoute('/(app)/configs/$id/')({
 
 function RouteComponent() {
   const { id } = Route.useParams();
+  if (id === 'new') return null;
+
   return (
     <Navigate
       to="/configs/$id/variants"

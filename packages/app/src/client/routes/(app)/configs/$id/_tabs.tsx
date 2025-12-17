@@ -7,6 +7,11 @@ export const Route = createFileRoute('/(app)/configs/$id/_tabs')({
 
 function RouteComponent() {
   const { id } = Route.useParams();
+
+  if (!id) {
+    return null;
+  }
+
   return (
     <div>
       <div className={configTabsContainer}>

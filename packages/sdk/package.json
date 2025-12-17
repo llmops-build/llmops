@@ -1,7 +1,7 @@
 {
   "name": "@llmops/sdk",
   "version": "0.0.0",
-  "description": "A starter for creating a TypeScript package.",
+  "description": "An LLMOps toolkit for TypeScript applications.",
   "type": "module",
   "license": "MIT",
   "homepage": "https://github.com/author/library#readme",

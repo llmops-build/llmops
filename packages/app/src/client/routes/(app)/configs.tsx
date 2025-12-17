@@ -59,7 +59,6 @@ function RouteComponent() {
     }));
 
   const handleNavigateToNew = () => {
-    console.log('Navigating to new config');
     navigate({ to: '/configs/$id', params: { id: 'new' } });
   };
 

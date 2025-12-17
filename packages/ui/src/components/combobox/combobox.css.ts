@@ -26,6 +26,16 @@ export const comboboxInputWrapper = style({
   },
 });
 
+export const comboboxInputWrapperDisabled = style({
+  opacity: 0.5,
+  cursor: 'not-allowed',
+  selectors: {
+    '&:focus-within': {
+      borderColor: colors.gray4,
+    },
+  },
+});
+
 export const comboboxInput = style([
   sprinkles({
     fontSize: 'base',
@@ -54,6 +64,10 @@ export const comboboxInput = style([
     // },
   },
 ]);
+
+export const comboboxInputDisabled = style({
+  cursor: 'not-allowed',
+});
 
 export const comboboxActionButtons = style({
   boxSizing: 'border-box',
@@ -337,6 +351,19 @@ export const comboboxInputWrapperInline = style({
   },
 });
 
+export const comboboxInputWrapperInlineDisabled = style({
+  opacity: 0.5,
+  cursor: 'not-allowed',
+  selectors: {
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+    '&:focus-within': {
+      backgroundColor: 'transparent',
+    },
+  },
+});
+
 export const comboboxInputInline = style([
   sprinkles({
     fontSize: 'sm',
@@ -362,3 +389,7 @@ export const comboboxInputInline = style([
     },
   },
 ]);
+
+export const comboboxInputInlineDisabled = style({
+  cursor: 'not-allowed',
+});
