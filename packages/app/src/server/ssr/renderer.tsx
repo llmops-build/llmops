@@ -14,7 +14,19 @@ const manifest: Manifest = existsSync(manifestPath)
   ? JSON.parse(readFileSync(manifestPath, 'utf-8'))
   : {};
 
-export const renderer = ({ basePath = '', dev = false }) => {
+export const renderer = ({
+  basePath = '',
+  dev = false,
+  llmProviders,
+}: {
+  basePath?: string;
+  dev?: boolean;
+  llmProviders?: {
+    key: string;
+    name: string;
+    imageURI: string;
+  }[];
+}) => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
 
@@ -270,6 +282,7 @@ export const renderer = ({ basePath = '', dev = false }) => {
           {`
             window.bootstrapData = {
               basePath: "${basePath}",
+              llmProviders: ${JSON.stringify(llmProviders || [])}
             };
           `}
         </script>

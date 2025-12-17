@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { readFile } from 'fs/promises';
 import api from '@server/handlers/api';
 import { env } from 'node:process';
+import type { SupportedProviders } from '@llmops/core';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -27,10 +28,17 @@ app
   .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
       const basePath = c.var.llmopsConfig.basePath || '';
+      const providers = c.var.providers;
+
       return c.html(
         renderer({
           basePath,
           dev: (env.LLMOPS_DEV as unknown) === 'true',
+          llmProviders: Object.keys(providers).map((key) => ({
+            key,
+            name: providers[key as SupportedProviders].getName(),
+            imageURI: providers[key as SupportedProviders].getImageURI(),
+          })),
         })
       );
     }

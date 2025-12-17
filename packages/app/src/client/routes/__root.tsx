@@ -1,5 +1,5 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router';
-import { Page, darkTheme, lightTheme } from '@llmops/ui';
+import { Page } from '@llmops/ui';
 import { AppSidebar } from '@client/components/app-sidebar';
 import { contentLayout } from './-styles/root.css';
 
@@ -9,7 +9,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <div className={lightTheme}>
+    <div>
       <Page>
         <AppSidebar />
         <div className={contentLayout}>

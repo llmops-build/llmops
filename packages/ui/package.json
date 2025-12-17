@@ -18,6 +18,9 @@
     },
     "./global.css": {
       "import": "./src/global.css"
+    },
+    "./theme.css": {
+      "import": "./src/theme.css.ts"
     }
   },
   "repository": {

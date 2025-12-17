@@ -8,6 +8,7 @@ import {
 } from '@llmops/core';
 import { createDatabaseFromConnection } from '@llmops/core/db';
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
+import { createLLMProvidersMiddleware } from '@server/middlewares/providers';
 
 const setConfigMiddleware = (
   config: ValidatedLLMOpsConfig
@@ -38,8 +39,9 @@ export const createApp = (config: LLMOpsConfig) => {
 
   const app = new Hono()
     .use('*', createEnvValidatorMiddleware())
-    .use('*', createDatabaseMiddleware(validatedConfig))
     .use('*', setConfigMiddleware(validatedConfig))
+    .use('*', createDatabaseMiddleware(validatedConfig))
+    .use('*', createLLMProvidersMiddleware())
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);
 

@@ -11,6 +11,9 @@ export interface BaseProvider {
   readonly name: string;
   readonly config: Record<string, unknown>;
 
+  getName(): string;
+  getImageURI(): string;
+
   chatCompletionRequestSchema: z.ZodObject<any>;
   /**
    * Transform request from openai format to provider specific format

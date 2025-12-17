@@ -1,4 +1,4 @@
-import type { LLMOpsConfig } from '@llmops/core';
+import { type LLMOpsConfig } from '@llmops/core';
 import { createApp } from '@llmops/app';
 
 export type LLMOpsClient = {
