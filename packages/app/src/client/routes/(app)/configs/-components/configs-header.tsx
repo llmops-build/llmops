@@ -21,7 +21,7 @@ const ConfigsHeader = ({ id }: { id: string }) => {
       <Button onClick={handleClose} size="icon" scheme="gray" variant="ghost">
         <Icon icon={X} />
       </Button>
-      <UpdateOrCreateConfigName id={id} config={currentData} />
+      <UpdateOrCreateConfigName key={id} id={id} config={currentData} />
     </div>
   );
 };

@@ -173,6 +173,7 @@ export const comboboxItem = style({
   alignItems: 'center',
   gridTemplateColumns: '0.75rem auto 1fr',
   fontSize: '0.875rem',
+  whiteSpace: 'nowrap',
   lineHeight: '1rem',
   color: colors.gray10,
   selectors: {

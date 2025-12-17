@@ -31,6 +31,26 @@ export class OpenRouterProvider implements BaseProvider {
     this.client = new OpenRouter(config);
   }
 
+  async getModels() {
+    const models = await this.client.models.list();
+    return models.data.map((model) => {
+      // Parse provider from model ID (format: provider/model-name)
+      const [providerId] = model.id.split('/');
+      const providerName =
+        providerId.charAt(0).toUpperCase() + providerId.slice(1);
+
+      return {
+        id: model.id,
+        name: model.name,
+        provider: {
+          id: providerId,
+          name: providerName,
+        },
+        pricing: model.pricing,
+      };
+    });
+  }
+
   transformChatCompletionRequest<ReturnType = ChatGenerationParams>(
     request: ChatCompletionCreateParams
   ): ReturnType {

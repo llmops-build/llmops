@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { variantContainer, variantHeader } from '../-components/variants.css';
 import { Icon } from '@client/components/icons';
 import { Save } from 'lucide-react';
-import VariantForm from '../-components/variant-form';
+import VariantForm, { type VariantFormData } from '../-components/variant-form';
+import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
@@ -15,19 +16,33 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const { id: configId } = Route.useParams();
   const navigate = useNavigate();
-  const form = useForm({
+  const createVariant = useCreateVariant();
+
+  const form = useForm<VariantFormData>({
     defaultValues: {
       name: '',
+      provider: '',
+      modelName: '',
     },
   });
 
-  const onSubmit = async (data: { name: string }) => {
-    if (!data.name.trim()) {
+  const onSubmit = async (data: VariantFormData) => {
+    if (!data.name.trim() || !data.provider || !data.modelName) {
       return;
     }
     try {
-      console.log('Creating variant with name:', data.name);
-      // TODO: Add variant creation logic
+      // Create the variant and link it to the config in one call
+      await createVariant.mutateAsync({
+        configId,
+        name: data.name,
+        provider: data.provider,
+        modelName: data.modelName,
+      });
+
+      navigate({
+        to: '/configs/$id/variants',
+        params: { id: configId },
+      });
     } catch (error) {
       console.error('Error creating variant:', error);
     }

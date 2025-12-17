@@ -39,6 +39,14 @@ const listConfigVariants = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
+const createVariantAndLinkToConfig = z.object({
+  configId: z.string().uuid(),
+  name: z.string(),
+  provider: z.string(),
+  modelName: z.string(),
+  jsonData: z.record(z.string(), z.unknown()).optional().default({}),
+});
+
 export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
   return {
     createConfigVariant: async (
@@ -144,9 +152,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         .returningAll()
         .executeTakeFirst();
     },
-    listConfigVariants: async (
-      params?: z.infer<typeof listConfigVariants>
-    ) => {
+    listConfigVariants: async (params?: z.infer<typeof listConfigVariants>) => {
       const value = await listConfigVariants.safeParseAsync(params || {});
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
@@ -215,6 +221,59 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         .limit(limit)
         .offset(offset)
         .execute();
+    },
+    createVariantAndLinkToConfig: async (
+      params: z.infer<typeof createVariantAndLinkToConfig>
+    ) => {
+      const value = await createVariantAndLinkToConfig.safeParseAsync(params);
+      if (!value.success) {
+        throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
+      }
+      const { configId, name, provider, modelName, jsonData } = value.data;
+
+      const variantId = randomUUID();
+      const now = new Date().toISOString();
+
+      // Insert the variant
+      const variant = await db
+        .insertInto('variants')
+        .values({
+          id: variantId,
+          name,
+          provider,
+          modelName,
+          jsonData: JSON.stringify(jsonData),
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returningAll()
+        .executeTakeFirst();
+
+      if (!variant) {
+        throw new LLMOpsError('Failed to create variant');
+      }
+
+      // Create the config-variant relation
+      const configVariant = await db
+        .insertInto('config_variants')
+        .values({
+          id: randomUUID(),
+          configId,
+          variantId,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returningAll()
+        .executeTakeFirst();
+
+      if (!configVariant) {
+        throw new LLMOpsError('Failed to link variant to config');
+      }
+
+      return {
+        variant,
+        configVariant,
+      };
     },
   };
 };

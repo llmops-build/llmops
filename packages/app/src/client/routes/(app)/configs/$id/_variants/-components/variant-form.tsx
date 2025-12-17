@@ -1,5 +1,4 @@
-import { type UseFormReturn } from 'react-hook-form';
-import { useState } from 'react';
+import { useWatch, type UseFormReturn } from 'react-hook-form';
 import {
   variantFormContainer,
   variantPropertyRow,
@@ -10,6 +9,7 @@ import {
 import { Combobox } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
 import { BrainCircuit, CardSim, PenLine } from 'lucide-react';
+import { useProviderModels } from '@client/hooks/queries/useProviderModels';
 
 const providers = window.bootstrapData?.llmProviders?.map((provider) => {
   return {
@@ -19,25 +19,25 @@ const providers = window.bootstrapData?.llmProviders?.map((provider) => {
   };
 });
 
-const models = [
-  'gpt-4o',
-  'gpt-4o-mini',
-  'claude-3.5-sonnet',
-  'claude-3.5-haiku',
-  'gemini-2.0-flash',
-  'gemini-1.5-pro',
-  'llama-3.3-70b',
-  'mistral-large',
-  'command-r-plus',
-];
+const providerItems = providers?.map((provider) => provider.value) || [];
 
-const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
+export type VariantFormData = {
+  name: string;
+  provider: string;
+  modelName: string;
+};
+
+const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
   const {
     register,
     formState: { errors },
+    setValue,
   } = form;
-
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const selectedProvider = useWatch({
+    control: form.control,
+    name: 'provider',
+  });
+  const { data: models } = useProviderModels(selectedProvider);
 
   return (
     <div className={variantFormContainer}>
@@ -68,7 +68,7 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
         </div>
         <div className={variantPropertyValue}>
           <Combobox
-            items={providers?.map((provider) => provider.value) || []}
+            items={providerItems}
             itemToString={(item) => {
               return providers?.find((p) => p.value === item)?.label || '';
             }}
@@ -83,7 +83,10 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
             }}
             placeholder="Select provider"
             variant="inline"
-            onValueChange={setSelectedProvider}
+            onValueChange={(value) => {
+              setValue('provider', value || '');
+              setValue('modelName', '');
+            }}
           />
         </div>
       </div>
@@ -95,19 +98,35 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
         </div>
         <div className={variantPropertyValue}>
           <Combobox
-            items={models}
+            key={selectedProvider}
+            items={models?.map((model) => model.id) || []}
+            itemToIcon={(item) => {
+              const model = models?.find((m) => m.id === item);
+              if (!model?.provider) return null;
+              return (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 16,
+                    height: 16,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    backgroundColor: 'var(--color-bg-tertiary)',
+                    borderRadius: 4,
+                  }}
+                >
+                  {model.provider.name.charAt(0).toUpperCase()}
+                </span>
+              );
+            }}
             placeholder="Select model"
             variant="inline"
-            disabled={!selectedProvider}
+            onValueChange={(value) => setValue('modelName', value || '')}
           />
         </div>
       </div>
-      {/*<div className={variantContentArea}>
-        <textarea
-          placeholder="Start writing your prompt..."
-          className={variantTextarea}
-        />
-      </div>*/}
     </div>
   );
 };

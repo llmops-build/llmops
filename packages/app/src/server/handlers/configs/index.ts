@@ -91,7 +91,9 @@ const app = new Hono()
       const configId = c.req.valid('param').configId;
 
       try {
-        const variants = await db.getConfigVariantsWithDetailsByConfigId({ configId });
+        const variants = await db.getConfigVariantsWithDetailsByConfigId({
+          configId,
+        });
         return c.json(successResponse(variants, 200));
       } catch (error) {
         console.error('Error fetching config variants:', error);
@@ -113,24 +115,33 @@ const app = new Hono()
     zv(
       'json',
       z.object({
-        variantId: z.string().uuid(),
+        name: z.string().min(1),
+        provider: z.string().min(1),
+        modelName: z.string().min(1),
+        jsonData: z.record(z.string(), z.unknown()).optional(),
       })
     ),
     async (c) => {
       const db = c.get('db');
       const configId = c.req.valid('param').configId;
-      const { variantId } = c.req.valid('json');
+      const { name, provider, modelName, jsonData } = c.req.valid('json');
 
       try {
-        const value = await db.createConfigVariant({
+        const value = await db.createVariantAndLinkToConfig({
           configId,
-          variantId,
+          name,
+          provider,
+          modelName,
+          jsonData: jsonData ?? {},
         });
         return c.json(successResponse(value, 200));
       } catch (error) {
-        console.error('Error adding variant to config:', error);
+        console.error('Error creating variant and linking to config:', error);
         return c.json(
-          internalServerError('Failed to add variant to config', 500),
+          internalServerError(
+            'Failed to create variant and link to config',
+            500
+          ),
           500
         );
       }

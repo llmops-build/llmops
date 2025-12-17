@@ -22,7 +22,6 @@ try {
   const manifestPath = path.join(thisDir, '/.vite/manifest.json');
   const manifestStr = readFileSync(manifestPath).toString();
   manifest = JSON.parse(manifestStr) as Manifest;
-  console.log('Loaded manifest for scripts.', manifest);
 } catch (e) {
   console.log(e);
   console.log('No manifest found for scripts.');

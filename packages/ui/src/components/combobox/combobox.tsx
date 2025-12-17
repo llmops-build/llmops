@@ -143,12 +143,22 @@ export function Combobox<T = string>({
         : styles.comboboxInputDisabled)
   );
 
+  const handleValueChange = React.useCallback(
+    (newValue: T | null, event: { reason: string }) => {
+      onValueChange?.(newValue);
+    },
+    [onValueChange]
+  );
+
+  // Determine if we're in controlled mode
+  const isControlled = value !== undefined;
+
   return (
     <BaseCombobox.Root
       items={items}
-      value={value}
-      defaultValue={defaultValue}
-      onValueChange={onValueChange}
+      value={isControlled ? (value ?? undefined) : undefined}
+      defaultValue={!isControlled ? (defaultValue ?? undefined) : undefined}
+      onValueChange={handleValueChange}
       disabled={disabled}
       itemToStringLabel={itemToString}
     >

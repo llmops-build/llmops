@@ -4,6 +4,23 @@ import type {
 } from 'openai/resources/chat/completions';
 import type z from 'zod';
 
+export interface ModelProviderInfo {
+  id: string;
+  name: string;
+}
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider?: ModelProviderInfo;
+  pricing?: {
+    prompt?: string;
+    completion?: string;
+    request?: string;
+    image?: string;
+  };
+}
+
 export interface BaseProvider {
   /**
    * Provider name/identifier
@@ -15,6 +32,12 @@ export interface BaseProvider {
   getImageURI(): string;
 
   chatCompletionRequestSchema: z.ZodObject<any>;
+
+  /**
+   * Get available models from the provider
+   */
+  getModels(): Promise<ModelInfo[]>;
+
   /**
    * Transform request from openai format to provider specific format
    */
