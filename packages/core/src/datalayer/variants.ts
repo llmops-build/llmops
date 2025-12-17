@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createVariant = z.object({
+  name: z.string(),
   provider: z.string(),
   modelName: z.string(),
   jsonData: z.record(z.string(), z.unknown()).optional().default({}),
@@ -12,6 +13,7 @@ const createVariant = z.object({
 
 const updateVariant = z.object({
   variantId: z.string().uuid(),
+  name: z.string().optional(),
   provider: z.string().optional(),
   modelName: z.string().optional(),
   jsonData: z.record(z.string(), z.unknown()).optional(),
@@ -37,12 +39,13 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { provider, modelName, jsonData } = value.data;
+      const { name, provider, modelName, jsonData } = value.data;
 
       return db
         .insertInto('variants')
         .values({
           id: randomUUID(),
+          name,
           provider,
           modelName,
           jsonData: JSON.stringify(jsonData),
@@ -63,6 +66,9 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
         updatedAt: new Date().toISOString(),
       };
 
+      if (updates.name) {
+        updateData.name = updates.name;
+      }
       if (updates.provider) {
         updateData.provider = updates.provider;
       }

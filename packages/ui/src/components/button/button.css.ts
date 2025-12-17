@@ -7,6 +7,10 @@ export const buttonRecipe = recipe({
     border: 'none',
     cursor: 'pointer',
     fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
   },
   variants: {
     size: {
@@ -16,13 +20,16 @@ export const buttonRecipe = recipe({
         paddingLeft: spacing.sm,
         paddingTop: 0,
         paddingBottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: spacing.xs,
         fontSize: '0.875rem',
+        lineHeight: spacing.xl,
       },
-      sm: {},
+      sm: {
+        height: spacing.lg,
+        paddingRight: spacing.sm,
+        paddingLeft: spacing.sm,
+        fontSize: '0.75rem',
+        lineHeight: spacing.lg,
+      },
       lg: {},
       icon: {
         width: spacing['xl'],

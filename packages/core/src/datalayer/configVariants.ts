@@ -188,5 +188,33 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         .where('config_variants.id', '=', id)
         .executeTakeFirst();
     },
+    getConfigVariantsWithDetailsByConfigId: async (
+      params: z.infer<typeof getConfigVariantsByConfigId>
+    ) => {
+      const value = await getConfigVariantsByConfigId.safeParseAsync(params);
+      if (!value.success) {
+        throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
+      }
+      const { configId, limit = 100, offset = 0 } = value.data;
+
+      return db
+        .selectFrom('config_variants')
+        .leftJoin('variants', 'config_variants.variantId', 'variants.id')
+        .select([
+          'config_variants.id',
+          'config_variants.configId',
+          'config_variants.variantId',
+          'config_variants.createdAt',
+          'config_variants.updatedAt',
+          'variants.provider',
+          'variants.modelName',
+          'variants.jsonData',
+        ])
+        .where('config_variants.configId', '=', configId)
+        .orderBy('config_variants.createdAt', 'desc')
+        .limit(limit)
+        .offset(offset)
+        .execute();
+    },
   };
 };

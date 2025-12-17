@@ -91,7 +91,7 @@ const app = new Hono()
       const configId = c.req.valid('param').configId;
 
       try {
-        const variants = await db.getConfigVariantsByConfigId({ configId });
+        const variants = await db.getConfigVariantsWithDetailsByConfigId({ configId });
         return c.json(successResponse(variants, 200));
       } catch (error) {
         console.error('Error fetching config variants:', error);

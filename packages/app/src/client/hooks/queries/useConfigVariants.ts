@@ -17,6 +17,9 @@ export const useConfigVariants = (configId: string) => {
         variantId: string;
         createdAt: string;
         updatedAt: string;
+        provider: string | null;
+        modelName: string | null;
+        jsonData: Record<string, any> | null;
       }[];
     },
     enabled: !!configId,

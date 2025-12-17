@@ -1,5 +1,9 @@
 import { useForm } from 'react-hook-form';
-import { configsContainer, configTitle, updateNameStatus } from './configs.css';
+import {
+  configsContainer,
+  configTitleInput,
+  updateNameStatus,
+} from './configs.css';
 import { useEffect } from 'react';
 import { useCreateConfig } from '@client/hooks/mutations/useCreateConfig';
 import { useUpdateConfigName } from '@client/hooks/mutations/useUpdateConfigName';
@@ -51,7 +55,7 @@ const CreateConfig = ({
         {...register('name', { required: 'Config name is required' })}
         placeholder="Config Name"
         title="title"
-        className={configTitle}
+        className={configTitleInput}
         aria-invalid={errors.name ? 'true' : 'false'}
       />
       {isSubmitting &&

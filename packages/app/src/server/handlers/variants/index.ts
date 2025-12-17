@@ -13,6 +13,7 @@ const app = new Hono()
     zv(
       'json',
       z.object({
+        name: z.string().min(1),
         provider: z.string().min(1),
         modelName: z.string().min(1),
         jsonData: z.record(z.string(), z.unknown()).optional().default({}),
@@ -21,8 +22,9 @@ const app = new Hono()
     async (c) => {
       const db = c.get('db');
       try {
-        const { provider, modelName, jsonData } = c.req.valid('json');
+        const { name, provider, modelName, jsonData } = c.req.valid('json');
         const value = await db.createVariant({
+          name,
           provider,
           modelName,
           jsonData,
@@ -79,6 +81,7 @@ const app = new Hono()
     zv(
       'json',
       z.object({
+        name: z.string().min(1).optional(),
         provider: z.string().min(1).optional(),
         modelName: z.string().min(1).optional(),
         jsonData: z.record(z.string(), z.unknown()).optional(),

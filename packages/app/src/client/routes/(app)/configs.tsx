@@ -12,14 +12,11 @@ import {
   leftTile,
   rightTile,
   twinSplitContainer,
-} from '../-components/twin-split.css';
-import {
-  gridElement,
-  workingArea,
-} from '@client/routes/_layout/-components/area.css';
+} from './-components/twin-split.css';
+import { gridElement, workingArea } from './-components/area.css';
 import { Icon } from '@client/components/icons';
 import { ChevronRight, Columns2, Plus, SlidersVertical } from 'lucide-react';
-import { ConfigsDataTable } from './-components/configs-data-table';
+import { ConfigsDataTable } from './configs/-components/configs-data-table';
 import { useEffect } from 'react';
 import { Breadcrumbs, Button, Header } from '@llmops/ui';
 import {
@@ -27,12 +24,12 @@ import {
   chevronStyle,
   headerGroup,
   headerStyle,
-} from '../-components/_layout.css';
+} from './-components/_layout.css';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
-import { headerStyles } from './-components/configs.css';
-import ConfigsHeader from './-components/configs-header';
+import { headerStyles } from './configs/-components/configs.css';
+import ConfigsHeader from './configs/-components/configs-header';
 
-export const Route = createFileRoute('/_layout/_layout/configs/_configs')({
+export const Route = createFileRoute('/(app)/configs')({
   component: RouteComponent,
   staticData: {
     customData: {

@@ -11,6 +11,7 @@ export const headerStyles = style({
   position: 'sticky',
   left: '0',
   top: '0',
+  backgroundColor: colors.background,
 });
 
 export const configsContainer = style([
@@ -28,7 +29,7 @@ export const configsContainer = style([
   },
 ]);
 
-export const configTitle = style([
+export const configTitleInput = style([
   sprinkles({
     fontSize: 'base',
     borderRadius: 'xs',
@@ -38,7 +39,7 @@ export const configTitle = style([
     color: 'gray11',
   }),
   {
-    height: '100%',
+    height: spacing['xl'],
     border: `1px solid ${colors.gray4}`,
     outline: 'none',
     ':-moz-placeholder': {

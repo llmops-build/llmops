@@ -1,9 +1,7 @@
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
-import { configTab, configTabsContainer } from './-components/configs.css';
+import { configTab, configTabsContainer } from '../-components/configs.css';
 
-export const Route = createFileRoute(
-  '/_layout/_layout/configs/_configs/$id/_tabs'
-)({
+export const Route = createFileRoute('/(app)/configs/$id/_tabs')({
   component: RouteComponent,
 });
 

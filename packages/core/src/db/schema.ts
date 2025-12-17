@@ -22,6 +22,7 @@ export const configsSchema = z.object({
 // Variants table schema - stores LLM model variants
 export const variantsSchema = z.object({
   ...baseSchema,
+  name: z.string(),
   provider: z.string(),
   modelName: z.string(),
   jsonData: z.record(z.string(), z.unknown()),
@@ -87,6 +88,7 @@ export interface ConfigsTable extends BaseTable {
 
 // Variants table
 export interface VariantsTable extends BaseTable {
+  name: string;
   provider: string;
   modelName: string;
   jsonData: ColumnType<Record<string, unknown>, string, string>;
@@ -194,6 +196,7 @@ export const SCHEMA_METADATA = {
       schema: variantsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
         provider: { type: 'text' },
         modelName: { type: 'text' },
         jsonData: { type: 'jsonb' },
