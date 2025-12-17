@@ -6,21 +6,18 @@ import {
   variantPropertyLabel,
   variantPropertyValue,
   variantInlineInput,
-  variantContentArea,
-  variantTextarea,
 } from './variants.css';
 import { Combobox } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
 import { BrainCircuit, CardSim, PenLine } from 'lucide-react';
 
-const providers = [
-  'OpenAI',
-  'Anthropic',
-  'Google',
-  'Meta',
-  'Mistral',
-  'Cohere',
-];
+const providers = window.bootstrapData?.llmProviders?.map((provider) => {
+  return {
+    label: provider.name,
+    icon: provider.imageURI,
+    value: provider.key,
+  };
+});
 
 const models = [
   'gpt-4o',
@@ -71,7 +68,19 @@ const VariantForm = ({ form }: { form: UseFormReturn<{ name: string }> }) => {
         </div>
         <div className={variantPropertyValue}>
           <Combobox
-            items={providers}
+            items={providers?.map((provider) => provider.value) || []}
+            itemToString={(item) => {
+              return providers?.find((p) => p.value === item)?.label || '';
+            }}
+            itemToIcon={(item) => {
+              const src = providers?.find((p) => p.value === item)?.icon || '';
+              if (src) {
+                return (
+                  <img src={src} alt="" style={{ width: 16, height: 16 }} />
+                );
+              }
+              return null;
+            }}
             placeholder="Select provider"
             variant="inline"
             onValueChange={setSelectedProvider}

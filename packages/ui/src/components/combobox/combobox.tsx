@@ -87,6 +87,7 @@ export interface ComboboxProps<T = string> {
   multiple?: boolean;
   className?: string;
   itemToString?: (item: T | null) => string;
+  itemToIcon?: (item: T | null) => React.ReactNode;
   variant?: 'default' | 'inline';
 }
 
@@ -102,6 +103,7 @@ export interface ComboboxMultipleProps<T = string> {
   multiple: true;
   className?: string;
   itemToString?: (item: T | null) => string;
+  itemToIcon?: (item: T | null) => React.ReactNode;
 }
 
 // Single selection Combobox
@@ -116,6 +118,7 @@ export function Combobox<T = string>({
   disabled = false,
   className,
   itemToString,
+  itemToIcon,
   variant = 'default',
 }: ComboboxProps<T>) {
   const generatedId = React.useId();
@@ -195,6 +198,11 @@ export function Combobox<T = string>({
                   >
                     <CheckIcon className={styles.comboboxItemIndicatorIcon} />
                   </BaseCombobox.ItemIndicator>
+                  {itemToIcon && (
+                    <div className={styles.comboboxItemIcon}>
+                      {itemToIcon(item)}
+                    </div>
+                  )}
                   <div className={styles.comboboxItemText}>
                     {itemToString ? itemToString(item) : String(item)}
                   </div>
@@ -220,6 +228,7 @@ export function ComboboxMultiple<T = string>({
   disabled = false,
   className,
   itemToString,
+  itemToIcon,
 }: ComboboxMultipleProps<T>) {
   const generatedId = React.useId();
   const comboboxId = id || generatedId;
@@ -246,12 +255,16 @@ export function ComboboxMultiple<T = string>({
                   const displayValue = itemToString
                     ? itemToString(item)
                     : String(item);
+                  const icon = itemToIcon?.(item);
                   return (
                     <BaseCombobox.Chip
                       key={key}
                       className={styles.comboboxChip}
                       aria-label={displayValue}
                     >
+                      {icon && (
+                        <div className={styles.comboboxItemIcon}>{icon}</div>
+                      )}
                       {displayValue}
                       <BaseCombobox.ChipRemove
                         className={styles.comboboxChipRemove}
@@ -289,6 +302,8 @@ export function ComboboxMultiple<T = string>({
                 const displayValue = itemToString
                   ? itemToString(item)
                   : String(item);
+                const icon = itemToIcon?.(item);
+
                 return (
                   <BaseCombobox.Item
                     key={key}
@@ -300,6 +315,9 @@ export function ComboboxMultiple<T = string>({
                     >
                       <CheckIcon className={styles.comboboxItemIndicatorIcon} />
                     </BaseCombobox.ItemIndicator>
+                    {icon && (
+                      <div className={styles.comboboxItemIcon}>{icon}</div>
+                    )}
                     <div className={styles.comboboxItemText}>
                       {displayValue}
                     </div>

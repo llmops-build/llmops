@@ -169,9 +169,9 @@ export const comboboxItem = style({
   paddingLeft: spacing.md,
   paddingRight: spacing.lg,
   display: 'grid',
-  gap: spacing.xs,
+  gap: spacing.sm,
   alignItems: 'center',
-  gridTemplateColumns: '0.75rem 1fr',
+  gridTemplateColumns: '0.75rem auto 1fr',
   fontSize: '0.875rem',
   lineHeight: '1rem',
   color: colors.gray10,
@@ -194,7 +194,17 @@ export const comboboxItem = style({
 });
 
 export const comboboxItemText = style({
+  gridColumnStart: 3,
+});
+
+export const comboboxItemIcon = style({
   gridColumnStart: 2,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '1rem',
+  height: '1rem',
+  color: colors.gray11,
 });
 
 export const comboboxItemIndicator = style({
