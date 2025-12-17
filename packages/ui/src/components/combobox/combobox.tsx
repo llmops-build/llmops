@@ -6,7 +6,13 @@ import * as styles from './combobox.css';
 // Icons
 function CheckIcon(props: React.ComponentProps<'svg'>) {
   return (
-    <svg fill="currentcolor" width="10" height="10" viewBox="0 0 10 10" {...props}>
+    <svg
+      fill="currentcolor"
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      {...props}
+    >
       <path d="M9.1603 1.12218C9.50684 1.34873 9.60427 1.81354 9.37792 2.16038L5.13603 8.66012C5.01614 8.8438 4.82192 8.96576 4.60451 8.99384C4.3871 9.02194 4.1683 8.95335 4.00574 8.80615L1.24664 6.30769C0.939709 6.02975 0.916013 5.55541 1.19372 5.24822C1.47142 4.94102 1.94536 4.91731 2.2523 5.19524L4.36085 7.10461L8.12299 1.33999C8.34934 0.993152 8.81376 0.895638 9.1603 1.12218Z" />
     </svg>
   );
@@ -81,6 +87,7 @@ export interface ComboboxProps<T = string> {
   multiple?: boolean;
   className?: string;
   itemToString?: (item: T | null) => string;
+  variant?: 'default' | 'inline';
 }
 
 export interface ComboboxMultipleProps<T = string> {
@@ -109,9 +116,21 @@ export function Combobox<T = string>({
   disabled = false,
   className,
   itemToString,
+  variant = 'default',
 }: ComboboxProps<T>) {
   const generatedId = React.useId();
   const comboboxId = id || generatedId;
+
+  const isInline = variant === 'inline';
+  const labelClass = isInline
+    ? styles.comboboxLabelInline
+    : styles.comboboxLabel;
+  const wrapperClass = isInline
+    ? styles.comboboxInputWrapperInline
+    : styles.comboboxInputWrapper;
+  const inputClass = isInline
+    ? styles.comboboxInputInline
+    : styles.comboboxInput;
 
   return (
     <BaseCombobox.Root
@@ -122,13 +141,13 @@ export function Combobox<T = string>({
       disabled={disabled}
       itemToStringLabel={itemToString}
     >
-      <div className={clsx(styles.comboboxLabel, className)}>
+      <div className={clsx(labelClass, className)}>
         {label && <label htmlFor={comboboxId}>{label}</label>}
-        <div className={styles.comboboxInputWrapper}>
+        <div className={wrapperClass}>
           <BaseCombobox.Input
             placeholder={placeholder}
             id={comboboxId}
-            className={styles.comboboxInput}
+            className={inputClass}
           />
           <div className={styles.comboboxActionButtons}>
             <BaseCombobox.Clear
@@ -137,7 +156,10 @@ export function Combobox<T = string>({
             >
               <ClearIcon className={styles.comboboxIcon} />
             </BaseCombobox.Clear>
-            <BaseCombobox.Trigger className={styles.comboboxTrigger} aria-label="Open popup">
+            <BaseCombobox.Trigger
+              className={styles.comboboxTrigger}
+              aria-label="Open popup"
+            >
               <ChevronDownIcon className={styles.comboboxIcon} />
             </BaseCombobox.Trigger>
           </div>
@@ -145,7 +167,10 @@ export function Combobox<T = string>({
       </div>
 
       <BaseCombobox.Portal>
-        <BaseCombobox.Positioner className={styles.comboboxPositioner} sideOffset={4}>
+        <BaseCombobox.Positioner
+          className={styles.comboboxPositioner}
+          sideOffset={4}
+        >
           <BaseCombobox.Popup className={styles.comboboxPopup}>
             <BaseCombobox.Empty className={styles.comboboxEmpty}>
               No items found.
@@ -157,7 +182,9 @@ export function Combobox<T = string>({
                   value={item}
                   className={styles.comboboxItem}
                 >
-                  <BaseCombobox.ItemIndicator className={styles.comboboxItemIndicator}>
+                  <BaseCombobox.ItemIndicator
+                    className={styles.comboboxItemIndicator}
+                  >
                     <CheckIcon className={styles.comboboxItemIndicatorIcon} />
                   </BaseCombobox.ItemIndicator>
                   <div className={styles.comboboxItemText}>
@@ -208,7 +235,9 @@ export function ComboboxMultiple<T = string>({
               <React.Fragment>
                 {selectedValues.map((item) => {
                   const key = itemToString ? itemToString(item) : String(item);
-                  const displayValue = itemToString ? itemToString(item) : String(item);
+                  const displayValue = itemToString
+                    ? itemToString(item)
+                    : String(item);
                   return (
                     <BaseCombobox.Chip
                       key={key}
@@ -249,13 +278,23 @@ export function ComboboxMultiple<T = string>({
             <BaseCombobox.List className={styles.comboboxList}>
               {(item: T) => {
                 const key = itemToString ? itemToString(item) : String(item);
-                const displayValue = itemToString ? itemToString(item) : String(item);
+                const displayValue = itemToString
+                  ? itemToString(item)
+                  : String(item);
                 return (
-                  <BaseCombobox.Item key={key} value={item} className={styles.comboboxItem}>
-                    <BaseCombobox.ItemIndicator className={styles.comboboxItemIndicator}>
+                  <BaseCombobox.Item
+                    key={key}
+                    value={item}
+                    className={styles.comboboxItem}
+                  >
+                    <BaseCombobox.ItemIndicator
+                      className={styles.comboboxItemIndicator}
+                    >
                       <CheckIcon className={styles.comboboxItemIndicatorIcon} />
                     </BaseCombobox.ItemIndicator>
-                    <div className={styles.comboboxItemText}>{displayValue}</div>
+                    <div className={styles.comboboxItemText}>
+                      {displayValue}
+                    </div>
                   </BaseCombobox.Item>
                 );
               }}

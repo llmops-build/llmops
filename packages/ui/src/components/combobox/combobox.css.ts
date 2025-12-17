@@ -306,3 +306,59 @@ export const comboboxGroupLabel = style({
   width: 'calc(100% - 0.5rem)',
   color: colors.gray11,
 });
+
+// Inline variant styles
+export const comboboxLabelInline = style({
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 0,
+  fontSize: '0.875rem',
+  lineHeight: '1.25rem',
+  fontWeight: 400,
+  color: colors.gray12,
+  position: 'relative',
+  maxWidth: 'none',
+});
+
+export const comboboxInputWrapperInline = style({
+  position: 'relative',
+  backgroundColor: 'transparent',
+  border: 'none',
+  borderRadius: 0,
+  selectors: {
+    '&:hover': {
+      backgroundColor: colors.gray2,
+    },
+    '&:focus-within': {
+      backgroundColor: colors.gray3,
+      borderColor: 'transparent',
+    },
+  },
+});
+
+export const comboboxInputInline = style([
+  sprinkles({
+    fontSize: 'sm',
+    borderRadius: 'xs',
+    paddingLeft: 'xs',
+    paddingRight: 'xs',
+    color: 'gray12',
+  }),
+  {
+    border: 'none',
+    backgroundColor: 'transparent',
+    height: '1.75rem',
+    outline: 'none',
+    minWidth: '8rem',
+    ':-moz-placeholder': {
+      color: colors.gray9,
+    },
+    '::-webkit-input-placeholder': {
+      color: colors.gray9,
+    },
+    '::placeholder': {
+      color: colors.gray9,
+    },
+  },
+]);
