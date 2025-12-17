@@ -1,4 +1,4 @@
-export { Button, buttonRecipe } from './button';
+export { Button } from './button';
 export type { ButtonProps } from './button';
 
 export { Breadcrumbs } from './breadcrumbs';
