@@ -18,9 +18,11 @@ import { Route as LayoutLayoutEvaluationsRouteImport } from './routes/_layout/_l
 import { Route as LayoutLayoutConfigsConfigsRouteImport } from './routes/_layout/_layout.configs/_configs'
 import { Route as LayoutLayoutConfigsConfigsIndexRouteImport } from './routes/_layout/_layout.configs/_configs.index'
 import { Route as LayoutLayoutConfigsConfigsIdRouteImport } from './routes/_layout/_layout.configs/_configs.$id'
-import { Route as LayoutLayoutConfigsConfigsIdIndexRouteImport } from './routes/_layout/_layout.configs/_configs.$id.index'
-import { Route as LayoutLayoutConfigsConfigsIdVariantsRouteImport } from './routes/_layout/_layout.configs/_configs.$id.variants'
-import { Route as LayoutLayoutConfigsConfigsIdSettingsRouteImport } from './routes/_layout/_layout.configs/_configs.$id.settings'
+import { Route as LayoutLayoutConfigsConfigsIdTabsRouteImport } from './routes/_layout/_layout.configs/_configs.$id._tabs'
+import { Route as LayoutLayoutConfigsConfigsIdTabsIndexRouteImport } from './routes/_layout/_layout.configs/_configs.$id._tabs/index'
+import { Route as LayoutLayoutConfigsConfigsIdTabsVariantsRouteImport } from './routes/_layout/_layout.configs/_configs.$id._tabs/variants'
+import { Route as LayoutLayoutConfigsConfigsIdTabsSettingsRouteImport } from './routes/_layout/_layout.configs/_configs.$id._tabs/settings'
+import { Route as LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRouteImport } from './routes/_layout/_layout.configs/_configs.$id._variants/variants.$variant'
 
 const LayoutLayoutConfigsRouteImport = createFileRoute(
   '/_layout/_layout/configs',
@@ -68,22 +70,33 @@ const LayoutLayoutConfigsConfigsIdRoute =
     path: '/$id',
     getParentRoute: () => LayoutLayoutConfigsConfigsRoute,
   } as any)
-const LayoutLayoutConfigsConfigsIdIndexRoute =
-  LayoutLayoutConfigsConfigsIdIndexRouteImport.update({
+const LayoutLayoutConfigsConfigsIdTabsRoute =
+  LayoutLayoutConfigsConfigsIdTabsRouteImport.update({
+    id: '/_tabs',
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
+  } as any)
+const LayoutLayoutConfigsConfigsIdTabsIndexRoute =
+  LayoutLayoutConfigsConfigsIdTabsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdTabsRoute,
   } as any)
-const LayoutLayoutConfigsConfigsIdVariantsRoute =
-  LayoutLayoutConfigsConfigsIdVariantsRouteImport.update({
+const LayoutLayoutConfigsConfigsIdTabsVariantsRoute =
+  LayoutLayoutConfigsConfigsIdTabsVariantsRouteImport.update({
     id: '/variants',
     path: '/variants',
-    getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdTabsRoute,
   } as any)
-const LayoutLayoutConfigsConfigsIdSettingsRoute =
-  LayoutLayoutConfigsConfigsIdSettingsRouteImport.update({
+const LayoutLayoutConfigsConfigsIdTabsSettingsRoute =
+  LayoutLayoutConfigsConfigsIdTabsSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
+    getParentRoute: () => LayoutLayoutConfigsConfigsIdTabsRoute,
+  } as any)
+const LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute =
+  LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRouteImport.update({
+    id: '/_variants/variants/$variant',
+    path: '/variants/$variant',
     getParentRoute: () => LayoutLayoutConfigsConfigsIdRoute,
   } as any)
 
@@ -92,20 +105,22 @@ export interface FileRoutesByFullPath {
   '/observability': typeof LayoutLayoutObservabilityRoute
   '/': typeof LayoutLayoutIndexRoute
   '/configs': typeof LayoutLayoutConfigsConfigsRouteWithChildren
-  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdRouteWithChildren
+  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdTabsRouteWithChildren
   '/configs/': typeof LayoutLayoutConfigsConfigsIndexRoute
-  '/configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdSettingsRoute
-  '/configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdVariantsRoute
-  '/configs/$id/': typeof LayoutLayoutConfigsConfigsIdIndexRoute
+  '/configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdTabsSettingsRoute
+  '/configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdTabsVariantsRoute
+  '/configs/$id/': typeof LayoutLayoutConfigsConfigsIdTabsIndexRoute
+  '/configs/$id/variants/$variant': typeof LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesByTo {
   '/evaluations': typeof LayoutLayoutEvaluationsRoute
   '/observability': typeof LayoutLayoutObservabilityRoute
   '/': typeof LayoutLayoutIndexRoute
   '/configs': typeof LayoutLayoutConfigsConfigsIndexRoute
-  '/configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdSettingsRoute
-  '/configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdVariantsRoute
-  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdIndexRoute
+  '/configs/$id': typeof LayoutLayoutConfigsConfigsIdTabsIndexRoute
+  '/configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdTabsSettingsRoute
+  '/configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdTabsVariantsRoute
+  '/configs/$id/variants/$variant': typeof LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,9 +132,11 @@ export interface FileRoutesById {
   '/_layout/_layout/configs/_configs': typeof LayoutLayoutConfigsConfigsRouteWithChildren
   '/_layout/_layout/configs/_configs/$id': typeof LayoutLayoutConfigsConfigsIdRouteWithChildren
   '/_layout/_layout/configs/_configs/': typeof LayoutLayoutConfigsConfigsIndexRoute
-  '/_layout/_layout/configs/_configs/$id/settings': typeof LayoutLayoutConfigsConfigsIdSettingsRoute
-  '/_layout/_layout/configs/_configs/$id/variants': typeof LayoutLayoutConfigsConfigsIdVariantsRoute
-  '/_layout/_layout/configs/_configs/$id/': typeof LayoutLayoutConfigsConfigsIdIndexRoute
+  '/_layout/_layout/configs/_configs/$id/_tabs': typeof LayoutLayoutConfigsConfigsIdTabsRouteWithChildren
+  '/_layout/_layout/configs/_configs/$id/_tabs/settings': typeof LayoutLayoutConfigsConfigsIdTabsSettingsRoute
+  '/_layout/_layout/configs/_configs/$id/_tabs/variants': typeof LayoutLayoutConfigsConfigsIdTabsVariantsRoute
+  '/_layout/_layout/configs/_configs/$id/_tabs/': typeof LayoutLayoutConfigsConfigsIdTabsIndexRoute
+  '/_layout/_layout/configs/_configs/$id/_variants/variants/$variant': typeof LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,15 +150,17 @@ export interface FileRouteTypes {
     | '/configs/$id/settings'
     | '/configs/$id/variants'
     | '/configs/$id/'
+    | '/configs/$id/variants/$variant'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/evaluations'
     | '/observability'
     | '/'
     | '/configs'
+    | '/configs/$id'
     | '/configs/$id/settings'
     | '/configs/$id/variants'
-    | '/configs/$id'
+    | '/configs/$id/variants/$variant'
   id:
     | '__root__'
     | '/_layout/_layout'
@@ -152,9 +171,11 @@ export interface FileRouteTypes {
     | '/_layout/_layout/configs/_configs'
     | '/_layout/_layout/configs/_configs/$id'
     | '/_layout/_layout/configs/_configs/'
-    | '/_layout/_layout/configs/_configs/$id/settings'
-    | '/_layout/_layout/configs/_configs/$id/variants'
-    | '/_layout/_layout/configs/_configs/$id/'
+    | '/_layout/_layout/configs/_configs/$id/_tabs'
+    | '/_layout/_layout/configs/_configs/$id/_tabs/settings'
+    | '/_layout/_layout/configs/_configs/$id/_tabs/variants'
+    | '/_layout/_layout/configs/_configs/$id/_tabs/'
+    | '/_layout/_layout/configs/_configs/$id/_variants/variants/$variant'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -219,44 +240,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdRouteImport
       parentRoute: typeof LayoutLayoutConfigsConfigsRoute
     }
-    '/_layout/_layout/configs/_configs/$id/': {
-      id: '/_layout/_layout/configs/_configs/$id/'
+    '/_layout/_layout/configs/_configs/$id/_tabs': {
+      id: '/_layout/_layout/configs/_configs/$id/_tabs'
+      path: ''
+      fullPath: '/configs/$id'
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdTabsRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+    }
+    '/_layout/_layout/configs/_configs/$id/_tabs/': {
+      id: '/_layout/_layout/configs/_configs/$id/_tabs/'
       path: '/'
       fullPath: '/configs/$id/'
-      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdIndexRouteImport
-      parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdTabsIndexRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdTabsRoute
     }
-    '/_layout/_layout/configs/_configs/$id/variants': {
-      id: '/_layout/_layout/configs/_configs/$id/variants'
+    '/_layout/_layout/configs/_configs/$id/_tabs/variants': {
+      id: '/_layout/_layout/configs/_configs/$id/_tabs/variants'
       path: '/variants'
       fullPath: '/configs/$id/variants'
-      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdVariantsRouteImport
-      parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdTabsVariantsRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdTabsRoute
     }
-    '/_layout/_layout/configs/_configs/$id/settings': {
-      id: '/_layout/_layout/configs/_configs/$id/settings'
+    '/_layout/_layout/configs/_configs/$id/_tabs/settings': {
+      id: '/_layout/_layout/configs/_configs/$id/_tabs/settings'
       path: '/settings'
       fullPath: '/configs/$id/settings'
-      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdSettingsRouteImport
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdTabsSettingsRouteImport
+      parentRoute: typeof LayoutLayoutConfigsConfigsIdTabsRoute
+    }
+    '/_layout/_layout/configs/_configs/$id/_variants/variants/$variant': {
+      id: '/_layout/_layout/configs/_configs/$id/_variants/variants/$variant'
+      path: '/variants/$variant'
+      fullPath: '/configs/$id/variants/$variant'
+      preLoaderRoute: typeof LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRouteImport
       parentRoute: typeof LayoutLayoutConfigsConfigsIdRoute
     }
   }
 }
 
+interface LayoutLayoutConfigsConfigsIdTabsRouteChildren {
+  LayoutLayoutConfigsConfigsIdTabsSettingsRoute: typeof LayoutLayoutConfigsConfigsIdTabsSettingsRoute
+  LayoutLayoutConfigsConfigsIdTabsVariantsRoute: typeof LayoutLayoutConfigsConfigsIdTabsVariantsRoute
+  LayoutLayoutConfigsConfigsIdTabsIndexRoute: typeof LayoutLayoutConfigsConfigsIdTabsIndexRoute
+}
+
+const LayoutLayoutConfigsConfigsIdTabsRouteChildren: LayoutLayoutConfigsConfigsIdTabsRouteChildren =
+  {
+    LayoutLayoutConfigsConfigsIdTabsSettingsRoute:
+      LayoutLayoutConfigsConfigsIdTabsSettingsRoute,
+    LayoutLayoutConfigsConfigsIdTabsVariantsRoute:
+      LayoutLayoutConfigsConfigsIdTabsVariantsRoute,
+    LayoutLayoutConfigsConfigsIdTabsIndexRoute:
+      LayoutLayoutConfigsConfigsIdTabsIndexRoute,
+  }
+
+const LayoutLayoutConfigsConfigsIdTabsRouteWithChildren =
+  LayoutLayoutConfigsConfigsIdTabsRoute._addFileChildren(
+    LayoutLayoutConfigsConfigsIdTabsRouteChildren,
+  )
+
 interface LayoutLayoutConfigsConfigsIdRouteChildren {
-  LayoutLayoutConfigsConfigsIdSettingsRoute: typeof LayoutLayoutConfigsConfigsIdSettingsRoute
-  LayoutLayoutConfigsConfigsIdVariantsRoute: typeof LayoutLayoutConfigsConfigsIdVariantsRoute
-  LayoutLayoutConfigsConfigsIdIndexRoute: typeof LayoutLayoutConfigsConfigsIdIndexRoute
+  LayoutLayoutConfigsConfigsIdTabsRoute: typeof LayoutLayoutConfigsConfigsIdTabsRouteWithChildren
+  LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute: typeof LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute
 }
 
 const LayoutLayoutConfigsConfigsIdRouteChildren: LayoutLayoutConfigsConfigsIdRouteChildren =
   {
-    LayoutLayoutConfigsConfigsIdSettingsRoute:
-      LayoutLayoutConfigsConfigsIdSettingsRoute,
-    LayoutLayoutConfigsConfigsIdVariantsRoute:
-      LayoutLayoutConfigsConfigsIdVariantsRoute,
-    LayoutLayoutConfigsConfigsIdIndexRoute:
-      LayoutLayoutConfigsConfigsIdIndexRoute,
+    LayoutLayoutConfigsConfigsIdTabsRoute:
+      LayoutLayoutConfigsConfigsIdTabsRouteWithChildren,
+    LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute:
+      LayoutLayoutConfigsConfigsIdVariantsVariantsVariantRoute,
   }
 
 const LayoutLayoutConfigsConfigsIdRouteWithChildren =

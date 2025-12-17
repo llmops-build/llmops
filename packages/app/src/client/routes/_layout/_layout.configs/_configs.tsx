@@ -30,6 +30,7 @@ import {
 } from '../-components/_layout.css';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { headerStyles } from './-components/configs.css';
+import ConfigsHeader from './-components/configs-header';
 
 export const Route = createFileRoute('/_layout/_layout/configs/_configs')({
   component: RouteComponent,
@@ -104,7 +105,10 @@ function RouteComponent() {
             <ConfigsDataTable />
           </div>
           <div className={clsx(workingArea, rightTile)}>
-            <Outlet />
+            <div>
+              <ConfigsHeader id={params.id as string} />
+              <Outlet />
+            </div>
           </div>
         </div>
       </div>

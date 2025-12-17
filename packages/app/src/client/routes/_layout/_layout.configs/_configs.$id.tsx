@@ -1,6 +1,4 @@
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
-import ConfigsHeader from './-components/configs-header';
-import { configTab, configTabsContainer } from './-components/configs.css';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_layout/_layout/configs/_configs/$id')({
   component: RouteComponent,
@@ -8,30 +6,10 @@ export const Route = createFileRoute('/_layout/_layout/configs/_configs/$id')({
 
 function RouteComponent() {
   const { id } = Route.useParams();
+  if (id === 'new') return null;
   return (
     <div>
-      <ConfigsHeader id={id} />
-      {id === 'new' ? null : (
-        <div>
-          <div className={configTabsContainer}>
-            <Link
-              to="/configs/$id/variants"
-              params={{ id }}
-              className={configTab()}
-            >
-              <span>Variants</span>
-            </Link>
-            <Link
-              to="/configs/$id/settings"
-              params={{ id }}
-              className={configTab()}
-            >
-              <span>Settings</span>
-            </Link>
-          </div>
-          <Outlet />
-        </div>
-      )}
+      <Outlet />
     </div>
   );
 }

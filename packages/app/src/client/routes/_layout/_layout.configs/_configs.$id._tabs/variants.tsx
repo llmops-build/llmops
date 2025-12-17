@@ -13,10 +13,10 @@ import { useVariantList } from '@client/hooks/queries/useVariantList';
 import { useRemoveVariantFromConfig } from '@client/hooks/mutations/useRemoveVariantFromConfig';
 import { Icon } from '@client/components/icons';
 import { Plus } from 'lucide-react';
-import { variantsContainer, variantsHeader } from './-components/variants.css';
+import { variantsContainer, variantsHeader } from '../-components/variants.css';
 
 export const Route = createFileRoute(
-  '/_layout/_layout/configs/_configs/$id/variants'
+  '/_layout/_layout/configs/_configs/$id/_tabs/variants'
 )({
   component: RouteComponent,
 });
