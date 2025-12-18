@@ -32,7 +32,7 @@ function RouteComponent() {
 
   const form = useForm<VariantFormData>({
     defaultValues: {
-      name: '',
+      variant_name: '',
       provider: '',
       modelName: '',
       system_prompt: '',
@@ -63,7 +63,7 @@ function RouteComponent() {
       const jsonData = variantData.jsonData as Record<string, unknown> | null;
       form.reset(
         {
-          name: variantData.name || '',
+          variant_name: variantData.name || '',
           provider: variantData.provider || '',
           modelName: variantData.modelName || '',
           system_prompt: (jsonData?.system_prompt as string) || '',
@@ -78,7 +78,7 @@ function RouteComponent() {
   }, [variantData]);
 
   const onSubmit = async (data: VariantFormData) => {
-    if (!data.name.trim() || !data.provider || !data.modelName) {
+    if (!data.variant_name.trim() || !data.provider || !data.modelName) {
       return;
     }
     try {
@@ -90,7 +90,7 @@ function RouteComponent() {
         // Create the variant and link it to the config in one call
         await createVariant.mutateAsync({
           configId,
-          name: data.name,
+          name: data.variant_name,
           provider: data.provider,
           modelName: data.modelName,
           jsonData,
@@ -99,7 +99,7 @@ function RouteComponent() {
         // Update existing variant
         await updateVariant.mutateAsync({
           id: variant,
-          name: data.name,
+          name: data.variant_name,
           provider: data.provider,
           modelName: data.modelName,
           jsonData,
@@ -118,7 +118,7 @@ function RouteComponent() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
+    <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
       <div className={variantHeader}>
         <Button
           variant="ghost"

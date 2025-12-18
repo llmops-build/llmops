@@ -27,7 +27,7 @@ const providers = window.bootstrapData?.llmProviders?.map((provider) => {
 const providerItems = providers?.map((provider) => provider.value) || [];
 
 export type VariantFormData = {
-  name: string;
+  variant_name: string;
   provider: string;
   modelName: string;
   system_prompt: string;
@@ -55,7 +55,7 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
   });
   const nameValue = useWatch({
     control,
-    name: 'name',
+    name: 'variant_name',
   });
   const systemPromptValue = useWatch({
     control,
@@ -73,22 +73,26 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
         </div>
         <div className={variantPropertyValue}>
           <input
+            title="Variant Name"
+            data-1p-ignore
+            autoComplete="off"
             value={nameValue || ''}
             onChange={(e) =>
-              setValue('name', e.target.value, {
+              setValue('variant_name', e.target.value, {
                 shouldValidate: true,
                 shouldDirty: true,
               })
             }
             placeholder="Enter variant name"
-            aria-invalid={errors.name ? 'true' : 'false'}
+            aria-invalid={errors.variant_name ? 'true' : 'false'}
             className={variantInlineInput}
+            name="variant_name"
           />
         </div>
       </div>
-      {errors.name && (
+      {errors.variant_name && (
         <span style={{ color: 'red', fontSize: '0.875rem' }}>
-          {errors.name.message}
+          {errors.variant_name.message}
         </span>
       )}
 

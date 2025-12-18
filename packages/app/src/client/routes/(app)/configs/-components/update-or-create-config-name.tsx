@@ -50,7 +50,14 @@ const CreateConfig = ({
   };
 
   return (
-    <form className={configsContainer} onBlur={handleSubmit(onSubmit)}>
+    <form
+      className={configsContainer}
+      onBlur={handleSubmit(onSubmit)}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(onSubmit)();
+      }}
+    >
       <input
         {...register('name', { required: 'Config name is required' })}
         placeholder="Config Name"
