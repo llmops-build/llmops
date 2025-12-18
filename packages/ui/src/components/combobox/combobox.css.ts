@@ -78,10 +78,11 @@ export const comboboxActionButtons = style({
   bottom: 0,
   height: '100%',
   right: spacing.xs,
-  borderRadius: spacing.xs,
   border: 'none',
   color: colors.gray11,
   padding: 0,
+  backgroundColor: colors.gray1,
+  borderRadius: spacing.xs,
 });
 
 export const comboboxTrigger = style({
@@ -344,6 +345,8 @@ export const comboboxLabelInline = style({
   color: colors.gray12,
   position: 'relative',
   maxWidth: 'none',
+  flex: 1,
+  minWidth: 0, // Allows flex item to shrink below content size
 });
 
 export const comboboxInputWrapperInline = style({
@@ -351,6 +354,10 @@ export const comboboxInputWrapperInline = style({
   backgroundColor: 'transparent',
   border: 'none',
   borderRadius: 0,
+  display: 'flex',
+  alignItems: 'center',
+  minWidth: '10rem',
+  maxWidth: '100%',
   selectors: {
     '&:hover': {
       backgroundColor: colors.gray2,
@@ -380,7 +387,6 @@ export const comboboxInputInline = style([
     fontSize: 'sm',
     borderRadius: 'xs',
     paddingLeft: 'xs',
-    paddingRight: 'xs',
     color: 'gray12',
   }),
   {
@@ -388,7 +394,12 @@ export const comboboxInputInline = style([
     backgroundColor: 'transparent',
     height: '1.75rem',
     outline: 'none',
-    minWidth: '8rem',
+    flex: 1,
+    minWidth: '6rem',
+    paddingRight: '3rem', // Make room for action buttons
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     ':-moz-placeholder': {
       color: colors.gray9,
     },
@@ -403,4 +414,27 @@ export const comboboxInputInline = style([
 
 export const comboboxInputInlineDisabled = style({
   cursor: 'not-allowed',
+});
+
+export const comboboxActionButtonsInline = style({
+  boxSizing: 'border-box',
+  position: 'absolute',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  bottom: 0,
+  height: '100%',
+  right: spacing.xs,
+  border: 'none',
+  color: colors.gray11,
+  padding: 0,
+  backgroundColor: colors.gray1,
+  borderRadius: spacing.xs,
+  opacity: 0.8,
+  transition: 'opacity 0.15s',
+  selectors: {
+    '&:hover, &:focus-within': {
+      opacity: 1,
+    },
+  },
 });

@@ -142,6 +142,9 @@ export function Combobox<T = string>({
         ? styles.comboboxInputInlineDisabled
         : styles.comboboxInputDisabled)
   );
+  const actionButtonsClass = isInline
+    ? styles.comboboxActionButtonsInline
+    : styles.comboboxActionButtons;
 
   const handleValueChange = React.useCallback(
     (newValue: T | null, event: { reason: string }) => {
@@ -170,7 +173,7 @@ export function Combobox<T = string>({
             id={comboboxId}
             className={inputClass}
           />
-          <div className={styles.comboboxActionButtons}>
+          <div className={actionButtonsClass}>
             <BaseCombobox.Clear
               className={clsx(styles.comboboxClear, 'combobox-clear')}
               aria-label="Clear selection"
