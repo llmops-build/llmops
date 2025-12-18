@@ -30,9 +30,15 @@ export type VariantFormData = {
   name: string;
   provider: string;
   modelName: string;
+  system_prompt: string;
 };
 
-const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
+type VariantFormProps = {
+  form: UseFormReturn<VariantFormData>;
+  editorKey?: string;
+};
+
+const VariantForm = ({ form, editorKey }: VariantFormProps) => {
   const {
     register,
     formState: { errors },
@@ -51,6 +57,10 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
   const nameValue = useWatch({
     control,
     name: 'name',
+  });
+  const systemPromptValue = useWatch({
+    control,
+    name: 'system_prompt',
   });
 
   const { data: models } = useProviderModels(selectedProvider);
@@ -159,7 +169,16 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
             <span>Markdown Supported</span>
           </div>
         </div>
-        <MarkdownEditor />
+        <MarkdownEditor
+          key={editorKey}
+          value={systemPromptValue}
+          onChange={(value) =>
+            setValue('system_prompt', value, {
+              shouldValidate: true,
+              shouldDirty: true,
+            })
+          }
+        />
       </div>
     </div>
   );

@@ -23,10 +23,20 @@ import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import {
+  $convertFromMarkdownString,
+  $convertToMarkdownString,
+} from '@lexical/markdown';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useEffect, useCallback } from 'react';
+import type { EditorState } from 'lexical';
 import type { JSX } from 'react/jsx-runtime';
 
 export type MarkdownEditorProps = {
   placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
 };
 
 const urlRegExp = new RegExp(
@@ -135,8 +145,44 @@ function Placeholder({ text }: { text: string }) {
   return <div className={editorPlaceholder}>{text}</div>;
 }
 
+function InitialValuePlugin({ value }: { value?: string }) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (value !== undefined) {
+      editor.update(() => {
+        $convertFromMarkdownString(value, MARKDOWN_TRANSFORMERS);
+      });
+    }
+  }, []);
+
+  return null;
+}
+
+function OnChangeMarkdownPlugin({
+  onChange,
+}: {
+  onChange?: (value: string) => void;
+}) {
+  const handleChange = useCallback(
+    (editorState: EditorState) => {
+      if (onChange) {
+        editorState.read(() => {
+          const markdown = $convertToMarkdownString(MARKDOWN_TRANSFORMERS);
+          onChange(markdown);
+        });
+      }
+    },
+    [onChange]
+  );
+
+  return <OnChangePlugin onChange={handleChange} />;
+}
+
 export function MarkdownEditor({
   placeholder = 'Write your content here...',
+  value,
+  onChange,
 }: MarkdownEditorProps) {
   const initialConfig = {
     namespace: 'MarkdownEditor',
@@ -163,6 +209,8 @@ export function MarkdownEditor({
         <HorizontalRulePlugin />
         <LexicalLinkPlugin />
         <LexicalAutoLinkPlugin />
+        <InitialValuePlugin value={value} />
+        <OnChangeMarkdownPlugin onChange={onChange} />
       </LexicalComposer>
     </div>
   );

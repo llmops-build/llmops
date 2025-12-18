@@ -12,7 +12,7 @@ import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useUpdateVariant } from '@client/hooks/mutations/useUpdateVariant';
 import { useVariantById } from '@client/hooks/queries/useVariantById';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
@@ -28,12 +28,14 @@ function RouteComponent() {
   const { data: variantData } = useVariantById(
     variant === 'new' ? '' : variant
   );
+  const [editorKey, setEditorKey] = useState<string>('new');
 
   const form = useForm<VariantFormData>({
     defaultValues: {
       name: '',
       provider: '',
       modelName: '',
+      system_prompt: '',
     },
   });
 
@@ -58,16 +60,20 @@ function RouteComponent() {
 
   useEffect(() => {
     if (variantData) {
+      const jsonData = variantData.jsonData as Record<string, unknown> | null;
       form.reset(
         {
           name: variantData.name || '',
           provider: variantData.provider || '',
           modelName: variantData.modelName || '',
+          system_prompt: (jsonData?.system_prompt as string) || '',
         },
         {
           keepDirty: false,
         }
       );
+      // Update editor key to force remount with new initial value
+      setEditorKey(variantData.id);
     }
   }, [variantData]);
 
@@ -76,6 +82,10 @@ function RouteComponent() {
       return;
     }
     try {
+      const jsonData = {
+        system_prompt: data.system_prompt,
+      };
+
       if (variant === 'new') {
         // Create the variant and link it to the config in one call
         await createVariant.mutateAsync({
@@ -83,6 +93,7 @@ function RouteComponent() {
           name: data.name,
           provider: data.provider,
           modelName: data.modelName,
+          jsonData,
         });
       } else {
         // Update existing variant
@@ -91,6 +102,7 @@ function RouteComponent() {
           name: data.name,
           provider: data.provider,
           modelName: data.modelName,
+          jsonData,
         });
       }
 
@@ -127,7 +139,7 @@ function RouteComponent() {
         </Button>
       </div>
       <div className={variantContainer}>
-        <VariantForm form={form} />
+        <VariantForm form={form} editorKey={editorKey} />
       </div>
     </form>
   );
