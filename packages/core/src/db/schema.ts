@@ -33,6 +33,7 @@ export const environmentsSchema = z.object({
   ...baseSchema,
   name: z.string(),
   slug: z.string(), // unique
+  isProd: z.boolean().default(false), // System-managed environments cannot be deleted/updated
 });
 
 // Environment secrets table schema
@@ -98,6 +99,7 @@ export interface VariantsTable extends BaseTable {
 export interface EnvironmentsTable extends BaseTable {
   name: string;
   slug: string;
+  isProd: ColumnType<boolean, boolean | undefined, boolean | undefined>;
 }
 
 // Environment secrets table
@@ -211,6 +213,7 @@ export const SCHEMA_METADATA = {
         id: { type: 'uuid', primaryKey: true },
         name: { type: 'text' },
         slug: { type: 'text', unique: true },
+        isProd: { type: 'boolean', default: false },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },

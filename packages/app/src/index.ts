@@ -9,6 +9,7 @@ import {
 import { createDatabaseFromConnection } from '@llmops/core/db';
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 import { createLLMProvidersMiddleware } from '@server/middlewares/providers';
+import { createSeedMiddleware } from '@server/middlewares/seed';
 
 const setConfigMiddleware = (
   config: ValidatedLLMOpsConfig
@@ -41,6 +42,7 @@ export const createApp = (config: LLMOpsConfig) => {
     .use('*', createEnvValidatorMiddleware())
     .use('*', setConfigMiddleware(validatedConfig))
     .use('*', createDatabaseMiddleware(validatedConfig))
+    .use('*', createSeedMiddleware())
     .use('*', createLLMProvidersMiddleware())
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);

@@ -40,7 +40,6 @@ type VariantFormProps = {
 
 const VariantForm = ({ form, editorKey }: VariantFormProps) => {
   const {
-    register,
     formState: { errors },
     setValue,
     control,
