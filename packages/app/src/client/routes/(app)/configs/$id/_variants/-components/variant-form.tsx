@@ -32,10 +32,15 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
     register,
     formState: { errors },
     setValue,
+    control,
   } = form;
   const selectedProvider = useWatch({
     control: form.control,
     name: 'provider',
+  });
+  const selectedModel = useWatch({
+    control,
+    name: 'modelName',
   });
   const { data: models } = useProviderModels(selectedProvider);
 
@@ -69,6 +74,7 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
         <div className={variantPropertyValue}>
           <Combobox
             items={providerItems}
+            value={selectedProvider}
             itemToString={(item) => {
               return providers?.find((p) => p.value === item)?.label || '';
             }}
@@ -100,6 +106,7 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
           <Combobox
             key={selectedProvider}
             items={models?.map((model) => model.id) || []}
+            value={selectedModel}
             itemToIcon={(item) => {
               const model = models?.find((m) => m.id === item);
               if (!model?.provider) return null;

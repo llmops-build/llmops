@@ -6,6 +6,9 @@ import { Icon } from '@client/components/icons';
 import { Save } from 'lucide-react';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
+import { useUpdateVariant } from '@client/hooks/mutations/useUpdateVariant';
+import { useVariantById } from '@client/hooks/queries/useVariantById';
+import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
@@ -14,15 +17,22 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  const { id: configId } = Route.useParams();
+  const { id: configId, variant } = Route.useParams();
   const navigate = useNavigate();
   const createVariant = useCreateVariant();
+  const updateVariant = useUpdateVariant();
+  const { data: variantData } = useVariantById(
+    variant === 'new' ? '' : variant
+  );
+  const { data: configVariants } = useConfigVariants(configId);
+
+  const currentVariant = configVariants?.find((v) => v.variantId === variant);
 
   const form = useForm<VariantFormData>({
     defaultValues: {
-      name: '',
-      provider: '',
-      modelName: '',
+      name: currentVariant?.name || '',
+      provider: variantData?.provider || currentVariant?.provider || '',
+      modelName: variantData?.modelName || currentVariant?.modelName || '',
     },
   });
 
@@ -31,20 +41,32 @@ function RouteComponent() {
       return;
     }
     try {
-      // Create the variant and link it to the config in one call
-      await createVariant.mutateAsync({
-        configId,
-        name: data.name,
-        provider: data.provider,
-        modelName: data.modelName,
-      });
+      if (variant === 'new') {
+        // Create the variant and link it to the config in one call
+        await createVariant.mutateAsync({
+          configId,
+          name: data.name,
+          provider: data.provider,
+          modelName: data.modelName,
+        });
+      } else {
+        // Update existing variant
+        await updateVariant.mutateAsync({
+          id: variant,
+          name: data.name,
+          provider: data.provider,
+          modelName: data.modelName,
+        });
+      }
 
+      // Reset form and navigate away
+      form.reset();
       navigate({
         to: '/configs/$id/variants',
         params: { id: configId },
       });
     } catch (error) {
-      console.error('Error creating variant:', error);
+      console.error('Error saving variant:', error);
     }
   };
 

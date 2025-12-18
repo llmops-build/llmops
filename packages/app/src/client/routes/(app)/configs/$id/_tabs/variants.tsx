@@ -9,7 +9,6 @@ import {
   Button,
 } from '@llmops/ui';
 import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
-import { useRemoveVariantFromConfig } from '@client/hooks/mutations/useRemoveVariantFromConfig';
 import { Icon } from '@client/components/icons';
 import { Plus } from 'lucide-react';
 import {
@@ -61,7 +60,19 @@ function RouteComponent() {
         <TableBody>
           {configVariants && configVariants.length > 0 ? (
             configVariants.map((variant) => (
-              <TableRow key={variant.variantId}>
+              <TableRow
+                key={variant.variantId}
+                interactive={true}
+                onClick={() =>
+                  navigate({
+                    to: '/configs/$id/variants/$variant',
+                    params: {
+                      id: configId,
+                      variant: variant.variantId,
+                    },
+                  })
+                }
+              >
                 <TableCell>{variant.name || 'Unnamed Variant'}</TableCell>
                 <TableCell>{variant.provider || 'Unknown'}</TableCell>
                 <TableCell>{variant.modelName || 'Unknown'}</TableCell>
