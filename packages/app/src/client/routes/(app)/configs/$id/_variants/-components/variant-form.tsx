@@ -34,6 +34,7 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
     setValue,
     control,
   } = form;
+
   const selectedProvider = useWatch({
     control: form.control,
     name: 'provider',
@@ -42,6 +43,11 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
     control,
     name: 'modelName',
   });
+  const nameValue = useWatch({
+    control,
+    name: 'name',
+  });
+
   const { data: models } = useProviderModels(selectedProvider);
 
   return (
@@ -53,7 +59,13 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
         </div>
         <div className={variantPropertyValue}>
           <input
-            {...register('name', { required: 'Variant name is required' })}
+            value={nameValue || ''}
+            onChange={(e) =>
+              setValue('name', e.target.value, {
+                shouldValidate: true,
+                shouldDirty: true,
+              })
+            }
             placeholder="Enter variant name"
             aria-invalid={errors.name ? 'true' : 'false'}
             className={variantInlineInput}

@@ -43,7 +43,7 @@ export const variantPropertyRow = style({
 
 export const variantPropertyLabel = style({
   fontSize: '0.875rem',
-  color: colors.gray11,
+  color: colors.gray9,
   fontWeight: 400,
   display: 'flex',
   alignItems: 'center',

@@ -13,6 +13,7 @@ export const useVariantById = (id: string) => {
       const result = await response.json();
       return ('data' in result ? result.data : null) as {
         id: string;
+        name: string;
         provider: string;
         modelName: string;
         jsonData: Record<string, unknown>;

@@ -1,5 +1,9 @@
 import { Button } from '@llmops/ui';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  useBlocker,
+  useNavigate,
+} from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { variantContainer, variantHeader } from '../-components/variants.css';
 import { Icon } from '@client/components/icons';
@@ -8,7 +12,7 @@ import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useUpdateVariant } from '@client/hooks/mutations/useUpdateVariant';
 import { useVariantById } from '@client/hooks/queries/useVariantById';
-import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
+import { useEffect } from 'react';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
@@ -24,17 +28,48 @@ function RouteComponent() {
   const { data: variantData } = useVariantById(
     variant === 'new' ? '' : variant
   );
-  const { data: configVariants } = useConfigVariants(configId);
-
-  const currentVariant = configVariants?.find((v) => v.variantId === variant);
 
   const form = useForm<VariantFormData>({
     defaultValues: {
-      name: currentVariant?.name || '',
-      provider: variantData?.provider || currentVariant?.provider || '',
-      modelName: variantData?.modelName || currentVariant?.modelName || '',
+      name: '',
+      provider: '',
+      modelName: '',
     },
   });
+
+  const isDirty = form.formState.isDirty;
+  const isSaving = createVariant.isPending || updateVariant.isPending;
+
+  useBlocker({
+    shouldBlockFn: () => {
+      console.log(isDirty);
+      if (isSaving) {
+        return false;
+      }
+      if (isDirty) {
+        const shouldLeave = confirm(
+          'You have unsaved changes. Are you sure you want to move away from the form?'
+        );
+        return !shouldLeave;
+      }
+      return false;
+    },
+  });
+
+  useEffect(() => {
+    if (variantData) {
+      form.reset(
+        {
+          name: variantData.name || '',
+          provider: variantData.provider || '',
+          modelName: variantData.modelName || '',
+        },
+        {
+          keepDirty: false,
+        }
+      );
+    }
+  }, [variantData]);
 
   const onSubmit = async (data: VariantFormData) => {
     if (!data.name.trim() || !data.provider || !data.modelName) {
