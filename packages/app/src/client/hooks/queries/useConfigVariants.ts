@@ -13,6 +13,7 @@ export const useConfigVariants = (configId: string) => {
       const result = await response.json();
       return ('data' in result ? result.data : []) as {
         id: string;
+        name: string;
         configId: string;
         variantId: string;
         createdAt: string;

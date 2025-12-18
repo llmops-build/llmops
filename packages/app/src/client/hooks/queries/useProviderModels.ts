@@ -34,5 +34,6 @@ export const useProviderModels = (providerId: string | null | undefined) => {
       return [] as ModelInfo[];
     },
     enabled: isEnabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

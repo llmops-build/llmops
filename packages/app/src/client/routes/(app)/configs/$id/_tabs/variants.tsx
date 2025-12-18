@@ -25,14 +25,7 @@ function RouteComponent() {
   const { id: configId } = Route.useParams();
   const { data: configVariants, isLoading: loadingConfigVariants } =
     useConfigVariants(configId);
-  const removeVariant = useRemoveVariantFromConfig();
   const navigate = useNavigate();
-
-  const handleDelete = (variantId: string) => {
-    if (confirm('Are you sure you want to remove this variant?')) {
-      removeVariant.mutate({ configId, variantId });
-    }
-  };
 
   if (loadingConfigVariants) {
     return <div>Loading variants...</div>;
@@ -60,32 +53,18 @@ function RouteComponent() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHeaderCell>Model</TableHeaderCell>
+            <TableHeaderCell>Name</TableHeaderCell>
             <TableHeaderCell>Provider</TableHeaderCell>
-            <TableHeaderCell>Configuration</TableHeaderCell>
-            <TableHeaderCell>Actions</TableHeaderCell>
+            <TableHeaderCell>Model</TableHeaderCell>
           </TableRow>
         </TableHeader>
         <TableBody>
           {configVariants && configVariants.length > 0 ? (
             configVariants.map((variant) => (
-              <TableRow key={variant.id}>
-                <TableCell>{variant.modelName || 'Unknown'}</TableCell>
+              <TableRow key={variant.variantId}>
+                <TableCell>{variant.name || 'Unnamed Variant'}</TableCell>
                 <TableCell>{variant.provider || 'Unknown'}</TableCell>
-                <TableCell>
-                  {variant.jsonData
-                    ? Object.entries(variant.jsonData)
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join(', ')
-                    : '-'}
-                </TableCell>
-                <TableCell>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button onClick={() => handleDelete(variant.variantId)}>
-                      Remove
-                    </Button>
-                  </div>
-                </TableCell>
+                <TableCell>{variant.modelName || 'Unknown'}</TableCell>
               </TableRow>
             ))
           ) : (

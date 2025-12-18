@@ -208,6 +208,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         .leftJoin('variants', 'config_variants.variantId', 'variants.id')
         .select([
           'config_variants.id',
+          'variants.name',
           'config_variants.configId',
           'config_variants.variantId',
           'config_variants.createdAt',
