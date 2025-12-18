@@ -5,11 +5,16 @@ import {
   variantPropertyLabel,
   variantPropertyValue,
   variantInlineInput,
+  variantPropertyColumn,
+  markdownLabelInfo,
 } from './variants.css';
 import { Combobox } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
 import { BrainCircuit, CardSim, PenLine } from 'lucide-react';
 import { useProviderModels } from '@client/hooks/queries/useProviderModels';
+import MarkdownEditor from './editor';
+import Markdown from '@client/components/icons/markdown';
+// import MarkdownIcon from '@/client/icons/markdown';
 
 const providers = window.bootstrapData?.llmProviders?.map((provider) => {
   return {
@@ -145,6 +150,16 @@ const VariantForm = ({ form }: { form: UseFormReturn<VariantFormData> }) => {
             onValueChange={(value) => setValue('modelName', value || '')}
           />
         </div>
+      </div>
+      <div className={variantPropertyColumn}>
+        <div className={variantPropertyLabel}>
+          <span>System</span>
+          <div className={markdownLabelInfo}>
+            <Markdown width={14} height={14} />
+            <span>Markdown Supported</span>
+          </div>
+        </div>
+        <MarkdownEditor />
       </div>
     </div>
   );

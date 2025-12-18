@@ -32,6 +32,12 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.5",
+    "@lexical/code": "^0.39.0",
+    "@lexical/link": "^0.39.0",
+    "@lexical/list": "^0.39.0",
+    "@lexical/markdown": "^0.39.0",
+    "@lexical/react": "^0.39.0",
+    "@lexical/rich-text": "^0.39.0",
     "@llmops/core": "workspace:*",
     "@llmops/ui": "workspace:*",
     "@rollup/plugin-url": "^8.0.2",
@@ -49,6 +55,7 @@
     "hono": "^4.10.7",
     "jotai": "^2.15.2",
     "ky": "^1.14.0",
+    "lexical": "^0.39.0",
     "lucide-react": "^0.556.0",
     "motion": "^12.23.25",
     "react-hook-form": "^7.68.0"
@@ -69,6 +76,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.2.3",
     "pg": "^8.16.3",
-    "vite": "^7.2.6"
+    "vite": "^7.2.6",
+    "vite-plugin-svgr": "^4.5.0"
   }
 }

@@ -41,13 +41,33 @@ export const variantPropertyRow = style({
   gap: spacing.md,
 });
 
+export const variantPropertyColumn = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'stretch',
+  paddingTop: spacing.xs,
+  paddingBottom: spacing.xs,
+  gap: spacing.md,
+  marginTop: spacing.md,
+});
+
 export const variantPropertyLabel = style({
   fontSize: '0.875rem',
   color: colors.gray9,
   fontWeight: 400,
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: spacing.sm,
+});
+
+export const markdownLabelInfo = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  color: colors.gray8,
+  fontSize: '0.75rem',
+  lineHeight: '0.875rem',
 });
 
 export const variantPropertyValue = style({
@@ -92,34 +112,3 @@ export const variantContentArea = style({
   marginTop: spacing.lg,
   padding: spacing.md,
 });
-
-export const variantTextarea = style([
-  sprinkles({
-    fontSize: 'sm',
-    borderRadius: 'xs',
-    padding: 'md',
-    color: 'gray12',
-  }),
-  {
-    border: `1px solid ${colors.gray4}`,
-    backgroundColor: colors.gray1,
-    outline: 'none',
-    minHeight: '20rem',
-    width: '100%',
-    fontFamily: 'inherit',
-    lineHeight: '1.5',
-    resize: 'vertical',
-    ':-moz-placeholder': {
-      color: colors.gray9,
-    },
-    '::-webkit-input-placeholder': {
-      color: colors.gray9,
-    },
-    '::placeholder': {
-      color: colors.gray9,
-    },
-    ':focus': {
-      borderColor: colors.accent9,
-    },
-  },
-]);
