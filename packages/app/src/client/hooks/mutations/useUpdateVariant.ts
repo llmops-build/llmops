@@ -2,7 +2,6 @@ import { hc } from '@client/lib/hc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKey } from '../queries/useVariantList';
 import { getQueryKey } from '../queries/useVariantById';
-import { getQueryKey as getConfigVariantsQueryKey } from '../queries/useConfigVariants';
 
 export const useUpdateVariant = () => {
   const queryClient = useQueryClient();
