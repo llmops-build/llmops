@@ -8,29 +8,26 @@ import {
   variantPropertyColumn,
   markdownLabelInfo,
 } from './variants.css';
-import { Combobox } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import { BrainCircuit, CardSim, PenLine } from 'lucide-react';
-import { useProviderModels } from '@client/hooks/queries/useProviderModels';
+import { BrainCircuit, PenLine } from 'lucide-react';
 import MarkdownEditor from './editor';
 import Markdown from '@client/components/icons/markdown';
-// import MarkdownIcon from '@/client/icons/markdown';
-
-const providers = window.bootstrapData?.llmProviders?.map((provider) => {
-  return {
-    label: provider.name,
-    icon: provider.imageURI,
-    value: provider.key,
-  };
-});
-
-const providerItems = providers?.map((provider) => provider.value) || [];
+import {
+  ModelSettingsPopover,
+  type ModelSettings,
+} from './model-settings-popover';
 
 export type VariantFormData = {
   variant_name: string;
   provider: string;
   modelName: string;
   system_prompt: string;
+  // Model parameters
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
 };
 
 type VariantFormProps = {
@@ -61,8 +58,81 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
     control,
     name: 'system_prompt',
   });
+  const temperature = useWatch({
+    control,
+    name: 'temperature',
+  });
+  const maxTokens = useWatch({
+    control,
+    name: 'maxTokens',
+  });
+  const topP = useWatch({
+    control,
+    name: 'topP',
+  });
+  const frequencyPenalty = useWatch({
+    control,
+    name: 'frequencyPenalty',
+  });
+  const presencePenalty = useWatch({
+    control,
+    name: 'presencePenalty',
+  });
 
-  const { data: models } = useProviderModels(selectedProvider);
+  const modelSettings: ModelSettings = {
+    provider: selectedProvider || '',
+    modelName: selectedModel || '',
+    temperature,
+    maxTokens,
+    topP,
+    frequencyPenalty,
+    presencePenalty,
+  };
+
+  const handleModelSettingsChange = (settings: ModelSettings) => {
+    if (settings.provider !== selectedProvider) {
+      setValue('provider', settings.provider, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (settings.modelName !== selectedModel) {
+      setValue('modelName', settings.modelName, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (settings.temperature !== temperature) {
+      setValue('temperature', settings.temperature, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (settings.maxTokens !== maxTokens) {
+      setValue('maxTokens', settings.maxTokens, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (settings.topP !== topP) {
+      setValue('topP', settings.topP, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (settings.frequencyPenalty !== frequencyPenalty) {
+      setValue('frequencyPenalty', settings.frequencyPenalty, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    if (settings.presencePenalty !== presencePenalty) {
+      setValue('presencePenalty', settings.presencePenalty, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  };
 
   return (
     <div className={variantFormContainer}>
@@ -98,72 +168,17 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
 
       <div className={variantPropertyRow}>
         <div className={variantPropertyLabel}>
-          <Icon icon={CardSim} size="xs" />
-          Provider
-        </div>
-        <div className={variantPropertyValue}>
-          <Combobox
-            items={providerItems}
-            value={selectedProvider}
-            itemToString={(item) => {
-              return providers?.find((p) => p.value === item)?.label || '';
-            }}
-            itemToIcon={(item) => {
-              const src = providers?.find((p) => p.value === item)?.icon || '';
-              if (src) {
-                return (
-                  <img src={src} alt="" style={{ width: 16, height: 16 }} />
-                );
-              }
-              return null;
-            }}
-            placeholder="Select provider"
-            variant="inline"
-            onValueChange={(value) => {
-              setValue('provider', value || '');
-              setValue('modelName', '');
-            }}
-          />
-        </div>
-      </div>
-
-      <div className={variantPropertyRow}>
-        <div className={variantPropertyLabel}>
           <Icon icon={BrainCircuit} size="xs" />
           <span>Model</span>
         </div>
         <div className={variantPropertyValue}>
-          <Combobox
-            key={selectedProvider}
-            items={models?.map((model) => model.id) || []}
-            value={selectedModel}
-            itemToIcon={(item) => {
-              const model = models?.find((m) => m.id === item);
-              if (!model?.provider) return null;
-              return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 16,
-                    height: 16,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    backgroundColor: 'var(--color-bg-tertiary)',
-                    borderRadius: 4,
-                  }}
-                >
-                  {model.provider.name.charAt(0).toUpperCase()}
-                </span>
-              );
-            }}
-            placeholder="Select model"
-            variant="inline"
-            onValueChange={(value) => setValue('modelName', value || '')}
+          <ModelSettingsPopover
+            value={modelSettings}
+            onChange={handleModelSettingsChange}
           />
         </div>
       </div>
+
       <div className={variantPropertyColumn}>
         <div className={variantPropertyLabel}>
           <span>System</span>

@@ -122,6 +122,7 @@ export const comboboxIcon = style({
 
 export const comboboxPositioner = style({
   outline: 0,
+  zIndex: 200, // Higher than popover (100) to ensure dropdown appears above
 });
 
 export const comboboxPopup = style({

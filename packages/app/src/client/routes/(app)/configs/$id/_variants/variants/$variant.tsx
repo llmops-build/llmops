@@ -36,6 +36,11 @@ function RouteComponent() {
       provider: '',
       modelName: '',
       system_prompt: '',
+      temperature: undefined,
+      maxTokens: undefined,
+      topP: undefined,
+      frequencyPenalty: undefined,
+      presencePenalty: undefined,
     },
   });
 
@@ -67,6 +72,11 @@ function RouteComponent() {
           provider: variantData.provider || '',
           modelName: variantData.modelName || '',
           system_prompt: (jsonData?.system_prompt as string) || '',
+          temperature: jsonData?.temperature as number | undefined,
+          maxTokens: jsonData?.max_tokens as number | undefined,
+          topP: jsonData?.top_p as number | undefined,
+          frequencyPenalty: jsonData?.frequency_penalty as number | undefined,
+          presencePenalty: jsonData?.presence_penalty as number | undefined,
         },
         {
           keepDirty: false,
@@ -82,9 +92,26 @@ function RouteComponent() {
       return;
     }
     try {
-      const jsonData = {
+      const jsonData: Record<string, unknown> = {
         system_prompt: data.system_prompt,
       };
+
+      // Only include model parameters if they have been set
+      if (data.temperature !== undefined) {
+        jsonData.temperature = data.temperature;
+      }
+      if (data.maxTokens !== undefined) {
+        jsonData.max_tokens = data.maxTokens;
+      }
+      if (data.topP !== undefined) {
+        jsonData.top_p = data.topP;
+      }
+      if (data.frequencyPenalty !== undefined) {
+        jsonData.frequency_penalty = data.frequencyPenalty;
+      }
+      if (data.presencePenalty !== undefined) {
+        jsonData.presence_penalty = data.presencePenalty;
+      }
 
       if (variant === 'new') {
         // Create the variant and link it to the config in one call

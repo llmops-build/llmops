@@ -1,8 +1,4 @@
-import {
-  createThemeContract,
-  createTheme,
-  createGlobalTheme,
-} from '@vanilla-extract/css';
+import { createThemeContract, createTheme } from '@vanilla-extract/css';
 
 export const colors = createThemeContract({
   accent1: null,

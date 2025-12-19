@@ -42,3 +42,24 @@ export type {
 
 export { Combobox, ComboboxMultiple, BaseCombobox } from './combobox';
 export type { ComboboxProps, ComboboxMultipleProps } from './combobox';
+
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverTitle,
+  PopoverDescription,
+  PopoverClose,
+  BasePopover,
+} from './popover';
+export type {
+  PopoverProps,
+  PopoverTriggerProps,
+  PopoverContentProps,
+  PopoverTitleProps,
+  PopoverDescriptionProps,
+  PopoverCloseProps,
+} from './popover';
+
+export { Slider, BaseSlider } from './slider';
+export type { SliderProps } from './slider';
