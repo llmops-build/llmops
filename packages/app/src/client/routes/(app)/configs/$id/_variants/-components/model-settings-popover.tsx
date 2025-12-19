@@ -1,17 +1,30 @@
-import { Popover, PopoverTrigger, PopoverContent, Slider } from '@llmops/ui';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Slider,
+  Combobox,
+} from '@llmops/ui';
 import { Menu } from '@base-ui/react/menu';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useProviderModels } from '@client/hooks/queries/useProviderModels';
 import * as styles from './model-settings.css';
 import { configTitleInput } from '../../../-components/configs.css';
 
-const providers = window.bootstrapData?.llmProviders?.map((provider) => {
-  return {
-    label: provider.name,
-    icon: provider.imageURI,
-    value: provider.key,
-  };
-});
+type ProviderItem = {
+  label: string;
+  icon?: string;
+  value: string;
+};
+
+const providers: ProviderItem[] | undefined =
+  window.bootstrapData?.llmProviders?.map((provider) => {
+    return {
+      label: provider.name,
+      icon: provider.imageURI,
+      value: provider.key,
+    };
+  });
 
 export type ModelSettings = {
   provider: string;
@@ -32,25 +45,33 @@ function ChevronIcon({ className }: { className?: string }) {
   return <ChevronDown className={className} />;
 }
 
-type ProviderSubmenuProps = {
-  provider: { label: string; icon?: string; value: string };
-  selectedProvider: string;
+// Helper to extract provider from model ID (e.g., "anthropic/claude-3" -> "Anthropic")
+function getModelProvider(modelId: string): string {
+  const parts = modelId.split('/');
+  if (parts.length > 1) {
+    // Capitalize first letter
+    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  }
+  return 'Other';
+}
+
+type ModelMenuProps = {
+  models: Array<{ id: string; name: string }> | undefined;
+  isLoading: boolean;
   selectedModelName: string;
-  onSelect: (provider: string, modelName: string) => void;
+  onSelect: (modelName: string) => void;
 };
 
-function ProviderSubmenu({
-  provider,
-  selectedProvider,
+function ModelMenu({
+  models,
+  isLoading,
   selectedModelName,
   onSelect,
-}: ProviderSubmenuProps) {
-  const { data: models, isLoading } = useProviderModels(provider.value);
-
-  // Group models by their provider.name (e.g., "Anthropic", "OpenAI")
+}: ModelMenuProps) {
+  // Group models by provider extracted from model ID
   const modelsByProvider = models?.reduce(
     (acc, model) => {
-      const providerName = model.provider?.name || 'Other';
+      const providerName = getModelProvider(model.id);
       if (!acc[providerName]) {
         acc[providerName] = [];
       }
@@ -64,27 +85,21 @@ function ProviderSubmenu({
     ? Object.keys(modelsByProvider).sort()
     : [];
 
+  // Get display name for selected model
+  const selectedModel = models?.find((m) => m.id === selectedModelName);
+  const displayName =
+    selectedModel?.name || selectedModelName || 'Select a model';
+
   return (
-    <Menu.SubmenuRoot>
-      <Menu.SubmenuTrigger
-        className={styles.menuSubmenuTrigger}
-        openOnHover
-        delay={100}
-      >
-        {provider.icon ? (
-          <img src={provider.icon} alt="" className={styles.menuItemIcon} />
-        ) : (
-          <span className={styles.modelSettingsTriggerIcon}>
-            {provider.label.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <span className={styles.menuItemText}>{provider.label}</span>
-        <ChevronRight className={styles.menuChevron} />
-      </Menu.SubmenuTrigger>
+    <Menu.Root modal={false}>
+      <Menu.Trigger className={styles.modelMenuTrigger}>
+        <span className={styles.menuItemText}>{displayName}</span>
+        <ChevronDown className={styles.menuChevron} />
+      </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner
           className={styles.menuPositioner}
-          side="right"
+          side="bottom"
           sideOffset={4}
           align="start"
         >
@@ -94,40 +109,51 @@ function ProviderSubmenu({
             ) : providerNames.length === 0 ? (
               <div className={styles.menuEmpty}>No models available</div>
             ) : (
-              providerNames.map((providerName, index) => (
-                <Menu.Group key={providerName}>
-                  {index > 0 && (
-                    <Menu.Separator className={styles.menuSeparator} />
-                  )}
-                  <Menu.GroupLabel className={styles.menuGroupLabel}>
-                    {providerName}
-                  </Menu.GroupLabel>
-                  {modelsByProvider?.[providerName]?.map((model) => {
-                    const isSelected =
-                      selectedProvider === provider.value &&
-                      selectedModelName === model.id;
-                    return (
-                      <Menu.Item
-                        key={model.id}
-                        className={styles.menuItem}
-                        onClick={() => onSelect(provider.value, model.id)}
-                      >
-                        <span className={styles.menuItemText}>
-                          {model.name || model.id}
-                        </span>
-                        {isSelected && (
-                          <Check className={styles.menuCheckIcon} />
-                        )}
-                      </Menu.Item>
-                    );
-                  })}
-                </Menu.Group>
+              providerNames.map((providerName) => (
+                <Menu.SubmenuRoot key={providerName}>
+                  <Menu.SubmenuTrigger
+                    className={styles.menuSubmenuTrigger}
+                    openOnHover
+                    delay={100}
+                  >
+                    <span className={styles.menuItemText}>{providerName}</span>
+                    <ChevronRight className={styles.menuChevron} />
+                  </Menu.SubmenuTrigger>
+                  <Menu.Portal>
+                    <Menu.Positioner
+                      className={styles.menuPositioner}
+                      side="right"
+                      sideOffset={4}
+                      align="start"
+                    >
+                      <Menu.Popup className={styles.menuPopup}>
+                        {modelsByProvider?.[providerName]?.map((model) => {
+                          const isSelected = selectedModelName === model.id;
+                          return (
+                            <Menu.Item
+                              key={model.id}
+                              className={styles.menuItem}
+                              onClick={() => onSelect(model.id)}
+                            >
+                              <span className={styles.menuItemText}>
+                                {model.name || model.id}
+                              </span>
+                              {isSelected && (
+                                <Check className={styles.menuCheckIcon} />
+                              )}
+                            </Menu.Item>
+                          );
+                        })}
+                      </Menu.Popup>
+                    </Menu.Positioner>
+                  </Menu.Portal>
+                </Menu.SubmenuRoot>
               ))
             )}
           </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>
-    </Menu.SubmenuRoot>
+    </Menu.Root>
   );
 }
 
@@ -135,10 +161,10 @@ export function ModelSettingsPopover({
   value,
   onChange,
 }: ModelSettingsPopoverProps) {
-  const { data: models } = useProviderModels(value.provider);
+  const { data: models, isLoading } = useProviderModels(value.provider);
 
-  const selectedModel = models?.find((m) => m.id === value.modelName);
-  const selectedProvider = providers?.find((p) => p.value === value.provider);
+  const selectedProviderItem =
+    providers?.find((p) => p.value === value.provider) || null;
 
   const displayText = value.modelName
     ? value.modelName
@@ -146,10 +172,19 @@ export function ModelSettingsPopover({
       ? 'Select model'
       : 'Select model';
 
-  const handleModelSelect = (provider: string, modelName: string) => {
+  const handleProviderChange = (providerItem: ProviderItem | null) => {
+    if (providerItem) {
+      onChange({
+        ...value,
+        provider: providerItem.value,
+        modelName: '', // Reset model when provider changes
+      });
+    }
+  };
+
+  const handleModelSelect = (modelName: string) => {
     onChange({
       ...value,
-      provider,
       modelName,
     });
   };
@@ -167,13 +202,9 @@ export function ModelSettingsPopover({
   return (
     <Popover>
       <PopoverTrigger className={styles.modelSettingsTrigger}>
-        {selectedModel?.provider ? (
-          <span className={styles.modelSettingsTriggerIcon}>
-            {selectedModel.provider.name.charAt(0).toUpperCase()}
-          </span>
-        ) : selectedProvider?.icon ? (
+        {selectedProviderItem?.icon ? (
           <img
-            src={selectedProvider.icon}
+            src={selectedProviderItem.icon}
             alt=""
             style={{ width: 16, height: 16, flexShrink: 0 }}
           />
@@ -194,50 +225,49 @@ export function ModelSettingsPopover({
 
       <PopoverContent side="bottom" align="start" sideOffset={4}>
         <div className={styles.modelSettingsPopupContent}>
-          {/* Multi-level Model Selection */}
+          {/* Provider Selection */}
           <div className={styles.modelSettingsSection}>
-            <span className={styles.modelSettingsSectionTitle}>Model</span>
-            <Menu.Root modal={false}>
-              <Menu.Trigger className={styles.modelMenuTrigger}>
-                {selectedModel?.provider ? (
-                  <span className={styles.modelSettingsTriggerIcon}>
-                    {selectedModel.provider.name.charAt(0).toUpperCase()}
-                  </span>
-                ) : selectedProvider?.icon ? (
+            <span className={styles.modelSettingsSectionTitle}>Provider</span>
+            <Combobox<ProviderItem>
+              items={providers || []}
+              value={selectedProviderItem}
+              onValueChange={handleProviderChange}
+              itemToString={(item) => item?.label || ''}
+              itemToIcon={(item) =>
+                item?.icon ? (
                   <img
-                    src={selectedProvider.icon}
+                    src={item.icon}
                     alt=""
-                    className={styles.menuItemIcon}
+                    style={{ width: 16, height: 16 }}
                   />
                 ) : (
-                  <span className={styles.modelSettingsTriggerIcon}>?</span>
-                )}
-                <span className={styles.menuItemText}>
-                  {value.modelName || 'Select a model'}
-                </span>
-                <ChevronDown className={styles.menuChevron} />
-              </Menu.Trigger>
-              <Menu.Portal>
-                <Menu.Positioner
-                  className={styles.menuPositioner}
-                  side="bottom"
-                  sideOffset={4}
-                  align="start"
-                >
-                  <Menu.Popup className={styles.menuPopup}>
-                    {providers?.map((provider) => (
-                      <ProviderSubmenu
-                        key={provider.value}
-                        provider={provider}
-                        selectedProvider={value.provider}
-                        selectedModelName={value.modelName}
-                        onSelect={handleModelSelect}
-                      />
-                    ))}
-                  </Menu.Popup>
-                </Menu.Positioner>
-              </Menu.Portal>
-            </Menu.Root>
+                  <span className={styles.modelSettingsTriggerIcon}>
+                    {item?.label?.charAt(0).toUpperCase() || '?'}
+                  </span>
+                )
+              }
+              placeholder="Select provider"
+            />
+          </div>
+
+          {/* Model Selection */}
+          <div className={styles.modelSettingsSection}>
+            <span className={styles.modelSettingsSectionTitle}>Model</span>
+            {value.provider ? (
+              <ModelMenu
+                models={models}
+                isLoading={isLoading}
+                selectedModelName={value.modelName}
+                onSelect={handleModelSelect}
+              />
+            ) : (
+              <div
+                className={styles.modelMenuTrigger}
+                style={{ color: 'var(--gray9)' }}
+              >
+                Select a provider first
+              </div>
+            )}
           </div>
 
           {/* Model Parameters */}
