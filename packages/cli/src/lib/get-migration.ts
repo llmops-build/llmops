@@ -19,7 +19,8 @@ const mysqlMap = {
 const sqliteMap = {
   text: ['TEXT'],
   date: ['DATE', 'INTEGER'],
-  integer: ['INTEGER', 'BOOLEAN'],
+  integer: ['INTEGER'],
+  boolean: ['INTEGER', 'BOOLEAN', 'TEXT'],
   jsonb: ['TEXT'],
 };
 
@@ -218,6 +219,18 @@ export async function getMigrations(
         mysql: 'json',
         sqlite: 'text',
         mssql: 'varchar(8000)',
+      },
+      boolean: {
+        postgres: 'boolean',
+        mysql: 'boolean',
+        sqlite: 'integer',
+        mssql: sql`bit`,
+      },
+      integer: {
+        postgres: 'integer',
+        mysql: 'integer',
+        sqlite: 'integer',
+        mssql: 'integer',
       },
     };
 
