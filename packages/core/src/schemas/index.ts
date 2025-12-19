@@ -10,5 +10,5 @@ export type {
   EnvironmentsTable,
   EnvironmentSecretsTable,
   ConfigVariantsTable,
-  EnvironmentConfigVariantsTable,
+  TargetingRulesTable,
 } from '../db/schema';

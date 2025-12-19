@@ -23,6 +23,13 @@ function RouteComponent() {
           <span>Variants</span>
         </Link>
         <Link
+          to="/configs/$id/targeting"
+          params={{ id }}
+          className={configTab()}
+        >
+          <span>Targeting</span>
+        </Link>
+        <Link
           to="/configs/$id/settings"
           params={{ id }}
           className={configTab()}

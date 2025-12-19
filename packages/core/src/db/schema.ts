@@ -51,11 +51,16 @@ export const configVariantsSchema = z.object({
   variantId: z.string().uuid(), // FK -> variants.id
 });
 
-// Environment config variants junction table schema
-export const environmentConfigVariantsSchema = z.object({
+// Targeting rules table schema
+export const targetingRulesSchema = z.object({
   ...baseSchema,
   environmentId: z.string().uuid(), // FK -> environments.id
+  configId: z.string().uuid(), // FK -> configs.id (for easier querying)
   configVariantId: z.string().uuid(), // FK -> config_variants.id
+  weight: z.number().int().min(0).max(10000).default(10000), // 0-10000 for precision (10000 = 100%)
+  priority: z.number().int().default(0), // Higher priority rules evaluated first
+  enabled: z.boolean().default(true), // Toggle without deleting
+  conditions: z.record(z.string(), z.unknown()).nullable(), // JSONLogic conditions for advanced targeting
 });
 
 /**
@@ -66,9 +71,7 @@ export type Variant = z.infer<typeof variantsSchema>;
 export type Environment = z.infer<typeof environmentsSchema>;
 export type EnvironmentSecret = z.infer<typeof environmentSecretsSchema>;
 export type ConfigVariant = z.infer<typeof configVariantsSchema>;
-export type EnvironmentConfigVariant = z.infer<
-  typeof environmentConfigVariantsSchema
->;
+export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -115,10 +118,19 @@ export interface ConfigVariantsTable extends BaseTable {
   variantId: string;
 }
 
-// Environment config variants junction table
-export interface EnvironmentConfigVariantsTable extends BaseTable {
+// Targeting rules table
+export interface TargetingRulesTable extends BaseTable {
   environmentId: string;
+  configId: string;
   configVariantId: string;
+  weight: ColumnType<number, number | undefined, number | undefined>;
+  priority: ColumnType<number, number | undefined, number | undefined>;
+  enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+  conditions: ColumnType<
+    Record<string, unknown> | null,
+    string | null,
+    string | null
+  >;
 }
 
 /**
@@ -130,7 +142,7 @@ export interface Database {
   environments: EnvironmentsTable;
   environment_secrets: EnvironmentSecretsTable;
   config_variants: ConfigVariantsTable;
-  environment_config_variants: EnvironmentConfigVariantsTable;
+  targeting_rules: TargetingRulesTable;
 }
 
 /**
@@ -250,19 +262,27 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    environment_config_variants: {
+    targeting_rules: {
       order: 6,
-      schema: environmentConfigVariantsSchema,
+      schema: targetingRulesSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
         environmentId: {
           type: 'uuid',
           references: { table: 'environments', column: 'id' },
         },
+        configId: {
+          type: 'uuid',
+          references: { table: 'configs', column: 'id' },
+        },
         configVariantId: {
           type: 'uuid',
           references: { table: 'config_variants', column: 'id' },
         },
+        weight: { type: 'integer', default: 10000 },
+        priority: { type: 'integer', default: 0 },
+        enabled: { type: 'boolean', default: true },
+        conditions: { type: 'jsonb', nullable: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
@@ -279,5 +299,5 @@ export const schemas = {
   environments: environmentsSchema,
   environment_secrets: environmentSecretsSchema,
   config_variants: configVariantsSchema,
-  environment_config_variants: environmentConfigVariantsSchema,
+  targeting_rules: targetingRulesSchema,
 } as const;
