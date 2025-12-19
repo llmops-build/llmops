@@ -1,5 +1,6 @@
 import type { ComponentPropsWithoutRef, HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import * as styles from './table.css';
 
 export interface TableProps extends ComponentPropsWithoutRef<'div'> {
@@ -88,8 +89,8 @@ export const TableHeaderCell = ({
   const content = sortable ? (
     <button type="button" className={styles.sortButton} onClick={props.onClick}>
       {children}
-      {sortDirection === 'asc' && ' 🔼'}
-      {sortDirection === 'desc' && ' 🔽'}
+      {sortDirection === 'asc' && <ArrowUp size={12} />}
+      {sortDirection === 'desc' && <ArrowDown size={12} />}
     </button>
   ) : (
     children
