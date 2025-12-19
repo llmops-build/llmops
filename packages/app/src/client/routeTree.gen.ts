@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
@@ -20,6 +21,11 @@ import { Route as appConfigsIdTabsSettingsRouteImport } from './routes/(app)/con
 import { Route as appConfigsIdVariantsVariantsVariantRouteImport } from './routes/(app)/configs/$id/_variants/variants/$variant'
 import { Route as appConfigsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/configs/$id/_targeting/targeting/$environment'
 
+const appIndexRoute = appIndexRouteImport.update({
+  id: '/(app)/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const appConfigsRoute = appConfigsRouteImport.update({
   id: '/(app)/configs',
   path: '/configs',
@@ -76,6 +82,7 @@ const appConfigsIdTargetingTargetingEnvironmentRoute =
 
 export interface FileRoutesByFullPath {
   '/configs': typeof appConfigsRouteWithChildren
+  '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/configs/$id/': typeof appConfigsIdIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
+  '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
@@ -96,6 +104,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)/configs': typeof appConfigsRouteWithChildren
+  '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
   '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/configs'
+    | '/'
     | '/configs/$id'
     | '/configs/$id/'
     | '/configs/$id/settings'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/configs'
+    | '/'
     | '/configs/$id'
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/(app)/configs'
+    | '/(app)/'
     | '/(app)/configs/$id'
     | '/(app)/configs/$id/_tabs'
     | '/(app)/configs/$id/_variants'
@@ -142,10 +154,18 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   appConfigsRoute: typeof appConfigsRouteWithChildren
+  appIndexRoute: typeof appIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/(app)/': {
+      id: '/(app)/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof appIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/configs': {
       id: '/(app)/configs'
       path: '/configs'
@@ -278,6 +298,7 @@ const appConfigsRouteWithChildren = appConfigsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   appConfigsRoute: appConfigsRouteWithChildren,
+  appIndexRoute: appIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

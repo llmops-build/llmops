@@ -32,11 +32,9 @@ export function AppSidebar() {
             Evaluations
           </Link>
         </SidebarItem>*/}
-        <SidebarItem asChild>
-          <Link to="/observability">
-            <Icon icon={Telescope} />
-            Observability
-          </Link>
+        <SidebarItem>
+          <Icon icon={Telescope} />
+          Observability
         </SidebarItem>
       </SidebarContent>
     </Sidebar>
