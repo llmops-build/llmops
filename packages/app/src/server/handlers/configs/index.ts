@@ -204,6 +204,30 @@ const app = new Hono()
         );
       }
     }
+  )
+  .delete(
+    '/:id',
+    zv(
+      'param',
+      z.object({
+        id: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const id = c.req.valid('param').id;
+
+      try {
+        const config = await db.deleteConfig({ configId: id });
+        if (!config) {
+          return c.json(clientErrorResponse('Config not found', 404), 404);
+        }
+        return c.json(successResponse(config, 200));
+      } catch (error) {
+        console.error('Error deleting config:', error);
+        return c.json(internalServerError('Failed to delete config', 500), 500);
+      }
+    }
   );
 
 export default app;
