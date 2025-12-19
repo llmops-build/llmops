@@ -200,27 +200,38 @@ export function Combobox<T = string>({
               No items found.
             </BaseCombobox.Empty>
             <BaseCombobox.List className={styles.comboboxList}>
-              {(item: T) => (
-                <BaseCombobox.Item
-                  key={itemToString ? itemToString(item) : String(item)}
-                  value={item}
-                  className={styles.comboboxItem}
-                >
-                  <BaseCombobox.ItemIndicator
-                    className={styles.comboboxItemIndicator}
+              {(item: T) => {
+                const hasIcon = Boolean(itemToIcon);
+                return (
+                  <BaseCombobox.Item
+                    key={itemToString ? itemToString(item) : String(item)}
+                    value={item}
+                    className={styles.comboboxItem({ withIcon: hasIcon })}
                   >
-                    <CheckIcon className={styles.comboboxItemIndicatorIcon} />
-                  </BaseCombobox.ItemIndicator>
-                  {itemToIcon && (
-                    <div className={styles.comboboxItemIcon}>
-                      {itemToIcon(item)}
+                    <BaseCombobox.ItemIndicator
+                      className={styles.comboboxItemIndicator({
+                        withIcon: hasIcon,
+                      })}
+                    >
+                      <CheckIcon className={styles.comboboxItemIndicatorIcon} />
+                    </BaseCombobox.ItemIndicator>
+                    {itemToIcon && (
+                      <div
+                        className={styles.comboboxItemIcon({
+                          withIcon: hasIcon,
+                        })}
+                      >
+                        {itemToIcon(item)}
+                      </div>
+                    )}
+                    <div
+                      className={styles.comboboxItemText({ withIcon: hasIcon })}
+                    >
+                      {itemToString ? itemToString(item) : String(item)}
                     </div>
-                  )}
-                  <div className={styles.comboboxItemText}>
-                    {itemToString ? itemToString(item) : String(item)}
-                  </div>
-                </BaseCombobox.Item>
-              )}
+                  </BaseCombobox.Item>
+                );
+              }}
             </BaseCombobox.List>
           </BaseCombobox.Popup>
         </BaseCombobox.Positioner>
@@ -276,7 +287,7 @@ export function ComboboxMultiple<T = string>({
                       aria-label={displayValue}
                     >
                       {icon && (
-                        <div className={styles.comboboxItemIcon}>{icon}</div>
+                        <div className={styles.comboboxChipIcon}>{icon}</div>
                       )}
                       {displayValue}
                       <BaseCombobox.ChipRemove
@@ -316,22 +327,33 @@ export function ComboboxMultiple<T = string>({
                   ? itemToString(item)
                   : String(item);
                 const icon = itemToIcon?.(item);
+                const hasIcon = Boolean(itemToIcon);
 
                 return (
                   <BaseCombobox.Item
                     key={key}
                     value={item}
-                    className={styles.comboboxItem}
+                    className={styles.comboboxItem({ withIcon: hasIcon })}
                   >
                     <BaseCombobox.ItemIndicator
-                      className={styles.comboboxItemIndicator}
+                      className={styles.comboboxItemIndicator({
+                        withIcon: hasIcon,
+                      })}
                     >
                       <CheckIcon className={styles.comboboxItemIndicatorIcon} />
                     </BaseCombobox.ItemIndicator>
                     {icon && (
-                      <div className={styles.comboboxItemIcon}>{icon}</div>
+                      <div
+                        className={styles.comboboxItemIcon({
+                          withIcon: hasIcon,
+                        })}
+                      >
+                        {icon}
+                      </div>
                     )}
-                    <div className={styles.comboboxItemText}>
+                    <div
+                      className={styles.comboboxItemText({ withIcon: hasIcon })}
+                    >
                       {displayValue}
                     </div>
                   </BaseCombobox.Item>

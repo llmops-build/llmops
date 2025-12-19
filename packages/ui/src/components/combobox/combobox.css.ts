@@ -1,6 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { colors, spacing } from '../../tokens';
 import { sprinkles } from '../../styles';
+import { recipe } from '@vanilla-extract/recipes';
 
 export const comboboxLabel = style({
   display: 'flex',
@@ -162,56 +163,112 @@ export const comboboxList = style({
   },
 });
 
-export const comboboxItem = style({
-  boxSizing: 'border-box',
-  outline: 0,
-  cursor: 'default',
-  userSelect: 'none',
-  paddingBlock: spacing.xs,
-  paddingLeft: spacing.md,
-  paddingRight: spacing.lg,
-  display: 'grid',
-  gap: spacing.sm,
-  alignItems: 'center',
-  gridTemplateColumns: '0.75rem auto 1fr',
-  fontSize: '0.875rem',
-  whiteSpace: 'nowrap',
-  lineHeight: '1rem',
-  color: colors.gray10,
-  selectors: {
-    '&[data-highlighted]': {
-      zIndex: 0,
-      position: 'relative',
-      color: colors.gray12,
+export const comboboxItem = recipe({
+  base: {
+    boxSizing: 'border-box',
+    outline: 0,
+    cursor: 'default',
+    userSelect: 'none',
+    paddingBlock: spacing.xs,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.lg,
+    display: 'grid',
+    gap: spacing.sm,
+    alignItems: 'center',
+    gridTemplateColumns: '0.75rem 1fr',
+    fontSize: '0.875rem',
+    whiteSpace: 'nowrap',
+    lineHeight: '1rem',
+    color: colors.gray10,
+    selectors: {
+      '&[data-highlighted]': {
+        zIndex: 0,
+        position: 'relative',
+        color: colors.gray12,
+      },
+      '&[data-highlighted]::before': {
+        content: '',
+        zIndex: -1,
+        position: 'absolute',
+        insetBlock: 0,
+        insetInline: spacing.xs,
+        borderRadius: spacing.xs,
+        backgroundColor: colors.gray3,
+      },
     },
-    '&[data-highlighted]::before': {
-      content: '',
-      zIndex: -1,
-      position: 'absolute',
-      insetBlock: 0,
-      insetInline: spacing.xs,
-      borderRadius: spacing.xs,
-      backgroundColor: colors.gray3,
+  },
+  variants: {
+    withIcon: {
+      true: {
+        gridTemplateColumns: '0.75rem 1rem 1fr',
+      },
+      false: {},
     },
+  },
+  defaultVariants: {
+    withIcon: false,
   },
 });
 
-export const comboboxItemText = style({
-  gridColumnStart: 3,
+export const comboboxItemText = recipe({
+  base: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  variants: {
+    withIcon: {
+      true: {
+        gridColumnStart: 3,
+      },
+      false: {
+        gridColumnStart: 2,
+      },
+    },
+  },
+  defaultVariants: {
+    withIcon: false,
+  },
 });
 
-export const comboboxItemIcon = style({
-  gridColumnStart: 2,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '1rem',
-  height: '1rem',
-  color: colors.gray11,
+export const comboboxItemIcon = recipe({
+  base: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '1rem',
+    height: '1rem',
+    color: colors.gray11,
+  },
+  variants: {
+    withIcon: {
+      true: {
+        gridColumnStart: 2,
+      },
+      false: {
+        gridColumnStart: 2,
+      },
+    },
+  },
+  defaultVariants: {
+    withIcon: false,
+  },
 });
 
-export const comboboxItemIndicator = style({
-  gridColumnStart: 1,
+export const comboboxItemIndicator = recipe({
+  base: {},
+  variants: {
+    withIcon: {
+      true: {
+        gridColumnStart: 1,
+      },
+      false: {
+        gridColumnStart: 1,
+      },
+    },
+  },
+  defaultVariants: {
+    withIcon: false,
+  },
 });
 
 export const comboboxItemIndicatorIcon = style({
@@ -291,6 +348,15 @@ export const comboboxChipRemove = style({
       backgroundColor: colors.gray4,
     },
   },
+});
+
+export const comboboxChipIcon = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '1rem',
+  height: '1rem',
+  color: colors.gray11,
 });
 
 export const comboboxChipInput = style({
@@ -425,7 +491,7 @@ export const comboboxActionButtonsInline = style({
   justifyContent: 'center',
   bottom: 0,
   height: '100%',
-  right: spacing.xs,
+  right: 0,
   border: 'none',
   color: colors.gray11,
   padding: 0,
