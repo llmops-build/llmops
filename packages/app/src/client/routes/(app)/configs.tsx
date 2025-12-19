@@ -47,16 +47,29 @@ function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
 
   const breadcrumbItems = matches
-    .filter((match) => Boolean(match.staticData.customData?.title))
-    .map((match) => ({
-      key: match.id,
-      label: (
-        <Link to={match.pathname} className={breadcrumbLink}>
-          {match.staticData.customData?.title as string}
-        </Link>
-      ),
-      prefix: match.staticData.customData?.icon,
-    }));
+    .filter(
+      (match) =>
+        Boolean(match.staticData.customData?.title) ||
+        Boolean((match.loaderData as { title?: string } | undefined)?.title)
+    )
+    .map((match) => {
+      const loaderTitle = (match.loaderData as { title?: string } | undefined)
+        ?.title;
+      const staticTitle = match.staticData.customData?.title as
+        | string
+        | undefined;
+      const title = loaderTitle ?? staticTitle;
+
+      return {
+        key: match.id,
+        label: (
+          <Link to={match.pathname} className={breadcrumbLink}>
+            {title}
+          </Link>
+        ),
+        prefix: match.staticData.customData?.icon,
+      };
+    });
 
   const handleNavigateToNew = () => {
     navigate({ to: '/configs/$id', params: { id: 'new' } });

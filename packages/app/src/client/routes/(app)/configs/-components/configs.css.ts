@@ -31,7 +31,7 @@ export const configsContainer = style([
 
 export const configTitleInput = style([
   sprinkles({
-    fontSize: 'base',
+    fontSize: 'sm',
     borderRadius: 'xs',
     paddingLeft: 'sm',
     paddingRight: 'sm',

@@ -11,13 +11,29 @@ import { Save } from 'lucide-react';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useUpdateVariant } from '@client/hooks/mutations/useUpdateVariant';
-import { useVariantById } from '@client/hooks/queries/useVariantById';
+import {
+  useVariantById,
+  variantByIdQueryOptions,
+} from '@client/hooks/queries/useVariantById';
 import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
 )({
   component: RouteComponent,
+  loader: async ({ params, context }) => {
+    if (params.variant === 'new') {
+      return { title: 'New Variant' };
+    }
+
+    const variant = await context.queryClient.ensureQueryData(
+      variantByIdQueryOptions(params.variant)
+    );
+
+    return {
+      title: variant?.name ?? params.variant,
+    };
+  },
 });
 
 function RouteComponent() {
@@ -49,7 +65,6 @@ function RouteComponent() {
 
   useBlocker({
     shouldBlockFn: () => {
-      console.log(isDirty);
       if (isSaving) {
         return false;
       }

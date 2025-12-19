@@ -7,10 +7,14 @@ import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Providers } from './providers';
+import { queryClient } from './lib/queryClient';
 
 const router = createRouter({
   basepath: window.bootstrapData?.basePath || '/',
   routeTree,
+  context: {
+    queryClient,
+  },
 });
 
 declare module '@tanstack/react-router' {

@@ -8,25 +8,24 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
+import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
+import { Route as appConfigsIdVariantsRouteImport } from './routes/(app)/configs/$id/_variants'
 import { Route as appConfigsIdTabsRouteImport } from './routes/(app)/configs/$id/_tabs'
 import { Route as appConfigsIdTabsVariantsRouteImport } from './routes/(app)/configs/$id/_tabs/variants'
 import { Route as appConfigsIdTabsTargetingRouteImport } from './routes/(app)/configs/$id/_tabs/targeting'
 import { Route as appConfigsIdTabsSettingsRouteImport } from './routes/(app)/configs/$id/_tabs/settings'
 import { Route as appConfigsIdVariantsVariantsVariantRouteImport } from './routes/(app)/configs/$id/_variants/variants/$variant'
-
-const appConfigsIdRouteImport = createFileRoute('/(app)/configs/$id')()
+import { Route as appConfigsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/configs/$id/_targeting/targeting/$environment'
 
 const appConfigsRoute = appConfigsRouteImport.update({
   id: '/(app)/configs',
   path: '/configs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const appConfigsIdRoute = appConfigsIdRouteImport.update({
+const appConfigsIdRouteRoute = appConfigsIdRouteRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => appConfigsRoute,
@@ -34,11 +33,15 @@ const appConfigsIdRoute = appConfigsIdRouteImport.update({
 const appConfigsIdIndexRoute = appConfigsIdIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => appConfigsIdRoute,
+  getParentRoute: () => appConfigsIdRouteRoute,
+} as any)
+const appConfigsIdVariantsRoute = appConfigsIdVariantsRouteImport.update({
+  id: '/_variants',
+  getParentRoute: () => appConfigsIdRouteRoute,
 } as any)
 const appConfigsIdTabsRoute = appConfigsIdTabsRouteImport.update({
   id: '/_tabs',
-  getParentRoute: () => appConfigsIdRoute,
+  getParentRoute: () => appConfigsIdRouteRoute,
 } as any)
 const appConfigsIdTabsVariantsRoute =
   appConfigsIdTabsVariantsRouteImport.update({
@@ -60,18 +63,25 @@ const appConfigsIdTabsSettingsRoute =
   } as any)
 const appConfigsIdVariantsVariantsVariantRoute =
   appConfigsIdVariantsVariantsVariantRouteImport.update({
-    id: '/_variants/variants/$variant',
+    id: '/variants/$variant',
     path: '/variants/$variant',
-    getParentRoute: () => appConfigsIdRoute,
+    getParentRoute: () => appConfigsIdVariantsRoute,
+  } as any)
+const appConfigsIdTargetingTargetingEnvironmentRoute =
+  appConfigsIdTargetingTargetingEnvironmentRouteImport.update({
+    id: '/_targeting/targeting/$environment',
+    path: '/targeting/$environment',
+    getParentRoute: () => appConfigsIdRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/configs': typeof appConfigsRouteWithChildren
-  '/configs/$id': typeof appConfigsIdTabsRouteWithChildren
+  '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/configs/$id/': typeof appConfigsIdIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
+  '/configs/$id/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
   '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesByTo {
@@ -80,17 +90,20 @@ export interface FileRoutesByTo {
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
+  '/configs/$id/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
   '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)/configs': typeof appConfigsRouteWithChildren
-  '/(app)/configs/$id': typeof appConfigsIdRouteWithChildren
+  '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
+  '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
   '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
   '/(app)/configs/$id/_tabs/settings': typeof appConfigsIdTabsSettingsRoute
   '/(app)/configs/$id/_tabs/targeting': typeof appConfigsIdTabsTargetingRoute
   '/(app)/configs/$id/_tabs/variants': typeof appConfigsIdTabsVariantsRoute
+  '/(app)/configs/$id/_targeting/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
   '/(app)/configs/$id/_variants/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRouteTypes {
@@ -102,6 +115,7 @@ export interface FileRouteTypes {
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
+    | '/configs/$id/targeting/$environment'
     | '/configs/$id/variants/$variant'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,16 +124,19 @@ export interface FileRouteTypes {
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
+    | '/configs/$id/targeting/$environment'
     | '/configs/$id/variants/$variant'
   id:
     | '__root__'
     | '/(app)/configs'
     | '/(app)/configs/$id'
     | '/(app)/configs/$id/_tabs'
+    | '/(app)/configs/$id/_variants'
     | '/(app)/configs/$id/'
     | '/(app)/configs/$id/_tabs/settings'
     | '/(app)/configs/$id/_tabs/targeting'
     | '/(app)/configs/$id/_tabs/variants'
+    | '/(app)/configs/$id/_targeting/targeting/$environment'
     | '/(app)/configs/$id/_variants/variants/$variant'
   fileRoutesById: FileRoutesById
 }
@@ -140,7 +157,7 @@ declare module '@tanstack/react-router' {
       id: '/(app)/configs/$id'
       path: '/$id'
       fullPath: '/configs/$id'
-      preLoaderRoute: typeof appConfigsIdRouteImport
+      preLoaderRoute: typeof appConfigsIdRouteRouteImport
       parentRoute: typeof appConfigsRoute
     }
     '/(app)/configs/$id/': {
@@ -148,14 +165,21 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/configs/$id/'
       preLoaderRoute: typeof appConfigsIdIndexRouteImport
-      parentRoute: typeof appConfigsIdRoute
+      parentRoute: typeof appConfigsIdRouteRoute
+    }
+    '/(app)/configs/$id/_variants': {
+      id: '/(app)/configs/$id/_variants'
+      path: ''
+      fullPath: '/configs/$id'
+      preLoaderRoute: typeof appConfigsIdVariantsRouteImport
+      parentRoute: typeof appConfigsIdRouteRoute
     }
     '/(app)/configs/$id/_tabs': {
       id: '/(app)/configs/$id/_tabs'
-      path: '/$id'
+      path: ''
       fullPath: '/configs/$id'
       preLoaderRoute: typeof appConfigsIdTabsRouteImport
-      parentRoute: typeof appConfigsIdRoute
+      parentRoute: typeof appConfigsIdRouteRoute
     }
     '/(app)/configs/$id/_tabs/variants': {
       id: '/(app)/configs/$id/_tabs/variants'
@@ -183,7 +207,14 @@ declare module '@tanstack/react-router' {
       path: '/variants/$variant'
       fullPath: '/configs/$id/variants/$variant'
       preLoaderRoute: typeof appConfigsIdVariantsVariantsVariantRouteImport
-      parentRoute: typeof appConfigsIdRoute
+      parentRoute: typeof appConfigsIdVariantsRoute
+    }
+    '/(app)/configs/$id/_targeting/targeting/$environment': {
+      id: '/(app)/configs/$id/_targeting/targeting/$environment'
+      path: '/targeting/$environment'
+      fullPath: '/configs/$id/targeting/$environment'
+      preLoaderRoute: typeof appConfigsIdTargetingTargetingEnvironmentRouteImport
+      parentRoute: typeof appConfigsIdRouteRoute
     }
   }
 }
@@ -203,29 +234,42 @@ const appConfigsIdTabsRouteChildren: appConfigsIdTabsRouteChildren = {
 const appConfigsIdTabsRouteWithChildren =
   appConfigsIdTabsRoute._addFileChildren(appConfigsIdTabsRouteChildren)
 
-interface appConfigsIdRouteChildren {
-  appConfigsIdTabsRoute: typeof appConfigsIdTabsRouteWithChildren
-  appConfigsIdIndexRoute: typeof appConfigsIdIndexRoute
+interface appConfigsIdVariantsRouteChildren {
   appConfigsIdVariantsVariantsVariantRoute: typeof appConfigsIdVariantsVariantsVariantRoute
 }
 
-const appConfigsIdRouteChildren: appConfigsIdRouteChildren = {
-  appConfigsIdTabsRoute: appConfigsIdTabsRouteWithChildren,
-  appConfigsIdIndexRoute: appConfigsIdIndexRoute,
+const appConfigsIdVariantsRouteChildren: appConfigsIdVariantsRouteChildren = {
   appConfigsIdVariantsVariantsVariantRoute:
     appConfigsIdVariantsVariantsVariantRoute,
 }
 
-const appConfigsIdRouteWithChildren = appConfigsIdRoute._addFileChildren(
-  appConfigsIdRouteChildren,
-)
+const appConfigsIdVariantsRouteWithChildren =
+  appConfigsIdVariantsRoute._addFileChildren(appConfigsIdVariantsRouteChildren)
+
+interface appConfigsIdRouteRouteChildren {
+  appConfigsIdTabsRoute: typeof appConfigsIdTabsRouteWithChildren
+  appConfigsIdVariantsRoute: typeof appConfigsIdVariantsRouteWithChildren
+  appConfigsIdIndexRoute: typeof appConfigsIdIndexRoute
+  appConfigsIdTargetingTargetingEnvironmentRoute: typeof appConfigsIdTargetingTargetingEnvironmentRoute
+}
+
+const appConfigsIdRouteRouteChildren: appConfigsIdRouteRouteChildren = {
+  appConfigsIdTabsRoute: appConfigsIdTabsRouteWithChildren,
+  appConfigsIdVariantsRoute: appConfigsIdVariantsRouteWithChildren,
+  appConfigsIdIndexRoute: appConfigsIdIndexRoute,
+  appConfigsIdTargetingTargetingEnvironmentRoute:
+    appConfigsIdTargetingTargetingEnvironmentRoute,
+}
+
+const appConfigsIdRouteRouteWithChildren =
+  appConfigsIdRouteRoute._addFileChildren(appConfigsIdRouteRouteChildren)
 
 interface appConfigsRouteChildren {
-  appConfigsIdRoute: typeof appConfigsIdRouteWithChildren
+  appConfigsIdRouteRoute: typeof appConfigsIdRouteRouteWithChildren
 }
 
 const appConfigsRouteChildren: appConfigsRouteChildren = {
-  appConfigsIdRoute: appConfigsIdRouteWithChildren,
+  appConfigsIdRouteRoute: appConfigsIdRouteRouteWithChildren,
 }
 
 const appConfigsRouteWithChildren = appConfigsRoute._addFileChildren(

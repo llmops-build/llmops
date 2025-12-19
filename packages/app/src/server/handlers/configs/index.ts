@@ -42,6 +42,30 @@ const app = new Hono()
       return c.json(internalServerError('Failed to fetch configs', 500), 500);
     }
   })
+  .get(
+    '/:id',
+    zv(
+      'param',
+      z.object({
+        id: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const id = c.req.valid('param').id;
+
+      try {
+        const config = await db.getConfigById({ configId: id });
+        if (!config) {
+          return c.json(clientErrorResponse('Config not found', 404), 404);
+        }
+        return c.json(successResponse(config, 200));
+      } catch (error) {
+        console.error('Error fetching config:', error);
+        return c.json(internalServerError('Failed to fetch config', 500), 500);
+      }
+    }
+  )
   .patch(
     '/:id',
     zv(

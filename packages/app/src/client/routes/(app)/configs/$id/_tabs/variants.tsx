@@ -18,6 +18,11 @@ import {
 
 export const Route = createFileRoute('/(app)/configs/$id/_tabs/variants')({
   component: RouteComponent,
+  staticData: {
+    customData: {
+      title: 'Variants',
+    },
+  },
 });
 
 function RouteComponent() {

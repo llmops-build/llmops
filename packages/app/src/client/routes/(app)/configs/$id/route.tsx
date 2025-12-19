@@ -1,7 +1,7 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { configByIdQueryOptions } from '@client/hooks/queries/useConfigById';
 
-export const Route = createFileRoute('/(app)/configs/$id/')({
+export const Route = createFileRoute('/(app)/configs/$id')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
     if (params.id === 'new') {
@@ -19,16 +19,5 @@ export const Route = createFileRoute('/(app)/configs/$id/')({
 });
 
 function RouteComponent() {
-  const { id } = Route.useParams();
-  if (id === 'new') return null;
-
-  return (
-    <Navigate
-      to="/configs/$id/variants"
-      params={{
-        id,
-      }}
-      replace
-    />
-  );
+  return <Outlet />;
 }

@@ -2,7 +2,6 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  PopoverClose,
   Combobox,
   Slider,
 } from '@llmops/ui';

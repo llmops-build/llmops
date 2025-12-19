@@ -57,9 +57,16 @@ export const tableRow = recipe({
       },
       false: {},
     },
+    selected: {
+      true: {
+        backgroundColor: colors.accent3,
+      },
+      false: {},
+    },
   },
   defaultVariants: {
     interactive: false,
+    selected: false,
   },
 });
 

@@ -1,9 +1,14 @@
-import { Outlet, createRootRoute } from '@tanstack/react-router';
+import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import { Page } from '@llmops/ui';
 import { AppSidebar } from '@client/components/app-sidebar';
 import { contentLayout } from './-styles/root.css';
+import type { QueryClient } from '@tanstack/react-query';
 
-export const Route = createRootRoute({
+export interface RouterContext {
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
 });
 

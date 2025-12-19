@@ -38,7 +38,7 @@ export const comboboxInputWrapperDisabled = style({
 
 export const comboboxInput = style([
   sprinkles({
-    fontSize: 'base',
+    fontSize: 'sm',
     borderRadius: 'xs',
     paddingLeft: 'sm',
     paddingRight: 'sm',
@@ -222,7 +222,7 @@ export const comboboxItemIndicatorIcon = style({
 
 export const comboboxEmpty = style({
   boxSizing: 'border-box',
-  fontSize: '0.925rem',
+  fontSize: '0.875rem',
   lineHeight: '1rem',
   color: colors.gray11,
   padding: spacing.md,
@@ -302,7 +302,7 @@ export const comboboxChipInput = style({
   height: spacing.lg,
   borderRadius: spacing.xs,
   fontFamily: 'inherit',
-  fontSize: '1rem',
+  fontSize: '0.875rem',
   backgroundColor: 'transparent',
   color: colors.gray12,
   minWidth: '3rem',

@@ -20,7 +20,7 @@ import {
   TableHeaderCell,
   TableCell,
 } from '@llmops/ui';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 
 type Config = {
@@ -37,6 +37,7 @@ export function ConfigsDataTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const navigate = useNavigate();
+  const { id: selectedId } = useParams({ strict: false });
   const { data } = useConfigList();
 
   const columns = useMemo<ColumnDef<Config, any>[]>(
@@ -114,6 +115,7 @@ export function ConfigsDataTable() {
           {table.getRowModel().rows.map((row) => (
             <TableRow
               interactive={true}
+              selected={row.original.id === selectedId}
               key={row.id}
               onClick={() =>
                 navigate({

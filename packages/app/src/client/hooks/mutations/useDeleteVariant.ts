@@ -1,7 +1,7 @@
 import { hc } from '@client/lib/hc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKey } from '../queries/useVariantList';
-import { getQueryKey } from '../queries/useVariantById';
+import { variantByIdQueryOptions } from '../queries/useVariantById';
 
 export const useDeleteVariant = () => {
   const queryClient = useQueryClient();
@@ -15,7 +15,9 @@ export const useDeleteVariant = () => {
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: getQueryKey(id) });
+      queryClient.invalidateQueries({
+        queryKey: variantByIdQueryOptions(id).queryKey,
+      });
     },
   });
 };

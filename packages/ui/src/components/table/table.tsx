@@ -49,18 +49,20 @@ export const TableBody = ({
 export interface TableRowProps extends ComponentPropsWithoutRef<'tr'> {
   className?: string;
   interactive?: boolean;
+  selected?: boolean;
 }
 
 export const TableRow = ({
   className,
   interactive,
+  selected,
   children,
   ...props
 }: TableRowProps) => {
   return (
     <tr
       {...props}
-      className={clsx(styles.tableRow({ interactive }), className)}
+      className={clsx(styles.tableRow({ interactive, selected }), className)}
     >
       {children}
     </tr>

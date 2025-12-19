@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import {
   Table,
   TableHeader,
@@ -13,6 +13,11 @@ import { variantsContainer } from '../../-components/variants.css';
 
 export const Route = createFileRoute('/(app)/configs/$id/_tabs/targeting')({
   component: RouteComponent,
+  staticData: {
+    customData: {
+      title: 'Targeting',
+    },
+  },
 });
 
 function RouteComponent() {
@@ -21,6 +26,7 @@ function RouteComponent() {
     useEnvironments();
   const { data: targetingRules, isLoading: loadingTargetingRules } =
     useTargetingRules(configId);
+  const navigate = useNavigate();
 
   if (loadingEnvironments || loadingTargetingRules) {
     return <div>Loading...</div>;
@@ -46,7 +52,19 @@ function RouteComponent() {
             environments.map((env) => {
               const rule = rulesByEnv.get(env.id);
               return (
-                <TableRow key={env.id}>
+                <TableRow
+                  key={env.id}
+                  interactive={true}
+                  onClick={() =>
+                    navigate({
+                      to: '/configs/$id/targeting/$environment',
+                      params: {
+                        id: configId,
+                        environment: env.id,
+                      },
+                    })
+                  }
+                >
                   <TableCell>
                     {env.name}
                     {env.isProd && (
