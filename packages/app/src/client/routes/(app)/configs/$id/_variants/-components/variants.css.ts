@@ -27,6 +27,25 @@ export const variantContainer = style({
   paddingRight: calc.add(spacing.sm, spacing.xs),
 });
 
+export const environmentHighlight = style({
+  padding: spacing.md,
+  backgroundColor: colors.accent2,
+  borderRadius: spacing.xs,
+  fontSize: '0.875rem',
+  color: colors.gray10,
+  marginBottom: spacing.md,
+});
+
+export const environmentNameHighlight = style({
+  padding: spacing.xs,
+  backgroundColor: colors.accent4,
+  color: colors.gray12,
+  borderRadius: spacing.xs,
+  fontWeight: 500,
+  marginLeft: spacing.xs,
+  marginRight: spacing.xs,
+});
+
 // Variant form Notion-like styles
 export const variantFormContainer = style({
   margin: '0 auto',

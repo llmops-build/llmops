@@ -76,10 +76,7 @@ function RouteComponent() {
                   <TableCell>{env.slug}</TableCell>
                   <TableCell>
                     {rule ? (
-                      <span>
-                        {rule.variantName || 'Unnamed'} ({rule.variantProvider}/
-                        {rule.variantModelName})
-                      </span>
+                      <span>{rule.variantName || 'Unnamed'}</span>
                     ) : (
                       <span style={{ opacity: 0.5 }}>Not configured</span>
                     )}
