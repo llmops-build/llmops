@@ -55,6 +55,20 @@ function getModelProvider(modelId: string): string {
   return 'Other';
 }
 
+// Helper to get provider ID from model ID (e.g., "anthropic/claude-3" -> "anthropic")
+function getProviderIdFromModel(modelId: string): string | null {
+  const parts = modelId.split('/');
+  if (parts.length > 1) {
+    return parts[0];
+  }
+  return null;
+}
+
+// Helper to get provider icon URL from provider ID
+function getProviderIconUrl(providerId: string): string {
+  return `https://models.dev/logos/${providerId}.svg`;
+}
+
 type ModelMenuProps = {
   models: Array<{ id: string; name: string }> | undefined;
   isLoading: boolean;
@@ -72,13 +86,14 @@ function ModelMenu({
   const modelsByProvider = models?.reduce(
     (acc, model) => {
       const providerName = getModelProvider(model.id);
+      const providerId = getProviderIdFromModel(model.id);
       if (!acc[providerName]) {
-        acc[providerName] = [];
+        acc[providerName] = { models: [], providerId };
       }
-      acc[providerName].push(model);
+      acc[providerName].models.push(model);
       return acc;
     },
-    {} as Record<string, typeof models>
+    {} as Record<string, { models: typeof models; providerId: string | null }>
   );
 
   const providerNames = modelsByProvider
@@ -111,48 +126,62 @@ function ModelMenu({
             ) : providerNames.length === 0 ? (
               <div className={styles.menuEmpty}>No models available</div>
             ) : (
-              providerNames.map((providerName) => (
-                <Menu.SubmenuRoot key={providerName}>
-                  <Menu.SubmenuTrigger
-                    className={styles.menuSubmenuTrigger}
-                    openOnHover
-                    delay={100}
-                  >
-                    <span className={styles.menuItemText}>{providerName}</span>
-                    <ChevronRight className={styles.menuChevron} />
-                  </Menu.SubmenuTrigger>
-                  <Menu.Portal>
-                    <Menu.Positioner
-                      className={styles.menuPositioner}
-                      side="right"
-                      sideOffset={4}
-                      align="start"
-                      positionMethod="fixed"
-                      sticky
+              providerNames.map((providerName) => {
+                const providerData = modelsByProvider?.[providerName];
+                const providerId = providerData?.providerId;
+                const providerModels = providerData?.models;
+                return (
+                  <Menu.SubmenuRoot key={providerName}>
+                    <Menu.SubmenuTrigger
+                      className={styles.menuSubmenuTrigger}
+                      openOnHover
+                      delay={100}
                     >
-                      <Menu.Popup className={styles.menuPopup}>
-                        {modelsByProvider?.[providerName]?.map((model) => {
-                          const isSelected = selectedModelName === model.id;
-                          return (
-                            <Menu.Item
-                              key={model.id}
-                              className={styles.menuItem}
-                              onClick={() => onSelect(model.id)}
-                            >
-                              <span className={styles.menuItemText}>
-                                {model.name || model.id}
-                              </span>
-                              {isSelected && (
-                                <Check className={styles.menuCheckIcon} />
-                              )}
-                            </Menu.Item>
-                          );
-                        })}
-                      </Menu.Popup>
-                    </Menu.Positioner>
-                  </Menu.Portal>
-                </Menu.SubmenuRoot>
-              ))
+                      {providerId && (
+                        <img
+                          src={getProviderIconUrl(providerId)}
+                          alt=""
+                          className={styles.providerIcon}
+                        />
+                      )}
+                      <span className={styles.menuItemText}>
+                        {providerName}
+                      </span>
+                      <ChevronRight className={styles.menuChevron} />
+                    </Menu.SubmenuTrigger>
+                    <Menu.Portal>
+                      <Menu.Positioner
+                        className={styles.menuPositioner}
+                        side="right"
+                        sideOffset={4}
+                        align="start"
+                        positionMethod="fixed"
+                        sticky
+                      >
+                        <Menu.Popup className={styles.menuPopup}>
+                          {providerModels?.map((model) => {
+                            const isSelected = selectedModelName === model.id;
+                            return (
+                              <Menu.Item
+                                key={model.id}
+                                className={styles.menuItem}
+                                onClick={() => onSelect(model.id)}
+                              >
+                                <span className={styles.menuItemText}>
+                                  {model.name.split(':')[1] || model.id}
+                                </span>
+                                {isSelected && (
+                                  <Check className={styles.menuCheckIcon} />
+                                )}
+                              </Menu.Item>
+                            );
+                          })}
+                        </Menu.Popup>
+                      </Menu.Positioner>
+                    </Menu.Portal>
+                  </Menu.SubmenuRoot>
+                );
+              })
             )}
           </Menu.Popup>
         </Menu.Positioner>
@@ -206,11 +235,11 @@ export function ModelSettingsPopover({
   return (
     <Popover>
       <PopoverTrigger className={styles.modelSettingsTrigger}>
-        {selectedProviderItem?.icon ? (
+        {value.modelName.split('/')[0].length > 0 ? (
           <img
-            src={selectedProviderItem.icon}
+            src={getProviderIconUrl(value.modelName.split('/')[0])}
             alt=""
-            style={{ width: 16, height: 16, flexShrink: 0 }}
+            className={styles.providerIcon}
           />
         ) : (
           <span className={styles.modelSettingsTriggerIcon}>?</span>
@@ -244,11 +273,7 @@ export function ModelSettingsPopover({
               itemToString={(item) => item?.label || ''}
               itemToIcon={(item) =>
                 item?.icon ? (
-                  <img
-                    src={item.icon}
-                    alt=""
-                    style={{ width: 16, height: 16 }}
-                  />
+                  <img src={item.icon} alt="" className={styles.providerIcon} />
                 ) : (
                   <span className={styles.modelSettingsTriggerIcon}>
                     {item?.label?.charAt(0).toUpperCase() || '?'}

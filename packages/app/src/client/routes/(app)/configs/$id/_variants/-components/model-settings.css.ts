@@ -305,3 +305,14 @@ export const menuCheckIcon = style({
   flexShrink: 0,
   color: colors.accent11,
 });
+
+export const providerIcon = style({
+  width: 16,
+  height: 16,
+  flexShrink: 0,
+  selectors: {
+    '.dark &': {
+      filter: 'invert(1)',
+    },
+  },
+});
