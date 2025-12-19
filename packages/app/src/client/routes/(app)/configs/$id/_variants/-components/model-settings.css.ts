@@ -118,3 +118,189 @@ export const chevronIcon = style({
   transition: 'transform 150ms',
   flexShrink: 0,
 });
+
+export const modelMenuTrigger = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  padding: `${spacing.sm} ${spacing.md}`,
+  border: `1px solid ${colors.gray4}`,
+  background: colors.gray1,
+  cursor: 'pointer',
+  borderRadius: spacing.xs,
+  color: colors.gray12,
+  fontSize: '0.875rem',
+  width: '100%',
+  textAlign: 'left',
+  ':hover': {
+    backgroundColor: colors.gray2,
+    borderColor: colors.gray6,
+  },
+});
+
+// Nested menu model selector styles
+export const menuPositioner = style({
+  outline: 0,
+  zIndex: 200,
+});
+
+export const menuPopup = style({
+  boxSizing: 'border-box',
+  paddingBlock: spacing.xs,
+  borderRadius: spacing.xs,
+  backgroundColor: colors.gray1,
+  color: colors.gray12,
+  transformOrigin: 'var(--transform-origin)',
+  transition: 'transform 150ms, opacity 150ms',
+  outline: `1px solid ${colors.gray6}`,
+  boxShadow: `0 10px 15px -3px ${colors.gray6}, 0 4px 6px -4px ${colors.gray6}`,
+  minWidth: '180px',
+  maxHeight: '400px',
+  overflowY: 'auto',
+  selectors: {
+    '&[data-starting-style], &[data-ending-style]': {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+  },
+});
+
+export const menuItem = style({
+  outline: 0,
+  cursor: 'default',
+  userSelect: 'none',
+  paddingBlock: spacing.sm,
+  paddingLeft: spacing.md,
+  paddingRight: spacing.lg,
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  fontSize: '0.875rem',
+  lineHeight: '1rem',
+  color: colors.gray11,
+  selectors: {
+    '&[data-highlighted]': {
+      zIndex: 0,
+      position: 'relative',
+      color: colors.gray12,
+    },
+    '&[data-highlighted]::before': {
+      content: '',
+      zIndex: -1,
+      position: 'absolute',
+      insetBlock: 0,
+      insetInline: spacing.xs,
+      borderRadius: spacing.xs,
+      backgroundColor: colors.gray3,
+    },
+  },
+});
+
+export const menuSubmenuTrigger = style({
+  outline: 0,
+  cursor: 'default',
+  userSelect: 'none',
+  paddingBlock: spacing.sm,
+  paddingLeft: spacing.md,
+  paddingRight: spacing.md,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: spacing.md,
+  fontSize: '0.875rem',
+  lineHeight: '1rem',
+  color: colors.gray11,
+  selectors: {
+    '&[data-popup-open]': {
+      zIndex: 0,
+      position: 'relative',
+    },
+    '&[data-popup-open]::before': {
+      content: '',
+      zIndex: -1,
+      position: 'absolute',
+      insetBlock: 0,
+      insetInline: spacing.xs,
+      borderRadius: spacing.xs,
+      backgroundColor: colors.gray3,
+    },
+    '&[data-highlighted]': {
+      zIndex: 0,
+      position: 'relative',
+      color: colors.gray12,
+    },
+    '&[data-highlighted]::before': {
+      content: '',
+      zIndex: -1,
+      position: 'absolute',
+      insetBlock: 0,
+      insetInline: spacing.xs,
+      borderRadius: spacing.xs,
+      backgroundColor: colors.gray3,
+    },
+  },
+});
+
+export const menuItemIcon = style({
+  width: 16,
+  height: 16,
+  borderRadius: 4,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+});
+
+export const menuItemText = style({
+  flex: 1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
+
+export const menuChevron = style({
+  width: 12,
+  height: 12,
+  color: colors.gray8,
+  flexShrink: 0,
+});
+
+export const menuGroupLabel = style({
+  cursor: 'default',
+  userSelect: 'none',
+  paddingBlock: spacing.xs,
+  paddingLeft: spacing.md,
+  paddingRight: spacing.lg,
+  fontSize: '0.6875rem',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  color: colors.gray9,
+});
+
+export const menuSeparator = style({
+  margin: `${spacing.xs} ${spacing.md}`,
+  height: 1,
+  backgroundColor: colors.gray4,
+});
+
+export const menuEmpty = style({
+  padding: spacing.md,
+  fontSize: '0.875rem',
+  color: colors.gray9,
+  textAlign: 'center',
+});
+
+export const menuLoading = style({
+  padding: spacing.md,
+  fontSize: '0.875rem',
+  color: colors.gray9,
+  textAlign: 'center',
+});
+
+export const menuCheckIcon = style({
+  width: 14,
+  height: 14,
+  flexShrink: 0,
+  color: colors.accent11,
+});

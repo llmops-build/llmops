@@ -31,6 +31,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "^1.0.0",
     "@hono/zod-validator": "^0.7.5",
     "@lexical/code": "^0.39.0",
     "@lexical/link": "^0.39.0",
