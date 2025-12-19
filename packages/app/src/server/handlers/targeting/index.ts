@@ -241,6 +241,26 @@ const app = new Hono()
       const body = c.req.valid('json');
 
       try {
+        // Validate that the configVariantId exists and belongs to the configId
+        const configVariant = await db.getConfigVariantById({
+          id: body.configVariantId,
+        });
+        if (!configVariant) {
+          return c.json(
+            clientErrorResponse('Config variant not found', 404),
+            404
+          );
+        }
+        if (configVariant.configId !== body.configId) {
+          return c.json(
+            clientErrorResponse(
+              'Config variant does not belong to the specified config',
+              400
+            ),
+            400
+          );
+        }
+
         const rule = await db.setTargetingForEnvironment(body);
         return c.json(successResponse(rule, 200));
       } catch (error) {

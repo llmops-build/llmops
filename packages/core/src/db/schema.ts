@@ -60,7 +60,7 @@ export const targetingRulesSchema = z.object({
   weight: z.number().int().min(0).max(10000).default(10000), // 0-10000 for precision (10000 = 100%)
   priority: z.number().int().default(0), // Higher priority rules evaluated first
   enabled: z.boolean().default(true), // Toggle without deleting
-  conditions: z.record(z.string(), z.unknown()).nullable(), // JSONLogic conditions for advanced targeting
+  conditions: z.record(z.string(), z.unknown()).default({}), // JSONLogic conditions for advanced targeting
 });
 
 /**
@@ -126,11 +126,7 @@ export interface TargetingRulesTable extends BaseTable {
   weight: ColumnType<number, number | undefined, number | undefined>;
   priority: ColumnType<number, number | undefined, number | undefined>;
   enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
-  conditions: ColumnType<
-    Record<string, unknown> | null,
-    string | null,
-    string | null
-  >;
+  conditions: ColumnType<Record<string, unknown>, string, string>;
 }
 
 /**
@@ -282,7 +278,7 @@ export const SCHEMA_METADATA = {
         weight: { type: 'integer', default: 10000 },
         priority: { type: 'integer', default: 0 },
         enabled: { type: 'boolean', default: true },
-        conditions: { type: 'jsonb', nullable: true },
+        conditions: { type: 'jsonb', default: '{}' },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },

@@ -95,7 +95,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
           weight,
           priority,
           enabled,
-          conditions: conditions ? JSON.stringify(conditions) : null,
+          conditions: JSON.stringify(conditions ?? {}),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
@@ -354,7 +354,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
           weight: 10000,
           priority: 0,
           enabled: true,
-          conditions: null,
+          conditions: JSON.stringify({}),
           createdAt: now,
           updatedAt: now,
         })
