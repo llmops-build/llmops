@@ -19,6 +19,7 @@ export const configByIdQueryOptions = (id: string) =>
       return ('data' in result ? result.data : null) as Config | null;
     },
     enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
 export const useConfigById = (id: string) => {

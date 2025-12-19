@@ -22,6 +22,7 @@ export const variantByIdQueryOptions = (id: string) =>
       return ('data' in result ? result.data : null) as Variant | null;
     },
     enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
 export const useVariantById = (id: string) => {

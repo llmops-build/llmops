@@ -10,8 +10,8 @@ import {
   type SortingState,
   type ColumnFiltersState,
 } from '@tanstack/react-table';
-import { formatDistance, subDays } from 'date-fns';
-import { useState, useMemo } from 'react';
+import { formatDistance } from 'date-fns';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Table,
   TableHeader,
@@ -22,6 +22,8 @@ import {
 } from '@llmops/ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
+import { useQueryClient } from '@tanstack/react-query';
+import { configByIdQueryOptions } from '@client/hooks/queries/useConfigById';
 
 type Config = {
   id: string;
@@ -39,6 +41,14 @@ export function ConfigsDataTable() {
   const navigate = useNavigate();
   const { id: selectedId } = useParams({ strict: false });
   const { data } = useConfigList();
+  const queryClient = useQueryClient();
+
+  const handleRowHover = useCallback(
+    (configId: string) => {
+      queryClient.prefetchQuery(configByIdQueryOptions(configId));
+    },
+    [queryClient]
+  );
 
   const columns = useMemo<ColumnDef<Config, any>[]>(
     () => [
@@ -49,7 +59,9 @@ export function ConfigsDataTable() {
       columnHelper.accessor('createdAt', {
         header: 'Creation Date',
         cell: (info) => {
-          return formatDistance(subDays(new Date(), 5), new Date());
+          return formatDistance(new Date(info.getValue()), new Date(), {
+            addSuffix: true,
+          });
         },
       }),
     ],
@@ -117,6 +129,7 @@ export function ConfigsDataTable() {
               interactive={true}
               selected={row.original.id === selectedId}
               key={row.id}
+              onMouseEnter={() => handleRowHover(row.original.id)}
               onClick={() =>
                 navigate({
                   to: '/configs/$id',

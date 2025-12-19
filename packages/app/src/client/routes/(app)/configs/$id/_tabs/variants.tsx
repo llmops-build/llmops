@@ -15,6 +15,8 @@ import {
   variantsContainer,
   variantsHeader,
 } from '../../-components/variants.css';
+import { useQueryClient } from '@tanstack/react-query';
+import { variantByIdQueryOptions } from '@client/hooks/queries/useVariantById';
 
 export const Route = createFileRoute('/(app)/configs/$id/_tabs/variants')({
   component: RouteComponent,
@@ -27,6 +29,7 @@ export const Route = createFileRoute('/(app)/configs/$id/_tabs/variants')({
 
 function RouteComponent() {
   const { id: configId } = Route.useParams();
+  const queryClient = useQueryClient();
   const { data: configVariants, isLoading: loadingConfigVariants } =
     useConfigVariants(configId);
   const navigate = useNavigate();
@@ -68,6 +71,11 @@ function RouteComponent() {
               <TableRow
                 key={variant.variantId}
                 interactive={true}
+                onMouseEnter={() => {
+                  queryClient.prefetchQuery(
+                    variantByIdQueryOptions(variant.variantId)
+                  );
+                }}
                 onClick={() =>
                   navigate({
                     to: '/configs/$id/variants/$variant',
