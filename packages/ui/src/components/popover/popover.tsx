@@ -29,6 +29,7 @@ export interface PopoverContentProps {
   sideOffset?: number;
   align?: 'start' | 'center' | 'end';
   side?: 'top' | 'right' | 'bottom' | 'left';
+  positionMethod?: 'absolute' | 'fixed';
 }
 
 export interface PopoverTitleProps {
@@ -145,6 +146,7 @@ export function PopoverContent({
   sideOffset = 8,
   align = 'center',
   side = 'bottom',
+  positionMethod = 'absolute',
 }: PopoverContentProps) {
   return (
     <BasePopover.Portal>
@@ -153,6 +155,7 @@ export function PopoverContent({
         sideOffset={sideOffset}
         align={align}
         side={side}
+        positionMethod={positionMethod}
       >
         <BasePopover.Popup className={clsx(styles.popoverPopup, className)}>
           {children}

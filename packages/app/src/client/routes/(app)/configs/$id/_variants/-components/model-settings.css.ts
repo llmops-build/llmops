@@ -48,6 +48,7 @@ export const modelSettingsPopupContent = style({
   flexDirection: 'column',
   gap: spacing.md,
   padding: spacing.md,
+  minWidth: '280px',
 });
 
 export const modelSettingsSection = style({

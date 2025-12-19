@@ -102,6 +102,8 @@ function ModelMenu({
           side="bottom"
           sideOffset={4}
           align="start"
+          positionMethod="fixed"
+          sticky
         >
           <Menu.Popup className={styles.menuPopup}>
             {isLoading ? (
@@ -125,6 +127,8 @@ function ModelMenu({
                       side="right"
                       sideOffset={4}
                       align="start"
+                      positionMethod="fixed"
+                      sticky
                     >
                       <Menu.Popup className={styles.menuPopup}>
                         {modelsByProvider?.[providerName]?.map((model) => {
@@ -223,7 +227,12 @@ export function ModelSettingsPopover({
         <ChevronIcon className={styles.chevronIcon} />
       </PopoverTrigger>
 
-      <PopoverContent side="bottom" align="start" sideOffset={4}>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        positionMethod="fixed"
+      >
         <div className={styles.modelSettingsPopupContent}>
           {/* Provider Selection */}
           <div className={styles.modelSettingsSection}>
