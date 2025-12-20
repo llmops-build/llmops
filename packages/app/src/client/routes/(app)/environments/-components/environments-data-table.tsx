@@ -138,8 +138,8 @@ export function EnvironmentsDataTable() {
               onMouseEnter={() => handleRowHover(row.original.id)}
               onClick={() =>
                 navigate({
-                  to: '/environments/$id',
-                  params: { id: row.original.id },
+                  to: '/environments/$environment',
+                  params: { environment: row.original.id },
                 })
               }
             >
