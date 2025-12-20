@@ -12,6 +12,7 @@ import { Blocks, Settings, SlidersVertical, Telescope } from 'lucide-react';
 import Logo from '@client/components/icons/llmops.svg?react';
 import type React from 'react';
 import { comingSoonTooltip } from './app-sidebar.css';
+import { logoWithDarkmode } from '@client/styles/logo.css';
 
 export function AppSidebar() {
   return (
@@ -41,12 +42,11 @@ export function AppSidebar() {
           content={
             <div className={comingSoonTooltip}>
               <Logo
+                className={logoWithDarkmode({ invert: true })}
                 style={
                   {
                     height: 14,
                     width: 14,
-                    '--ghost-body': '#fff',
-                    '--ghost-eyes': '#000',
                   } as React.CSSProperties
                 }
               />{' '}

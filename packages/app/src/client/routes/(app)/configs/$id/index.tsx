@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { configByIdQueryOptions } from '@client/hooks/queries/useConfigById';
+import NewConfigState from './-components/new-config-state';
 
 export const Route = createFileRoute('/(app)/configs/$id/')({
   component: RouteComponent,
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/(app)/configs/$id/')({
 
 function RouteComponent() {
   const { id } = Route.useParams();
-  if (id === 'new') return null;
+  if (id === 'new') return <NewConfigState />;
 
   return (
     <Navigate
