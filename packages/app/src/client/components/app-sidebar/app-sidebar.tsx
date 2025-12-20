@@ -2,11 +2,12 @@ import { Link } from '@tanstack/react-router';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarItem,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import { Blocks, SlidersVertical, Telescope } from 'lucide-react';
+import { Blocks, Settings, SlidersVertical, Telescope } from 'lucide-react';
 
 export function AppSidebar() {
   return (
@@ -37,6 +38,14 @@ export function AppSidebar() {
           Observability
         </SidebarItem>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarItem asChild>
+          <Link to="/settings">
+            <Icon icon={Settings} />
+            Settings
+          </Link>
+        </SidebarItem>
+      </SidebarFooter>
     </Sidebar>
   );
 }

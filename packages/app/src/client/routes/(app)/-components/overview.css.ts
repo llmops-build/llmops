@@ -37,7 +37,7 @@ export const gettingStartedCard = recipe({
   variants: {
     variant: {
       primary: {
-        backgroundColor: colors.accent3,
+        backgroundColor: colors.accent7,
       },
     },
   },
