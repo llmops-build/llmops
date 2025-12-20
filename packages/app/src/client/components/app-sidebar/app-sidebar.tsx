@@ -5,9 +5,13 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarItem,
+  Tooltip,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
 import { Blocks, Settings, SlidersVertical, Telescope } from 'lucide-react';
+import Logo from '@client/components/icons/llmops.svg?react';
+import type React from 'react';
+import { comingSoonTooltip } from './app-sidebar.css';
 
 export function AppSidebar() {
   return (
@@ -33,10 +37,29 @@ export function AppSidebar() {
             Evaluations
           </Link>
         </SidebarItem>*/}
-        <SidebarItem>
-          <Icon icon={Telescope} />
-          Observability
-        </SidebarItem>
+        <Tooltip
+          content={
+            <div className={comingSoonTooltip}>
+              <Logo
+                style={
+                  {
+                    height: 14,
+                    width: 14,
+                    '--ghost-body': '#fff',
+                    '--ghost-eyes': '#000',
+                  } as React.CSSProperties
+                }
+              />{' '}
+              Coming Soon
+            </div>
+          }
+          side="right"
+        >
+          <SidebarItem>
+            <Icon icon={Telescope} />
+            Observability
+          </SidebarItem>
+        </Tooltip>
       </SidebarContent>
       <SidebarFooter>
         <SidebarItem asChild>

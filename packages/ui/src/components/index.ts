@@ -63,3 +63,6 @@ export type {
 
 export { Slider, BaseSlider } from './slider';
 export type { SliderProps } from './slider';
+
+export { Tooltip, BaseTooltip } from './tooltip';
+export type { TooltipProps } from './tooltip';

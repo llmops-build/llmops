@@ -33,6 +33,7 @@ export const gettingStartedCard = recipe({
     gap: spacing.md,
     textDecoration: 'none',
     color: colors.gray12,
+    justifyContent: 'space-between',
   },
   variants: {
     variant: {

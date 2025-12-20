@@ -2,7 +2,7 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { nodeAdapter } from '@hono/vite-dev-server/node';
 
-// import svgr from 'vite-plugin-svgr';
+import svgr from 'vite-plugin-svgr';
 import build from '@hono/vite-build';
 import devServer, { defaultOptions } from '@hono/vite-dev-server';
 import react from '@vitejs/plugin-react';
@@ -23,7 +23,9 @@ const commonPlugins = [
     routesDirectory: 'src/client/routes',
     generatedRouteTree: 'src/client/routeTree.gen.ts',
   }),
-  // svgr(),
+  svgr({
+    include: '**/*.svg?react',
+  }),
   react({
     jsxImportSource: 'react',
     jsxRuntime: 'automatic',
@@ -70,6 +72,7 @@ export default defineConfig(({ mode }) => {
         exclude: [
           ...defaultOptions.exclude,
           /[?&]tsr-split=(component|[^&]*)(&t=[^&]*)?$/,
+          /.*\.svg?.*$/,
         ],
       }),
       build({
