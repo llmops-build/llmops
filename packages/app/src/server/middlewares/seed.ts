@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 import { generateId } from '@llmops/core';
+import { hashPassword, isBasicAuth } from './auth';
 
 const DEFAULT_ENVIRONMENTS = [
   { name: 'Production', slug: 'production', isProd: true },
@@ -17,6 +18,7 @@ export const createSeedMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
     if (!initialized) {
       const db = c.get('db');
+      const config = c.get('llmopsConfig');
 
       // Check if environments already exist
       const environmentCount = await db.countEnvironments();
@@ -47,6 +49,30 @@ export const createSeedMiddleware = (): MiddlewareHandler => {
         }
 
         console.log('[Seed] Default environments seeded successfully');
+      }
+
+      // Only seed users if basic auth is configured
+      if (isBasicAuth(config.auth)) {
+        const userCount = await db.countUsers();
+
+        if (userCount === 0) {
+          console.log('[Seed] No users found, seeding default admin user...');
+
+          const { defaultEmail, defaultPassword } = config.auth;
+          const passwordHash = await hashPassword(defaultPassword);
+
+          const adminUser = await db.createNewUser({
+            email: defaultEmail,
+            passwordHash,
+            name: 'Admin',
+            role: 'admin',
+          });
+
+          if (adminUser) {
+            console.log('[Seed] Default admin user created successfully');
+            console.log(`[Seed] Admin email: ${defaultEmail}`);
+          }
+        }
       }
 
       initialized = true;

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appSettingsRouteImport } from './routes/(app)/settings'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
@@ -22,6 +23,11 @@ import { Route as appConfigsIdTabsSettingsRouteImport } from './routes/(app)/con
 import { Route as appConfigsIdVariantsVariantsVariantRouteImport } from './routes/(app)/configs/$id/_variants/variants/$variant'
 import { Route as appConfigsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/configs/$id/_targeting/targeting/$environment'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const appIndexRoute = appIndexRouteImport.update({
   id: '/(app)/',
   path: '/',
@@ -87,6 +93,7 @@ const appConfigsIdTargetingTargetingEnvironmentRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/login': typeof LoginRoute
   '/configs': typeof appConfigsRouteWithChildren
   '/settings': typeof appSettingsRoute
   '/': typeof appIndexRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LoginRoute
   '/configs': typeof appConfigsRouteWithChildren
   '/settings': typeof appSettingsRoute
   '/': typeof appIndexRoute
@@ -111,6 +119,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/login': typeof LoginRoute
   '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/settings': typeof appSettingsRoute
   '/(app)/': typeof appIndexRoute
@@ -127,6 +136,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/login'
     | '/configs'
     | '/settings'
     | '/'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/configs/$id/variants/$variant'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/login'
     | '/configs'
     | '/settings'
     | '/'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/configs/$id/variants/$variant'
   id:
     | '__root__'
+    | '/login'
     | '/(app)/configs'
     | '/(app)/settings'
     | '/(app)/'
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  LoginRoute: typeof LoginRoute
   appConfigsRoute: typeof appConfigsRouteWithChildren
   appSettingsRoute: typeof appSettingsRoute
   appIndexRoute: typeof appIndexRoute
@@ -172,6 +185,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/': {
       id: '/(app)/'
       path: '/'
@@ -317,6 +337,7 @@ const appConfigsRouteWithChildren = appConfigsRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  LoginRoute: LoginRoute,
   appConfigsRoute: appConfigsRouteWithChildren,
   appSettingsRoute: appSettingsRoute,
   appIndexRoute: appIndexRoute,

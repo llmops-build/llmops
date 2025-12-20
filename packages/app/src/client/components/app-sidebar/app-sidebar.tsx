@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import {
   Sidebar,
   SidebarContent,
@@ -8,13 +8,31 @@ import {
   Tooltip,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import { Blocks, Settings, SlidersVertical, Telescope } from 'lucide-react';
+import {
+  Blocks,
+  LogOut,
+  Settings,
+  SlidersVertical,
+  Telescope,
+} from 'lucide-react';
 import Logo from '@client/components/icons/llmops.svg?react';
 import type React from 'react';
 import { comingSoonTooltip } from './app-sidebar.css';
 import { logoWithDarkmode } from '@client/styles/logo.css';
+import { useLogout } from '@client/hooks/mutations/useLogout';
 
 export function AppSidebar() {
+  const logout = useLogout();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout.mutate(undefined, {
+      onSuccess: () => {
+        navigate({ to: '/login' });
+      },
+    });
+  };
+
   return (
     <Sidebar>
       <SidebarHeader></SidebarHeader>
@@ -67,6 +85,10 @@ export function AppSidebar() {
             <Icon icon={Settings} />
             Settings
           </Link>
+        </SidebarItem>
+        <SidebarItem onClick={handleLogout} style={{ cursor: 'pointer' }}>
+          <Icon icon={LogOut} />
+          {logout.isPending ? 'Logging out...' : 'Logout'}
         </SidebarItem>
       </SidebarFooter>
     </Sidebar>

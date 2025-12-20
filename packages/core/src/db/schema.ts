@@ -64,6 +64,38 @@ export const targetingRulesSchema = z.object({
 });
 
 /**
+ * Role enum for RBAC - extensible for future Pro features
+ * - admin: Full access to all features
+ * - member: Standard user access (for future team features)
+ * - viewer: Read-only access (for future team features)
+ */
+export const UserRole = z.enum(['admin', 'member', 'viewer']);
+export type UserRoleType = z.infer<typeof UserRole>;
+
+// Users table schema - extensible for teams and RBAC
+export const usersSchema = z.object({
+  ...baseSchema,
+  email: z.string().email(),
+  passwordHash: z.string(),
+  name: z.string().optional(),
+  role: UserRole.default('admin'),
+  // Future Pro fields (nullable for now):
+  teamId: z.string().uuid().optional(), // FK -> teams.id (future)
+  lastLoginAt: z.date().optional(),
+  isActive: z.boolean().default(true),
+});
+
+// Sessions table schema
+export const sessionsSchema = z.object({
+  ...baseSchema,
+  userId: z.string().uuid(), // FK -> users.id
+  token: z.string(), // Session token (hashed)
+  expiresAt: z.date(),
+  userAgent: z.string().optional(),
+  ipAddress: z.string().optional(),
+});
+
+/**
  * Zod inferred types (for runtime validation)
  */
 export type Config = z.infer<typeof configsSchema>;
@@ -72,6 +104,8 @@ export type Environment = z.infer<typeof environmentsSchema>;
 export type EnvironmentSecret = z.infer<typeof environmentSecretsSchema>;
 export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
+export type User = z.infer<typeof usersSchema>;
+export type Session = z.infer<typeof sessionsSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -129,6 +163,30 @@ export interface TargetingRulesTable extends BaseTable {
   conditions: ColumnType<Record<string, unknown>, string, string>;
 }
 
+// Users table - extensible for teams and RBAC
+export interface UsersTable extends BaseTable {
+  email: string;
+  passwordHash: string;
+  name?: string;
+  role: ColumnType<
+    UserRoleType,
+    UserRoleType | undefined,
+    UserRoleType | undefined
+  >;
+  teamId?: string; // Future Pro field
+  lastLoginAt: ColumnType<Date | null, string | undefined, string | undefined>;
+  isActive: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+}
+
+// Sessions table
+export interface SessionsTable extends BaseTable {
+  userId: string;
+  token: string;
+  expiresAt: ColumnType<Date, string, string>;
+  userAgent?: string;
+  ipAddress?: string;
+}
+
 /**
  * Main Kysely Database interface
  */
@@ -139,6 +197,8 @@ export interface Database {
   environment_secrets: EnvironmentSecretsTable;
   config_variants: ConfigVariantsTable;
   targeting_rules: TargetingRulesTable;
+  users: UsersTable;
+  sessions: SessionsTable;
 }
 
 /**
@@ -283,6 +343,43 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
+    users: {
+      order: 7,
+      schema: usersSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        email: { type: 'text', unique: true },
+        passwordHash: { type: 'text' },
+        name: { type: 'text', nullable: true },
+        role: { type: 'text', default: 'admin' },
+        teamId: {
+          type: 'uuid',
+          nullable: true,
+          // Future Pro feature - will reference teams.id when teams table is added
+        },
+        lastLoginAt: { type: 'timestamp', nullable: true },
+        isActive: { type: 'boolean', default: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    sessions: {
+      order: 8,
+      schema: sessionsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        userId: {
+          type: 'uuid',
+          references: { table: 'users', column: 'id' },
+        },
+        token: { type: 'text', unique: true },
+        expiresAt: { type: 'timestamp' },
+        userAgent: { type: 'text', nullable: true },
+        ipAddress: { type: 'text', nullable: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
   },
 } as const;
 
@@ -296,4 +393,6 @@ export const schemas = {
   environment_secrets: environmentSecretsSchema,
   config_variants: configVariantsSchema,
   targeting_rules: targetingRulesSchema,
+  users: usersSchema,
+  sessions: sessionsSchema,
 } as const;

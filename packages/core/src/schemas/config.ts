@@ -11,6 +11,91 @@ const providersSchema = z.object({
   [SupportedProviders.OPENROUTER]: openRouterProviderSchema.optional(),
 });
 
+/**
+ * Auth user object returned by the auth hook
+ */
+export const authUserSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string().optional(),
+  role: z.enum(['admin', 'member', 'viewer']).default('admin'),
+  teamId: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+export type AuthUser = z.infer<typeof authUserSchema>;
+
+/**
+ * Auth session object returned by the auth hook
+ */
+export const authSessionSchema = z.object({
+  id: z.string(),
+  expiresAt: z.date(),
+});
+
+export type AuthSession = z.infer<typeof authSessionSchema>;
+
+/**
+ * Auth context returned by authenticate hook
+ */
+export const authContextSchema = z.object({
+  user: authUserSchema,
+  session: authSessionSchema,
+});
+
+export type AuthContext = z.infer<typeof authContextSchema>;
+
+/**
+ * Basic auth configuration - uses built-in user/session tables
+ */
+const basicAuthSchema = z.object({
+  type: z.literal('basic'),
+  /** Default admin email (required) */
+  defaultEmail: z.string().email(),
+  /** Default admin password (required - we don't auto-generate for security) */
+  defaultPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  /** Session expiry in hours (default: 168 = 7 days) */
+  sessionExpiryHours: z.number().int().positive().optional().default(168),
+});
+
+export type BasicAuthConfig = z.infer<typeof basicAuthSchema>;
+
+/**
+ * Custom auth configuration - user provides their own authenticate function
+ */
+const customAuthSchema = z.object({
+  type: z.literal('custom'),
+  /**
+   * Authenticate function called on every request
+   * Should return AuthContext if authenticated, null otherwise
+   */
+  authenticate: z.custom<(request: Request) => Promise<AuthContext | null>>(
+    (val) => typeof val === 'function'
+  ),
+});
+
+export type CustomAuthConfig = z.infer<typeof customAuthSchema>;
+
+/**
+ * No auth - disables authentication entirely (use for development only)
+ */
+const noAuthSchema = z.object({
+  type: z.literal('none'),
+});
+
+export type NoAuthConfig = z.infer<typeof noAuthSchema>;
+
+/**
+ * Auth configuration - supports basic, custom, or no auth
+ */
+const authSchema = z.discriminatedUnion('type', [
+  basicAuthSchema,
+  customAuthSchema,
+  noAuthSchema,
+]);
+
+export type AuthConfig = z.infer<typeof authSchema>;
+
 export const llmopsConfigSchema = z.object({
   database: z.any(),
   basePath: z
@@ -26,50 +111,13 @@ export const llmopsConfigSchema = z.object({
     );
     return hasAtLeastOneProvider;
   }, 'At least one provider must be configured'),
-  // experimental: z
-  //   .object({
-  //     joins: z.boolean().default(false).optional(),
-  //   })
-  //   .optional()
-  //   .default({}),
-  // rateLimit: z
-  //   .object({
-  //     enabled: z.boolean().default(false).optional(),
-  //     storage: z.literal('database').optional(),
-  //     modelName: z.string().optional().default('ratelimit'),
-  //     fields: z
-  //       .object({
-  //         key: z.string().optional(),
-  //         count: z.number().optional(),
-  //         lastRequest: z.bigint().optional(),
-  //       })
-  //       .optional(),
-  //   })
-  //   .optional(),
-  // secondaryStorage: z.unknown(), // Placeholder for redis,
-  // advanced: z
-  //   .object({
-  //     database: z
-  //       .object({
-  //         useNumberId: z.boolean().default(false).optional(),
-  //         generateId: z
-  //           // .union([
-  //           //   z.function({
-  //           //     input: z.object({
-  //           //       model: z.string(),
-  //           //     }),
-  //           //     output: z.unknown(),
-  //           //   }),
-  //           //   z.enum(['uuid', 'serial']),
-  //           //   z.literal(false),
-  //           // ])
-  //           .any(), // We can refine this later to be more specific
-  //         defaultFindManyLimit: z.number().min(1).optional().default(100),
-  //       })
-  //       .optional(),
-  //   })
-  //   .optional()
-  //   .default({}),
+  /**
+   * Authentication configuration
+   * - 'basic': Built-in email/password auth with session management
+   * - 'custom': Provide your own authenticate function
+   * - 'none': Disable auth (development only)
+   */
+  auth: authSchema.optional(),
 });
 
 export type ValidatedLLMOpsConfig = z.infer<typeof llmopsConfigSchema>;

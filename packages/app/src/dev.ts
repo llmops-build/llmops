@@ -13,6 +13,12 @@ const { app } = createApp({
       apiKey: env.OPENROUTER_API_KEY || '',
     },
   },
+  auth: {
+    type: 'basic',
+    defaultEmail: 'admin@llmops.local',
+    defaultPassword: 'hello222222',
+    sessionExpiryHours: 24
+  }
 });
 
 export default app;

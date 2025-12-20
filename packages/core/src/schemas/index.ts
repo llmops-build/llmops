@@ -11,4 +11,21 @@ export type {
   EnvironmentSecretsTable,
   ConfigVariantsTable,
   TargetingRulesTable,
+  UsersTable,
+  SessionsTable,
+  UserRoleType,
 } from '../db/schema';
+
+// Re-export UserRole enum for runtime use
+export { UserRole } from '../db/schema';
+
+// Re-export auth config types for SDK usage
+export type {
+  AuthConfig,
+  BasicAuthConfig,
+  CustomAuthConfig,
+  NoAuthConfig,
+  AuthUser,
+  AuthSession,
+  AuthContext,
+} from './config';
