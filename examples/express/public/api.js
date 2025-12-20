@@ -1,16 +1,40 @@
 // API utility functions for making HTTP requests
 
 /**
+ * Get LLMOps headers from the configuration inputs
+ */
+function getLLMOpsHeaders() {
+  const headers = {};
+
+  const configId = document.getElementById('llmops-config-id')?.value?.trim();
+  const envSecret = document.getElementById('llmops-env-secret')?.value?.trim();
+
+  if (configId) {
+    headers['x-llmops-config'] = configId;
+  }
+
+  if (envSecret) {
+    headers['x-llmops-environment'] = envSecret;
+  }
+
+  return headers;
+}
+
+/**
  * Generic function to make API calls
  */
 async function makeAPICall(method, endpoint, body = null, customHeaders = {}) {
   const baseURL = window.location.origin;
   const url = `${baseURL}${endpoint}`;
 
+  // Merge LLMOps headers with custom headers
+  const llmopsHeaders = getLLMOpsHeaders();
+
   const options = {
     method: method,
     headers: {
       'Content-Type': 'application/json',
+      ...llmopsHeaders,
       ...customHeaders,
     },
   };
@@ -117,10 +141,14 @@ async function testOpenAIChat() {
     // Import OpenAI dynamically (since we're in a browser environment)
     const OpenAI = (await import('https://cdn.skypack.dev/openai')).default;
 
+    // Get LLMOps headers for the request
+    const llmopsHeaders = getLLMOpsHeaders();
+
     const openai = new OpenAI({
       baseURL: window.location.origin + '/llmops/api/v1/genai',
       apiKey: '',
       dangerouslyAllowBrowser: true, // Note: In production, API calls should go through your backend
+      defaultHeaders: llmopsHeaders,
     });
 
     const chatCompletion = await openai.chat.completions.create({

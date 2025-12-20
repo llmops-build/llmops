@@ -47,6 +47,11 @@ const createVariantAndLinkToConfig = z.object({
   jsonData: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
+const getVariantJsonDataForConfig = z.object({
+  configId: z.string().uuid(),
+  envSecret: z.string().optional(),
+});
+
 export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
   return {
     createConfigVariant: async (
@@ -275,6 +280,86 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         variant,
         configVariant,
       };
+    },
+
+    /**
+     * Get the variant jsonData for a config.
+     * If envSecret is provided, look up the environment by the secret's keyValue.
+     * If envSecret is not provided, use the production environment (isProd = true).
+     */
+    getVariantJsonDataForConfig: async (
+      params: z.infer<typeof getVariantJsonDataForConfig>
+    ) => {
+      const value = await getVariantJsonDataForConfig.safeParseAsync(params);
+      if (!value.success) {
+        throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
+      }
+      const { configId, envSecret } = value.data;
+
+      let environmentId: string;
+
+      if (envSecret) {
+        // Look up environment by secret keyValue
+        const secret = await db
+          .selectFrom('environment_secrets')
+          .select('environmentId')
+          .where('keyValue', '=', envSecret)
+          .executeTakeFirst();
+
+        if (!secret) {
+          throw new LLMOpsError('Invalid environment secret');
+        }
+        environmentId = secret.environmentId;
+      } else {
+        // No envSecret provided, get the production environment
+        const prodEnv = await db
+          .selectFrom('environments')
+          .select('id')
+          .where('isProd', '=', true)
+          .executeTakeFirst();
+
+        if (!prodEnv) {
+          throw new LLMOpsError('No production environment found');
+        }
+        environmentId = prodEnv.id;
+      }
+
+      // Get the targeting rule for this config + environment
+      const targetingRule = await db
+        .selectFrom('targeting_rules')
+        .select('configVariantId')
+        .where('configId', '=', configId)
+        .where('environmentId', '=', environmentId)
+        .where('enabled', '=', true)
+        .orderBy('priority', 'desc')
+        .orderBy('weight', 'desc')
+        .executeTakeFirst();
+
+      if (!targetingRule) {
+        throw new LLMOpsError(
+          `No targeting rule found for config ${configId} in environment ${environmentId}`
+        );
+      }
+
+      // Get the variant jsonData through the config_variant
+      const result = await db
+        .selectFrom('config_variants')
+        .innerJoin('variants', 'config_variants.variantId', 'variants.id')
+        .select([
+          'variants.jsonData',
+          'variants.provider',
+          'variants.modelName',
+        ])
+        .where('config_variants.id', '=', targetingRule.configVariantId)
+        .executeTakeFirst();
+
+      if (!result) {
+        throw new LLMOpsError(
+          `No variant found for config variant ${targetingRule.configVariantId}`
+        );
+      }
+
+      return result;
     },
   };
 };

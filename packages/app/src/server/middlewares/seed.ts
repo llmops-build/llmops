@@ -2,9 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 import { generateId } from '@llmops/core';
 
 const DEFAULT_ENVIRONMENTS = [
-  { name: 'Production', slug: 'production', isProd: true },
-  { name: 'Development', slug: 'development', isProd: false },
-  { name: 'Staging', slug: 'staging', isProd: false },
+  { name: 'Production', slug: 'production', isProd: true }
 ] as const;
 
 const generateSecretKey = () => {

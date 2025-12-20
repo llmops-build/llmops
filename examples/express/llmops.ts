@@ -4,7 +4,6 @@ import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-
   providers: {
     openrouter: {
       apiKey: env.OPENROUTER_API_KEY || '',
@@ -13,4 +12,9 @@ export default llmops({
   database: new Pool({
     connectionString: env.POSTGRES_URL || '',
   }),
+  auth: {
+    type: 'basic',
+    defaultUser: 'admin@llmops.local',
+    defaultPassword: 'password'
+  }
 });

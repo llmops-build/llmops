@@ -5,6 +5,7 @@ import chatCompletions from './openai/chatCompletions';
 import { completions } from './openai/completions';
 import models from './openai/models';
 import { requestValidator } from './requestValidator';
+import { createRequestGuardMiddleware } from './requestGuard';
 
 const app = new Hono();
 
@@ -16,6 +17,7 @@ app
     return c.json({ status: 'healthy' });
   })
   .use('*', requestValidator)
+  .use('*', createRequestGuardMiddleware())
   // Models
   .route('/models', models)
   // Chat completions

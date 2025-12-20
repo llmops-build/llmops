@@ -9,7 +9,7 @@ const CONTENT_TYPES = {
 } as const;
 
 // Request headers validation schema
-const requestHeadersSchema = z.object({
+export const requestHeadersSchema = z.object({
   'content-type': z.string().refine(
     (contentType) => {
       if (!contentType) return true; // Allow missing content-type
@@ -27,7 +27,10 @@ const requestHeadersSchema = z.object({
         'Invalid content type. Must be application/json, multipart/form-data, or audio/*',
     }
   ),
-  'x-llmops-config': z.string().optional(),
+  'x-llmops-config': z.string({
+    error: 'LLMOps Config ID was not provided.'
+  }), // This is required always
+  'x-llmops-environment': z.string().optional()
 });
 
 // Export the request validation middleware

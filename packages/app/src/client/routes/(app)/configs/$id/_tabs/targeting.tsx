@@ -69,7 +69,7 @@ function RouteComponent() {
                     {env.name}
                     {env.isProd && (
                       <span style={{ marginLeft: '0.5rem', opacity: 0.6 }}>
-                        (prod)
+                        (prod or this environment)
                       </span>
                     )}
                   </TableCell>

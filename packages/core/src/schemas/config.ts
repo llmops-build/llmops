@@ -11,8 +11,15 @@ const providersSchema = z.object({
   [SupportedProviders.OPENROUTER]: openRouterProviderSchema.optional(),
 });
 
+const authSchema = z.object({
+  type: z.literal('basic'),
+  defaultUser: z.string(),
+  defaultPassword: z.string(),
+});
+
 export const llmopsConfigSchema = z.object({
   database: z.any(),
+  auth: authSchema,
   basePath: z
     .string()
     .min(1, 'Base path is required and cannot be empty')

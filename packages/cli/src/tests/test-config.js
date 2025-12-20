@@ -11,4 +11,9 @@ export default llmops({
       apiKey: 'sk-yadayadayada',
     },
   },
+  auth: {
+    type: 'basic',
+    defaultUser: 'admin@llmops.local',
+    defaultPassword: 'password'
+  }
 });

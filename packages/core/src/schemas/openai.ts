@@ -328,3 +328,82 @@ export const chatCompletionCreateParamsBaseSchema = z.object({
 export type ChatCompletionCreateParamsBase = z.infer<
   typeof chatCompletionCreateParamsBaseSchema
 >;
+
+/**
+ * Schema for variant jsonData - these are the parameters that can be
+ * configured per variant to override the default chat completion settings.
+ * This is a subset of ChatCompletionCreateParamsBase that makes sense to
+ * configure at the variant level (excludes messages which come from the request).
+ */
+export const variantJsonDataSchema = z.object({
+  // LLMOps-specific fields
+  system_prompt: z.string().optional(),
+
+  // OpenAI-compatible fields
+  model: z.string().optional(),
+  audio: chatCompletionAudioParamSchema.optional().nullable(),
+  frequency_penalty: z.number().min(-2).max(2).optional().nullable(),
+  function_call: z
+    .union([
+      z.enum(['none', 'auto']),
+      z.object({
+        name: z.string(),
+      }),
+    ])
+    .optional(),
+  functions: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        parameters: z.record(z.string(), z.any()).optional(),
+      })
+    )
+    .optional(),
+  logit_bias: z
+    .record(z.string(), z.number().min(-100).max(100))
+    .optional()
+    .nullable(),
+  logprobs: z.boolean().optional().nullable(),
+  max_completion_tokens: z.number().positive().optional().nullable(),
+  max_tokens: z.number().positive().optional().nullable(),
+  metadata: z.record(z.string(), z.string()).optional().nullable(),
+  modalities: z
+    .array(z.enum(['text', 'audio']))
+    .optional()
+    .nullable(),
+  n: z.number().positive().optional().nullable(),
+  parallel_tool_calls: z.boolean().optional(),
+  prediction: chatCompletionPredictionContentSchema.optional().nullable(),
+  presence_penalty: z.number().min(-2).max(2).optional().nullable(),
+  prompt_cache_key: z.string().optional(),
+  prompt_cache_retention: z.enum(['in-memory', '24h']).optional().nullable(),
+  reasoning_effort: z
+    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
+    .optional()
+    .nullable(),
+  response_format: responseFormatSchema.optional(),
+  safety_identifier: z.string().optional(),
+  seed: z.number().optional().nullable(),
+  service_tier: z
+    .enum(['auto', 'default', 'flex', 'scale', 'priority'])
+    .optional()
+    .nullable(),
+  stop: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .nullable(),
+  store: z.boolean().optional().nullable(),
+  stream: z.boolean().optional().nullable(),
+  stream_options: chatCompletionStreamOptionsSchema.optional().nullable(),
+  temperature: z.number().min(0).max(2).optional().nullable(),
+  tool_choice: chatCompletionToolChoiceOptionSchema.optional(),
+  tools: z.array(chatCompletionToolSchema).optional(),
+  top_logprobs: z.number().min(0).max(20).optional().nullable(),
+  top_p: z.number().min(0).max(1).optional().nullable(),
+  user: z.string().optional(),
+  verbosity: z.enum(['low', 'medium', 'high']).optional().nullable(),
+  web_search_options: webSearchOptionsSchema.optional(),
+});
+
+export type VariantJsonData = z.infer<typeof variantJsonDataSchema>;

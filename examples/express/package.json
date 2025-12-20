@@ -14,12 +14,14 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "openai": "^6.10.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.9.0",
     "@types/pg": "^8.15.6",
+    "@types/swagger-ui-express": "^4.1.8",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

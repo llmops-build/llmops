@@ -77,6 +77,30 @@
       <h1>LLMOps Express API Demo</h1>
 
       <div class="api-section">
+        <h3>LLMOps Configuration</h3>
+        <p>Configure the LLMOps headers for API requests:</p>
+
+        <label for="llmops-config-id">Config ID:</label>
+        <input
+          type="text"
+          id="llmops-config-id"
+          placeholder="Enter config UUID"
+          style="margin-bottom: 10px"
+        />
+
+        <label for="llmops-env-secret">Environment Secret (optional):</label>
+        <input
+          type="password"
+          id="llmops-env-secret"
+          placeholder="Enter environment secret"
+          style="margin-bottom: 10px"
+        />
+        <p style="font-size: 12px; color: #666; margin-top: 0">
+          If not provided, the production environment will be used.
+        </p>
+      </div>
+
+      <div class="api-section">
         <h3>Basic API Test</h3>
         <p>Test the basic server endpoint:</p>
         <button onclick="testBasicAPI()">GET /</button>

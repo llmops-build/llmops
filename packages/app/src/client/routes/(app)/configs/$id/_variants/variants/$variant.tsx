@@ -85,7 +85,8 @@ function RouteComponent() {
         {
           variant_name: variantData.name || '',
           provider: variantData.provider || '',
-          modelName: variantData.modelName || '',
+          // Prefer model from jsonData, fallback to modelName column for backwards compatibility
+          modelName: (jsonData?.model as string) || variantData.modelName || '',
           system_prompt: (jsonData?.system_prompt as string) || '',
           temperature: jsonData?.temperature as number | undefined,
           maxTokens: jsonData?.max_tokens as number | undefined,
@@ -109,6 +110,8 @@ function RouteComponent() {
     try {
       const jsonData: Record<string, unknown> = {
         system_prompt: data.system_prompt,
+        // Store model in jsonData for future use (modelName column will be deprecated)
+        model: data.modelName,
       };
 
       // Only include model parameters if they have been set
