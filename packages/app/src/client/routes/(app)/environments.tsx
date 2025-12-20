@@ -1,4 +1,3 @@
-import { useTileWidth } from '@client/hooks/ui/useTileWidth';
 import {
   createFileRoute,
   Link,
@@ -7,44 +6,45 @@ import {
   useNavigate,
   useParams,
 } from '@tanstack/react-router';
-import clsx from 'clsx';
-import {
-  leftTile,
-  rightTile,
-  twinSplitContainer,
-} from './-components/twin-split.css';
-import { gridElement, workingArea } from './-components/area.css';
-import { Icon } from '@client/components/icons';
-import { ChevronRight, Columns2, Plus, SlidersVertical } from 'lucide-react';
-import { ConfigsDataTable } from './configs/-components/configs-data-table';
-import { useEffect } from 'react';
-import { Breadcrumbs, Button, Header } from '@llmops/ui';
 import {
   breadcrumbLink,
   chevronStyle,
   headerGroup,
   headerStyle,
 } from './-components/_layout.css';
+import { Breadcrumbs, Button, Header } from '@llmops/ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
+import { ChevronRight, Columns2, Globe, Plus } from 'lucide-react';
+import { Icon } from '@client/components/icons';
+import { gridElement, workingArea } from './-components/area.css';
+import clsx from 'clsx';
+import {
+  leftTile,
+  rightTile,
+  twinSplitContainer,
+} from './-components/twin-split.css';
+import { EnvironmentsDataTable } from './environments/-components/environments-data-table';
+import { useTileWidth } from '@client/hooks/ui/useTileWidth';
+import { useEffect } from 'react';
 import { headerStyles } from './configs/-components/configs.css';
-import ConfigsHeader from './configs/-components/configs-header';
+import EnvironmentsHeader from './environments/$environment/-components/environments-header';
 
-export const Route = createFileRoute('/(app)/configs')({
+export const Route = createFileRoute('/(app)/environments')({
   component: RouteComponent,
   staticData: {
     customData: {
-      title: 'Configs',
-      icon: <Icon icon={SlidersVertical} />,
+      title: 'Environments',
+      icon: <Icon icon={Globe} />,
     },
   },
 });
 
 function RouteComponent() {
+  const { toggleSidebar } = useSidebarWidth();
   const { containerRef, setTileWidth } = useTileWidth();
   const params = useParams({ strict: false });
-  const navigate = useNavigate();
   const matches = useMatches();
-  const { toggleSidebar } = useSidebarWidth();
+  const navigate = useNavigate();
 
   const breadcrumbItems = matches
     .filter(
@@ -72,16 +72,16 @@ function RouteComponent() {
     });
 
   const handleNavigateToNew = () => {
-    navigate({ to: '/configs/$id', params: { id: 'new' } });
+    navigate({ to: '/environments/$environment', params: { environment: 'new' } });
   };
 
   useEffect(() => {
-    if (params?.id) {
+    if (params?.environment) {
       setTileWidth('25%');
     } else {
       setTileWidth('100%');
     }
-  }, [params?.id]);
+  }, [params?.environment]);
 
   return (
     <>
@@ -103,7 +103,7 @@ function RouteComponent() {
         <div className={headerGroup}>
           <Button variant="outline" scheme="gray" onClick={handleNavigateToNew}>
             <Icon icon={Plus} className={chevronStyle} />
-            New Config
+            New Environment
           </Button>
         </div>
       </Header>
@@ -111,11 +111,11 @@ function RouteComponent() {
         <div ref={containerRef} className={twinSplitContainer}>
           <div className={clsx(workingArea, leftTile)}>
             <div className={headerStyles}></div>
-            <ConfigsDataTable />
+            <EnvironmentsDataTable />
           </div>
           <div className={clsx(workingArea, rightTile)}>
             <div>
-              <ConfigsHeader id={params.id as string} />
+              <EnvironmentsHeader id={params.environment} />
               <Outlet />
             </div>
           </div>

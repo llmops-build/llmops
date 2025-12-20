@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appSettingsRouteImport } from './routes/(app)/settings'
+import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
+import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
 import { Route as appConfigsIdVariantsRouteImport } from './routes/(app)/configs/$id/_variants'
 import { Route as appConfigsIdTabsRouteImport } from './routes/(app)/configs/$id/_tabs'
@@ -32,6 +34,11 @@ const appSettingsRoute = appSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appEnvironmentsRoute = appEnvironmentsRouteImport.update({
+  id: '/(app)/environments',
+  path: '/environments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const appConfigsRoute = appConfigsRouteImport.update({
   id: '/(app)/configs',
   path: '/configs',
@@ -42,6 +49,12 @@ const appConfigsIdRouteRoute = appConfigsIdRouteRouteImport.update({
   path: '/$id',
   getParentRoute: () => appConfigsRoute,
 } as any)
+const appEnvironmentsEnvironmentIndexRoute =
+  appEnvironmentsEnvironmentIndexRouteImport.update({
+    id: '/$environment/',
+    path: '/$environment/',
+    getParentRoute: () => appEnvironmentsRoute,
+  } as any)
 const appConfigsIdIndexRoute = appConfigsIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -88,10 +101,12 @@ const appConfigsIdTargetingTargetingEnvironmentRoute =
 
 export interface FileRoutesByFullPath {
   '/configs': typeof appConfigsRouteWithChildren
+  '/environments': typeof appEnvironmentsRouteWithChildren
   '/settings': typeof appSettingsRoute
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/configs/$id/': typeof appConfigsIdIndexRoute
+  '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
@@ -100,9 +115,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
+  '/environments': typeof appEnvironmentsRouteWithChildren
   '/settings': typeof appSettingsRoute
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdIndexRoute
+  '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
@@ -112,12 +129,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)/configs': typeof appConfigsRouteWithChildren
+  '/(app)/environments': typeof appEnvironmentsRouteWithChildren
   '/(app)/settings': typeof appSettingsRoute
   '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
   '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
   '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
+  '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/(app)/configs/$id/_tabs/settings': typeof appConfigsIdTabsSettingsRoute
   '/(app)/configs/$id/_tabs/targeting': typeof appConfigsIdTabsTargetingRoute
   '/(app)/configs/$id/_tabs/variants': typeof appConfigsIdTabsVariantsRoute
@@ -128,10 +147,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/configs'
+    | '/environments'
     | '/settings'
     | '/'
     | '/configs/$id'
     | '/configs/$id/'
+    | '/environments/$environment'
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
@@ -140,9 +161,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/configs'
+    | '/environments'
     | '/settings'
     | '/'
     | '/configs/$id'
+    | '/environments/$environment'
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
@@ -151,12 +174,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/(app)/configs'
+    | '/(app)/environments'
     | '/(app)/settings'
     | '/(app)/'
     | '/(app)/configs/$id'
     | '/(app)/configs/$id/_tabs'
     | '/(app)/configs/$id/_variants'
     | '/(app)/configs/$id/'
+    | '/(app)/environments/$environment/'
     | '/(app)/configs/$id/_tabs/settings'
     | '/(app)/configs/$id/_tabs/targeting'
     | '/(app)/configs/$id/_tabs/variants'
@@ -166,6 +191,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   appConfigsRoute: typeof appConfigsRouteWithChildren
+  appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
   appSettingsRoute: typeof appSettingsRoute
   appIndexRoute: typeof appIndexRoute
 }
@@ -186,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/environments': {
+      id: '/(app)/environments'
+      path: '/environments'
+      fullPath: '/environments'
+      preLoaderRoute: typeof appEnvironmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/configs': {
       id: '/(app)/configs'
       path: '/configs'
@@ -199,6 +232,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/configs/$id'
       preLoaderRoute: typeof appConfigsIdRouteRouteImport
       parentRoute: typeof appConfigsRoute
+    }
+    '/(app)/environments/$environment/': {
+      id: '/(app)/environments/$environment/'
+      path: '/$environment'
+      fullPath: '/environments/$environment'
+      preLoaderRoute: typeof appEnvironmentsEnvironmentIndexRouteImport
+      parentRoute: typeof appEnvironmentsRoute
     }
     '/(app)/configs/$id/': {
       id: '/(app)/configs/$id/'
@@ -316,8 +356,21 @@ const appConfigsRouteWithChildren = appConfigsRoute._addFileChildren(
   appConfigsRouteChildren,
 )
 
+interface appEnvironmentsRouteChildren {
+  appEnvironmentsEnvironmentIndexRoute: typeof appEnvironmentsEnvironmentIndexRoute
+}
+
+const appEnvironmentsRouteChildren: appEnvironmentsRouteChildren = {
+  appEnvironmentsEnvironmentIndexRoute: appEnvironmentsEnvironmentIndexRoute,
+}
+
+const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(
+  appEnvironmentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   appConfigsRoute: appConfigsRouteWithChildren,
+  appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
   appSettingsRoute: appSettingsRoute,
   appIndexRoute: appIndexRoute,
 }

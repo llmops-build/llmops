@@ -1,79 +1,6 @@
-import { useForm } from 'react-hook-form';
-import {
-  configsContainer,
-  configTitleInput,
-  updateNameStatus,
-} from './configs.css';
-import { useEffect } from 'react';
+import { UpdateOrCreateName } from '../../-components/update-or-create-name';
 import { useCreateConfig } from '@client/hooks/mutations/useCreateConfig';
 import { useUpdateConfigName } from '@client/hooks/mutations/useUpdateConfigName';
-
-const CreateConfig = ({
-  isNew,
-  config,
-}: {
-  isNew: boolean;
-  config?: { id: string; name: string };
-}) => {
-  const {
-    reset,
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<{ name: string }>({
-    defaultValues: {
-      name: config?.name || '',
-    },
-  });
-  const { mutateAsync: createConfig } = useCreateConfig();
-  const { mutateAsync: updateConfigName } = useUpdateConfigName();
-
-  useEffect(() => {
-    if (config?.name) {
-      reset({ name: config.name });
-    } else if (isNew) {
-      reset({ name: '' });
-    }
-  }, [config?.name]);
-
-  const onSubmit = async (data: { name: string }) => {
-    if (!data.name.trim()) {
-      return;
-    }
-    try {
-      isNew
-        ? await createConfig({ name: data.name })
-        : await updateConfigName({ id: config!.id, name: data.name });
-    } catch (error) {
-      console.error('Error in creating/updating config:', error);
-    }
-  };
-
-  return (
-    <form
-      className={configsContainer}
-      onBlur={handleSubmit(onSubmit)}
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit(onSubmit)();
-      }}
-    >
-      <input
-        {...register('name', { required: 'Config name is required' })}
-        placeholder="Config Name"
-        title="title"
-        className={configTitleInput}
-        aria-invalid={errors.name ? 'true' : 'false'}
-      />
-      {isSubmitting &&
-        (isNew ? (
-          <span className={updateNameStatus}>Creating...</span>
-        ) : (
-          <span className={updateNameStatus}>Updating...</span>
-        ))}
-    </form>
-  );
-};
 
 const UpdateOrCreateConfigName = ({
   id,
@@ -82,8 +9,18 @@ const UpdateOrCreateConfigName = ({
   id: string | 'new';
   config?: { id: string; name: string };
 }) => {
-  const isNew = id === 'new';
-  return <CreateConfig isNew={isNew} config={config} />;
+  const { mutateAsync: createConfig } = useCreateConfig();
+  const { mutateAsync: updateConfigName } = useUpdateConfigName();
+
+  return (
+    <UpdateOrCreateName
+      id={id}
+      entity={config}
+      placeholder="Config Name"
+      onCreate={createConfig}
+      onUpdate={updateConfigName}
+    />
+  );
 };
 
 export default UpdateOrCreateConfigName;
