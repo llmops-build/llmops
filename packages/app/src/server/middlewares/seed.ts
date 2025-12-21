@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 import { generateId } from '@llmops/core';
 
 const DEFAULT_ENVIRONMENTS = [
-  { name: 'Production', slug: 'production', isProd: true }
+  { name: 'Production', slug: 'production', isProd: true },
 ] as const;
 
 const generateSecretKey = () => {
@@ -36,7 +36,7 @@ export const createSeedMiddleware = (): MiddlewareHandler => {
             // Create secret for the environment
             await db.createEnvironmentSecret({
               environmentId: createdEnv.id,
-              keyName: 'api_key',
+              keyName: 'Secret key',
               keyValue: generateSecretKey(),
             });
 

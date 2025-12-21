@@ -37,7 +37,9 @@ type Environment = {
 const columnHelper = createColumnHelper<Environment>();
 
 export function EnvironmentsDataTable() {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'createdAt', desc: false },
+  ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const { data } = useEnvironments();
