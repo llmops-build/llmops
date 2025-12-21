@@ -217,21 +217,30 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
           data.modelName
         );
 
-        // Create a new request with the modified body
+        // Clone headers from the original request
+        const newHeaders = new Headers(c.req.raw.headers);
+        newHeaders.set('x-portkey-config', JSON.stringify(portkeyConfig));
+
+        // Create a completely new Request object with the merged body
+        // This is the proper way to replace request body in Hono
         const newRequest = new Request(c.req.raw.url, {
           method: c.req.raw.method,
-          headers: c.req.raw.headers,
+          headers: newHeaders,
           body: JSON.stringify(mergedBody),
+          duplex: 'half', // Required for request body streams in Node.js
+        } as RequestInit);
+
+        // Use Object.defineProperty to replace the raw request
+        // This ensures Hono will re-parse the body from the new request
+        Object.defineProperty(c.req, 'raw', {
+          value: newRequest,
+          writable: true,
+          configurable: true,
         });
 
-        // Set the portkey config header on the new request
-        newRequest.headers.set(
-          'x-portkey-config',
-          JSON.stringify(portkeyConfig)
-        );
-
-        // Replace the request
-        c.req.raw = newRequest;
+        // Clear Hono's internal body cache by resetting the parsed body
+        (c.req as unknown as { bodyCache: Record<string, unknown> }).bodyCache =
+          {};
       } else {
         // For non-chat requests, just set the header
         c.req.raw.headers.set(
