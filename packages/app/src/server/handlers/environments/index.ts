@@ -1,3 +1,4 @@
+import { generateId } from '@llmops/core';
 import { zv } from '@server/lib/zv';
 import {
   clientErrorResponse,
@@ -6,6 +7,16 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+
+/**
+ * Generate a secret key with environment-specific prefix
+ * Format: sec_{slug_prefix}_{random_string}
+ */
+const generateSecretKey = (slug: string): string => {
+  const slugPrefix = slug.slice(0, 4).toLowerCase();
+  const randomPart = generateId(24);
+  return `sec_${slugPrefix}_${randomPart}`;
+};
 
 const app = new Hono()
   // Create a new environment
@@ -29,6 +40,22 @@ const app = new Hono()
           slug,
           isProd: isProd ?? false,
         });
+
+        if (!environment) {
+          return c.json(
+            internalServerError('Failed to create environment', 500),
+            500
+          );
+        }
+
+        // Generate and store a secret key for the new environment
+        const secretKey = generateSecretKey(slug);
+        await db.createEnvironmentSecret({
+          environmentId: environment.id,
+          keyName: 'Secret key',
+          keyValue: secretKey,
+        });
+
         return c.json(successResponse(environment, 200));
       } catch (error) {
         console.error('Error creating environment:', error);
@@ -144,6 +171,33 @@ const app = new Hono()
         console.error('Error deleting environment:', error);
         return c.json(
           internalServerError('Failed to delete environment', 500),
+          500
+        );
+      }
+    }
+  )
+  // Get secrets by environment ID
+  .get(
+    '/:id/secrets',
+    zv(
+      'param',
+      z.object({
+        id: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const { id } = c.req.valid('param');
+
+      try {
+        const secrets = await db.getSecretsByEnvironmentId({
+          environmentId: id,
+        });
+        return c.json(successResponse(secrets, 200));
+      } catch (error) {
+        console.error('Error fetching environment secrets:', error);
+        return c.json(
+          internalServerError('Failed to fetch environment secrets', 500),
           500
         );
       }

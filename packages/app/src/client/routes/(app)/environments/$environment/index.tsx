@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { environmentByIdQueryOptions } from '@client/hooks/queries/useEnvironmentById';
 import NewEnvironmentState from './-components/new-environment-state';
+import SecretsTable from './-components/secrets-table';
 
 export const Route = createFileRoute('/(app)/environments/$environment/')({
   component: RouteComponent,
@@ -23,5 +24,5 @@ function RouteComponent() {
   const { environment } = Route.useParams();
   if (environment === 'new') return <NewEnvironmentState />;
 
-  return <div>Environment details for {environment}</div>;
+  return <SecretsTable environmentId={environment} />;
 }
