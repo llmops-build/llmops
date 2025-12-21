@@ -4,6 +4,7 @@ import type {
   NextFunction,
 } from 'express';
 import type { LLMOpsClient } from '../../client';
+import { Readable } from 'node:stream';
 
 export function createLLMOpsMiddleware(client: LLMOpsClient) {
   const basePath = client.config.basePath;
@@ -38,7 +39,18 @@ export function createLLMOpsMiddleware(client: LLMOpsClient) {
 
     res.status(response.status);
 
-    const body = await response.text();
-    res.send(body);
+    // Check if this is a streaming response (SSE)
+    const contentType = response.headers?.get('content-type');
+    if (contentType?.includes('text/event-stream') && response.body) {
+      // For SSE streaming, pipe the body directly to avoid buffering
+      // Convert Web ReadableStream to Node.js Readable and pipe to response
+      Readable.fromWeb(
+        response.body as import('stream/web').ReadableStream
+      ).pipe(res);
+    } else {
+      // For non-streaming responses, buffer and send
+      const body = await response.text();
+      res.send(body);
+    }
   };
 }
