@@ -55,7 +55,7 @@ const openApiSpec = {
         },
       },
     },
-    '/llmops/api/v1/genai/chat/completions': {
+    '/llmops/api/genai/v1/chat/completions': {
       post: {
         summary: 'Chat completions',
         description: 'OpenAI-compatible chat completions endpoint',

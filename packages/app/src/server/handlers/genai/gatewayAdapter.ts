@@ -1,0 +1,262 @@
+import type { MiddlewareHandler } from 'hono';
+import {
+  variantJsonDataSchema,
+  SupportedProviders,
+  type VariantJsonData,
+} from '@llmops/core';
+
+/**
+ * Portkey Gateway Config format
+ * @see packages/gateway/src/middlewares/requestValidator/schema/config.ts
+ */
+interface PortkeyConfig {
+  provider: string;
+  api_key?: string;
+  // AWS credentials
+  aws_secret_access_key?: string;
+  aws_access_key_id?: string;
+  aws_session_token?: string;
+  aws_region?: string;
+  // Azure
+  azure_model_name?: string;
+  azure_auth_mode?: string;
+  // Google Vertex AI
+  vertex_project_id?: string;
+  vertex_region?: string;
+  vertex_service_account_json?: Record<string, string>;
+  // OpenAI specific
+  openai_project?: string;
+  openai_organization?: string;
+  // Strategy for multiple targets
+  strategy?: {
+    mode: 'single' | 'loadbalance' | 'fallback' | 'conditional';
+    on_status_codes?: number[];
+  };
+  targets?: PortkeyConfig[];
+  // Other options
+  cache?: {
+    mode: 'simple' | 'semantic';
+    max_age?: number;
+  };
+  retry?: {
+    attempts: number;
+    on_status_codes?: number[];
+  };
+  request_timeout?: number;
+  custom_host?: string;
+  forward_headers?: string[];
+  weight?: number;
+  on_status_codes?: number[];
+}
+
+/**
+ * Maps LLMOps provider names to Portkey provider names
+ */
+const PROVIDER_MAP: Record<string, string> = {
+  [SupportedProviders.OPENROUTER]: 'openrouter',
+  openai: 'openai',
+  anthropic: 'anthropic',
+  'azure-openai': 'azure-openai',
+  'vertex-ai': 'vertex-ai',
+  bedrock: 'bedrock',
+  groq: 'groq',
+  'mistral-ai': 'mistral-ai',
+  cohere: 'cohere',
+  'together-ai': 'together-ai',
+  deepseek: 'deepseek',
+  // Add more mappings as needed
+};
+
+/**
+ * Merges variant config with the request body for chat completions.
+ * Variant config takes precedence over request body values.
+ */
+function mergeChatCompletionBody(
+  body: Record<string, unknown>,
+  variantConfig: VariantJsonData,
+  modelName: string
+): Record<string, unknown> {
+  // Build messages array: prepend system prompt from variant if present
+  const messages: Array<{ role: string; content: string }> = [];
+
+  if (variantConfig.system_prompt) {
+    messages.push({
+      role: 'system',
+      content: variantConfig.system_prompt,
+    });
+  }
+
+  // Append user's messages
+  if (Array.isArray(body.messages)) {
+    messages.push(
+      ...(body.messages as Array<{ role: string; content: string }>)
+    );
+  }
+
+  // Use model from jsonData, fallback to modelName column
+  const model = variantConfig.model || modelName;
+
+  // Merge variant config with request body
+  // Variant config takes precedence, request body provides fallbacks
+  return {
+    ...body,
+    messages,
+    model,
+    // Variant config takes precedence over request body
+    temperature: variantConfig.temperature ?? body.temperature,
+    max_tokens: variantConfig.max_tokens ?? body.max_tokens,
+    max_completion_tokens:
+      variantConfig.max_completion_tokens ?? body.max_completion_tokens,
+    top_p: variantConfig.top_p ?? body.top_p,
+    frequency_penalty:
+      variantConfig.frequency_penalty ?? body.frequency_penalty,
+    presence_penalty: variantConfig.presence_penalty ?? body.presence_penalty,
+    stop: variantConfig.stop ?? body.stop,
+    n: variantConfig.n ?? body.n,
+    logprobs: variantConfig.logprobs ?? body.logprobs,
+    top_logprobs: variantConfig.top_logprobs ?? body.top_logprobs,
+    response_format: variantConfig.response_format ?? body.response_format,
+    seed: variantConfig.seed ?? body.seed,
+    tools: variantConfig.tools ?? body.tools,
+    tool_choice: variantConfig.tool_choice ?? body.tool_choice,
+    parallel_tool_calls:
+      variantConfig.parallel_tool_calls ?? body.parallel_tool_calls,
+    user: variantConfig.user ?? body.user,
+    stream: variantConfig.stream ?? body.stream,
+    stream_options: variantConfig.stream_options ?? body.stream_options,
+  };
+}
+
+/**
+ * Middleware that adapts LLMOps config to Portkey Gateway format.
+ *
+ * Flow:
+ * 1. Reads configId and envSec from context (set by requestGuard)
+ * 2. Fetches variant config from database
+ * 3. Translates to Portkey config format
+ * 4. Sets x-portkey-config header for gateway consumption
+ * 5. Modifies request body to merge variant config settings
+ */
+export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
+  return async (c, next) => {
+    const configId = c.get('configId');
+    const envSec = c.get('envSec');
+    const db = c.var.db;
+    const llmopsConfig = c.get('llmopsConfig');
+
+    if (!configId) {
+      return c.json(
+        {
+          error: {
+            message: 'Config ID is required',
+            type: 'invalid_request_error',
+          },
+        },
+        400
+      );
+    }
+
+    try {
+      // Fetch variant data from database
+      const data = await db.getVariantJsonDataForConfig({
+        configId,
+        envSecret: envSec,
+      });
+
+      // Parse variant config
+      const variantConfig = variantJsonDataSchema.parse(
+        typeof data.jsonData === 'string'
+          ? JSON.parse(data.jsonData)
+          : data.jsonData
+      );
+
+      // Map provider name
+      const portkeyProvider = PROVIDER_MAP[data.provider] || data.provider;
+
+      // Get API key from llmopsConfig providers
+      // Cast to access provider config by string key
+      const providers = llmopsConfig?.providers as
+        | Record<string, { apiKey?: string } | undefined>
+        | undefined;
+      const providerConfig = providers?.[data.provider];
+      const apiKey = providerConfig?.apiKey;
+
+      if (!apiKey) {
+        return c.json(
+          {
+            error: {
+              message: `No API key configured for provider: ${data.provider}`,
+              type: 'invalid_request_error',
+            },
+          },
+          400
+        );
+      }
+
+      // Build Portkey config
+      const portkeyConfig: PortkeyConfig = {
+        provider: portkeyProvider,
+        api_key: apiKey,
+      };
+
+      // Check if this is a chat completions request that needs body transformation
+      const path = c.req.path;
+      const method = c.req.method;
+      const contentType = c.req.header('content-type')?.split(';')[0];
+
+      if (
+        method === 'POST' &&
+        contentType === 'application/json' &&
+        (path.endsWith('/chat/completions') || path.endsWith('/completions'))
+      ) {
+        // Get original body and merge with variant config
+        const originalBody = await c.req.json();
+        const mergedBody = mergeChatCompletionBody(
+          originalBody,
+          variantConfig,
+          data.modelName
+        );
+
+        // Create a new request with the modified body
+        const newRequest = new Request(c.req.raw.url, {
+          method: c.req.raw.method,
+          headers: c.req.raw.headers,
+          body: JSON.stringify(mergedBody),
+        });
+
+        // Set the portkey config header on the new request
+        newRequest.headers.set(
+          'x-portkey-config',
+          JSON.stringify(portkeyConfig)
+        );
+
+        // Replace the request
+        c.req.raw = newRequest;
+      } else {
+        // For non-chat requests, just set the header
+        c.req.raw.headers.set(
+          'x-portkey-config',
+          JSON.stringify(portkeyConfig)
+        );
+      }
+
+      // Store variant config in context for reference
+      c.set('variantConfig', variantConfig);
+      c.set('variantModel', variantConfig.model || data.modelName);
+
+      await next();
+    } catch (error) {
+      console.error('Gateway adapter error:', error);
+      return c.json(
+        {
+          error: {
+            message:
+              error instanceof Error ? error.message : 'Failed to fetch config',
+            type: 'api_error',
+          },
+        },
+        500
+      );
+    }
+  };
+};

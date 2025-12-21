@@ -118,6 +118,9 @@ importers:
       '@llmops/core':
         specifier: workspace:*
         version: link:../core
+      '@llmops/gateway':
+        specifier: workspace:*
+        version: link:../gateway
       '@llmops/ui':
         specifier: workspace:*
         version: link:../ui

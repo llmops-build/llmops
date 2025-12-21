@@ -1,7 +1,18 @@
-import conf from '../conf.json';
 import fs from 'fs';
 
-const pluginsEnabled = conf.plugins_enabled;
+const pluginsEnabled = [
+  'default',
+  // 'portkey',
+  // 'qualifire',
+  // 'aporia',
+  // 'sydelabs',
+  // 'pillar',
+  // 'patronus',
+  // 'pangea',
+  // 'promptsecurity',
+  // 'panw-prisma-airs',
+  // 'walledai',
+];
 
 let importStrings: any = [];
 let funcStrings: any = {};

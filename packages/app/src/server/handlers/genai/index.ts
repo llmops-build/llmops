@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
-import chatCompletions from './openai/chatCompletions';
-import { completions } from './openai/completions';
-import models from './openai/models';
 import { requestValidator } from './requestValidator';
 import { createRequestGuardMiddleware } from './requestGuard';
+import { createGatewayAdapterMiddleware } from './gatewayAdapter';
+import gateway from '@llmops/gateway';
 
 const app = new Hono();
 
@@ -16,14 +15,14 @@ app
   .get('/health', async (c) => {
     return c.json({ status: 'healthy' });
   })
+  // LLMOps request validation (x-llmops-config, x-llmops-environment)
   .use('*', requestValidator)
+  // Request guard (CORS handling, sets configId/envSec in context)
   .use('*', createRequestGuardMiddleware())
-  // Models
-  .route('/models', models)
-  // Chat completions
-  .route('/chat/completions', chatCompletions)
-  // Completions (legacy)
-  .post('/completions', completions)
+  // Adapter: translates LLMOps config to Portkey gateway format
+  .use('*', createGatewayAdapterMiddleware())
+  // Mount the gateway at root - gateway routes already have /v1 prefix
+  .route('/', gateway)
   // Error handling
   .notFound((c) =>
     c.json(
