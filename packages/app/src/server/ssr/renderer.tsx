@@ -42,7 +42,7 @@ export const renderer = ({
     });
 
   return renderToString(
-    <html lang="en" className='dark'>
+    <html lang="en" className="dark">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -286,7 +286,7 @@ export const renderer = ({
             };
           `}
         </script>
-        <ReactRefresh />
+        {dev && <ReactRefresh />}
       </head>
       <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
