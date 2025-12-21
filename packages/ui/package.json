@@ -1,6 +1,6 @@
 {
   "name": "@llmops/ui",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "React components library for LLMOps",
   "type": "module",
   "license": "MIT",

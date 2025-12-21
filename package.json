@@ -15,7 +15,8 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "pnpm -r run clean"
+    "clean": "pnpm -r run clean",
+    "release": "bumpp"
   },
   "keywords": [],
   "author": "",
@@ -26,11 +27,13 @@
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
+    "bumpp": "^10.3.2",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^16.5.0",
     "nodemon": "^3.1.11",
     "prettier": "^3.7.3",
+    "tinyglobby": "^0.2.15",
     "tsdown": "0.17.0-beta.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
