@@ -8,13 +8,7 @@ import {
   Tooltip,
 } from '@llmops/ui';
 import { Icon } from '@client/components/icons';
-import {
-  Blocks,
-  Globe,
-  Settings,
-  SlidersVertical,
-  Telescope,
-} from 'lucide-react';
+import { Blocks, Globe, SlidersVertical, Telescope } from 'lucide-react';
 import Logo from '@client/components/icons/llmops.svg?react';
 import type React from 'react';
 import { comingSoonTooltip } from './app-sidebar.css';
@@ -73,14 +67,7 @@ export function AppSidebar() {
           </SidebarItem>
         </Tooltip>
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarItem asChild>
-          <Link to="/settings">
-            <Icon icon={Settings} />
-            Settings
-          </Link>
-        </SidebarItem>
-      </SidebarFooter>
+      <SidebarFooter></SidebarFooter>
     </Sidebar>
   );
 }
