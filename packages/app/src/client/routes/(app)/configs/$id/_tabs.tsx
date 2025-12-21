@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
-import { configTab, configTabsContainer } from '../-components/configs.css';
+import { tab, tabsContainer } from '@client/styles/tabs.css';
 
 export const Route = createFileRoute('/(app)/configs/$id/_tabs')({
   component: RouteComponent,
@@ -14,26 +14,14 @@ function RouteComponent() {
 
   return (
     <div>
-      <div className={configTabsContainer}>
-        <Link
-          to="/configs/$id/variants"
-          params={{ id }}
-          className={configTab()}
-        >
+      <div className={tabsContainer}>
+        <Link to="/configs/$id/variants" params={{ id }} className={tab()}>
           <span>Variants</span>
         </Link>
-        <Link
-          to="/configs/$id/targeting"
-          params={{ id }}
-          className={configTab()}
-        >
+        <Link to="/configs/$id/targeting" params={{ id }} className={tab()}>
           <span>Targeting</span>
         </Link>
-        <Link
-          to="/configs/$id/settings"
-          params={{ id }}
-          className={configTab()}
-        >
+        <Link to="/configs/$id/settings" params={{ id }} className={tab()}>
           <span>Settings</span>
         </Link>
       </div>
