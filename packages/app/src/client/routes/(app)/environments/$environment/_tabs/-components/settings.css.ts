@@ -72,6 +72,12 @@ export const dangerButton = style({
     backgroundColor: colors.error3,
     borderColor: colors.error8,
   },
+  ':disabled': {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+    backgroundColor: 'transparent',
+    borderColor: colors.error7,
+  },
 });
 
 // AlertDialog styles

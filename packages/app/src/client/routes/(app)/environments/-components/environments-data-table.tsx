@@ -58,7 +58,12 @@ export function EnvironmentsDataTable() {
     () => [
       columnHelper.accessor('name', {
         header: 'Name',
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+          const isProd = info.row.original.isProd;
+          return isProd
+            ? `${info.getValue()} (this environment)`
+            : info.getValue();
+        },
       }),
       columnHelper.accessor('isProd', {
         header: 'Production',

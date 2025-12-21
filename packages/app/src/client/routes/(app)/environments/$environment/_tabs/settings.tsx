@@ -3,6 +3,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Form } from '@base-ui/react/form';
 import { AlertDialog } from '@base-ui/react/alert-dialog';
 import { useDeleteEnvironment } from '@client/hooks/mutations/useDeleteEnvironment';
+import { useEnvironmentById } from '@client/hooks/queries/useEnvironmentById';
+import { Tooltip } from '@llmops/ui';
 import * as styles from './-components/settings.css';
 
 export const Route = createFileRoute(
@@ -18,11 +20,15 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { environment: environmentId } = Route.useParams();
+  const { data: environment } = useEnvironmentById(environmentId);
   const navigate = useNavigate();
   const deleteEnvironmentMutation = useDeleteEnvironment();
   const [isDeleting, setIsDeleting] = React.useState(false);
 
+  const isProd = environment?.isProd ?? false;
+
   const handleDelete = async () => {
+    if (isProd) return;
     setIsDeleting(true);
     try {
       await deleteEnvironmentMutation.mutateAsync(environmentId);
@@ -49,37 +55,47 @@ function RouteComponent() {
                   be certain.
                 </span>
               </div>
-              <AlertDialog.Root>
-                <AlertDialog.Trigger className={styles.dangerButton}>
-                  Delete Environment
-                </AlertDialog.Trigger>
-                <AlertDialog.Portal>
-                  <AlertDialog.Backdrop className={styles.backdrop} />
-                  <AlertDialog.Popup className={styles.popup}>
-                    <AlertDialog.Title className={styles.dialogTitle}>
-                      Delete environment?
-                    </AlertDialog.Title>
-                    <AlertDialog.Description
-                      className={styles.dialogDescription}
-                    >
-                      This action cannot be undone. This will permanently delete
-                      the environment and all associated secrets.
-                    </AlertDialog.Description>
-                    <div className={styles.dialogActions}>
-                      <AlertDialog.Close className={styles.cancelButton}>
-                        Cancel
-                      </AlertDialog.Close>
-                      <AlertDialog.Close
-                        className={styles.confirmDeleteButton}
-                        onClick={handleDelete}
-                        disabled={isDeleting}
+              {isProd ? (
+                <Tooltip content="You can't delete the Production environment.">
+                  <span>
+                    <button className={styles.dangerButton} disabled>
+                      Delete Environment
+                    </button>
+                  </span>
+                </Tooltip>
+              ) : (
+                <AlertDialog.Root>
+                  <AlertDialog.Trigger className={styles.dangerButton}>
+                    Delete Environment
+                  </AlertDialog.Trigger>
+                  <AlertDialog.Portal>
+                    <AlertDialog.Backdrop className={styles.backdrop} />
+                    <AlertDialog.Popup className={styles.popup}>
+                      <AlertDialog.Title className={styles.dialogTitle}>
+                        Delete environment?
+                      </AlertDialog.Title>
+                      <AlertDialog.Description
+                        className={styles.dialogDescription}
                       >
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                      </AlertDialog.Close>
-                    </div>
-                  </AlertDialog.Popup>
-                </AlertDialog.Portal>
-              </AlertDialog.Root>
+                        This action cannot be undone. This will permanently
+                        delete the environment and all associated secrets.
+                      </AlertDialog.Description>
+                      <div className={styles.dialogActions}>
+                        <AlertDialog.Close className={styles.cancelButton}>
+                          Cancel
+                        </AlertDialog.Close>
+                        <AlertDialog.Close
+                          className={styles.confirmDeleteButton}
+                          onClick={handleDelete}
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? 'Deleting...' : 'Delete'}
+                        </AlertDialog.Close>
+                      </div>
+                    </AlertDialog.Popup>
+                  </AlertDialog.Portal>
+                </AlertDialog.Root>
+              )}
             </div>
           </div>
         </div>
