@@ -13,11 +13,15 @@ import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appSettingsRouteImport } from './routes/(app)/settings'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
+import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(app)/environments/$environment/route'
 import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
+import { Route as appEnvironmentsEnvironmentTabsRouteImport } from './routes/(app)/environments/$environment/_tabs'
 import { Route as appConfigsIdVariantsRouteImport } from './routes/(app)/configs/$id/_variants'
 import { Route as appConfigsIdTabsRouteImport } from './routes/(app)/configs/$id/_tabs'
+import { Route as appEnvironmentsEnvironmentTabsSettingsRouteImport } from './routes/(app)/environments/$environment/_tabs/settings'
+import { Route as appEnvironmentsEnvironmentTabsSecretsRouteImport } from './routes/(app)/environments/$environment/_tabs/secrets'
 import { Route as appConfigsIdTabsVariantsRouteImport } from './routes/(app)/configs/$id/_tabs/variants'
 import { Route as appConfigsIdTabsTargetingRouteImport } from './routes/(app)/configs/$id/_tabs/targeting'
 import { Route as appConfigsIdTabsSettingsRouteImport } from './routes/(app)/configs/$id/_tabs/settings'
@@ -44,6 +48,12 @@ const appConfigsRoute = appConfigsRouteImport.update({
   path: '/configs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appEnvironmentsEnvironmentRouteRoute =
+  appEnvironmentsEnvironmentRouteRouteImport.update({
+    id: '/$environment',
+    path: '/$environment',
+    getParentRoute: () => appEnvironmentsRoute,
+  } as any)
 const appConfigsIdRouteRoute = appConfigsIdRouteRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -51,15 +61,20 @@ const appConfigsIdRouteRoute = appConfigsIdRouteRouteImport.update({
 } as any)
 const appEnvironmentsEnvironmentIndexRoute =
   appEnvironmentsEnvironmentIndexRouteImport.update({
-    id: '/$environment/',
-    path: '/$environment/',
-    getParentRoute: () => appEnvironmentsRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => appEnvironmentsEnvironmentRouteRoute,
   } as any)
 const appConfigsIdIndexRoute = appConfigsIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appConfigsIdRouteRoute,
 } as any)
+const appEnvironmentsEnvironmentTabsRoute =
+  appEnvironmentsEnvironmentTabsRouteImport.update({
+    id: '/_tabs',
+    getParentRoute: () => appEnvironmentsEnvironmentRouteRoute,
+  } as any)
 const appConfigsIdVariantsRoute = appConfigsIdVariantsRouteImport.update({
   id: '/_variants',
   getParentRoute: () => appConfigsIdRouteRoute,
@@ -68,6 +83,18 @@ const appConfigsIdTabsRoute = appConfigsIdTabsRouteImport.update({
   id: '/_tabs',
   getParentRoute: () => appConfigsIdRouteRoute,
 } as any)
+const appEnvironmentsEnvironmentTabsSettingsRoute =
+  appEnvironmentsEnvironmentTabsSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => appEnvironmentsEnvironmentTabsRoute,
+  } as any)
+const appEnvironmentsEnvironmentTabsSecretsRoute =
+  appEnvironmentsEnvironmentTabsSecretsRouteImport.update({
+    id: '/secrets',
+    path: '/secrets',
+    getParentRoute: () => appEnvironmentsEnvironmentTabsRoute,
+  } as any)
 const appConfigsIdTabsVariantsRoute =
   appConfigsIdTabsVariantsRouteImport.update({
     id: '/variants',
@@ -105,11 +132,14 @@ export interface FileRoutesByFullPath {
   '/settings': typeof appSettingsRoute
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
+  '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
   '/configs/$id/': typeof appConfigsIdIndexRoute
-  '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
+  '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
+  '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
+  '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/configs/$id/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
   '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
@@ -123,6 +153,8 @@ export interface FileRoutesByTo {
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
+  '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
+  '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/configs/$id/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
   '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
@@ -133,13 +165,17 @@ export interface FileRoutesById {
   '/(app)/settings': typeof appSettingsRoute
   '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
+  '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
   '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
   '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
+  '/(app)/environments/$environment/_tabs': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
   '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/(app)/configs/$id/_tabs/settings': typeof appConfigsIdTabsSettingsRoute
   '/(app)/configs/$id/_tabs/targeting': typeof appConfigsIdTabsTargetingRoute
   '/(app)/configs/$id/_tabs/variants': typeof appConfigsIdTabsVariantsRoute
+  '/(app)/environments/$environment/_tabs/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
+  '/(app)/environments/$environment/_tabs/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/(app)/configs/$id/_targeting/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
   '/(app)/configs/$id/_variants/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
 }
@@ -151,11 +187,14 @@ export interface FileRouteTypes {
     | '/settings'
     | '/'
     | '/configs/$id'
-    | '/configs/$id/'
     | '/environments/$environment'
+    | '/configs/$id/'
+    | '/environments/$environment/'
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
+    | '/environments/$environment/secrets'
+    | '/environments/$environment/settings'
     | '/configs/$id/targeting/$environment'
     | '/configs/$id/variants/$variant'
   fileRoutesByTo: FileRoutesByTo
@@ -169,6 +208,8 @@ export interface FileRouteTypes {
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
+    | '/environments/$environment/secrets'
+    | '/environments/$environment/settings'
     | '/configs/$id/targeting/$environment'
     | '/configs/$id/variants/$variant'
   id:
@@ -178,13 +219,17 @@ export interface FileRouteTypes {
     | '/(app)/settings'
     | '/(app)/'
     | '/(app)/configs/$id'
+    | '/(app)/environments/$environment'
     | '/(app)/configs/$id/_tabs'
     | '/(app)/configs/$id/_variants'
+    | '/(app)/environments/$environment/_tabs'
     | '/(app)/configs/$id/'
     | '/(app)/environments/$environment/'
     | '/(app)/configs/$id/_tabs/settings'
     | '/(app)/configs/$id/_tabs/targeting'
     | '/(app)/configs/$id/_tabs/variants'
+    | '/(app)/environments/$environment/_tabs/secrets'
+    | '/(app)/environments/$environment/_tabs/settings'
     | '/(app)/configs/$id/_targeting/targeting/$environment'
     | '/(app)/configs/$id/_variants/variants/$variant'
   fileRoutesById: FileRoutesById
@@ -226,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appConfigsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/environments/$environment': {
+      id: '/(app)/environments/$environment'
+      path: '/$environment'
+      fullPath: '/environments/$environment'
+      preLoaderRoute: typeof appEnvironmentsEnvironmentRouteRouteImport
+      parentRoute: typeof appEnvironmentsRoute
+    }
     '/(app)/configs/$id': {
       id: '/(app)/configs/$id'
       path: '/$id'
@@ -235,10 +287,10 @@ declare module '@tanstack/react-router' {
     }
     '/(app)/environments/$environment/': {
       id: '/(app)/environments/$environment/'
-      path: '/$environment'
-      fullPath: '/environments/$environment'
+      path: '/'
+      fullPath: '/environments/$environment/'
       preLoaderRoute: typeof appEnvironmentsEnvironmentIndexRouteImport
-      parentRoute: typeof appEnvironmentsRoute
+      parentRoute: typeof appEnvironmentsEnvironmentRouteRoute
     }
     '/(app)/configs/$id/': {
       id: '/(app)/configs/$id/'
@@ -246,6 +298,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/configs/$id/'
       preLoaderRoute: typeof appConfigsIdIndexRouteImport
       parentRoute: typeof appConfigsIdRouteRoute
+    }
+    '/(app)/environments/$environment/_tabs': {
+      id: '/(app)/environments/$environment/_tabs'
+      path: ''
+      fullPath: '/environments/$environment'
+      preLoaderRoute: typeof appEnvironmentsEnvironmentTabsRouteImport
+      parentRoute: typeof appEnvironmentsEnvironmentRouteRoute
     }
     '/(app)/configs/$id/_variants': {
       id: '/(app)/configs/$id/_variants'
@@ -260,6 +319,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/configs/$id'
       preLoaderRoute: typeof appConfigsIdTabsRouteImport
       parentRoute: typeof appConfigsIdRouteRoute
+    }
+    '/(app)/environments/$environment/_tabs/settings': {
+      id: '/(app)/environments/$environment/_tabs/settings'
+      path: '/settings'
+      fullPath: '/environments/$environment/settings'
+      preLoaderRoute: typeof appEnvironmentsEnvironmentTabsSettingsRouteImport
+      parentRoute: typeof appEnvironmentsEnvironmentTabsRoute
+    }
+    '/(app)/environments/$environment/_tabs/secrets': {
+      id: '/(app)/environments/$environment/_tabs/secrets'
+      path: '/secrets'
+      fullPath: '/environments/$environment/secrets'
+      preLoaderRoute: typeof appEnvironmentsEnvironmentTabsSecretsRouteImport
+      parentRoute: typeof appEnvironmentsEnvironmentTabsRoute
     }
     '/(app)/configs/$id/_tabs/variants': {
       id: '/(app)/configs/$id/_tabs/variants'
@@ -356,12 +429,48 @@ const appConfigsRouteWithChildren = appConfigsRoute._addFileChildren(
   appConfigsRouteChildren,
 )
 
-interface appEnvironmentsRouteChildren {
+interface appEnvironmentsEnvironmentTabsRouteChildren {
+  appEnvironmentsEnvironmentTabsSecretsRoute: typeof appEnvironmentsEnvironmentTabsSecretsRoute
+  appEnvironmentsEnvironmentTabsSettingsRoute: typeof appEnvironmentsEnvironmentTabsSettingsRoute
+}
+
+const appEnvironmentsEnvironmentTabsRouteChildren: appEnvironmentsEnvironmentTabsRouteChildren =
+  {
+    appEnvironmentsEnvironmentTabsSecretsRoute:
+      appEnvironmentsEnvironmentTabsSecretsRoute,
+    appEnvironmentsEnvironmentTabsSettingsRoute:
+      appEnvironmentsEnvironmentTabsSettingsRoute,
+  }
+
+const appEnvironmentsEnvironmentTabsRouteWithChildren =
+  appEnvironmentsEnvironmentTabsRoute._addFileChildren(
+    appEnvironmentsEnvironmentTabsRouteChildren,
+  )
+
+interface appEnvironmentsEnvironmentRouteRouteChildren {
+  appEnvironmentsEnvironmentTabsRoute: typeof appEnvironmentsEnvironmentTabsRouteWithChildren
   appEnvironmentsEnvironmentIndexRoute: typeof appEnvironmentsEnvironmentIndexRoute
 }
 
+const appEnvironmentsEnvironmentRouteRouteChildren: appEnvironmentsEnvironmentRouteRouteChildren =
+  {
+    appEnvironmentsEnvironmentTabsRoute:
+      appEnvironmentsEnvironmentTabsRouteWithChildren,
+    appEnvironmentsEnvironmentIndexRoute: appEnvironmentsEnvironmentIndexRoute,
+  }
+
+const appEnvironmentsEnvironmentRouteRouteWithChildren =
+  appEnvironmentsEnvironmentRouteRoute._addFileChildren(
+    appEnvironmentsEnvironmentRouteRouteChildren,
+  )
+
+interface appEnvironmentsRouteChildren {
+  appEnvironmentsEnvironmentRouteRoute: typeof appEnvironmentsEnvironmentRouteRouteWithChildren
+}
+
 const appEnvironmentsRouteChildren: appEnvironmentsRouteChildren = {
-  appEnvironmentsEnvironmentIndexRoute: appEnvironmentsEnvironmentIndexRoute,
+  appEnvironmentsEnvironmentRouteRoute:
+    appEnvironmentsEnvironmentRouteRouteWithChildren,
 }
 
 const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(

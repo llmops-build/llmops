@@ -1,8 +1,7 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { environmentByIdQueryOptions } from '@client/hooks/queries/useEnvironmentById';
-import NewEnvironmentState from './-components/new-environment-state';
 
-export const Route = createFileRoute('/(app)/environments/$environment/')({
+export const Route = createFileRoute('/(app)/environments/$environment')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
     if (params.environment === 'new') {
@@ -20,16 +19,5 @@ export const Route = createFileRoute('/(app)/environments/$environment/')({
 });
 
 function RouteComponent() {
-  const { environment } = Route.useParams();
-  if (environment === 'new') return <NewEnvironmentState />;
-
-  return (
-    <Navigate
-      to="/environments/$environment/secrets"
-      params={{
-        environment,
-      }}
-      replace
-    />
-  );
+  return <Outlet />;
 }
