@@ -40,6 +40,7 @@
     "@lexical/react": "^0.39.0",
     "@lexical/rich-text": "^0.39.0",
     "@llmops/core": "workspace:*",
+    "@llmops/gateway": "workspace:*",
     "@llmops/ui": "workspace:*",
     "@rollup/plugin-url": "^8.0.2",
     "@tanstack/react-query": "^5.90.12",
