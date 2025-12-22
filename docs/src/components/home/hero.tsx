@@ -30,7 +30,7 @@ export default llmops({
   {
     name: 'server.ts',
     code: `import express from 'express';
-import { createLLMOpsMiddleware } from '@llmops/sdk';
+import { createLLMOpsMiddleware } from '@llmops/sdk/express';
 import llmopsClient from './llmops';
 
 const app = express();

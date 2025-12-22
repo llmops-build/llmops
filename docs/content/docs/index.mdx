@@ -3,3 +3,174 @@ title: Quickstart
 description: Quickstart guide to setup LLMOps
 icon: Album
 ---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Get started with LLMOps in minutes. This guide will walk you through installing the SDK, setting up a database, and making your first API request.
+
+## Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- An LLM provider API key (e.g., OpenRouter)
+
+<Steps>
+<Step>
+
+### Install the SDK
+
+Install the LLMOps SDK and PostgreSQL client:
+
+```bash tab="npm"
+npm install @llmops/sdk pg
+```
+
+```bash tab="pnpm"
+pnpm add @llmops/sdk pg
+```
+
+```bash tab="yarn"
+yarn add @llmops/sdk pg
+```
+
+</Step>
+
+<Step>
+
+### Set up the database
+
+LLMOps requires a PostgreSQL database. You can use Docker to quickly spin one up:
+
+```bash
+docker run -d \
+  --name llmops-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=llmops \
+  -p 5432:5432 \
+  postgres:16
+```
+
+</Step>
+
+<Step>
+
+### Create the LLMOps configuration
+
+Create a file called `llmops.ts` to configure LLMOps:
+
+```typescript title="llmops.ts"
+import { llmops } from '@llmops/sdk';
+import { Pool } from 'pg';
+
+export default llmops({
+  basePath: '/llmops',
+  providers: {
+    openrouter: {
+      apiKey: process.env.OPENROUTER_API_KEY || '',
+    },
+  },
+  database: new Pool({
+    connectionString: process.env.POSTGRES_URL || '',
+  }),
+  auth: {
+    type: 'basic',
+    defaultUser: 'admin@llmops.local',
+    defaultPassword: 'password',
+  },
+});
+```
+
+</Step>
+
+<Step>
+
+### Create your server
+
+Set up an Express server with the LLMOps middleware:
+
+```typescript title="server.ts"
+import 'dotenv/config';
+import express from 'express';
+import { createLLMOpsMiddleware } from '@llmops/sdk/express';
+import llmopsClient from './llmops';
+
+const app = express();
+const port = 3000;
+
+app.use(express.json());
+app.use('/llmops', createLLMOpsMiddleware(llmopsClient));
+
+app.listen(port, () => {
+  console.log(`LLMOps running at http://localhost:${port}/llmops`);
+});
+```
+
+</Step>
+
+<Step>
+
+### Set environment variables
+
+Create a `.env` file with your configuration:
+
+```bash title=".env"
+POSTGRES_URL=postgresql://postgres:password@localhost:5432/llmops
+OPENROUTER_API_KEY=sk-or-your-api-key
+```
+
+</Step>
+
+<Step>
+
+### Start the server
+
+Run your server:
+
+```bash
+npx tsx server.ts
+```
+
+Your LLMOps instance is now running at `http://localhost:3000/llmops`.
+
+</Step>
+
+<Step>
+
+### Create a config
+
+Open the LLMOps dashboard and create your first config to start routing requests to your LLM providers.
+
+{/* TODO: Add video here */}
+
+</Step>
+</Steps>
+
+## Making your first request
+
+Once you've created a config in the LLMOps dashboard, you can make requests using the OpenAI-compatible API:
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai',
+  apiKey: '',
+  defaultHeaders: {
+    'x-llmops-config': 'your-config-uuid',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+
+console.log(response.choices[0].message.content);
+```
+
+## Next steps
+
+- [Configuration](/docs/getting-started/configuration) - Learn about all configuration options
+- [Authentication](/docs/guides/authentication) - Set up authentication for your deployment
+- [Providers](/docs/providers/openrouter) - Configure different LLM providers
