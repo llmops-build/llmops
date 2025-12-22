@@ -1,3 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap');
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --color-accent-1: #fbfdff;
+  --color-accent-2: #f5f9ff;
+  --color-accent-3: #e9f3ff;
+  --color-accent-4: #daecff;
+  --color-accent-5: #c9e2ff;
+  --color-accent-6: #b5d4ff;
+  --color-accent-7: #9bc2ff;
+  --color-accent-8: #75aafc;
+  --color-accent-9: #2c80ff;
+  --color-accent-10: #1972f2;
+  --color-accent-11: #106ae7;
+  --color-accent-12: #0c3169;
+
+  --color-accent-a1: #0080ff04;
+  --color-accent-a2: #0066ff0a;
+  --color-accent-a3: #0074ff16;
+  --color-accent-a4: #007dff25;
+  --color-accent-a5: #0077ff36;
+  --color-accent-a6: #016bff4a;
+  --color-accent-a7: #0064ff64;
+  --color-accent-a8: #0062fa8a;
+  --color-accent-a9: #0066ffd3;
+  --color-accent-a10: #0063f1e6;
+  --color-accent-a11: #0060e5ef;
+  --color-accent-a12: #002762f3;
+
+  --color-accent-contrast: #fff;
+  --color-accent-surface: #f3f8ffcc;
+  --color-accent-indicator: #2c80ff;
+  --color-accent-track: #2c80ff;
+
+  --color-error-1: #fffcfc;
+  --color-error-2: #fff7f7;
+  --color-error-3: #feebec;
+  --color-error-4: #ffdbdc;
+  --color-error-5: #ffcdce;
+  --color-error-6: #fdbdbe;
+  --color-error-7: #f4a9aa;
+  --color-error-8: #eb8e90;
+  --color-error-9: #e5484d;
+  --color-error-10: #dc3e42;
+  --color-error-11: #ce2c31;
+  --color-error-12: #641723;
+
+  --color-error-a1: #ff000003;
+  --color-error-a2: #ff000008;
+  --color-error-a3: #f3000d14;
+  --color-error-a4: #ff000824;
+  --color-error-a5: #ff000632;
+  --color-error-a6: #f8000442;
+  --color-error-a7: #df000356;
+  --color-error-a8: #d2000571;
+  --color-error-a9: #db0007b7;
+  --color-error-a10: #d10005c1;
+  --color-error-a11: #c40006d3;
+  --color-error-a12: #55000de8;
+
+  --color-error-contrast: #fff;
+  --color-error-surface: #fef7f7cc;
+  --color-error-indicator: #e5484d;
+  --color-error-track: #e5484d;
+
+  --color-gray-1: #fcfcfc;
+  --color-gray-2: #f9f9f9;
+  --color-gray-3: #f0f0f0;
+  --color-gray-4: #e8e8e8;
+  --color-gray-5: #e1e1e1;
+  --color-gray-6: #d9d9d9;
+  --color-gray-7: #cecece;
+  --color-gray-8: #bbb;
+  --color-gray-9: #8c8c8c;
+  --color-gray-10: #818181;
+  --color-gray-11: #636363;
+  --color-gray-12: #1f1f1f;
+
+  --color-gray-a1: #00000003;
+  --color-gray-a2: #00000006;
+  --color-gray-a3: #0000000f;
+  --color-gray-a4: #00000017;
+  --color-gray-a5: #0000001e;
+  --color-gray-a6: #00000026;
+  --color-gray-a7: #00000031;
+  --color-gray-a8: #00000044;
+  --color-gray-a9: #00000073;
+  --color-gray-a10: #0000007e;
+  --color-gray-a11: #0000009c;
+  --color-gray-a12: #000000e0;
+
+  --color-gray-contrast: #ffffff;
+  --color-gray-surface: #ffffffcc;
+  --color-gray-indicator: #8c8c8c;
+  --color-gray-track: #8c8c8c;
+
+  --color-background: #fff;
+}
+
+.dark {
+  --color-accent-1: #000;
+  --color-accent-2: #09121f;
+  --color-accent-3: #0c2246;
+  --color-accent-4: #092d63;
+  --color-accent-5: #123a77;
+  --color-accent-6: #1e488a;
+  --color-accent-7: #2957a0;
+  --color-accent-8: #3168bf;
+  --color-accent-9: #2c80ff;
+  --color-accent-10: #1c73f0;
+  --color-accent-11: #7eb5ff;
+  --color-accent-12: #cde2ff;
+
+  --color-accent-a1: #00000000;
+  --color-accent-a2: #4b95ff1f;
+  --color-accent-a3: #2c7cff46;
+  --color-accent-a4: #1874ff63;
+  --color-accent-a5: #277dff77;
+  --color-accent-a6: #3885ff8a;
+  --color-accent-a7: #428bffa0;
+  --color-accent-a8: #428bffbf;
+  --color-accent-a9: #2c80ff;
+  --color-accent-a10: #1e7afff0;
+  --color-accent-a11: #7eb5ff;
+  --color-accent-a12: #cde2ff;
+
+  --color-accent-contrast: #fff;
+  --color-accent-surface: #12243e80;
+  --color-accent-indicator: #2c80ff;
+  --color-accent-track: #2c80ff;
+
+  --color-error-1: #191111;
+  --color-error-2: #201314;
+  --color-error-3: #3b1219;
+  --color-error-4: #500f1c;
+  --color-error-5: #611623;
+  --color-error-6: #72232d;
+  --color-error-7: #8c333a;
+  --color-error-8: #b54548;
+  --color-error-9: #e5484d;
+  --color-error-10: #ec5d5e;
+  --color-error-11: #ff9592;
+  --color-error-12: #ffd1d9;
+
+  --color-error-a1: #f4121209;
+  --color-error-a2: #f22f3e11;
+  --color-error-a3: #ff173f2d;
+  --color-error-a4: #fe0a3b44;
+  --color-error-a5: #ff204756;
+  --color-error-a6: #ff3e5668;
+  --color-error-a7: #ff536184;
+  --color-error-a8: #ff5d61b0;
+  --color-error-a9: #fe4e54e4;
+  --color-error-a10: #ff6465eb;
+  --color-error-a11: #ff9592;
+  --color-error-a12: #ffd1d9;
+
+  --color-error-contrast: #fff;
+  --color-error-surface: #251a1a80;
+  --color-error-indicator: #e5484d;
+  --color-error-track: #e5484d;
+
+  --color-gray-1: #000;
+  --color-gray-2: #131313;
+  --color-gray-3: #1f1f1f;
+  --color-gray-4: #282828;
+  --color-gray-5: #303030;
+  --color-gray-6: #3a3a3a;
+  --color-gray-7: #484848;
+  --color-gray-8: #616161;
+  --color-gray-9: #6f6f6f;
+  --color-gray-10: #7c7c7c;
+  --color-gray-11: #b4b4b4;
+  --color-gray-12: #eee;
+
+  --color-gray-a1: #00000000;
+  --color-gray-a2: #ffffff13;
+  --color-gray-a3: #ffffff1f;
+  --color-gray-a4: #ffffff28;
+  --color-gray-a5: #ffffff30;
+  --color-gray-a6: #ffffff3a;
+  --color-gray-a7: #ffffff48;
+  --color-gray-a8: #ffffff61;
+  --color-gray-a9: #ffffff6f;
+  --color-gray-a10: #ffffff7c;
+  --color-gray-a11: #ffffffb4;
+  --color-gray-a12: #ffffffee;
+
+  --color-gray-contrast: #ffffff;
+  --color-gray-surface: rgba(0, 0, 0, 0.05);
+  --color-gray-indicator: #6f6f6f;
+  --color-gray-track: #6f6f6f;
+
+  --color-background: #000;
+  --color-fd-background: #000;
+}

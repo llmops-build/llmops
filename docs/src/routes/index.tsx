@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
+import './-styles/base.css';
+import Hero from '@/components/home/hero';
 import { baseOptions } from '@/lib/layout.shared';
+import { createFileRoute } from '@tanstack/react-router';
+import { HomeLayout } from 'fumadocs-ui/layouts/home';
 
 export const Route = createFileRoute('/')({
   component: Home,
@@ -9,17 +11,7 @@ export const Route = createFileRoute('/')({
 function Home() {
   return (
     <HomeLayout {...baseOptions()}>
-      <div className="flex flex-col flex-1 justify-center px-4 py-8 text-center">
-        <Link
-          to="/docs/$"
-          params={{
-            _splat: '',
-          }}
-          className="px-3 py-2 rounded-lg bg-fd-primary text-fd-primary-foreground font-medium text-sm mx-auto"
-        >
-          Open Docs
-        </Link>
-      </div>
+      <Hero />
     </HomeLayout>
   );
 }

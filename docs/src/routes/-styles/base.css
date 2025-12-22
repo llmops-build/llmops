@@ -1,0 +1,197 @@
+:root {
+  --accent1: #fbfdff;
+  --accent2: #f5f9ff;
+  --accent3: #e9f3ff;
+  --accent4: #daecff;
+  --accent5: #c9e2ff;
+  --accent6: #b5d4ff;
+  --accent7: #9bc2ff;
+  --accent8: #75aafc;
+  --accent9: #2c80ff;
+  --accent10: #1972f2;
+  --accent11: #106ae7;
+  --accent12: #0c3169;
+
+  --accentA1: #0080ff04;
+  --accentA2: #0066ff0a;
+  --accentA3: #0074ff16;
+  --accentA4: #007dff25;
+  --accentA5: #0077ff36;
+  --accentA6: #016bff4a;
+  --accentA7: #0064ff64;
+  --accentA8: #0062fa8a;
+  --accentA9: #0066ffd3;
+  --accentA10: #0063f1e6;
+  --accentA11: #0060e5ef;
+  --accentA12: #002762f3;
+
+  --accent-contrast: #fff;
+  --accent-surface: #f3f8ffcc;
+  --accent-indicator: #2c80ff;
+  --accent-track: #2c80ff;
+
+  --error1: #fffcfc;
+  --error2: #fff7f7;
+  --error3: #feebec;
+  --error4: #ffdbdc;
+  --error5: #ffcdce;
+  --error6: #fdbdbe;
+  --error7: #f4a9aa;
+  --error8: #eb8e90;
+  --error9: #e5484d;
+  --error10: #dc3e42;
+  --error11: #ce2c31;
+  --error12: #641723;
+
+  --errorA1: #ff000003;
+  --errorA2: #ff000008;
+  --errorA3: #f3000d14;
+  --errorA4: #ff000824;
+  --errorA5: #ff000632;
+  --errorA6: #f8000442;
+  --errorA7: #df000356;
+  --errorA8: #d2000571;
+  --errorA9: #db0007b7;
+  --errorA10: #d10005c1;
+  --errorA11: #c40006d3;
+  --errorA12: #55000de8;
+
+  --error-contrast: #fff;
+  --error-surface: #fef7f7cc;
+  --error-indicator: #e5484d;
+  --error-track: #e5484d;
+
+  --gray1: #fcfcfc;
+  --gray2: #f9f9f9;
+  --gray3: #f0f0f0;
+  --gray4: #e8e8e8;
+  --gray5: #e1e1e1;
+  --gray6: #d9d9d9;
+  --gray7: #cecece;
+  --gray8: #bbb;
+  --gray9: #8c8c8c;
+  --gray10: #818181;
+  --gray11: #636363;
+  --gray12: #1f1f1f;
+
+  --grayA1: #00000003;
+  --grayA2: #00000006;
+  --grayA3: #0000000f;
+  --grayA4: #00000017;
+  --grayA5: #0000001e;
+  --grayA6: #00000026;
+  --grayA7: #00000031;
+  --grayA8: #00000044;
+  --grayA9: #00000073;
+  --grayA10: #0000007e;
+  --grayA11: #0000009c;
+  --grayA12: #000000e0;
+
+  --gray-contrast: #ffffff;
+  --gray-surface: #ffffffcc;
+  --gray-indicator: #8c8c8c;
+  --gray-track: #8c8c8c;
+
+  --background: #fff;
+}
+
+.dark {
+  --accent1: #000;
+  --accent2: #09121f;
+  --accent3: #0c2246;
+  --accent4: #092d63;
+  --accent5: #123a77;
+  --accent6: #1e488a;
+  --accent7: #2957a0;
+  --accent8: #3168bf;
+  --accent9: #2c80ff;
+  --accent10: #1c73f0;
+  --accent11: #7eb5ff;
+  --accent12: #cde2ff;
+
+  --accentA1: #00000000;
+  --accentA2: #4b95ff1f;
+  --accentA3: #2c7cff46;
+  --accentA4: #1874ff63;
+  --accentA5: #277dff77;
+  --accentA6: #3885ff8a;
+  --accentA7: #428bffa0;
+  --accentA8: #428bffbf;
+  --accentA9: #2c80ff;
+  --accentA10: #1e7afff0;
+  --accentA11: #7eb5ff;
+  --accentA12: #cde2ff;
+
+  --accent-contrast: #fff;
+  --accent-surface: #12243e80;
+  --accent-indicator: #2c80ff;
+  --accent-track: #2c80ff;
+
+  --error1: #191111;
+  --error2: #201314;
+  --error3: #3b1219;
+  --error4: #500f1c;
+  --error5: #611623;
+  --error6: #72232d;
+  --error7: #8c333a;
+  --error8: #b54548;
+  --error9: #e5484d;
+  --error10: #ec5d5e;
+  --error11: #ff9592;
+  --error12: #ffd1d9;
+
+  --errorA1: #f4121209;
+  --errorA2: #f22f3e11;
+  --errorA3: #ff173f2d;
+  --errorA4: #fe0a3b44;
+  --errorA5: #ff204756;
+  --errorA6: #ff3e5668;
+  --errorA7: #ff536184;
+  --errorA8: #ff5d61b0;
+  --errorA9: #fe4e54e4;
+  --errorA10: #ff6465eb;
+  --errorA11: #ff9592;
+  --errorA12: #ffd1d9;
+
+  --error-contrast: #fff;
+  --error-surface: #251a1a80;
+  --error-indicator: #e5484d;
+  --error-track: #e5484d;
+
+  --gray1: #000;
+  --gray2: #131313;
+  --gray3: #1f1f1f;
+  --gray4: #282828;
+  --gray5: #303030;
+  --gray6: #3a3a3a;
+  --gray7: #484848;
+  --gray8: #616161;
+  --gray9: #6f6f6f;
+  --gray10: #7c7c7c;
+  --gray11: #b4b4b4;
+  --gray12: #eee;
+
+  --grayA1: #00000000;
+  --grayA2: #ffffff13;
+  --grayA3: #ffffff1f;
+  --grayA4: #ffffff28;
+  --grayA5: #ffffff30;
+  --grayA6: #ffffff3a;
+  --grayA7: #ffffff48;
+  --grayA8: #ffffff61;
+  --grayA9: #ffffff6f;
+  --grayA10: #ffffff7c;
+  --grayA11: #ffffffb4;
+  --grayA12: #ffffffee;
+
+  --gray-contrast: #ffffff;
+  --gray-surface: rgba(0, 0, 0, 0.05);
+  --gray-indicator: #6f6f6f;
+  --gray-track: #6f6f6f;
+
+  --background: #000;
+}
+
+body {
+  background-color: var(--background);
+}
