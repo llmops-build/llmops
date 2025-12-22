@@ -1,4 +1,3 @@
-import { Fragment } from 'react'
 import { useForm } from 'react-hook-form';
 import {
   configsContainer,
@@ -64,26 +63,28 @@ export function UpdateOrCreateName({
     />
   );
 
-  const Comp = tooltip ? Tooltip : Fragment
-
-  return (
-    <Comp content={tooltip}>
-      <form
-        className={configsContainer}
-        onBlur={handleSubmit(onSubmit)}
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit(onSubmit)();
-        }}
-      >
-        {input}
-        {isSubmitting &&
-          (isNew ? (
-            <span className={updateNameStatus}>Creating...</span>
-          ) : (
-            <span className={updateNameStatus}>Updating...</span>
-          ))}
-      </form>
-    </Comp>
+  const form = (
+    <form
+      className={configsContainer}
+      onBlur={handleSubmit(onSubmit)}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(onSubmit)();
+      }}
+    >
+      {input}
+      {isSubmitting &&
+        (isNew ? (
+          <span className={updateNameStatus}>Creating...</span>
+        ) : (
+          <span className={updateNameStatus}>Updating...</span>
+        ))}
+    </form>
   );
+
+  if (tooltip) {
+    return <Tooltip content={tooltip}>{form}</Tooltip>;
+  }
+
+  return form;
 }

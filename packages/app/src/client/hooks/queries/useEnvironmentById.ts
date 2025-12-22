@@ -34,7 +34,7 @@ export const environmentByIdQueryOptions = (id?: string) =>
           env.isProd === true || env.isProd === 1 || env.isProd === 'true',
       } as Environment;
     },
-    enabled: !!id,
+    enabled: !!id && id !== 'new',
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 

@@ -18,7 +18,7 @@ export const configByIdQueryOptions = (id: string) =>
       const result = await response.json();
       return ('data' in result ? result.data : null) as Config | null;
     },
-    enabled: !!id,
+    enabled: !!id && id !== 'new',
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 

@@ -6,8 +6,8 @@ index ed730fe..20c0f2c 100755
       * @param bail A function you can invoke to abort the retrying (bail).
       * @param attempt The attempt number. The absolute first attempt (before any retries) is `1`.
       */
--    type RetryFunction<TRet> = (bail: (e: Error) => void, attempt: number) => TRet | Promise<TRet>;
-+    type RetryFunction<TRet> = (bail: (e: Error) => void, attempt: number, rateLimiter: any) => TRet | Promise<TRet>;
+-    type RetryFunction<TRet, TErr = unknown> = (bail: (e: TErr) => void, attempt: number) => TRet | Promise<TRet>;
++    type RetryFunction<TRet, TErr = unknown> = (bail: (e: TErr) => void, attempt: number, rateLimiter: any) => TRet | Promise<TRet>;
  }
  
  export = AsyncRetry;
