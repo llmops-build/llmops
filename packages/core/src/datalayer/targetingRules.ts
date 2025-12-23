@@ -8,6 +8,7 @@ const createTargetingRule = z.object({
   environmentId: z.string().uuid(),
   configId: z.string().uuid(),
   configVariantId: z.string().uuid(),
+  variantVersionId: z.string().uuid().nullable().optional(), // null means use latest version
   weight: z.number().int().min(0).max(10000).optional().default(10000),
   priority: z.number().int().optional().default(0),
   enabled: z.boolean().optional().default(true),
@@ -16,6 +17,7 @@ const createTargetingRule = z.object({
 
 const updateTargetingRule = z.object({
   id: z.string().uuid(),
+  variantVersionId: z.string().uuid().nullable().optional(),
   weight: z.number().int().min(0).max(10000).optional(),
   priority: z.number().int().optional(),
   enabled: z.boolean().optional(),
@@ -64,6 +66,7 @@ const setTargetingForEnvironment = z.object({
   environmentId: z.string().uuid(),
   configId: z.string().uuid(),
   configVariantId: z.string().uuid(),
+  variantVersionId: z.string().uuid().nullable().optional(),
 });
 
 export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
@@ -79,6 +82,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
         environmentId,
         configId,
         configVariantId,
+        variantVersionId,
         weight,
         priority,
         enabled,
@@ -92,6 +96,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
           environmentId,
           configId,
           configVariantId,
+          variantVersionId: variantVersionId ?? null,
           weight,
           priority,
           enabled,
@@ -110,11 +115,14 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { id, weight, priority, enabled, conditions } = value.data;
+      const { id, variantVersionId, weight, priority, enabled, conditions } =
+        value.data;
 
       const updateData: Record<string, unknown> = {
         updatedAt: new Date().toISOString(),
       };
+      if (variantVersionId !== undefined)
+        updateData.variantVersionId = variantVersionId;
       if (weight !== undefined) updateData.weight = weight;
       if (priority !== undefined) updateData.priority = priority;
       if (enabled !== undefined) updateData.enabled = enabled;
@@ -276,7 +284,10 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
         .execute();
     },
 
-    // Get targeting rules with full details (environment, config, variant info)
+    /**
+     * Get targeting rules with full details (environment, config, variant info)
+     * Now includes variantVersionId and resolves the actual version being used
+     */
     getTargetingRulesWithDetailsByConfigId: async (
       params: z.infer<typeof getTargetingRulesByConfigId>
     ) => {
@@ -286,7 +297,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { configId, limit = 100, offset = 0 } = value.data;
 
-      return db
+      const rules = await db
         .selectFrom('targeting_rules')
         .leftJoin(
           'environments',
@@ -304,6 +315,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
           'targeting_rules.environmentId',
           'targeting_rules.configId',
           'targeting_rules.configVariantId',
+          'targeting_rules.variantVersionId',
           'targeting_rules.weight',
           'targeting_rules.priority',
           'targeting_rules.enabled',
@@ -313,8 +325,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
           'environments.name as environmentName',
           'environments.slug as environmentSlug',
           'variants.name as variantName',
-          'variants.provider as variantProvider',
-          'variants.modelName as variantModelName',
+          'config_variants.variantId',
         ])
         .where('targeting_rules.configId', '=', configId)
         .orderBy('targeting_rules.priority', 'desc')
@@ -322,9 +333,47 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
         .limit(limit)
         .offset(offset)
         .execute();
+
+      // For each rule, get the version info (either pinned version or latest)
+      const rulesWithVersions = await Promise.all(
+        rules.map(async (rule) => {
+          let versionInfo = null;
+
+          if (rule.variantVersionId) {
+            // Get the specific pinned version
+            versionInfo = await db
+              .selectFrom('variant_versions')
+              .select(['provider', 'modelName', 'version'])
+              .where('id', '=', rule.variantVersionId)
+              .executeTakeFirst();
+          } else if (rule.variantId) {
+            // Get the latest version
+            versionInfo = await db
+              .selectFrom('variant_versions')
+              .select(['provider', 'modelName', 'version'])
+              .where('variantId', '=', rule.variantId)
+              .orderBy('version', 'desc')
+              .limit(1)
+              .executeTakeFirst();
+          }
+
+          return {
+            ...rule,
+            variantProvider: versionInfo?.provider ?? null,
+            variantModelName: versionInfo?.modelName ?? null,
+            pinnedVersion: rule.variantVersionId ? versionInfo?.version : null,
+            latestVersion: !rule.variantVersionId ? versionInfo?.version : null,
+          };
+        })
+      );
+
+      return rulesWithVersions;
     },
 
-    // Simple helper: Set a single variant for an environment (replaces existing)
+    /**
+     * Set a single variant for an environment (replaces existing).
+     * Now supports optional variantVersionId to pin to a specific version.
+     */
     setTargetingForEnvironment: async (
       params: z.infer<typeof setTargetingForEnvironment>
     ) => {
@@ -332,7 +381,8 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { environmentId, configId, configVariantId } = value.data;
+      const { environmentId, configId, configVariantId, variantVersionId } =
+        value.data;
 
       const now = new Date().toISOString();
 
@@ -351,6 +401,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
           environmentId,
           configId,
           configVariantId,
+          variantVersionId: variantVersionId ?? null,
           weight: 10000,
           priority: 0,
           enabled: true,

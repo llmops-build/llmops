@@ -6,16 +6,20 @@ import {
 } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { variantContainer, variantHeader } from '../-components/variants.css';
-import { Icon } from '@client/components/icons';
-import { Save } from 'lucide-react';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
-import { useUpdateVariant } from '@client/hooks/mutations/useUpdateVariant';
+import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
+import { useSetTargeting } from '@client/hooks/mutations/useSetTargeting';
 import {
   useVariantById,
   variantByIdQueryOptions,
 } from '@client/hooks/queries/useVariantById';
+import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
 import { useEffect, useState } from 'react';
+import {
+  SaveVariantPopup,
+  type SaveVariantOptions,
+} from '../-components/save-variant-popup';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
@@ -40,11 +44,15 @@ function RouteComponent() {
   const { id: configId, variant } = Route.useParams();
   const navigate = useNavigate();
   const createVariant = useCreateVariant();
-  const updateVariant = useUpdateVariant();
+  const createVariantVersion = useCreateVariantVersion();
+  const setTargeting = useSetTargeting();
   const { data: variantData } = useVariantById(
     variant === 'new' ? '' : variant
   );
+  const { data: configVariants } = useConfigVariants(configId);
   const [editorKey, setEditorKey] = useState<string>('new');
+
+  const isNewVariant = variant === 'new';
 
   const form = useForm<VariantFormData>({
     defaultValues: {
@@ -61,7 +69,10 @@ function RouteComponent() {
   });
 
   const isDirty = form.formState.isDirty;
-  const isSaving = createVariant.isPending || updateVariant.isPending;
+  const isSaving =
+    createVariant.isPending ||
+    createVariantVersion.isPending ||
+    setTargeting.isPending;
 
   useBlocker({
     shouldBlockFn: () => {
@@ -103,52 +114,89 @@ function RouteComponent() {
     }
   }, [variantData]);
 
-  const onSubmit = async (data: VariantFormData) => {
+  const buildJsonData = (data: VariantFormData): Record<string, unknown> => {
+    const jsonData: Record<string, unknown> = {
+      system_prompt: data.system_prompt,
+      // Store model in jsonData for future use (modelName column will be deprecated)
+      model: data.modelName,
+    };
+
+    // Only include model parameters if they have been set
+    if (data.temperature !== undefined) {
+      jsonData.temperature = data.temperature;
+    }
+    if (data.maxTokens !== undefined) {
+      jsonData.max_tokens = data.maxTokens;
+    }
+    if (data.topP !== undefined) {
+      jsonData.top_p = data.topP;
+    }
+    if (data.frequencyPenalty !== undefined) {
+      jsonData.frequency_penalty = data.frequencyPenalty;
+    }
+    if (data.presencePenalty !== undefined) {
+      jsonData.presence_penalty = data.presencePenalty;
+    }
+
+    return jsonData;
+  };
+
+  const handleSave = async (options: SaveVariantOptions) => {
+    const data = form.getValues();
+
     if (!data.variant_name.trim() || !data.provider || !data.modelName) {
       return;
     }
+
     try {
-      const jsonData: Record<string, unknown> = {
-        system_prompt: data.system_prompt,
-        // Store model in jsonData for future use (modelName column will be deprecated)
-        model: data.modelName,
-      };
+      const jsonData = buildJsonData(data);
 
-      // Only include model parameters if they have been set
-      if (data.temperature !== undefined) {
-        jsonData.temperature = data.temperature;
-      }
-      if (data.maxTokens !== undefined) {
-        jsonData.max_tokens = data.maxTokens;
-      }
-      if (data.topP !== undefined) {
-        jsonData.top_p = data.topP;
-      }
-      if (data.frequencyPenalty !== undefined) {
-        jsonData.frequency_penalty = data.frequencyPenalty;
-      }
-      if (data.presencePenalty !== undefined) {
-        jsonData.presence_penalty = data.presencePenalty;
-      }
-
-      if (variant === 'new') {
-        // Create the variant and link it to the config in one call
-        await createVariant.mutateAsync({
+      if (options.mode === 'new_variant' || isNewVariant) {
+        // Create new variant with version 1
+        const result = await createVariant.mutateAsync({
           configId,
           name: data.variant_name,
           provider: data.provider,
           modelName: data.modelName,
           jsonData,
         });
+
+        // Deploy to environment if requested
+        if (options.deployToEnvironment && options.environmentId && result) {
+          await setTargeting.mutateAsync({
+            environmentId: options.environmentId,
+            configId,
+            configVariantId: result.configVariant.id,
+            // null means use latest version (which will be version 1)
+            variantVersionId: null,
+          });
+        }
       } else {
-        // Update existing variant
-        await updateVariant.mutateAsync({
-          id: variant,
-          name: data.variant_name,
+        // Create new version for existing variant
+        const versionResult = await createVariantVersion.mutateAsync({
+          variantId: variant,
           provider: data.provider,
           modelName: data.modelName,
           jsonData,
         });
+
+        // Deploy to environment if requested
+        if (options.deployToEnvironment && options.environmentId) {
+          // Find the config variant for this variant
+          const configVariant = configVariants?.find(
+            (cv) => cv.variantId === variant
+          );
+
+          if (configVariant && versionResult) {
+            await setTargeting.mutateAsync({
+              environmentId: options.environmentId,
+              configId,
+              configVariantId: configVariant.id,
+              // null means use latest version (which is the newly created one)
+              variantVersionId: null,
+            });
+          }
+        }
       }
 
       // Reset form and navigate away
@@ -163,7 +211,7 @@ function RouteComponent() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
+    <div>
       <div className={variantHeader}>
         <Button
           variant="ghost"
@@ -178,14 +226,15 @@ function RouteComponent() {
         >
           Close
         </Button>
-        <Button variant="primary" size="sm" type="submit">
-          <Icon icon={Save} size="xs" />
-          Save
-        </Button>
+        <SaveVariantPopup
+          isNewVariant={isNewVariant}
+          onSave={handleSave}
+          isSaving={isSaving}
+        />
       </div>
       <div className={variantContainer}>
         <VariantForm form={form} editorKey={editorKey} />
       </div>
-    </form>
+    </div>
   );
 }
