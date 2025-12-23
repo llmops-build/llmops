@@ -4,13 +4,11 @@ import { X } from 'lucide-react';
 import { headerStyles } from './configs.css';
 import { useNavigate } from '@tanstack/react-router';
 import UpdateOrCreateConfigName from './update-or-create-config-name';
-import { useConfigList } from '@client/hooks/queries/useConfigList';
+import { useConfigById } from '@client/hooks/queries/useConfigById';
 
 const ConfigsHeader = ({ id }: { id: string }) => {
   const navigate = useNavigate();
-  const { data } = useConfigList();
-
-  const currentData = data?.find((config) => config.id === id);
+  const { data: currentData } = useConfigById(id);
 
   const handleClose = () => {
     navigate({ to: '/configs' });
@@ -21,7 +19,11 @@ const ConfigsHeader = ({ id }: { id: string }) => {
       <Button onClick={handleClose} size="icon" scheme="gray" variant="ghost">
         <Icon icon={X} />
       </Button>
-      <UpdateOrCreateConfigName key={id} id={id} config={currentData} />
+      <UpdateOrCreateConfigName
+        key={id}
+        id={id}
+        config={currentData ?? undefined}
+      />
     </div>
   );
 };
