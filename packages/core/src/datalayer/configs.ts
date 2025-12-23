@@ -1,8 +1,23 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import z from 'zod';
+
+/**
+ * Generate a short unique ID for configs (8 characters, URL-safe)
+ * Uses base62 encoding (a-z, A-Z, 0-9) for shorter, readable IDs
+ */
+function generateShortId(length = 8): string {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = randomBytes(length);
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length];
+  }
+  return result;
+}
 
 const createNewConfig = z.object({
   name: z.string(),
@@ -39,6 +54,7 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
         .insertInto('configs')
         .values({
           id: randomUUID(),
+          slug: generateShortId(),
           name,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -121,6 +137,7 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
         .leftJoin('variants', 'config_variants.variantId', 'variants.id')
         .select([
           'configs.id',
+          'configs.slug',
           'configs.name',
           'configs.createdAt',
           'configs.updatedAt',

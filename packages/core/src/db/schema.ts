@@ -16,6 +16,7 @@ const baseSchema = {
 // Configs table schema
 export const configsSchema = z.object({
   ...baseSchema,
+  slug: z.string(), // Short unique ID for LLM calls (x-llmops-config header)
   name: z.string().optional(),
 });
 
@@ -96,6 +97,7 @@ interface BaseTable {
 
 // Configs table
 export interface ConfigsTable extends BaseTable {
+  slug: string; // Short unique ID for LLM calls (x-llmops-config header)
   name?: string;
 }
 
@@ -213,6 +215,7 @@ export const SCHEMA_METADATA = {
       schema: configsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
+        slug: { type: 'text', unique: true }, // Short unique ID for LLM calls
         name: { type: 'text', nullable: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },

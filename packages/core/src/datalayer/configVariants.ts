@@ -48,7 +48,7 @@ const createVariantAndLinkToConfig = z.object({
 });
 
 const getVariantJsonDataForConfig = z.object({
-  configId: z.string().uuid(),
+  configId: z.string(), // Can be UUID or slug
   envSecret: z.string().optional(),
 });
 
@@ -353,6 +353,8 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
      * Get the variant version data for a config based on targeting rules.
      * If variantVersionId is specified in the targeting rule, use that specific version.
      * Otherwise, use the latest version.
+     *
+     * configId can be either a UUID or a short slug.
      */
     getVariantJsonDataForConfig: async (
       params: z.infer<typeof getVariantJsonDataForConfig>
@@ -361,7 +363,28 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { configId, envSecret } = value.data;
+      const { configId: configIdOrSlug, envSecret } = value.data;
+
+      // Resolve configId: check if it's a UUID or a slug
+      const UUID_REGEX =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let resolvedConfigId: string;
+
+      if (UUID_REGEX.test(configIdOrSlug)) {
+        resolvedConfigId = configIdOrSlug;
+      } else {
+        // Look up by slug
+        const config = await db
+          .selectFrom('configs')
+          .select('id')
+          .where('slug', '=', configIdOrSlug)
+          .executeTakeFirst();
+
+        if (!config) {
+          throw new LLMOpsError(`Config not found: ${configIdOrSlug}`);
+        }
+        resolvedConfigId = config.id;
+      }
 
       let environmentId: string;
 
@@ -395,7 +418,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       const targetingRule = await db
         .selectFrom('targeting_rules')
         .select(['configVariantId', 'variantVersionId'])
-        .where('configId', '=', configId)
+        .where('configId', '=', resolvedConfigId)
         .where('environmentId', '=', environmentId)
         .where('enabled', '=', true)
         .orderBy('priority', 'desc')
@@ -404,7 +427,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
 
       if (!targetingRule) {
         throw new LLMOpsError(
-          `No targeting rule found for config ${configId} in environment ${environmentId}`
+          `No targeting rule found for config ${resolvedConfigId} in environment ${environmentId}`
         );
       }
 

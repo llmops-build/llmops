@@ -64,10 +64,9 @@ const openApiSpec = {
             name: 'x-llmops-config',
             in: 'header',
             required: true,
-            description: 'LLMOps Config ID (UUID)',
+            description: 'LLMOps Config ID (UUID or short slug)',
             schema: {
               type: 'string',
-              format: 'uuid',
             },
           },
           {
