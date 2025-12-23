@@ -3,6 +3,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 
 export type Config = {
   id: string;
+  slug: string;
   name: string;
   createdAt: string;
   updatedAt: string;
