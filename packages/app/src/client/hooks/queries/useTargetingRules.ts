@@ -16,6 +16,8 @@ export const useTargetingRules = (configId: string) => {
         environmentId: string;
         configId: string;
         configVariantId: string;
+        variantVersionId: string | null;
+        variantId: string | null;
         weight: number;
         priority: number;
         enabled: boolean;
@@ -27,6 +29,8 @@ export const useTargetingRules = (configId: string) => {
         variantName: string | null;
         variantProvider: string | null;
         variantModelName: string | null;
+        pinnedVersion: number | null;
+        latestVersion: number | null;
       }[];
     },
     enabled: !!configId,

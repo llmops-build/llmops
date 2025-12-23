@@ -237,41 +237,7 @@ export async function getMigrations(
     return colTypeMap[type]?.[dbType] || 'text';
   }
 
-  // Add missing columns to existing tables
-  for (const table of toBeAdded) {
-    for (const [fieldName, fieldConfig] of Object.entries(table.fields)) {
-      const type = getColumnType(fieldConfig, fieldName);
-      const builder = db.schema
-        .alterTable(table.table)
-        .addColumn(fieldName, type, (col) => {
-          let c = col;
-
-          if (fieldConfig.references) {
-            const refTable = fieldConfig.references.table;
-            const refColumn = fieldConfig.references.column;
-            c = c.references(`${refTable}.${refColumn}`).onDelete('cascade');
-          }
-
-          if (fieldConfig.unique) {
-            c = c.unique();
-          }
-
-          if (fieldConfig.default === 'now()' && dbType !== 'sqlite') {
-            if (dbType === 'mysql') {
-              c = c.defaultTo(sql`CURRENT_TIMESTAMP(3)`);
-            } else {
-              c = c.defaultTo(sql`CURRENT_TIMESTAMP`);
-            }
-          }
-
-          return c;
-        });
-
-      migrations.push(builder);
-    }
-  }
-
-  // Create new tables
+  // IMPORTANT: Create new tables FIRST (before adding columns that may reference them)
   for (const table of toBeCreated) {
     let builder = db.schema.createTable(table.table);
 
@@ -291,7 +257,8 @@ export async function getMigrations(
           } else {
             c = c.primaryKey().notNull();
           }
-        } else {
+        } else if (!fieldConfig.nullable) {
+          // Only add notNull constraint if the field is not nullable
           c = c.notNull();
         }
 
@@ -322,6 +289,46 @@ export async function getMigrations(
     }
 
     migrations.push(builder);
+  }
+
+  // Add missing columns to existing tables AFTER creating new tables
+  // (columns may reference newly created tables)
+  for (const table of toBeAdded) {
+    for (const [fieldName, fieldConfig] of Object.entries(table.fields)) {
+      const type = getColumnType(fieldConfig, fieldName);
+      const builder = db.schema
+        .alterTable(table.table)
+        .addColumn(fieldName, type, (col) => {
+          let c = col;
+
+          // Add notNull constraint only if the field is not nullable
+          if (!fieldConfig.nullable) {
+            c = c.notNull();
+          }
+
+          if (fieldConfig.references) {
+            const refTable = fieldConfig.references.table;
+            const refColumn = fieldConfig.references.column;
+            c = c.references(`${refTable}.${refColumn}`).onDelete('cascade');
+          }
+
+          if (fieldConfig.unique) {
+            c = c.unique();
+          }
+
+          if (fieldConfig.default === 'now()' && dbType !== 'sqlite') {
+            if (dbType === 'mysql') {
+              c = c.defaultTo(sql`CURRENT_TIMESTAMP(3)`);
+            } else {
+              c = c.defaultTo(sql`CURRENT_TIMESTAMP`);
+            }
+          }
+
+          return c;
+        });
+
+      migrations.push(builder);
+    }
   }
 
   async function runMigrations() {

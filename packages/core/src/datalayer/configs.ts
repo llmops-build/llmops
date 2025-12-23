@@ -104,6 +104,9 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
         .offset(offset)
         .execute();
     },
+    /**
+     * Get config with its variants and their latest versions
+     */
     getConfigWithVariants: async (params: z.infer<typeof getConfigById>) => {
       const value = await getConfigById.safeParseAsync(params);
       if (!value.success) {
@@ -111,7 +114,8 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
       }
       const { configId } = value.data;
 
-      return db
+      // First get the config with basic variant info
+      const configData = await db
         .selectFrom('configs')
         .leftJoin('config_variants', 'configs.id', 'config_variants.configId')
         .leftJoin('variants', 'config_variants.variantId', 'variants.id')
@@ -121,12 +125,53 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
           'configs.createdAt',
           'configs.updatedAt',
           'variants.id as variantId',
-          'variants.provider',
-          'variants.modelName',
-          'variants.jsonData',
+          'variants.name as variantName',
         ])
         .where('configs.id', '=', configId)
         .execute();
+
+      // Get latest versions for each variant
+      const variantIds = configData
+        .map((row) => row.variantId)
+        .filter((id): id is string => id !== null);
+
+      if (variantIds.length === 0) {
+        return configData.map((row) => ({
+          ...row,
+          provider: null,
+          modelName: null,
+          jsonData: null,
+        }));
+      }
+
+      // Get latest version for each variant
+      const latestVersions = await Promise.all(
+        variantIds.map((variantId) =>
+          db
+            .selectFrom('variant_versions')
+            .selectAll()
+            .where('variantId', '=', variantId)
+            .orderBy('version', 'desc')
+            .limit(1)
+            .executeTakeFirst()
+        )
+      );
+
+      const versionMap = new Map(
+        latestVersions
+          .filter((v): v is NonNullable<typeof v> => v !== undefined)
+          .map((v) => [v.variantId, v])
+      );
+
+      return configData.map((row) => {
+        const version = row.variantId ? versionMap.get(row.variantId) : null;
+        return {
+          ...row,
+          provider: version?.provider ?? null,
+          modelName: version?.modelName ?? null,
+          jsonData: version?.jsonData ?? null,
+        };
+      });
     },
   };
 };

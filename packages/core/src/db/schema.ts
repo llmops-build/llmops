@@ -19,10 +19,17 @@ export const configsSchema = z.object({
   name: z.string().optional(),
 });
 
-// Variants table schema - stores LLM model variants
+// Variants table schema - stores LLM model variant metadata only
 export const variantsSchema = z.object({
   ...baseSchema,
   name: z.string(),
+});
+
+// Variant versions table schema - stores actual variant data with versioning
+export const variantVersionsSchema = z.object({
+  ...baseSchema,
+  variantId: z.string().uuid(), // FK -> variants.id
+  version: z.number().int().min(1), // Version number, auto-incremented per variant
   provider: z.string(),
   modelName: z.string(),
   jsonData: z.record(z.string(), z.unknown()),
@@ -57,6 +64,7 @@ export const targetingRulesSchema = z.object({
   environmentId: z.string().uuid(), // FK -> environments.id
   configId: z.string().uuid(), // FK -> configs.id (for easier querying)
   configVariantId: z.string().uuid(), // FK -> config_variants.id
+  variantVersionId: z.string().uuid().nullable().optional(), // FK -> variant_versions.id (null = use latest)
   weight: z.number().int().min(0).max(10000).default(10000), // 0-10000 for precision (10000 = 100%)
   priority: z.number().int().default(0), // Higher priority rules evaluated first
   enabled: z.boolean().default(true), // Toggle without deleting
@@ -68,6 +76,7 @@ export const targetingRulesSchema = z.object({
  */
 export type Config = z.infer<typeof configsSchema>;
 export type Variant = z.infer<typeof variantsSchema>;
+export type VariantVersion = z.infer<typeof variantVersionsSchema>;
 export type Environment = z.infer<typeof environmentsSchema>;
 export type EnvironmentSecret = z.infer<typeof environmentSecretsSchema>;
 export type ConfigVariant = z.infer<typeof configVariantsSchema>;
@@ -90,9 +99,15 @@ export interface ConfigsTable extends BaseTable {
   name?: string;
 }
 
-// Variants table
+// Variants table - metadata only
 export interface VariantsTable extends BaseTable {
   name: string;
+}
+
+// Variant versions table - actual model configuration
+export interface VariantVersionsTable extends BaseTable {
+  variantId: string;
+  version: number;
   provider: string;
   modelName: string;
   jsonData: ColumnType<Record<string, unknown>, string, string>;
@@ -123,6 +138,7 @@ export interface TargetingRulesTable extends BaseTable {
   environmentId: string;
   configId: string;
   configVariantId: string;
+  variantVersionId: string | null; // null means use latest version
   weight: ColumnType<number, number | undefined, number | undefined>;
   priority: ColumnType<number, number | undefined, number | undefined>;
   enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
@@ -135,6 +151,7 @@ export interface TargetingRulesTable extends BaseTable {
 export interface Database {
   configs: ConfigsTable;
   variants: VariantsTable;
+  variant_versions: VariantVersionsTable;
   environments: EnvironmentsTable;
   environment_secrets: EnvironmentSecretsTable;
   config_variants: ConfigVariantsTable;
@@ -207,15 +224,30 @@ export const SCHEMA_METADATA = {
       fields: {
         id: { type: 'uuid', primaryKey: true },
         name: { type: 'text' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    variant_versions: {
+      order: 3,
+      schema: variantVersionsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        variantId: {
+          type: 'uuid',
+          references: { table: 'variants', column: 'id' },
+        },
+        version: { type: 'integer' },
         provider: { type: 'text' },
         modelName: { type: 'text' },
         jsonData: { type: 'jsonb' },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
+      uniqueConstraints: [{ columns: ['variantId', 'version'] }],
     },
     environments: {
-      order: 3,
+      order: 4,
       schema: environmentsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -227,7 +259,7 @@ export const SCHEMA_METADATA = {
       },
     },
     environment_secrets: {
-      order: 4,
+      order: 5,
       schema: environmentSecretsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -242,7 +274,7 @@ export const SCHEMA_METADATA = {
       },
     },
     config_variants: {
-      order: 5,
+      order: 6,
       schema: configVariantsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -259,7 +291,7 @@ export const SCHEMA_METADATA = {
       },
     },
     targeting_rules: {
-      order: 6,
+      order: 7,
       schema: targetingRulesSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -274,6 +306,11 @@ export const SCHEMA_METADATA = {
         configVariantId: {
           type: 'uuid',
           references: { table: 'config_variants', column: 'id' },
+        },
+        variantVersionId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'variant_versions', column: 'id' },
         },
         weight: { type: 'integer', default: 10000 },
         priority: { type: 'integer', default: 0 },
@@ -292,6 +329,7 @@ export const SCHEMA_METADATA = {
 export const schemas = {
   configs: configsSchema,
   variants: variantsSchema,
+  variant_versions: variantVersionsSchema,
   environments: environmentsSchema,
   environment_secrets: environmentSecretsSchema,
   config_variants: configVariantsSchema,

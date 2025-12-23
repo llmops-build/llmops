@@ -9,9 +9,15 @@ export const useSetTargeting = () => {
       environmentId: string;
       configId: string;
       configVariantId: string;
+      variantVersionId: string; // Required - explicit version deployment
     }) => {
       const response = await hc.v1.targeting.set.$post({
-        json: data,
+        json: {
+          environmentId: data.environmentId,
+          configId: data.configId,
+          configVariantId: data.configVariantId,
+          variantVersionId: data.variantVersionId,
+        },
       });
       const result = await response.json();
       if (!response.ok || !('data' in result)) {

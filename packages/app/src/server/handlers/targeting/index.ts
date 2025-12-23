@@ -17,6 +17,7 @@ const app = new Hono()
         environmentId: z.string().uuid(),
         configId: z.string().uuid(),
         configVariantId: z.string().uuid(),
+        variantVersionId: z.string().uuid().nullable().optional(), // null = use latest version
         weight: z.number().int().min(0).max(10000).optional(),
         priority: z.number().int().optional(),
         enabled: z.boolean().optional(),
@@ -32,6 +33,7 @@ const app = new Hono()
           environmentId: body.environmentId,
           configId: body.configId,
           configVariantId: body.configVariantId,
+          variantVersionId: body.variantVersionId,
           weight: body.weight ?? 10000,
           priority: body.priority ?? 0,
           enabled: body.enabled ?? true,
@@ -105,6 +107,7 @@ const app = new Hono()
     zv(
       'json',
       z.object({
+        variantVersionId: z.string().uuid().nullable().optional(), // null = use latest version
         weight: z.number().int().min(0).max(10000).optional(),
         priority: z.number().int().optional(),
         enabled: z.boolean().optional(),
@@ -234,6 +237,7 @@ const app = new Hono()
         environmentId: z.string().uuid(),
         configId: z.string().uuid(),
         configVariantId: z.string().uuid(),
+        variantVersionId: z.string().uuid(), // Required - explicit version deployment
       })
     ),
     async (c) => {
@@ -261,7 +265,32 @@ const app = new Hono()
           );
         }
 
-        const rule = await db.setTargetingForEnvironment(body);
+        // Validate variantVersionId belongs to the variant
+        const version = await db.getVariantVersionById({
+          id: body.variantVersionId,
+        });
+        if (!version) {
+          return c.json(
+            clientErrorResponse('Variant version not found', 404),
+            404
+          );
+        }
+        if (version.variantId !== configVariant.variantId) {
+          return c.json(
+            clientErrorResponse(
+              'Variant version does not belong to the specified variant',
+              400
+            ),
+            400
+          );
+        }
+
+        const rule = await db.setTargetingForEnvironment({
+          environmentId: body.environmentId,
+          configId: body.configId,
+          configVariantId: body.configVariantId,
+          variantVersionId: body.variantVersionId,
+        });
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error setting targeting for environment:', error);

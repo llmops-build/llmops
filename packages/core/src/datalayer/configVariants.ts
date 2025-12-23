@@ -181,7 +181,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
+      const configVariant = await db
         .selectFrom('config_variants')
         .leftJoin('configs', 'config_variants.configId', 'configs.id')
         .leftJoin('variants', 'config_variants.variantId', 'variants.id')
@@ -192,13 +192,32 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
           'config_variants.createdAt',
           'config_variants.updatedAt',
           'configs.name as configName',
-          'variants.provider',
-          'variants.modelName',
-          'variants.jsonData',
+          'variants.name as variantName',
         ])
         .where('config_variants.id', '=', id)
         .executeTakeFirst();
+
+      if (!configVariant) {
+        return undefined;
+      }
+
+      // Get the latest version for this variant
+      const latestVersion = await db
+        .selectFrom('variant_versions')
+        .selectAll()
+        .where('variantId', '=', configVariant.variantId)
+        .orderBy('version', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+
+      return {
+        ...configVariant,
+        latestVersion: latestVersion ?? null,
+      };
     },
+    /**
+     * Get config variants with details including latest version data
+     */
     getConfigVariantsWithDetailsByConfigId: async (
       params: z.infer<typeof getConfigVariantsByConfigId>
     ) => {
@@ -208,26 +227,55 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { configId, limit = 100, offset = 0 } = value.data;
 
-      return db
+      const configVariants = await db
         .selectFrom('config_variants')
         .leftJoin('variants', 'config_variants.variantId', 'variants.id')
         .select([
           'config_variants.id',
-          'variants.name',
           'config_variants.configId',
           'config_variants.variantId',
           'config_variants.createdAt',
           'config_variants.updatedAt',
-          'variants.provider',
-          'variants.modelName',
-          'variants.jsonData',
+          'variants.name',
         ])
         .where('config_variants.configId', '=', configId)
         .orderBy('config_variants.createdAt', 'desc')
         .limit(limit)
         .offset(offset)
         .execute();
+
+      if (configVariants.length === 0) {
+        return [];
+      }
+
+      // Get latest versions for each variant
+      const configVariantsWithVersions = await Promise.all(
+        configVariants.map(async (cv) => {
+          const latestVersion = cv.variantId
+            ? await db
+                .selectFrom('variant_versions')
+                .selectAll()
+                .where('variantId', '=', cv.variantId)
+                .orderBy('version', 'desc')
+                .limit(1)
+                .executeTakeFirst()
+            : null;
+
+          return {
+            ...cv,
+            provider: latestVersion?.provider ?? null,
+            modelName: latestVersion?.modelName ?? null,
+            jsonData: latestVersion?.jsonData ?? null,
+            latestVersion: latestVersion ?? null,
+          };
+        })
+      );
+
+      return configVariantsWithVersions;
     },
+    /**
+     * Create a new variant with its first version and link to config
+     */
     createVariantAndLinkToConfig: async (
       params: z.infer<typeof createVariantAndLinkToConfig>
     ) => {
@@ -238,14 +286,32 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       const { configId, name, provider, modelName, jsonData } = value.data;
 
       const variantId = randomUUID();
+      const versionId = randomUUID();
       const now = new Date().toISOString();
 
-      // Insert the variant
+      // Insert the variant (metadata only)
       const variant = await db
         .insertInto('variants')
         .values({
           id: variantId,
           name,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returningAll()
+        .executeTakeFirst();
+
+      if (!variant) {
+        throw new LLMOpsError('Failed to create variant');
+      }
+
+      // Create the first version
+      const version = await db
+        .insertInto('variant_versions')
+        .values({
+          id: versionId,
+          variantId,
+          version: 1,
           provider,
           modelName,
           jsonData: JSON.stringify(jsonData),
@@ -255,8 +321,8 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         .returningAll()
         .executeTakeFirst();
 
-      if (!variant) {
-        throw new LLMOpsError('Failed to create variant');
+      if (!version) {
+        throw new LLMOpsError('Failed to create variant version');
       }
 
       // Create the config-variant relation
@@ -278,14 +344,15 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
 
       return {
         variant,
+        version,
         configVariant,
       };
     },
 
     /**
-     * Get the variant jsonData for a config.
-     * If envSecret is provided, look up the environment by the secret's keyValue.
-     * If envSecret is not provided, use the production environment (isProd = true).
+     * Get the variant version data for a config based on targeting rules.
+     * If variantVersionId is specified in the targeting rule, use that specific version.
+     * Otherwise, use the latest version.
      */
     getVariantJsonDataForConfig: async (
       params: z.infer<typeof getVariantJsonDataForConfig>
@@ -327,7 +394,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       // Get the targeting rule for this config + environment
       const targetingRule = await db
         .selectFrom('targeting_rules')
-        .select('configVariantId')
+        .select(['configVariantId', 'variantVersionId'])
         .where('configId', '=', configId)
         .where('environmentId', '=', environmentId)
         .where('enabled', '=', true)
@@ -341,25 +408,46 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         );
       }
 
-      // Get the variant jsonData through the config_variant
-      const result = await db
+      // Get the config_variant to find the variantId
+      const configVariant = await db
         .selectFrom('config_variants')
-        .innerJoin('variants', 'config_variants.variantId', 'variants.id')
-        .select([
-          'variants.jsonData',
-          'variants.provider',
-          'variants.modelName',
-        ])
-        .where('config_variants.id', '=', targetingRule.configVariantId)
+        .select('variantId')
+        .where('id', '=', targetingRule.configVariantId)
         .executeTakeFirst();
 
-      if (!result) {
+      if (!configVariant) {
         throw new LLMOpsError(
-          `No variant found for config variant ${targetingRule.configVariantId}`
+          `No config variant found for ${targetingRule.configVariantId}`
         );
       }
 
-      return result;
+      let versionData;
+
+      if (targetingRule.variantVersionId) {
+        // Use the specific version pinned in the targeting rule
+        versionData = await db
+          .selectFrom('variant_versions')
+          .select(['jsonData', 'provider', 'modelName', 'version'])
+          .where('id', '=', targetingRule.variantVersionId)
+          .executeTakeFirst();
+      } else {
+        // Use the latest version
+        versionData = await db
+          .selectFrom('variant_versions')
+          .select(['jsonData', 'provider', 'modelName', 'version'])
+          .where('variantId', '=', configVariant.variantId)
+          .orderBy('version', 'desc')
+          .limit(1)
+          .executeTakeFirst();
+      }
+
+      if (!versionData) {
+        throw new LLMOpsError(
+          `No variant version found for variant ${configVariant.variantId}`
+        );
+      }
+
+      return versionData;
     },
   };
 };
