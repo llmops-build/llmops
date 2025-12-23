@@ -46,7 +46,7 @@ const Hero = () => {
   return (
     <div
       className={clsx(
-        'max-w-6xl mx-auto flex w-full items-center justify-stretch h-full px-4 lg:px-8',
+        'max-w-6xl mx-auto flex w-full items-center justify-stretch h-full px-4 lg:px-8 border-x border-dashed border-gray-6',
         styles.hero
       )}
     >
