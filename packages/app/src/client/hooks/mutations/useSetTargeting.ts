@@ -9,7 +9,7 @@ export const useSetTargeting = () => {
       environmentId: string;
       configId: string;
       configVariantId: string;
-      variantVersionId?: string | null; // null = use latest version
+      variantVersionId: string; // Required - explicit version deployment
     }) => {
       const response = await hc.v1.targeting.set.$post({
         json: {

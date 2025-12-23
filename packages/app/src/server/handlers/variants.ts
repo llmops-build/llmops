@@ -19,13 +19,55 @@ const app = new Hono()
     async (c) => {
       const db = c.get('db');
       const { id } = c.req.valid('param');
+      const versionParam = c.req.query('version');
 
       try {
-        const variant = await db.getVariantWithLatestVersion({ variantId: id });
+        // Get variant metadata
+        const variant = await db.getVariantById({ variantId: id });
         if (!variant) {
           return c.json(clientErrorResponse('Variant not found', 404), 404);
         }
-        return c.json(successResponse(variant, 200));
+
+        // Get the requested version or latest
+        let versionData;
+        if (versionParam) {
+          const versionNumber = parseInt(versionParam, 10);
+          if (isNaN(versionNumber) || versionNumber < 1) {
+            return c.json(
+              clientErrorResponse('Invalid version number', 400),
+              400
+            );
+          }
+          versionData = await db.getVariantVersionByNumber({
+            variantId: id,
+            version: versionNumber,
+          });
+          if (!versionData) {
+            return c.json(
+              clientErrorResponse(`Version ${versionNumber} not found`, 404),
+              404
+            );
+          }
+        } else {
+          versionData = await db.getLatestVariantVersion({ variantId: id });
+        }
+
+        // Flatten the response
+        const response = {
+          id: variant.id,
+          name: variant.name,
+          createdAt: variant.createdAt,
+          updatedAt: variant.updatedAt,
+          // Version data flattened
+          versionId: versionData?.id ?? null,
+          version: versionData?.version ?? null,
+          provider: versionData?.provider ?? null,
+          modelName: versionData?.modelName ?? null,
+          jsonData: versionData?.jsonData ?? null,
+          versionCreatedAt: versionData?.createdAt ?? null,
+        };
+
+        return c.json(successResponse(response, 200));
       } catch (error) {
         console.error('Error fetching variant:', error);
         return c.json(internalServerError('Failed to fetch variant', 500), 500);
@@ -106,7 +148,23 @@ const app = new Hono()
         limit,
         offset,
       });
-      return c.json(successResponse(variants, 200));
+
+      // Flatten the response for each variant
+      const flattenedVariants = variants.map((v) => ({
+        id: v.id,
+        name: v.name,
+        createdAt: v.createdAt,
+        updatedAt: v.updatedAt,
+        // Version data flattened
+        versionId: v.latestVersion?.id ?? null,
+        version: v.latestVersion?.version ?? null,
+        provider: v.latestVersion?.provider ?? null,
+        modelName: v.latestVersion?.modelName ?? null,
+        jsonData: v.latestVersion?.jsonData ?? null,
+        versionCreatedAt: v.latestVersion?.createdAt ?? null,
+      }));
+
+      return c.json(successResponse(flattenedVariants, 200));
     } catch (error) {
       console.error('Error fetching variants:', error);
       return c.json(internalServerError('Failed to fetch variants', 500), 500);

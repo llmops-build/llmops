@@ -7,6 +7,13 @@ type VariantResult = {
   variant: {
     id: string;
     name: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  version: {
+    id: string;
+    variantId: string;
+    version: number;
     provider: string;
     modelName: string;
     jsonData: string;

@@ -79,9 +79,9 @@ type TargetingFormProps = {
 };
 
 type VersionOption = {
-  id: string | null;
+  id: string;
   label: string;
-  version: number | null;
+  version: number;
 };
 
 function TargetingForm({
@@ -120,18 +120,16 @@ function TargetingForm({
 
   const variantIds = variants.map((v) => v.id);
 
-  // Build version options - "Latest" option + all available versions
-  const versionOptions: VersionOption[] = [
-    { id: null, label: 'Latest (auto-update)', version: null },
-    ...(versions?.map((v) => ({
+  // Build version options - all available versions (no auto-update)
+  const versionOptions: VersionOption[] =
+    versions?.map((v) => ({
       id: v.id,
       label: `Version ${v.version}`,
       version: v.version,
-    })) ?? []),
-  ];
+    })) ?? [];
 
   const handleSave = async () => {
-    if (!selectedVariantId) return;
+    if (!selectedVariantId || !selectedVersionId) return;
 
     try {
       await setTargeting.mutateAsync({
@@ -166,7 +164,9 @@ function TargetingForm({
           variant="primary"
           size="sm"
           onClick={handleSave}
-          disabled={!selectedVariantId || setTargeting.isPending}
+          disabled={
+            !selectedVariantId || !selectedVersionId || setTargeting.isPending
+          }
         >
           <Icon icon={Save} size="sm" />
           {setTargeting.isPending ? 'Saving...' : 'Save'}
@@ -213,12 +213,14 @@ function TargetingForm({
             <div className={variantPropertyValue}>
               {loadingVersions ? (
                 <span style={{ opacity: 0.6 }}>Loading versions...</span>
+              ) : versionOptions.length === 0 ? (
+                <span style={{ opacity: 0.6 }}>No versions available</span>
               ) : (
                 <Combobox<VersionOption>
                   items={versionOptions}
                   value={
                     versionOptions.find((v) => v.id === selectedVersionId) ??
-                    versionOptions[0]
+                    null
                   }
                   onValueChange={(option) =>
                     setSelectedVersionId(option?.id ?? null)
@@ -231,31 +233,20 @@ function TargetingForm({
           </div>
         )}
 
-        {/* Show info about version selection */}
-        {selectedVariantId && !selectedVersionId && (
-          <div
-            style={{
-              marginTop: '0.5rem',
-              fontSize: '0.75rem',
-              color: 'var(--gray9)',
-            }}
-          >
-            Using &quot;Latest&quot; will automatically use the newest version
-            when new versions are created.
-          </div>
-        )}
-        {selectedVariantId && selectedVersionId && (
-          <div
-            style={{
-              marginTop: '0.5rem',
-              fontSize: '0.75rem',
-              color: 'var(--gray9)',
-            }}
-          >
-            Pinning to a specific version means this environment will not
-            auto-update when new versions are created.
-          </div>
-        )}
+        {/* Show info when version is selected */}
+        {selectedVariantId &&
+          !selectedVersionId &&
+          versionOptions.length > 0 && (
+            <div
+              style={{
+                marginTop: '0.5rem',
+                fontSize: '0.75rem',
+                color: 'var(--gray9)',
+              }}
+            >
+              Select a version to deploy to this environment.
+            </div>
+          )}
       </div>
     </div>
   );

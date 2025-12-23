@@ -237,7 +237,7 @@ const app = new Hono()
         environmentId: z.string().uuid(),
         configId: z.string().uuid(),
         configVariantId: z.string().uuid(),
-        variantVersionId: z.string().uuid().nullable().optional(), // null = use latest version
+        variantVersionId: z.string().uuid(), // Required - explicit version deployment
       })
     ),
     async (c) => {
@@ -265,26 +265,24 @@ const app = new Hono()
           );
         }
 
-        // If variantVersionId is provided, validate it belongs to the variant
-        if (body.variantVersionId) {
-          const version = await db.getVariantVersionById({
-            id: body.variantVersionId,
-          });
-          if (!version) {
-            return c.json(
-              clientErrorResponse('Variant version not found', 404),
-              404
-            );
-          }
-          if (version.variantId !== configVariant.variantId) {
-            return c.json(
-              clientErrorResponse(
-                'Variant version does not belong to the specified variant',
-                400
-              ),
+        // Validate variantVersionId belongs to the variant
+        const version = await db.getVariantVersionById({
+          id: body.variantVersionId,
+        });
+        if (!version) {
+          return c.json(
+            clientErrorResponse('Variant version not found', 404),
+            404
+          );
+        }
+        if (version.variantId !== configVariant.variantId) {
+          return c.json(
+            clientErrorResponse(
+              'Variant version does not belong to the specified variant',
               400
-            );
-          }
+            ),
+            400
+          );
         }
 
         const rule = await db.setTargetingForEnvironment({

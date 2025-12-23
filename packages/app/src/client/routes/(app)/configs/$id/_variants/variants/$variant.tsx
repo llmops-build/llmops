@@ -141,6 +141,32 @@ function RouteComponent() {
     return jsonData;
   };
 
+  /**
+   * Generate a unique variant name by adding a suffix like (2), (3), etc.
+   */
+  const generateUniqueVariantName = (baseName: string): string => {
+    if (!configVariants || configVariants.length === 0) {
+      return baseName;
+    }
+
+    const existingNames = new Set(configVariants.map((cv) => cv.name));
+
+    // If the base name doesn't exist, use it as-is
+    if (!existingNames.has(baseName)) {
+      return baseName;
+    }
+
+    // Find the next available suffix
+    let suffix = 2;
+    let newName = `${baseName} (${suffix})`;
+    while (existingNames.has(newName)) {
+      suffix++;
+      newName = `${baseName} (${suffix})`;
+    }
+
+    return newName;
+  };
+
   const handleSave = async (options: SaveVariantOptions) => {
     const data = form.getValues();
 
@@ -152,10 +178,16 @@ function RouteComponent() {
       const jsonData = buildJsonData(data);
 
       if (options.mode === 'new_variant' || isNewVariant) {
+        // Generate unique name when saving as new variant from existing
+        const variantName =
+          options.mode === 'new_variant' && !isNewVariant
+            ? generateUniqueVariantName(data.variant_name)
+            : data.variant_name;
+
         // Create new variant with version 1
         const result = await createVariant.mutateAsync({
           configId,
-          name: data.variant_name,
+          name: variantName,
           provider: data.provider,
           modelName: data.modelName,
           jsonData,
@@ -167,8 +199,7 @@ function RouteComponent() {
             environmentId: options.environmentId,
             configId,
             configVariantId: result.configVariant.id,
-            // null means use latest version (which will be version 1)
-            variantVersionId: null,
+            variantVersionId: result.version.id,
           });
         }
       } else {
@@ -192,8 +223,7 @@ function RouteComponent() {
               environmentId: options.environmentId,
               configId,
               configVariantId: configVariant.id,
-              // null means use latest version (which is the newly created one)
-              variantVersionId: null,
+              variantVersionId: versionResult.id,
             });
           }
         }
