@@ -5,3 +5,13 @@
   font-family: 'Geist', sans-serif;
   padding-top: 8rem;
 }
+
+.comingSoonPattern {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 5px,
+    rgba(128, 128, 128, 0.05) 5px,
+    rgba(128, 128, 128, 0.05) 10px
+  );
+}
