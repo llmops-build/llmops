@@ -23,7 +23,7 @@ function Home() {
       <Features />
       <footer className="border-t border-gray-4 py-8 px-4 lg:px-8 relative">
         <div className="absolute w-20 aspect-square -top-20">
-          <Logo className="w-full h-full" />
+          <Logo className="w-full h-full dark:invert" />
         </div>
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-10">
           <p>

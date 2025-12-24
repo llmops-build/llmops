@@ -7,4 +7,10 @@
   "observability": {
     "enabled": true,
   },
+  "routes": [
+    {
+      "pattern": "llmops.build",
+      "custom_domain": true,
+    },
+  ],
 }
