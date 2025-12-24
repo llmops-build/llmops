@@ -26,7 +26,10 @@ function Home() {
           <Logo className="w-full h-full" />
         </div>
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-10">
-          <p>&copy; {new Date().getFullYear()} LLMOps. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} ByteByByte Ventures LLP. All
+            rights reserved.
+          </p>
           <div className="flex items-center gap-6">
             <a
               href="https://github.com/llmops-build/llmops"
