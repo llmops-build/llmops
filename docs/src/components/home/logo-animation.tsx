@@ -6,7 +6,7 @@ const LogoAnimation = () => {
     <div className="w-60 aspect-square flex items-center justify-center relative">
       <svg
         viewBox="0 0 400 400"
-        className="inset-2.5 absolute animate-[spin_20s_linear_infinite]"
+        className="absolute top-1/2 left-1/2 w-full h-full -translate-x-1/2 -translate-y-1/2 animate-[spin_20s_linear_infinite]"
       >
         <defs>
           <path
