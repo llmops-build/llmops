@@ -7,12 +7,14 @@ import tailwindcss from '@tailwindcss/vite';
 import mdx from 'fumadocs-mdx/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export default defineConfig({
   server: {
     port: 3000,
   },
   plugins: [
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    isProduction && cloudflare({ viteEnvironment: { name: 'ssr' } }),
     mdx(await import('./source.config')),
     tailwindcss(),
     tsConfigPaths({
@@ -21,5 +23,5 @@ export default defineConfig({
     tanstackStart(),
     react(),
     svgr(),
-  ],
+  ].filter(Boolean),
 });
