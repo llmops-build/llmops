@@ -101,6 +101,17 @@
   --color-gray-track: #8c8c8c;
 
   --color-background: #fff;
+
+  @keyframes fade-out-scale {
+    0% {
+      opacity: 1;
+      transform: scale(0.25);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.75);
+    }
+  }
 }
 
 .dark {
@@ -199,4 +210,13 @@
 
   --color-background: #000;
   --color-fd-background: #000;
+}
+.border-dashed-img {
+  border-image: repeating-linear-gradient(
+    45deg,
+    #333,
+    /* Dash color */ #333 10px,
+    /* Dash length */ transparent 10px,
+    /* Gap start */ transparent 20px /* Gap length */
+  );
 }

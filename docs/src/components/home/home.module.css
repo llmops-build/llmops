@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap');
 
 .hero {
-  min-height: calc(100vh - 57px);
+  max-height: 100vh;
   font-family: 'Geist', sans-serif;
+  padding-top: 8rem;
 }

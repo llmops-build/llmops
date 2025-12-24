@@ -1,5 +1,4 @@
 import './-styles/base.css';
-import Features from '@/components/home/features';
 import Hero from '@/components/home/hero';
 import { baseOptions } from '@/lib/layout.shared';
 import { createFileRoute } from '@tanstack/react-router';
@@ -11,9 +10,13 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-    <HomeLayout {...baseOptions()}>
+    <HomeLayout
+      {...baseOptions({
+        noTitle: true,
+      })}
+      nav={{ enabled: false }}
+    >
       <Hero />
-      <Features />
     </HomeLayout>
   );
 }
