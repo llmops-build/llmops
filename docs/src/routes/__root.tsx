@@ -23,7 +23,10 @@ export const Route = createRootRoute({
           'LLMOps: A pluggable LLMOps toolkit for TypeScript applications.',
       },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', href: '/favicon.ico', type: 'image/x-icon' },
+    ],
   }),
   component: RootComponent,
 });
