@@ -1,11 +1,11 @@
 import Features from '@/components/home/features';
 import './-styles/base.css';
-import Hero from '@/components/home/hero';
-import { baseOptions } from '@/lib/layout.shared';
 import { createFileRoute } from '@tanstack/react-router';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 // @ts-expect-error // svgr import
 import Logo from '@/assets/llmops.svg?react';
+import Hero from '@/components/home/hero';
+import { baseOptions } from '@/lib/layout.shared';
 
 export const Route = createFileRoute('/')({
   component: Home,

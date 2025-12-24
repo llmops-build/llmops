@@ -5,12 +5,12 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
   "observability": {
-    "enabled": true,
+    "enabled": true
   },
   "routes": [
     {
       "pattern": "llmops.build",
-      "custom_domain": true,
-    },
-  ],
+      "custom_domain": true
+    }
+  ]
 }

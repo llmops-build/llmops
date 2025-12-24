@@ -1,11 +1,11 @@
-import react from '@vitejs/plugin-react';
-import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import { defineConfig } from 'vite';
-import tsConfigPaths from 'vite-tsconfig-paths';
-import svgr from 'vite-plugin-svgr';
-import tailwindcss from '@tailwindcss/vite';
-import mdx from 'fumadocs-mdx/vite';
 import { cloudflare } from '@cloudflare/vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
+import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import react from '@vitejs/plugin-react';
+import mdx from 'fumadocs-mdx/vite';
+import { defineConfig } from 'vite';
+import svgr from 'vite-plugin-svgr';
+import tsConfigPaths from 'vite-tsconfig-paths';
 
 const isProduction = process.env.NODE_ENV === 'production';
 

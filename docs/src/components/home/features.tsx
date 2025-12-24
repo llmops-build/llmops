@@ -146,6 +146,17 @@ const FeatureCard = ({ item }: { item: CardItem }) => (
   </div>
 );
 
+const Section = ({ title, items }: { title: string; items: CardItem[] }) => (
+  <div className="w-full">
+    <h2 className="text-sm font-mono text-gray-8 mb-3">{title}</h2>
+    <div className="flex flex-col gap-3">
+      {items.map((item) => (
+        <FeatureCard key={item.name} item={item} />
+      ))}
+    </div>
+  </div>
+);
+
 const Features = () => {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Features');
 
@@ -171,7 +182,16 @@ const Features = () => {
         styles.features
       )}
     >
-      <div className="max-w-sm w-full">
+      {/* Mobile: Stacked sections */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full md:hidden">
+        <Section title="Features" items={features} />
+        <Section title="Middlewares" items={middlewares} />
+        <Section title="Integrations" items={integrations} />
+        <Section title="Providers" items={providers} />
+      </div>
+
+      {/* Desktop: Tabs */}
+      <div className="max-w-sm w-full hidden md:block">
         <div className="flex items-center justify-center h-10 border-b border-gray-4 px-2 gap-2 w-full">
           {tabs.map((tab) => (
             <button

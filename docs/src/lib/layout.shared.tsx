@@ -5,9 +5,7 @@ import Logo from '@/assets/llmops.svg?react';
 export function baseOptions(opts?: { noTitle?: boolean }): BaseLayoutProps {
   return {
     nav: {
-      title: opts?.noTitle ? (
-        <></>
-      ) : (
+      title: opts?.noTitle ? null : (
         <div className="flex gap-4 items-center">
           <div className="bg-gray-12 w-10 h-10 rounded-full flex">
             <Logo className="w-10 h-10 invert dark:invert-0" />
