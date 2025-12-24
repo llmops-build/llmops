@@ -125,7 +125,7 @@ const Hero = () => {
               </span>
             </a>
           </div>
-          <div className="dark">
+          <div className="dark flex gap-3">
             <Link
               to="/docs/$"
               params={{
@@ -136,6 +136,14 @@ const Hero = () => {
             >
               Get Started &rarr;
             </Link>
+            <a
+              href="https://discord.gg/8teSTfmEKU"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-gray-6 hover:border-gray-8 h-8 px-3 text-sm font-medium rounded flex items-center justify-center gap-1 transition-colors text-gray-10"
+            >
+              Join Discord
+            </a>
           </div>
         </div>
       </div>
