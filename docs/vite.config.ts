@@ -5,13 +5,14 @@ import tsConfigPaths from 'vite-tsconfig-paths';
 import svgr from 'vite-plugin-svgr';
 import tailwindcss from '@tailwindcss/vite';
 import mdx from 'fumadocs-mdx/vite';
-import { nitro } from 'nitro/vite';
+import { cloudflare } from '@cloudflare/vite-plugin';
 
 export default defineConfig({
   server: {
     port: 3000,
   },
   plugins: [
+    cloudflare({ viteEnvironment: { name: 'ssr' } }),
     mdx(await import('./source.config')),
     tailwindcss(),
     tsConfigPaths({
@@ -23,9 +24,6 @@ export default defineConfig({
       },
     }),
     react(),
-    // see https://tanstack.com/start/latest/docs/framework/react/guide/hosting for hosting config
-    // we configured nitro by default
-    nitro(),
     svgr(),
   ],
 });

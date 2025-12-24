@@ -7,12 +7,16 @@
     "dev": "vite dev",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
+    "preview": "vite build && vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "cf-typegen": "wrangler types",
     "types:check": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "lint": "biome check",
     "format": "biome format --write"
   },
   "dependencies": {
+    "@cloudflare/vite-plugin": "^1.0.7",
     "@tanstack/react-router": "1.136.18",
     "@tanstack/react-router-devtools": "1.136.18",
     "@tanstack/react-start": "1.136.18",
@@ -35,10 +39,10 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
-    "nitro": "3.0.1-alpha.1",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite-plugin-svgr": "^4.5.0",
-    "vite-tsconfig-paths": "^6.0.0"
+    "vite-tsconfig-paths": "^6.0.0",
+    "wrangler": "^4.21.1"
   }
 }
