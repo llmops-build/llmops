@@ -9,6 +9,7 @@ import { useVariantVersions } from '@client/hooks/queries/useVariantVersions';
 import {
   variantContainer,
   variantHeader,
+  variantHeaderTitle,
   variantPropertyRow,
   variantPropertyLabel,
   variantPropertyValue,
@@ -147,22 +148,11 @@ function TargetingForm({
     }
   };
 
-  const handleClose = () => {
-    navigate({
-      to: '/configs/$id/targeting',
-      params: { id: configId },
-    });
-  };
-
   return (
     <div>
-      <div className={variantHeader}>
-        <Button variant="ghost" scheme="gray" size="sm" onClick={handleClose}>
-          Close
-        </Button>
+      <div className={variantHeader} style={{ justifyContent: 'flex-end' }}>
         <Button
           variant="primary"
-          size="sm"
           onClick={handleSave}
           disabled={
             !selectedVariantId || !selectedVersionId || setTargeting.isPending

@@ -20,10 +20,14 @@ const ConfigsHeader = ({ id }: { id: string }) => {
   const params = useParams({ strict: false });
 
   const isVariantRoute = 'variant' in params;
+  const isTargetingRoute = 'environment' in params;
+  const isSubRoute = isVariantRoute || isTargetingRoute;
 
   const handleClose = () => {
     if (isVariantRoute) {
       navigate({ to: '/configs/$id/variants', params: { id } });
+    } else if (isTargetingRoute) {
+      navigate({ to: '/configs/$id/targeting', params: { id } });
     } else {
       navigate({ to: '/configs' });
     }
@@ -40,13 +44,13 @@ const ConfigsHeader = ({ id }: { id: string }) => {
   return (
     <div className={headerStyles}>
       <Button onClick={handleClose} size="icon" scheme="gray" variant="ghost">
-        <Icon icon={isVariantRoute ? ArrowLeft : X} />
+        <Icon icon={isSubRoute ? ArrowLeft : X} />
       </Button>
       <UpdateOrCreateConfigName
         key={id}
         id={id}
         config={currentData ?? undefined}
-        disabled={isVariantRoute}
+        disabled={isSubRoute}
       />
       {currentData?.slug && (
         <div className={configSlugStyles}>

@@ -21,6 +21,9 @@ export const useConfigVariants = (configId: string) => {
         provider: string | null;
         modelName: string | null;
         jsonData: Record<string, any> | null;
+        latestVersion: {
+          version: number;
+        } | null;
       }[];
     },
     enabled: !!configId,

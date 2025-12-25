@@ -45,6 +45,7 @@ function RouteComponent() {
             <TableHeaderCell>Environment</TableHeaderCell>
             <TableHeaderCell>Slug</TableHeaderCell>
             <TableHeaderCell>Active Variant</TableHeaderCell>
+            <TableHeaderCell>Variant Version</TableHeaderCell>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -81,13 +82,26 @@ function RouteComponent() {
                       <span style={{ opacity: 0.5 }}>Not configured</span>
                     )}
                   </TableCell>
+                  <TableCell>
+                    {rule ? (
+                      rule.pinnedVersion ? (
+                        <span>v{rule.pinnedVersion} (pinned)</span>
+                      ) : rule.latestVersion ? (
+                        <span>v{rule.latestVersion} (latest)</span>
+                      ) : (
+                        <span style={{ opacity: 0.5 }}>-</span>
+                      )
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>-</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })
           ) : (
             <TableRow>
               <TableCell
-                colSpan={3}
+                colSpan={4}
                 style={{ textAlign: 'center', padding: '2rem' }}
               >
                 No environments found. Create an environment to get started.

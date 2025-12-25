@@ -63,6 +63,7 @@ function RouteComponent() {
             <TableHeaderCell>Name</TableHeaderCell>
             <TableHeaderCell>Provider</TableHeaderCell>
             <TableHeaderCell>Model</TableHeaderCell>
+            <TableHeaderCell>Current Version</TableHeaderCell>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,6 +90,11 @@ function RouteComponent() {
                 <TableCell>{variant.name || 'Unnamed Variant'}</TableCell>
                 <TableCell>{variant.provider || 'Unknown'}</TableCell>
                 <TableCell>{variant.modelName || 'Unknown'}</TableCell>
+                <TableCell>
+                  {variant.latestVersion?.version
+                    ? `v${variant.latestVersion.version}`
+                    : '-'}
+                </TableCell>
               </TableRow>
             ))
           ) : (

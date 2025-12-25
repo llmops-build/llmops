@@ -25,6 +25,12 @@ export const variantHeaderActions = style({
   gap: spacing.sm,
 });
 
+export const variantHeaderTitle = style({
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  color: colors.gray11,
+});
+
 export const variantContainer = style({
   minHeight: `calc(100vh - 3 * ${spacing['2xl']})`,
   paddingTop: spacing.sm,
