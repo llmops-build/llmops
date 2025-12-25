@@ -34,11 +34,16 @@ app
         renderer({
           basePath,
           dev: (env.LLMOPS_DEV as unknown) === 'true',
-          llmProviders: Object.keys(providers).map((key) => ({
-            key,
-            name: providers[key as SupportedProviders].getName(),
-            imageURI: providers[key as SupportedProviders].getImageURI(),
-          })),
+          llmProviders: Object.keys(providers)
+            .filter((key) => providers[key as SupportedProviders] !== undefined)
+            .map((key) => {
+              const provider = providers[key as SupportedProviders]!;
+              return {
+                key,
+                name: provider.getName(),
+                imageURI: provider.getImageURI(),
+              };
+            }),
         })
       );
     }

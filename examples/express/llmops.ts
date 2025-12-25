@@ -8,6 +8,9 @@ export default llmops({
     openrouter: {
       apiKey: env.OPENROUTER_API_KEY || '',
     },
+    openai: {
+      apiKey: env.OPENAI_API_KEY || '',
+    },
   },
   database: new Pool({
     connectionString: env.POSTGRES_URL || '',

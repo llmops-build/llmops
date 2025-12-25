@@ -12,12 +12,15 @@ const { app } = createApp({
     openrouter: {
       apiKey: env.OPENROUTER_API_KEY || '',
     },
+    openai: {
+      apiKey: env.OPENAI_API_KEY || '',
+    },
   },
   auth: {
     type: 'basic',
     defaultUser: 'admin@llmops.local',
-    defaultPassword: 'password'
-  }
+    defaultPassword: 'password',
+  },
 });
 
 export default app;

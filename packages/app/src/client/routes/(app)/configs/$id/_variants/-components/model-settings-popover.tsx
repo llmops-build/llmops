@@ -46,11 +46,15 @@ function ChevronIcon({ className }: { className?: string }) {
 }
 
 // Helper to extract provider from model ID (e.g., "anthropic/claude-3" -> "Anthropic")
-function getModelProvider(modelId: string): string {
+function getModelProvider(modelId: string, selectedProvider?: string): string {
   const parts = modelId.split('/');
-  if (parts.length > 1) {
+  if (parts.length > 1 && parts[0].length > 0) {
     // Capitalize first letter
     return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  }
+  // Fall back to selected provider if available
+  if (selectedProvider) {
+    return selectedProvider.charAt(0).toUpperCase() + selectedProvider.slice(1);
   }
   return 'Other';
 }
@@ -58,7 +62,7 @@ function getModelProvider(modelId: string): string {
 // Helper to get provider ID from model ID (e.g., "anthropic/claude-3" -> "anthropic")
 function getProviderIdFromModel(modelId: string): string | null {
   const parts = modelId.split('/');
-  if (parts.length > 1) {
+  if (parts.length > 1 && parts[0].length > 0) {
     return parts[0];
   }
   return null;
@@ -232,15 +236,19 @@ export function ModelSettingsPopover({
     });
   };
 
+  // Get provider icon URL - prefer from model ID, fall back to selected provider
+  const modelProviderId = getProviderIdFromModel(value.modelName);
+  const providerIconUrl = modelProviderId
+    ? getProviderIconUrl(modelProviderId)
+    : value.provider
+      ? getProviderIconUrl(value.provider)
+      : null;
+
   return (
     <Popover>
       <PopoverTrigger className={styles.modelSettingsTrigger}>
-        {value.modelName.split('/')[0].length > 0 ? (
-          <img
-            src={getProviderIconUrl(value.modelName.split('/')[0])}
-            alt=""
-            className={styles.providerIcon}
-          />
+        {providerIconUrl ? (
+          <img src={providerIconUrl} alt="" className={styles.providerIcon} />
         ) : (
           <span className={styles.modelSettingsTriggerIcon}>?</span>
         )}

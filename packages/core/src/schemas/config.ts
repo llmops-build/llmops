@@ -1,14 +1,54 @@
 import { z } from 'zod';
 import { SupportedProviders } from '../providers';
 
+// Base API key schema used by most providers
+const apiKeySchema = z.object({
+  apiKey: z.string().min(1, 'API key is required and cannot be empty'),
+  baseURL: z.string().optional(),
+});
+
+// Provider-specific schemas
 const openRouterProviderSchema = z.object({
   apiKey: z
     .string()
     .min(1, 'OpenRouter API key is required and cannot be empty'),
 });
 
+const openAIProviderSchema = z.object({
+  apiKey: z.string().min(1, 'OpenAI API key is required and cannot be empty'),
+  organization: z.string().optional(),
+  project: z.string().optional(),
+  baseURL: z.string().optional(),
+});
+
+// const anthropicProviderSchema = apiKeySchema;
+// const groqProviderSchema = apiKeySchema;
+// const googleProviderSchema = z.object({
+//   apiKey: z.string().min(1, 'Google API key is required and cannot be empty'),
+// });
+// const mistralProviderSchema = apiKeySchema;
+// const togetherProviderSchema = apiKeySchema;
+// const fireworksProviderSchema = apiKeySchema;
+// const deepseekProviderSchema = apiKeySchema;
+// const cohereProviderSchema = z.object({
+//   apiKey: z.string().min(1, 'Cohere API key is required and cannot be empty'),
+// });
+// const cerebrasProviderSchema = apiKeySchema;
+// const perplexityProviderSchema = apiKeySchema;
+
 const providersSchema = z.object({
   [SupportedProviders.OPENROUTER]: openRouterProviderSchema.optional(),
+  [SupportedProviders.OPENAI]: openAIProviderSchema.optional(),
+  // [SupportedProviders.ANTHROPIC]: anthropicProviderSchema.optional(),
+  // [SupportedProviders.GROQ]: groqProviderSchema.optional(),
+  // [SupportedProviders.GOOGLE]: googleProviderSchema.optional(),
+  // [SupportedProviders.MISTRAL_AI]: mistralProviderSchema.optional(),
+  // [SupportedProviders.TOGETHER_AI]: togetherProviderSchema.optional(),
+  // [SupportedProviders.FIREWORKS_AI]: fireworksProviderSchema.optional(),
+  // [SupportedProviders.DEEPSEEK]: deepseekProviderSchema.optional(),
+  // [SupportedProviders.COHERE]: cohereProviderSchema.optional(),
+  // [SupportedProviders.CEREBRAS]: cerebrasProviderSchema.optional(),
+  // [SupportedProviders.PERPLEXITY_AI]: perplexityProviderSchema.optional(),
 });
 
 const authSchema = z.object({
@@ -33,50 +73,6 @@ export const llmopsConfigSchema = z.object({
     );
     return hasAtLeastOneProvider;
   }, 'At least one provider must be configured'),
-  // experimental: z
-  //   .object({
-  //     joins: z.boolean().default(false).optional(),
-  //   })
-  //   .optional()
-  //   .default({}),
-  // rateLimit: z
-  //   .object({
-  //     enabled: z.boolean().default(false).optional(),
-  //     storage: z.literal('database').optional(),
-  //     modelName: z.string().optional().default('ratelimit'),
-  //     fields: z
-  //       .object({
-  //         key: z.string().optional(),
-  //         count: z.number().optional(),
-  //         lastRequest: z.bigint().optional(),
-  //       })
-  //       .optional(),
-  //   })
-  //   .optional(),
-  // secondaryStorage: z.unknown(), // Placeholder for redis,
-  // advanced: z
-  //   .object({
-  //     database: z
-  //       .object({
-  //         useNumberId: z.boolean().default(false).optional(),
-  //         generateId: z
-  //           // .union([
-  //           //   z.function({
-  //           //     input: z.object({
-  //           //       model: z.string(),
-  //           //     }),
-  //           //     output: z.unknown(),
-  //           //   }),
-  //           //   z.enum(['uuid', 'serial']),
-  //           //   z.literal(false),
-  //           // ])
-  //           .any(), // We can refine this later to be more specific
-  //         defaultFindManyLimit: z.number().min(1).optional().default(100),
-  //       })
-  //       .optional(),
-  //   })
-  //   .optional()
-  //   .default({}),
 });
 
 export type ValidatedLLMOpsConfig = z.infer<typeof llmopsConfigSchema>;
@@ -86,7 +82,7 @@ export function validateLLMOpsConfig(config: unknown): ValidatedLLMOpsConfig {
 
   if (!result.success) {
     const errorMessages = result.error.issues
-      .map((err: z.ZodIssue) => `${err.path.join('.')}: ${err.message}`)
+      .map((err) => `${err.path.join('.')}: ${err.message}`)
       .join('\n');
 
     throw new Error(

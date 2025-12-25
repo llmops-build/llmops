@@ -1,26 +1,33 @@
 import type { MiddlewareHandler } from 'hono';
 import { providers } from '@llmops/core';
 
-export const createLLMProvidersMiddleware = (): MiddlewareHandler => {
-  let initialized = false;
-  let providerInstances: Record<
+type ProviderInstances = Partial<
+  Record<
     keyof typeof providers,
     ReturnType<(typeof providers)[keyof typeof providers]['createProvider']>
-  >;
+  >
+>;
+
+export const createLLMProvidersMiddleware = (): MiddlewareHandler => {
+  let initialized = false;
+  let providerInstances: ProviderInstances;
 
   return async (c, next) => {
     if (!initialized) {
       const config = c.get('llmopsConfig');
       providerInstances = Object.entries(providers).reduce(
         (acc, [key, providerFactory]) => {
-          if (config.providers[key as keyof typeof providers]) {
-            acc[key as keyof typeof providers] = providerFactory.createProvider(
-              config.providers[key as keyof typeof providers]
+          const providerKey = key as keyof typeof providers;
+          const providerConfig = config.providers[providerKey];
+          if (providerConfig) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            acc[providerKey] = providerFactory.createProvider(
+              providerConfig as any
             );
           }
           return acc;
         },
-        {} as Record<keyof typeof providers, any>
+        {} as ProviderInstances
       );
       initialized = true;
     }
