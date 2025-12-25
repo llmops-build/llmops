@@ -71,7 +71,12 @@ export function SaveVariantPopup({
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="primary" size="sm" type="button" disabled={isSaving}>
+        <Button
+          variant="primary"
+          size="default"
+          type="button"
+          disabled={isSaving}
+        >
           <Icon icon={Save} size="xs" />
           {isSaving ? 'Saving...' : 'Save'}
         </Button>

@@ -5,9 +5,11 @@ import { useUpdateConfigName } from '@client/hooks/mutations/useUpdateConfigName
 const UpdateOrCreateConfigName = ({
   id,
   config,
+  disabled,
 }: {
   id: string | 'new';
   config?: { id: string; name: string };
+  disabled?: boolean;
 }) => {
   const { mutateAsync: createConfig } = useCreateConfig();
   const { mutateAsync: updateConfigName } = useUpdateConfigName();
@@ -19,6 +21,7 @@ const UpdateOrCreateConfigName = ({
       placeholder="Config Name"
       onCreate={createConfig}
       onUpdate={updateConfigName}
+      disabled={disabled}
     />
   );
 };

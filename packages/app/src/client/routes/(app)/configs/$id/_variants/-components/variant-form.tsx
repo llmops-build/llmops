@@ -4,12 +4,11 @@ import {
   variantPropertyRow,
   variantPropertyLabel,
   variantPropertyValue,
-  variantInlineInput,
   variantPropertyColumn,
   markdownLabelInfo,
 } from './variants.css';
 import { Icon } from '@client/components/icons';
-import { BrainCircuit, PenLine } from 'lucide-react';
+import { BrainCircuit } from 'lucide-react';
 import MarkdownEditor from './editor';
 import Markdown from '@client/components/icons/markdown';
 import {
@@ -36,11 +35,7 @@ type VariantFormProps = {
 };
 
 const VariantForm = ({ form, editorKey }: VariantFormProps) => {
-  const {
-    formState: { errors },
-    setValue,
-    control,
-  } = form;
+  const { setValue, control } = form;
 
   const selectedProvider = useWatch({
     control: form.control,
@@ -49,10 +44,6 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
   const selectedModel = useWatch({
     control,
     name: 'modelName',
-  });
-  const nameValue = useWatch({
-    control,
-    name: 'variant_name',
   });
   const systemPromptValue = useWatch({
     control,
@@ -136,36 +127,6 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
 
   return (
     <div className={variantFormContainer}>
-      <div className={variantPropertyRow}>
-        <div className={variantPropertyLabel}>
-          <Icon icon={PenLine} size="xs" />
-          <span>Name</span>
-        </div>
-        <div className={variantPropertyValue}>
-          <input
-            title="Variant Name"
-            data-1p-ignore
-            autoComplete="off"
-            value={nameValue || ''}
-            onChange={(e) =>
-              setValue('variant_name', e.target.value, {
-                shouldValidate: true,
-                shouldDirty: true,
-              })
-            }
-            placeholder="Enter variant name"
-            aria-invalid={errors.variant_name ? 'true' : 'false'}
-            className={variantInlineInput}
-            name="variant_name"
-          />
-        </div>
-      </div>
-      {errors.variant_name && (
-        <span style={{ color: 'red', fontSize: '0.875rem' }}>
-          {errors.variant_name.message}
-        </span>
-      )}
-
       <div className={variantPropertyRow}>
         <div className={variantPropertyLabel}>
           <Icon icon={BrainCircuit} size="xs" />

@@ -28,6 +28,14 @@ export const configSlugStyles = style({
   paddingRight: spacing.sm,
 });
 
+export const configSlugLabel = style([
+  sprinkles({
+    fontSize: 'xs',
+    color: 'gray9',
+    fontFamily: 'mono',
+  }),
+]);
+
 export const configSlugText = style({
   fontFamily: 'monospace',
   fontSize: '0.75rem',

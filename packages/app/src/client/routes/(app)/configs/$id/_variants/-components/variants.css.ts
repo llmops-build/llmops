@@ -4,7 +4,7 @@ import { calc } from '@vanilla-extract/css-utils';
 
 export const variantHeader = style({
   display: 'flex',
-  justifyContent: 'flex-end',
+  justifyContent: 'space-between',
   alignItems: 'center',
   gap: spacing.sm,
   width: '100%',
@@ -17,6 +17,12 @@ export const variantHeader = style({
   borderBottom: `1px solid ${colors.gray4}`,
   left: '0',
   backgroundColor: colors.background,
+});
+
+export const variantHeaderActions = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
 });
 
 export const variantContainer = style({

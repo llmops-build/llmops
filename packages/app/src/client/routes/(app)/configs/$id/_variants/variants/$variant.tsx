@@ -1,11 +1,16 @@
-import { Button } from '@llmops/ui';
+import { Combobox } from '@llmops/ui';
 import {
   createFileRoute,
   useBlocker,
   useNavigate,
 } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
-import { variantContainer, variantHeader } from '../-components/variants.css';
+import {
+  variantContainer,
+  variantHeader,
+  variantHeaderActions,
+} from '../-components/variants.css';
+import { configTitleInput } from '../../../-components/configs.css';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
@@ -15,6 +20,11 @@ import {
   variantByIdQueryOptions,
 } from '@client/hooks/queries/useVariantById';
 import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
+import {
+  useVariantVersions,
+  type VariantVersion,
+} from '@client/hooks/queries/useVariantVersions';
+import { useTargetingRules } from '@client/hooks/queries/useTargetingRules';
 import { useEffect, useState } from 'react';
 import {
   SaveVariantPopup,
@@ -50,7 +60,14 @@ function RouteComponent() {
     variant === 'new' ? '' : variant
   );
   const { data: configVariants } = useConfigVariants(configId);
+  const { data: versions } = useVariantVersions(
+    variant === 'new' ? '' : variant
+  );
+  const { data: targetingRules } = useTargetingRules(configId);
   const [editorKey, setEditorKey] = useState<string>('new');
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
+    null
+  );
 
   const isNewVariant = variant === 'new';
 
@@ -74,6 +91,40 @@ function RouteComponent() {
     createVariantVersion.isPending ||
     setTargeting.isPending;
 
+  // Build version options sorted by version number (descending)
+  const versionOptions: VariantVersion[] = versions
+    ? [...versions].sort((a, b) => b.version - a.version)
+    : [];
+
+  // Set initial selected version to the targeted version if available, otherwise latest
+  useEffect(() => {
+    if (versions && versions.length > 0 && !selectedVersionId) {
+      // Find the config variant for this variant
+      const configVariant = configVariants?.find(
+        (cv) => cv.variantId === variant
+      );
+
+      // Check if there's a targeting rule with a pinned version for this variant
+      const targetingRule = targetingRules?.find(
+        (rule) =>
+          configVariant &&
+          rule.configVariantId === configVariant.id &&
+          rule.variantVersionId
+      );
+
+      if (targetingRule?.variantVersionId) {
+        // Use the targeted (pinned) version
+        setSelectedVersionId(targetingRule.variantVersionId);
+      } else {
+        // Fall back to latest version
+        const latestVersion = versions.reduce((latest, current) =>
+          current.version > latest.version ? current : latest
+        );
+        setSelectedVersionId(latestVersion.id);
+      }
+    }
+  }, [versions, selectedVersionId, configVariants, targetingRules, variant]);
+
   useBlocker({
     shouldBlockFn: () => {
       if (isSaving) {
@@ -90,14 +141,24 @@ function RouteComponent() {
   });
 
   useEffect(() => {
-    if (variantData) {
-      const jsonData = variantData.jsonData as Record<string, unknown> | null;
+    if (variantData && selectedVersionId && versions) {
+      // Find the selected version
+      const selectedVersion = versions.find((v) => v.id === selectedVersionId);
+      if (!selectedVersion) return;
+
+      // Parse jsonData - it's stored as a string in VariantVersion
+      const jsonData =
+        typeof selectedVersion.jsonData === 'string'
+          ? (JSON.parse(selectedVersion.jsonData) as Record<string, unknown>)
+          : (selectedVersion.jsonData as Record<string, unknown> | null);
+
       form.reset(
         {
           variant_name: variantData.name || '',
-          provider: variantData.provider || '',
+          provider: selectedVersion.provider || '',
           // Prefer model from jsonData, fallback to modelName column for backwards compatibility
-          modelName: (jsonData?.model as string) || variantData.modelName || '',
+          modelName:
+            (jsonData?.model as string) || selectedVersion.modelName || '',
           system_prompt: (jsonData?.system_prompt as string) || '',
           temperature: jsonData?.temperature as number | undefined,
           maxTokens: jsonData?.max_tokens as number | undefined,
@@ -110,9 +171,9 @@ function RouteComponent() {
         }
       );
       // Update editor key to force remount with new initial value
-      setEditorKey(variantData.id);
+      setEditorKey(`${variantData.id}-${selectedVersionId}`);
     }
-  }, [variantData]);
+  }, [variantData, selectedVersionId, versions]);
 
   const buildJsonData = (data: VariantFormData): Record<string, unknown> => {
     const jsonData: Record<string, unknown> = {
@@ -243,24 +304,47 @@ function RouteComponent() {
   return (
     <div>
       <div className={variantHeader}>
-        <Button
-          variant="ghost"
-          scheme="gray"
-          size="sm"
-          onClick={() => {
-            navigate({
-              to: '/configs/$id/variants',
-              params: { id: configId },
-            });
-          }}
-        >
-          Close
-        </Button>
-        <SaveVariantPopup
-          isNewVariant={isNewVariant}
-          onSave={handleSave}
-          isSaving={isSaving}
+        {/* Variant name input on the left */}
+        <input
+          title="Variant Name"
+          data-1p-ignore
+          autoComplete="off"
+          placeholder="Variant Name"
+          className={configTitleInput}
+          {...form.register('variant_name')}
         />
+        {/* Version selector and save button on the right */}
+        <div className={variantHeaderActions}>
+          {!isNewVariant && versionOptions.length > 0 && (
+            <Combobox<VariantVersion>
+              items={versionOptions}
+              value={
+                versionOptions.find((v) => v.id === selectedVersionId) ?? null
+              }
+              onValueChange={(option) => {
+                if (option && !isDirty) {
+                  setSelectedVersionId(option.id);
+                } else if (option && isDirty) {
+                  const shouldSwitch = confirm(
+                    'You have unsaved changes. Switching versions will discard them. Continue?'
+                  );
+                  if (shouldSwitch) {
+                    setSelectedVersionId(option.id);
+                  }
+                }
+              }}
+              placeholder="Select version..."
+              itemToString={(option) =>
+                option ? `Version ${option.version}` : ''
+              }
+            />
+          )}
+          <SaveVariantPopup
+            isNewVariant={isNewVariant}
+            onSave={handleSave}
+            isSaving={isSaving}
+          />
+        </div>
       </div>
       <div className={variantContainer}>
         <VariantForm form={form} editorKey={editorKey} />
