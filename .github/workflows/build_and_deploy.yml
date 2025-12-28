@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          if [[ "$TAG" =~ -(next|canary|beta|rc) ]]; then
+          if [[ "$TAG" =~ (next|canary|beta|rc) ]]; then
             NPM_TAG=${BASH_REMATCH[1]}
           else
             git fetch origin main
