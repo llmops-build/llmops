@@ -11,6 +11,9 @@ export default llmops({
     openai: {
       apiKey: env.OPENAI_API_KEY || '',
     },
+    anthropic: {
+      apiKey: env.ANTHROPIC_API_KEY || '',
+    },
   },
   database: new Pool({
     connectionString: env.POSTGRES_URL || '',

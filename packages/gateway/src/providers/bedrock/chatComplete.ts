@@ -10,6 +10,7 @@ import {
   ToolCall,
   SYSTEM_MESSAGE_ROLES,
   ContentType,
+  ToolChoiceObject,
 } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
@@ -61,8 +62,10 @@ export interface BedrockChatCompletionsParams extends Params {
   countPenalty?: number;
 }
 
-export interface BedrockConverseAnthropicChatCompletionsParams
-  extends Omit<BedrockChatCompletionsParams, 'anthropic_beta'> {
+export interface BedrockConverseAnthropicChatCompletionsParams extends Omit<
+  BedrockChatCompletionsParams,
+  'anthropic_beta'
+> {
   anthropic_version?: string;
   user?: string;
   thinking?: {
@@ -72,16 +75,14 @@ export interface BedrockConverseAnthropicChatCompletionsParams
   anthropic_beta?: string | string[];
 }
 
-export interface BedrockConverseCohereChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+export interface BedrockConverseCohereChatCompletionsParams extends BedrockChatCompletionsParams {
   frequency_penalty?: number;
   presence_penalty?: number;
   logit_bias?: Record<string, number>;
   n?: number;
 }
 
-export interface BedrockConverseAI21ChatCompletionsParams
-  extends BedrockChatCompletionsParams {
+export interface BedrockConverseAI21ChatCompletionsParams extends BedrockChatCompletionsParams {
   frequency_penalty?: number;
   presence_penalty?: number;
   frequencyPenalty?: number;
@@ -375,7 +376,7 @@ export const BedrockConverseChatCompleteConfig: ProviderConfig = {
         if (typeof params.tool_choice === 'object') {
           toolChoice = {
             tool: {
-              name: params.tool_choice.function.name,
+              name: (params.tool_choice as ToolChoiceObject).function.name,
             },
           };
         } else if (typeof params.tool_choice === 'string') {

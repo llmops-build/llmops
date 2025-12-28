@@ -13,6 +13,7 @@ import { handler as defaultalluppercase } from './default/alluppercase';
 import { handler as defaultalllowercase } from './default/alllowercase';
 import { handler as defaultendsWith } from './default/endsWith';
 import { handler as defaultmodelWhitelist } from './default/modelWhitelist';
+import { handler as defaultnotNull } from './default/notNull';
 import { handler as qualifireDangerousContent } from './qualifire/dangerousContent';
 import { handler as qualifireGrounding } from './qualifire/grounding';
 import { handler as qualifireHarassment } from './qualifire/harassment';
@@ -57,6 +58,8 @@ import { handler as lassoclassify } from './lasso/classify';
 import { handler as exaonline } from './exa/online';
 import { handler as azurePii } from './azure/pii';
 import { handler as azureContentSafety } from './azure/contentSafety';
+import { handler as azureShieldPrompt } from './azure/shieldPrompt';
+import { handler as azureProtectedMaterial } from './azure/protectedMaterial';
 import { handler as promptSecurityProtectPrompt } from './promptsecurity/protectPrompt';
 import { handler as promptSecurityProtectResponse } from './promptsecurity/protectResponse';
 import { handler as panwPrismaAirsintercept } from './panw-prisma-airs/intercept';
@@ -90,6 +93,7 @@ export const plugins = {
     addPrefix: defaultaddPrefix,
     regexReplace: defaultregexReplace,
     allowedRequestTypes: defaultallowedRequestTypes,
+    notNull: defaultnotNull,
   },
   qualifire: {
     dangerousContent: qualifireDangerousContent,
@@ -160,6 +164,8 @@ export const plugins = {
   azure: {
     pii: azurePii,
     contentSafety: azureContentSafety,
+    shieldPrompt: azureShieldPrompt,
+    protectedMaterial: azureProtectedMaterial,
   },
   promptsecurity: {
     protectPrompt: promptSecurityProtectPrompt,
