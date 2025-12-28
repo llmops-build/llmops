@@ -1,4 +1,4 @@
-import { LLMOpsConfig } from '@llmops/core';
+import type { LLMOpsConfig } from '@llmops/core';
 import { loadConfig } from 'c12';
 import { existsSync } from 'node:fs';
 import path from 'node:path';

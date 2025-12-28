@@ -9,7 +9,6 @@ import { useVariantVersions } from '@client/hooks/queries/useVariantVersions';
 import {
   variantContainer,
   variantHeader,
-  variantHeaderTitle,
   variantPropertyRow,
   variantPropertyLabel,
   variantPropertyValue,

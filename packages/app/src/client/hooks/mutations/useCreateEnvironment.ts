@@ -29,8 +29,8 @@ export const useCreateEnvironment = () => {
       await queryClient.invalidateQueries({ queryKey: getQueryKey() });
       if (!data?.id) return;
       navigate({
-        to: '/environments/$id',
-        params: { id: data?.id },
+        to: '/environments/$environment',
+        params: { environment: data?.id },
       });
     },
   });

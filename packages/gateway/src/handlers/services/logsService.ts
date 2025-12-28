@@ -13,7 +13,7 @@ const LogObjectSchema = z.object({
   }),
   transformedRequest: z.object({
     body: z.any(),
-    headers: z.record(z.string()),
+    headers: z.record(z.string(), z.string()),
   }),
   requestParams: z.any(),
   finalUntransformedRequest: z.object({

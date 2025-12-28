@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.15.6",
+    "@types/prompts": "^2.4.9",
     "pg": "^8.16.3"
   }
 }

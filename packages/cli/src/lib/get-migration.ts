@@ -1,6 +1,6 @@
 import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
-import type { Database, DatabaseType, SCHEMA_METADATA } from '@llmops/core/db';
+import type { Database, DatabaseType } from '@llmops/core/db';
 import { logger } from '@llmops/core';
 
 const postgresMap = {
@@ -150,7 +150,10 @@ export async function getMigrations(
     }
 
     // Check for missing fields
-    const missingFields: Partial<typeof tableConfig.fields> = {};
+    const missingFields: Record<
+      string,
+      (typeof tableConfig.fields)[keyof typeof tableConfig.fields]
+    > = {};
     for (const [fieldName, fieldConfig] of Object.entries(tableConfig.fields)) {
       const existingColumn = existingTable.columns.find(
         (c) => c.name === fieldName
