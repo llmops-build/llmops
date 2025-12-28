@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 import { useState } from 'react';
 import styles from './home.module.css';
 
-const tabs = ['Features', 'Middlewares', 'Integrations', 'Providers'] as const;
+const tabs = ['Features', 'Middlewares', 'Integrations'] as const;
 
 type CardItem = {
   name: string;
@@ -12,9 +12,13 @@ type CardItem = {
 
 const features: CardItem[] = [
   {
-    name: 'Prompt Management',
+    name: 'AI Gateway',
     description:
-      'Version, test, and deploy prompts with a visual editor and OpenAI-compatible API.',
+      'OpenAI-compatible gateway to connect to 1600+ LLMs from 70+ providers with unified API.',
+  },
+  {
+    name: 'Prompt Management',
+    description: 'Version, test, and deploy prompts with a visual editor.',
   },
   {
     name: 'Cost Tracking',
@@ -68,63 +72,6 @@ const integrations: CardItem[] = [
   },
 ];
 
-const providers: CardItem[] = [
-  {
-    name: 'OpenRouter',
-    description: 'Access 100+ models through a single API endpoint.',
-  },
-  {
-    name: 'OpenAI',
-    description: 'GPT-4, GPT-3.5, and other OpenAI models.',
-    comingSoon: true,
-  },
-  {
-    name: 'Anthropic',
-    description: 'Claude models for safe and helpful AI assistants.',
-    comingSoon: true,
-  },
-  {
-    name: 'Azure OpenAI',
-    description: 'Enterprise-grade OpenAI models on Azure infrastructure.',
-    comingSoon: true,
-  },
-  {
-    name: 'Google Vertex AI',
-    description: 'Gemini and PaLM models on Google Cloud.',
-    comingSoon: true,
-  },
-  {
-    name: 'AWS Bedrock',
-    description: 'Foundation models from AWS including Claude and Titan.',
-    comingSoon: true,
-  },
-  {
-    name: 'Groq',
-    description: 'Ultra-fast inference with LPU technology.',
-    comingSoon: true,
-  },
-  {
-    name: 'Mistral AI',
-    description: 'Open and efficient language models from Mistral.',
-    comingSoon: true,
-  },
-  {
-    name: 'Cohere',
-    description: 'Enterprise AI models for text generation and embeddings.',
-    comingSoon: true,
-  },
-  {
-    name: 'Together AI',
-    description: 'Open-source models with fast inference.',
-    comingSoon: true,
-  },
-  {
-    name: 'DeepSeek',
-    description: 'Advanced reasoning and coding models.',
-    comingSoon: true,
-  },
-];
-
 const FeatureCard = ({ item }: { item: CardItem }) => (
   <div
     className={clsx(
@@ -168,8 +115,6 @@ const Features = () => {
         return middlewares;
       case 'Integrations':
         return integrations;
-      case 'Providers':
-        return providers;
       default:
         return [];
     }
@@ -187,7 +132,6 @@ const Features = () => {
         <Section title="Features" items={features} />
         <Section title="Middlewares" items={middlewares} />
         <Section title="Integrations" items={integrations} />
-        <Section title="Providers" items={providers} />
       </div>
 
       {/* Desktop: Tabs */}
