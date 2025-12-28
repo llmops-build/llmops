@@ -1,4 +1,4 @@
-import { SupportedProviders } from '@/providers';
+import { SupportedProviders, type ProvidersConfig } from '@/providers';
 import { z } from 'zod';
 
 /**
@@ -6,11 +6,14 @@ import { z } from 'zod';
  *
  * This is a flexible schema that allows any provider configuration.
  * The actual provider validation happens at the gateway level.
+ * Uses passthrough() to allow provider-specific options.
  */
 const providerConfigSchema = z
   .object({
     apiKey: z.string().min(1, 'API key is required'),
     customHost: z.string().optional(),
+    requestTimeout: z.number().optional(),
+    forwardHeaders: z.array(z.string()).optional(),
   })
   .passthrough(); // Allow additional provider-specific options
 
@@ -57,7 +60,16 @@ export const llmopsConfigSchema = z.object({
   providers: providersSchema,
 });
 
-export type ValidatedLLMOpsConfig = z.infer<typeof llmopsConfigSchema>;
+/**
+ * Validated LLMOps configuration with typed providers
+ * Uses ProvidersConfig for proper provider-specific typing
+ */
+export type ValidatedLLMOpsConfig = Omit<
+  z.infer<typeof llmopsConfigSchema>,
+  'providers'
+> & {
+  providers: ProvidersConfig;
+};
 
 export function validateLLMOpsConfig(config: unknown): ValidatedLLMOpsConfig {
   const result = llmopsConfigSchema.safeParse(config);
