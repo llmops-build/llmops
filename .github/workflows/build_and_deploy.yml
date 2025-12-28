@@ -1,0 +1,68 @@
+name: Build and Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Generate changelog
+        run: npx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine npm tag
+        id: determine_npm_tag
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" =~ -(next|canary|beta|rc) ]]; then
+            NPM_TAG=${BASH_REMATCH[1]}
+          else
+            git fetch origin main
+            CURRENT_BRANCH=$(git branch -r --contains "$GITHUB_SHA" | grep -E 'origin/(main|v[0-9]+\.[0-9]+\.x-latest)' | head -1 | sed 's/.*origin\///')
+
+            if [[ "$CURRENT_BRANCH" == "main" ]]; then
+              NPM_TAG="latest"
+            elif [[ "$CURRENT_BRANCH" =~ ^v[0-9]+\.[0-9]+\.x-latest$ ]]; then
+              NPM_TAG="latest"
+            else
+              echo "The tagged commit is not on the main branch or a version branch."
+              echo "::error ::Releases with the 'latest' npm tag must be on the main branch or a version branch."
+              exit 1
+            fi
+          fi
+          echo "npm_tag=$NPM_TAG" >> $GITHUB_OUTPUT
+          echo "Using npm tag: $NPM_TAG"
+
+      - name: Publish to npm
+        run: pnpm -r publish --access public --no-git-checks --tag ${{ steps.determine_npm_tag.outputs.npm_tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
