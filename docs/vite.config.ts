@@ -11,7 +11,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
   server: {
-    port: 3000,
+    port: 3002,
   },
   plugins: [
     isProduction && cloudflare({ viteEnvironment: { name: 'ssr' } }),

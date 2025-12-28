@@ -11,7 +11,6 @@ export const zv = <T extends ZodType, Target extends keyof ValidationTargets>(
       /**
        * @todo handle error properly
        */
-      console.log(result);
       return c.json(
         {
           message: 'Bad Request',
