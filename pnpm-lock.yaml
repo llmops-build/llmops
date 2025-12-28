@@ -346,15 +346,15 @@ importers:
       '@better-auth/utils':
         specifier: ^0.3.0
         version: 0.3.0
-      '@openrouter/sdk':
-        specifier: ^0.2.9
-        version: 0.2.9
+      '@llmops/gateway':
+        specifier: workspace:*
+        version: link:../gateway
+      hono:
+        specifier: ^4.10.7
+        version: 4.10.7
       kysely:
         specifier: ^0.28.8
         version: 0.28.8
-      openai:
-        specifier: ^6.10.0
-        version: 6.10.0(ws@8.18.3)(zod@4.1.13)
       pino:
         specifier: ^10.1.0
         version: 10.1.0
@@ -2553,9 +2553,6 @@ packages:
   '@oozcitak/util@10.0.0':
     resolution: {integrity: sha512-hAX0pT/73190NLqBPPWSdBVGtbY6VOhWYK3qqHqtXQ1gK7kS2yz4+ivsN07hpJ6I3aeMtKP6J6npsEKOAzuTLA==}
     engines: {node: '>=20.0'}
-
-  '@openrouter/sdk@0.2.9':
-    resolution: {integrity: sha512-O3tu6PwoKzwYXCCT+azFneb0F1T6YcZUqlNVEFABWLOcBzdvsCfgW+GM3QKeBL9V0E1ZBjVy9yssavNjhphO6Q==}
 
   '@orama/orama@3.1.18':
     resolution: {integrity: sha512-a61ljmRVVyG5MC/698C8/FfFDw5a8LOIvyOLW5fztgUXqUpc1jOfQzOitSCbge657OgXXThmY3Tk8fpiDb4UcA==}
@@ -10881,10 +10878,6 @@ snapshots:
 
   '@oozcitak/util@10.0.0': {}
 
-  '@openrouter/sdk@0.2.9':
-    dependencies:
-      zod: 4.1.13
-
   '@orama/orama@3.1.18': {}
 
   '@oxc-project/runtime@0.99.0': {}
@@ -16965,11 +16958,6 @@ snapshots:
       zod: 3.25.76
     transitivePeerDependencies:
       - encoding
-
-  openai@6.10.0(ws@8.18.3)(zod@4.1.13):
-    optionalDependencies:
-      ws: 8.18.3
-      zod: 4.1.13
 
   openai@6.10.0(ws@8.18.3)(zod@4.2.1):
     optionalDependencies:

@@ -1,15 +1,16 @@
-import { providers, type ValidatedLLMOpsConfig } from '@llmops/core';
+import { type ValidatedLLMOpsConfig } from '@llmops/core';
 import { createDataLayer } from '@llmops/core';
+
+export interface LLMProvider {
+  key: string;
+  name: string;
+  imageURI: string;
+}
 
 declare module 'hono' {
   interface ContextVariableMap {
     llmopsConfig: ValidatedLLMOpsConfig;
-    providers: Partial<
-      Record<
-        keyof typeof providers,
-        ReturnType<(typeof providers)[keyof typeof providers]['createProvider']>
-      >
-    >;
+    llmProviders: LLMProvider[];
     db: Awaited<ReturnType<typeof createDataLayer>>;
   }
 }

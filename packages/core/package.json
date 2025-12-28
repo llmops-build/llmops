@@ -33,9 +33,9 @@
   },
   "dependencies": {
     "@better-auth/utils": "^0.3.0",
-    "@openrouter/sdk": "^0.2.9",
+    "@llmops/gateway": "workspace:*",
+    "hono": "^4.10.7",
     "kysely": "^0.28.8",
-    "openai": "^6.10.0",
     "pino": "^10.1.0",
     "zod": "^4.1.13"
   }
