@@ -20,15 +20,10 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
-    },
-    "./express": {
-      "import": "./dist/express.mjs",
-      "types": "./dist/express.d.mts"
-    },
-    "./package.json": "./package.json"
+    ".": "./dist/index.mjs",
+    "./express": "./dist/express.mjs",
+    "./hono": "./dist/hono.mjs",
+    "./*": "./*"
   },
   "scripts": {
     "build": "tsdown",
@@ -42,6 +37,7 @@
     "@llmops/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "hono": "^4.7.0"
   }
 }

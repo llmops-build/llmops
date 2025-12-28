@@ -1,0 +1,26 @@
+{
+  "name": "@llmops/hono-example",
+  "version": "1.0.0",
+  "description": "Minimal Hono application using @llmops/sdk",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx server.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.2",
+    "@hono/swagger-ui": "^0.5.3",
+    "@llmops/sdk": "workspace:*",
+    "dotenv": "^17.2.3",
+    "hono": "^4.7.0",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/pg": "^8.15.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

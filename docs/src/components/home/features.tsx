@@ -44,7 +44,6 @@ const middlewares: CardItem[] = [
     name: 'Hono',
     description:
       'Lightweight middleware for Hono framework with full TypeScript support.',
-    comingSoon: true,
   },
   {
     name: 'Next.js',

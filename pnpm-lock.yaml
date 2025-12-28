@@ -177,6 +177,40 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  examples/hono:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^1.14.2
+        version: 1.19.6(hono@4.10.7)
+      '@hono/swagger-ui':
+        specifier: ^0.5.3
+        version: 0.5.3(hono@4.10.7)
+      '@llmops/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      hono:
+        specifier: ^4.7.0
+        version: 4.10.7
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.19.1
+      '@types/pg':
+        specifier: ^8.15.6
+        version: 8.15.6
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/app:
     dependencies:
       '@base-ui/react':
@@ -459,6 +493,9 @@ importers:
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
+      hono:
+        specifier: ^4.7.0
+        version: 4.10.7
 
   packages/ui:
     dependencies:
@@ -2165,6 +2202,11 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hono/swagger-ui@0.5.3':
+    resolution: {integrity: sha512-Hn90DOOJ62ICJQplQvCDVpi9Jcn6EhtRaiffyJIS53wA5RmRLtMCDQGVc0bor8vQD7JIwpkweWjs+3cycp+IvA==}
+    peerDependencies:
+      hono: '>=4.0.0'
 
   '@hono/vite-build@1.8.0':
     resolution: {integrity: sha512-T/w0Tuv8VV6FgjNnw2aW6LXtRfc5tOhaO54tKCRv4Zqc1tP3w6JyqTFtzJFFDvmY0xTxHS+Pj+ZPLhzFsdiFzQ==}
@@ -10317,6 +10359,10 @@ snapshots:
       - zod
 
   '@hono/node-server@1.19.6(hono@4.10.7)':
+    dependencies:
+      hono: 4.10.7
+
+  '@hono/swagger-ui@0.5.3(hono@4.10.7)':
     dependencies:
       hono: 4.10.7
 
