@@ -1,5 +1,6 @@
 import { colors, spacing, sprinkles } from '@llmops/ui';
 import { style } from '@vanilla-extract/css';
+import { calc } from '@vanilla-extract/css-utils';
 import { recipe } from '@vanilla-extract/recipes';
 
 export const overviewContainer = style({
@@ -11,6 +12,20 @@ export const sectionContainer = style({
   flexDirection: 'column',
   gap: spacing.md,
   width: '100%',
+});
+
+export const recentSectionContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.md,
+  width: '100%',
+  marginTop: spacing.lg,
+});
+
+export const recentSectionTableContainer = style({
+  marginLeft: calc.negate(spacing.md),
+  marginRight: calc.negate(spacing.md),
+  width: calc.add('100%', calc.multiply(2, spacing.md)),
 });
 
 export const gettingStartedCards = style([

@@ -1,11 +1,25 @@
-import { createFileRoute, useMatches } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  useMatches,
+  useNavigate,
+} from '@tanstack/react-router';
 import {
   breadcrumbLink,
   chevronStyle,
   headerGroup,
   headerStyle,
 } from './-components/_layout.css';
-import { Breadcrumbs, Button, Header } from '@llmops/ui';
+import {
+  Breadcrumbs,
+  Button,
+  Header,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHeaderCell,
+  TableCell,
+} from '@llmops/ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { Blocks, ChevronRight, Columns2, SlidersVertical } from 'lucide-react';
 import { Icon } from '@client/components/icons';
@@ -17,9 +31,13 @@ import {
   gettingStartedCard,
   gettingStartedCards,
   overviewContainer,
+  recentSectionContainer,
+  recentSectionTableContainer,
   sectionContainer,
   sectionTitle,
 } from './-components/overview.css';
+import { useConfigList } from '@client/hooks/queries/useConfigList';
+import { formatDistance } from 'date-fns';
 
 export const Route = createFileRoute('/(app)/')({
   component: RouteComponent,
@@ -34,6 +52,16 @@ export const Route = createFileRoute('/(app)/')({
 function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
+  const navigate = useNavigate();
+  const { data: configs } = useConfigList();
+
+  const recentConfigs = configs
+    ?.slice()
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )
+    .slice(0, 3);
 
   const breadcrumbItems = matches
     .filter(
@@ -94,6 +122,46 @@ function RouteComponent() {
               </Link>
             </div>
           </div>
+          {recentConfigs && recentConfigs.length > 0 && (
+            <div className={recentSectionContainer}>
+              <h2 className={sectionTitle}>Recent</h2>
+              <div className={recentSectionTableContainer}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHeaderCell>Name</TableHeaderCell>
+                      <TableHeaderCell>Updated</TableHeaderCell>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentConfigs.map((config) => (
+                      <TableRow
+                        key={config.id}
+                        interactive
+                        onClick={() =>
+                          navigate({
+                            to: '/configs/$id',
+                            params: { id: config.id },
+                          })
+                        }
+                      >
+                        <TableCell>{config.name}</TableCell>
+                        <TableCell>
+                          {formatDistance(
+                            new Date(config.updatedAt),
+                            new Date(),
+                            {
+                              addSuffix: true,
+                            }
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
