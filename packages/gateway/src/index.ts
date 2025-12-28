@@ -292,3 +292,5 @@ app.delete('/v1/*', requestValidator, proxyHandler);
 
 // Export the app
 export default app;
+
+export { default as Providers } from './providers';

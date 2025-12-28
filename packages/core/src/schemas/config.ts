@@ -1,3 +1,4 @@
+import { SupportedProviders } from '@/providers';
 import { z } from 'zod';
 
 /**
@@ -14,14 +15,28 @@ const providerConfigSchema = z
   .passthrough(); // Allow additional provider-specific options
 
 /**
- * Providers configuration - maps provider names to their configs
+ * Build a partial object schema from SupportedProviders enum
+ * Each provider key is optional, allowing users to configure only the providers they need
  */
-const providersSchema = z
-  .record(z.string(), providerConfigSchema)
-  .refine(
-    (providers) => Object.keys(providers).length > 0,
-    'At least one provider must be configured'
-  );
+const providerEntries = Object.values(SupportedProviders).map(
+  (provider) => [provider, providerConfigSchema.optional()] as const
+);
+
+const providersObjectSchema = z.object(
+  Object.fromEntries(providerEntries) as {
+    [K in SupportedProviders]: z.ZodOptional<typeof providerConfigSchema>;
+  }
+);
+
+/**
+ * Providers configuration - maps supported provider names to their configs
+ * All providers are optional, but at least one must be configured
+ */
+const providersSchema = providersObjectSchema.refine(
+  (providers) =>
+    Object.values(providers).some((v) => v !== undefined && v !== null),
+  'At least one provider must be configured'
+);
 
 const authSchema = z.object({
   type: z.literal('basic'),
