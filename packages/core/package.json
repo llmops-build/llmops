@@ -1,6 +1,6 @@
 {
   "name": "@llmops/core",
-  "version": "0.1.0-beta.12",
+  "version": "0.1.0-beta.13",
   "description": "Core LLMOps functionality and utilities",
   "type": "module",
   "license": "Apache-2.0",
