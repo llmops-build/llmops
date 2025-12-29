@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { llmops } from '@llmops/sdk';
 import { env } from 'node:process';
 import { Pool } from 'pg';
