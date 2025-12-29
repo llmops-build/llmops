@@ -10,6 +10,7 @@ import type { Database } from './schema';
 
 export * from './schema';
 export * from './validation';
+export * from './migrations';
 
 /**
  * Supported database types

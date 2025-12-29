@@ -9,6 +9,7 @@ import {
 import { createDatabaseFromConnection } from '@llmops/core/db';
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 import { createSeedMiddleware } from '@server/middlewares/seed';
+import { createMigrationMiddleware } from '@server/middlewares/migration';
 import type { LLMProvider } from '@server/types';
 
 const MODELS_DEV_LOGOS = 'https://models.dev/logos';
@@ -75,6 +76,8 @@ export const createApp = (config: LLMOpsConfig) => {
   const app = new Hono()
     .use('*', createEnvValidatorMiddleware())
     .use('*', setConfigMiddleware(validatedConfig))
+    // Migration runs BEFORE database/seed to ensure tables exist
+    .use('*', createMigrationMiddleware(validatedConfig))
     .use('*', createDatabaseMiddleware(validatedConfig))
     .use('*', createSeedMiddleware())
     .use('*', createLLMProvidersMiddleware(validatedConfig))

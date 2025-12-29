@@ -3,13 +3,13 @@ import { logger } from '@llmops/core';
 import {
   createDatabaseFromConnection,
   detectDatabaseType,
+  getMigrations,
 } from '@llmops/core/db';
 import { existsSync } from 'node:fs';
 import yoctoSpinner from 'yocto-spinner';
 import chalk from 'chalk';
 import prompts from 'prompts';
 import { getConfig } from '../lib/get-config';
-import { getMigrations } from '../lib/get-migration';
 
 /**
  * @fileoverview This file defines the 'migrate' command for the CLI application.

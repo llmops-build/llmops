@@ -24,4 +24,6 @@ export default llmops({
     defaultUser: 'admin@llmops.local',
     defaultPassword: 'password',
   },
+  // Auto-run migrations in development
+  autoMigrate: 'development',
 });

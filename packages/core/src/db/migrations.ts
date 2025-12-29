@@ -1,7 +1,10 @@
 import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
-import type { Database, DatabaseType } from '@llmops/core/db';
-import { logger } from '@llmops/core';
+import type { Database } from './schema';
+import { SCHEMA_METADATA } from './schema';
+import { logger } from '../utils/logger';
+
+export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
 
 const postgresMap = {
   uuid: ['character varying', 'varchar', 'text', 'uuid'],
@@ -80,10 +83,27 @@ async function getPostgresSchema(db: Kysely<Database>): Promise<string> {
   return 'public';
 }
 
+export interface MigrationResult {
+  toBeCreated: Array<{
+    table: string;
+    fields: Record<string, any>;
+    order: number;
+  }>;
+  toBeAdded: Array<{
+    table: string;
+    fields: Record<string, any>;
+    order: number;
+  }>;
+  runMigrations: () => Promise<void>;
+  compileMigrations: () => Promise<string>;
+  migrations: any[];
+  needsMigration: boolean;
+}
+
 export async function getMigrations(
   db: Kysely<Database>,
   dbType: DatabaseType
-) {
+): Promise<MigrationResult> {
   // For PostgreSQL, detect and log the current schema being used
   let currentSchema = 'public';
   if (dbType === 'postgres') {
@@ -123,8 +143,7 @@ export async function getMigrations(
     }
   }
 
-  const metadata = (await import('@llmops/core/db')).SCHEMA_METADATA;
-  const schema = metadata.tables;
+  const schema = SCHEMA_METADATA.tables;
 
   const toBeCreated: Array<{
     table: string;
@@ -353,5 +372,59 @@ export async function getMigrations(
     runMigrations,
     compileMigrations,
     migrations,
+    needsMigration: toBeCreated.length > 0 || toBeAdded.length > 0,
   };
+}
+
+/**
+ * Run migrations if needed based on autoMigrate config
+ * @param db - Kysely database instance
+ * @param dbType - Database type
+ * @param autoMigrate - Auto-migrate configuration
+ * @returns true if migrations were run, false otherwise
+ */
+export async function runAutoMigrations(
+  db: Kysely<Database>,
+  dbType: DatabaseType,
+  autoMigrate: boolean | 'development'
+): Promise<{ ran: boolean; tables: string[]; fields: string[] }> {
+  // Determine if we should run migrations
+  const shouldMigrate =
+    autoMigrate === true ||
+    (autoMigrate === 'development' && process.env.NODE_ENV === 'development');
+
+  if (!shouldMigrate) {
+    return { ran: false, tables: [], fields: [] };
+  }
+
+  const { toBeCreated, toBeAdded, runMigrations, needsMigration } =
+    await getMigrations(db, dbType);
+
+  if (!needsMigration) {
+    logger.debug('Auto-migration: No migrations needed');
+    return { ran: false, tables: [], fields: [] };
+  }
+
+  const tables = toBeCreated.map((t) => t.table);
+  const fields = toBeAdded.flatMap((t) =>
+    Object.keys(t.fields).map((f) => `${t.table}.${f}`)
+  );
+
+  logger.info(
+    `Auto-migration: Running migrations for ${tables.length} table(s) and ${fields.length} field(s)`
+  );
+
+  if (tables.length > 0) {
+    logger.debug(`Auto-migration: Creating tables: ${tables.join(', ')}`);
+  }
+
+  if (fields.length > 0) {
+    logger.debug(`Auto-migration: Adding fields: ${fields.join(', ')}`);
+  }
+
+  await runMigrations();
+
+  logger.info('Auto-migration: Completed successfully');
+
+  return { ran: true, tables, fields };
 }

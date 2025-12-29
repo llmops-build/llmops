@@ -47,6 +47,14 @@ const authSchema = z.object({
   defaultPassword: z.string(),
 });
 
+/**
+ * Auto-migration configuration options:
+ * - true: Always run migrations on startup
+ * - false: Never run migrations on startup (default)
+ * - 'development': Only run migrations when NODE_ENV is 'development'
+ */
+export type AutoMigrateConfig = boolean | 'development';
+
 export const llmopsConfigSchema = z.object({
   database: z.any(),
   auth: authSchema,
@@ -58,17 +66,24 @@ export const llmopsConfigSchema = z.object({
       'Base path must start with a forward slash'
     ),
   providers: providersSchema,
+  autoMigrate: z
+    .union([z.boolean(), z.literal('development')])
+    .optional()
+    .default(false),
 });
 
 /**
  * Validated LLMOps configuration with typed providers
  * Uses ProvidersConfig for proper provider-specific typing
+ *
+ * Note: autoMigrate is optional in input but always present after validation
  */
 export type ValidatedLLMOpsConfig = Omit<
   z.infer<typeof llmopsConfigSchema>,
-  'providers'
+  'providers' | 'autoMigrate'
 > & {
   providers: ProvidersConfig;
+  autoMigrate?: AutoMigrateConfig;
 };
 
 export function validateLLMOpsConfig(config: unknown): ValidatedLLMOpsConfig {
