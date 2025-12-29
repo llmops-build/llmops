@@ -1,7 +1,19 @@
 {
-  "name": "one",
+  "name": "@llmops/vercel-example",
+  "description": "Vercel AI SDK integration example for LLMOps",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "packages/gateway/cookbook/integrations/vercel"
+  },
+  "author": "chtushar",
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",

@@ -3,11 +3,17 @@
   "version": "0.1.0-beta.1",
   "description": "AI gateway for LLMOps (forked from Portkey)",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sst/llmops.git"
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "packages/gateway"
   },
+  "author": "chtushar",
   "keywords": [
     "AI gateway",
     "LLMOps",

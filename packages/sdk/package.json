@@ -1,18 +1,19 @@
 {
   "name": "@llmops/sdk",
   "version": "0.1.0-beta.1",
-  "description": "An LLMOps toolkit for TypeScript applications.",
+  "description": "An LLMOps toolkit for TypeScript applications",
   "type": "module",
-  "license": "MIT",
-  "homepage": "https://github.com/author/library#readme",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
   "bugs": {
-    "url": "https://github.com/author/library/issues"
+    "url": "https://github.com/llmops-build/llmops/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/author/library.git"
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "packages/sdk"
   },
-  "author": "Author Name <author.name@mail.com>",
+  "author": "chtushar",
   "files": [
     "dist"
   ],

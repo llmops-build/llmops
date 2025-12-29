@@ -2,7 +2,19 @@
   "name": "@llmops/express-example",
   "version": "1.0.0",
   "description": "Minimal Express application using @llmops/sdk",
+  "private": true,
   "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "examples/express"
+  },
+  "author": "chtushar",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",

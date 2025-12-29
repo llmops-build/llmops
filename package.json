@@ -1,9 +1,17 @@
 {
   "name": "llmops-monorepo",
   "version": "1.0.0",
-  "description": "",
+  "description": "A pluggable LLMOps toolkit for TypeScript teams",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git"
+  },
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
   "scripts": {
     "build": "pnpm -r --workspace-concurrency=1 run build",
     "build:all": "pnpm -r run build",
@@ -18,9 +26,15 @@
     "clean": "pnpm -r run clean",
     "release": "bumpp"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "llmops",
+    "ai",
+    "llm",
+    "typescript",
+    "openai"
+  ],
+  "author": "chtushar",
+  "license": "Apache-2.0",
   "packageManager": "pnpm@10.24.0",
   "devDependencies": {
     "@eslint/js": "^9.39.1",

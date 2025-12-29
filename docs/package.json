@@ -1,8 +1,20 @@
 {
-  "name": "docs",
+  "name": "@llmops/docs",
+  "description": "LLMOps documentation site",
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "docs"
+  },
+  "author": "chtushar",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",

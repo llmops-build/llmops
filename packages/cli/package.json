@@ -1,8 +1,19 @@
 {
-  "name": "cli",
+  "name": "@llmops/cli",
   "version": "0.1.0-beta.1",
   "type": "module",
   "description": "LLMOps CLI - A pluggable LLMOps toolkit for TypeScript teams",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "packages/cli"
+  },
+  "author": "chtushar",
   "files": [
     "dist"
   ],
@@ -20,10 +31,13 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.24.0",
+  "keywords": [
+    "llmops",
+    "cli",
+    "ai",
+    "llm",
+    "typescript"
+  ],
   "dependencies": {
     "@drizzle-team/brocli": "^0.11.0",
     "@llmops/core": "workspace:*",
