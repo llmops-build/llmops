@@ -4,7 +4,7 @@ import { Form } from '@base-ui/react/form';
 import { AlertDialog } from '@base-ui/react/alert-dialog';
 import { useDeleteEnvironment } from '@client/hooks/mutations/useDeleteEnvironment';
 import { useEnvironmentById } from '@client/hooks/queries/useEnvironmentById';
-import { Tooltip } from '@llmops/ui';
+import { Tooltip } from '@ui';
 import * as styles from './-components/settings.css';
 
 export const Route = createFileRoute(

@@ -6,7 +6,7 @@ import {
   SidebarHeader,
   SidebarItem,
   Tooltip,
-} from '@llmops/ui';
+} from '@ui';
 import { Icon } from '@client/components/icons';
 import { Blocks, Globe, SlidersVertical, Telescope } from 'lucide-react';
 import Logo from '@client/components/icons/llmops.svg?react';

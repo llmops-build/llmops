@@ -8,7 +8,9 @@
     "paths": {
       "@client/*": ["src/client/*"],
       "@server/*": ["src/server/*"],
-      "@shared/*": ["src/shared/*"]
+      "@shared/*": ["src/shared/*"],
+      "@ui": ["src/client/components/ui"],
+      "@ui/*": ["src/client/components/ui/*"]
     }
   },
   "include": ["src", "src/server/types.ts"]

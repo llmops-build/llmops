@@ -18,7 +18,7 @@ import { Icon } from '@client/components/icons';
 import { ChevronRight, Columns2, Plus, SlidersVertical } from 'lucide-react';
 import { ConfigsDataTable } from './configs/-components/configs-data-table';
 import { useEffect } from 'react';
-import { Breadcrumbs, Button, Header } from '@llmops/ui';
+import { Breadcrumbs, Button, Header } from '@ui';
 import {
   breadcrumbLink,
   chevronStyle,

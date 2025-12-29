@@ -7,7 +7,7 @@ import {
   TableHeaderCell,
   TableCell,
   Button,
-} from '@llmops/ui';
+} from '@ui';
 import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
 import { Icon } from '@client/components/icons';
 import { Plus } from 'lucide-react';

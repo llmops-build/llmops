@@ -1,4 +1,4 @@
-import { colors, spacing } from '@llmops/ui';
+import { colors, spacing } from '@ui';
 import { style } from '@vanilla-extract/css';
 
 export const settingsContainer = style({

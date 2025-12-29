@@ -19,7 +19,7 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-} from '@llmops/ui';
+} from '@ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 import { useQueryClient } from '@tanstack/react-query';

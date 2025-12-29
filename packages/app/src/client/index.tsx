@@ -1,6 +1,6 @@
-import '@llmops/ui/global.css';
+import '@ui/global.css';
 import './styles/styles.css';
-import '@llmops/ui/theme.css';
+import '@ui/theme.css';
 
 import { routeTree } from '@client/routeTree.gen';
 import { createRouter, RouterProvider } from '@tanstack/react-router';

@@ -19,7 +19,7 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-} from '@llmops/ui';
+} from '@ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { Blocks, ChevronRight, Columns2, SlidersVertical } from 'lucide-react';
 import { Icon } from '@client/components/icons';

@@ -1,4 +1,4 @@
-import { spacing } from '@llmops/ui';
+import { spacing } from '@ui';
 import { style } from '@vanilla-extract/css';
 
 export const twinSplitContainer = style({

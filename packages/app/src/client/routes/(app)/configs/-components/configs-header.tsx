@@ -1,5 +1,5 @@
 import { Icon } from '@client/components/icons';
-import { Button } from '@llmops/ui';
+import { Button } from '@ui';
 import { X, Copy, Check, ArrowLeft } from 'lucide-react';
 import {
   headerStyles,

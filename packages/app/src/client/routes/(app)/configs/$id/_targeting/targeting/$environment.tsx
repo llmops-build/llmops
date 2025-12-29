@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Button, Combobox } from '@llmops/ui';
+import { Button, Combobox } from '@ui';
 import { useState, useEffect } from 'react';
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';

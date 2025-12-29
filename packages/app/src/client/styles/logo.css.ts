@@ -1,4 +1,4 @@
-import { colors } from '@llmops/ui';
+import { colors } from '@ui';
 import { recipe } from '@vanilla-extract/recipes';
 
 export const logoWithDarkmode = recipe({

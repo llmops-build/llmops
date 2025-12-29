@@ -12,7 +12,7 @@ import {
   headerGroup,
   headerStyle,
 } from './-components/_layout.css';
-import { Breadcrumbs, Button, Header } from '@llmops/ui';
+import { Breadcrumbs, Button, Header } from '@ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { ChevronRight, Columns2, Globe, Plus } from 'lucide-react';
 import { Icon } from '@client/components/icons';

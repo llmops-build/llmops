@@ -4,7 +4,7 @@ import {
   configTitleInput,
   updateNameStatus,
 } from '../configs/-components/configs.css';
-import { Tooltip } from '@llmops/ui';
+import { Tooltip } from '@ui';
 
 type UpdateOrCreateNameProps = {
   id: string | 'new';

@@ -14,6 +14,7 @@ const alias = {
   '@server': path.resolve(__dirname, './src/server'),
   '@client': path.resolve(__dirname, './src/client'),
   '@shared': path.resolve(__dirname, './src/shared'),
+  '@ui': path.resolve(__dirname, './src/client/components/ui'),
 };
 
 const commonPlugins = [
@@ -42,7 +43,6 @@ export default defineConfig(({ mode }) => {
       base: './',
       resolve: {
         alias,
-        noExternal: ['@llmops/ui'],
       },
       build: {
         commonjsOptions: {
@@ -60,7 +60,6 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: {
       alias,
-      noExternal: ['@llmops/ui'],
     },
     server: {
       port: 5177,

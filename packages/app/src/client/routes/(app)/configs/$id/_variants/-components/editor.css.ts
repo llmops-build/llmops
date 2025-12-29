@@ -1,4 +1,4 @@
-import { colors, spacing } from '@llmops/ui';
+import { colors, spacing } from '@ui';
 import { style, globalStyle } from '@vanilla-extract/css';
 
 export const editorContainer = style({

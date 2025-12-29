@@ -6,7 +6,7 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-} from '@llmops/ui';
+} from '@ui';
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useTargetingRules } from '@client/hooks/queries/useTargetingRules';
 import { variantsContainer } from '../../-components/variants.css';

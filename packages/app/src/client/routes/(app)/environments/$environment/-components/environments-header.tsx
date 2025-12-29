@@ -1,5 +1,5 @@
 import { Icon } from '@client/components/icons';
-import { Button } from '@llmops/ui';
+import { Button } from '@ui';
 import { X } from 'lucide-react';
 import { headerStyles } from '../../../configs/-components/configs.css';
 import { useNavigate } from '@tanstack/react-router';

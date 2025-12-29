@@ -5,7 +5,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   Combobox,
-} from '@llmops/ui';
+} from '@ui';
 import { Check, Save } from 'lucide-react';
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { Icon } from '@client/components/icons';

@@ -1,4 +1,4 @@
-import { colors, spacing, sprinkles } from '@llmops/ui';
+import { colors, spacing, sprinkles } from '@ui';
 import { style } from '@vanilla-extract/css';
 import { calc } from '@vanilla-extract/css-utils';
 

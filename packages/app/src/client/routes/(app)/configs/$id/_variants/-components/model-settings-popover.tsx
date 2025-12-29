@@ -4,7 +4,7 @@ import {
   PopoverContent,
   Slider,
   Combobox,
-} from '@llmops/ui';
+} from '@ui';
 import { Menu } from '@base-ui/react/menu';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useProviderModels } from '@client/hooks/queries/useProviderModels';

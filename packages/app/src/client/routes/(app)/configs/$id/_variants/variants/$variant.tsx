@@ -1,4 +1,4 @@
-import { Combobox } from '@llmops/ui';
+import { Combobox } from '@ui';
 import {
   createFileRoute,
   useBlocker,
