@@ -26,6 +26,9 @@
     "./hono": "./dist/hono.mjs",
     "./*": "./*"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",

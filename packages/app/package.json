@@ -24,6 +24,9 @@
     ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rm -rf dist && vite build && tsdown",
     "clean": "rm -rf dist",

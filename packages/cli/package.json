@@ -20,8 +20,16 @@
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "exports": "./dist/index.mjs",
   "bin": {
+    "@llmops/cli": "./dist/index.mjs",
     "llmops": "./dist/index.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "executableFiles": [
+      "./dist/index.mjs"
+    ]
   },
   "scripts": {
     "build": "tsdown",
