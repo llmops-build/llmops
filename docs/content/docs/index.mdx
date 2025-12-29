@@ -1,63 +1,35 @@
 ---
-title: Quickstart
-description: Quickstart guide to setup LLMOps
+title: Introduction
+description: Introduction to LLMOps.
 icon: Album
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
+LLMOps is a framework-agnostic, universal LLM operations toolkit for TypeScript. It provides a comprehensive set of features out of the box and includes a plugin ecosystem that simplifies adding advanced functionalities. Whether you need prompt versioning or multi-environment deployments, it lets you focus on building your application instead of reinventing the wheel.
 
-Get started with LLMOps in minutes. This guide will walk you through installing the SDK, setting up a database, and making your first API request.
+## Features
 
-## Prerequisites
+LLMOps aims to be the most comprehensive LLMOps toolkit. It provides a wide range of features out of the box and allows you to extend it with plugins. Here are some of the features:
 
-- Node.js 18+
-- PostgreSQL database
-- An LLM provider API key (e.g., OpenRouter)
+- **AI Gateway** - OpenAI-compatible API to access 1600+ LLMs from 70+ providers
+- **Prompt Management** - Version, test, and deploy prompts with a visual editor
+- **Environment Management** - Production, staging, development with secure secrets
+- **Framework Agnostic** - Works with Express, Hono, and more
+- **TypeScript-First** - Strict type safe SDK
+- **Self-Hosted** - Full control over your data and infrastructure
 
-<Steps>
-<Step>
+...and much more!
 
-### Install the SDK
+---
 
-Install the LLMOps SDK and PostgreSQL client:
+## Quick Setup
 
-```bash tab="npm"
-npm install @llmops/sdk pg
+### 1. Install
+
+```package-install
+@llmops/sdk pg
 ```
 
-```bash tab="pnpm"
-pnpm add @llmops/sdk pg
-```
-
-```bash tab="yarn"
-yarn add @llmops/sdk pg
-```
-
-</Step>
-
-<Step>
-
-### Set up the database
-
-LLMOps requires a PostgreSQL database. You can use Docker to quickly spin one up:
-
-```bash
-docker run -d \
-  --name llmops-postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=llmops \
-  -p 5432:5432 \
-  postgres:16
-```
-
-</Step>
-
-<Step>
-
-### Create the LLMOps configuration
-
-Create a file called `llmops.ts` to configure LLMOps:
+### 2. Configure
 
 ```typescript title="llmops.ts"
 import { llmops } from '@llmops/sdk';
@@ -66,111 +38,75 @@ import { Pool } from 'pg';
 export default llmops({
   basePath: '/llmops',
   providers: {
-    openrouter: {
-      apiKey: process.env.OPENROUTER_API_KEY || '',
-    },
+    openai: { apiKey: process.env.OPENAI_API_KEY },
+    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
   },
   database: new Pool({
-    connectionString: process.env.POSTGRES_URL || '',
+    connectionString: process.env.DATABASE_URL,
   }),
   auth: {
     type: 'basic',
-    defaultUser: 'admin@llmops.local',
+    defaultUser: 'admin@example.com',
     defaultPassword: 'password',
   },
 });
 ```
 
-</Step>
+### 3. Mount Middleware
 
-<Step>
-
-### Create your server
-
-Set up an Express server with the LLMOps middleware:
-
-```typescript title="server.ts"
-import 'dotenv/config';
+```typescript tab="Express" title="server.ts"
 import express from 'express';
 import { createLLMOpsMiddleware } from '@llmops/sdk/express';
 import llmopsClient from './llmops';
 
 const app = express();
-const port = 3000;
-
-app.use(express.json());
 app.use('/llmops', createLLMOpsMiddleware(llmopsClient));
-
-app.listen(port, () => {
-  console.log(`LLMOps running at http://localhost:${port}/llmops`);
-});
+app.listen(3000);
 ```
 
-</Step>
+```typescript tab="Hono" title="server.ts"
+import { Hono } from 'hono';
+import { serve } from '@hono/node-server';
+import { createLLMOpsMiddleware } from '@llmops/sdk/hono';
+import llmopsClient from './llmops';
 
-<Step>
-
-### Set environment variables
-
-Create a `.env` file with your configuration:
-
-```bash title=".env"
-POSTGRES_URL=postgresql://postgres:password@localhost:5432/llmops
-OPENROUTER_API_KEY=sk-or-your-api-key
+const app = new Hono();
+app.use('/llmops/*', createLLMOpsMiddleware(llmopsClient));
+serve({ fetch: app.fetch, port: 3000 });
 ```
 
-</Step>
+---
 
-<Step>
+## Supported Providers
 
-### Start the server
+LLMOps supports 70+ AI providers through its unified gateway:
 
-Run your server:
+| Category             | Providers                                                   |
+| -------------------- | ----------------------------------------------------------- |
+| **Major Cloud**      | OpenAI, Anthropic, Google Gemini, Azure OpenAI, AWS Bedrock |
+| **Open Source**      | Ollama, Hugging Face, Triton, Cortex                        |
+| **Specialized**      | Groq, Together AI, Fireworks AI, Cerebras, SambaNova        |
+| **Regional**         | DeepSeek, Zhipu, Moonshot, LingYi, Krutrim                  |
+| **Embeddings**       | Jina, Nomic, Voyage, Cohere                                 |
+| **Image Generation** | Stability AI, Replicate, Segmind, Recraft AI                |
+| **Routers**          | OpenRouter, Perplexity AI                                   |
 
-```bash
-npx tsx server.ts
-```
+---
 
-Your LLMOps instance is now running at `http://localhost:3000/llmops`.
+## Architecture
 
-</Step>
+LLMOps is organized as a monorepo with focused packages:
 
-<Step>
+| Package           | Description                                   |
+| ----------------- | --------------------------------------------- |
+| `@llmops/core`    | Database layer, schemas, types, and utilities |
+| `@llmops/gateway` | AI Gateway for routing requests to providers  |
+| `@llmops/app`     | Full-stack dashboard with React and Hono      |
+| `@llmops/sdk`     | Express and Hono middleware integrations      |
+| `@llmops/cli`     | CLI for migrations and management             |
 
-### Create a config
+---
 
-Open the LLMOps dashboard and create your first config to start routing requests to your LLM providers.
+## Next Steps
 
-{/* TODO: Add video here */}
-
-</Step>
-</Steps>
-
-## Making your first request
-
-Once you've created a config in the LLMOps dashboard, you can make requests using the OpenAI-compatible API:
-
-```typescript
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  baseURL: 'http://localhost:3000/llmops/api/genai',
-  apiKey: '',
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-uuid',
-  },
-});
-
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
-  messages: [{ role: 'user', content: 'Hello!' }],
-});
-
-console.log(response.choices[0].message.content);
-```
-
-## Next steps
-
-- [Configuration](/docs/getting-started/configuration) - Learn about all configuration options
-- [Authentication](/docs/guides/authentication) - Set up authentication for your deployment
-- [Providers](/docs/providers/openrouter) - Configure different LLM providers
+- [Quickstart](/docs/quickstart) - Get up and running in minutes

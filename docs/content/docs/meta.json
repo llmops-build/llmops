@@ -3,19 +3,5 @@
   "description": "The pluggable LLMOps toolkit for TypeScript Applications.",
   "icon": "Building",
   "root": true,
-  "pages": [
-    "---Introduction---",
-    "index",
-    "---Setup---",
-    "getting-started",
-    "frameworks",
-    "database",
-    "---Configuration---",
-    "providers",
-    "---Resources---",
-    "guides",
-    "api-reference",
-    "---Product Handbook---",
-    "product-handbook"
-  ]
+  "pages": ["---Getting Started---", "index", "quickstart"]
 }
