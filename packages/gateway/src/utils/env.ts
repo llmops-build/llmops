@@ -2,11 +2,17 @@ import { Context } from 'hono';
 import { env, getRuntimeKey } from 'hono/adapter';
 
 const isNodeInstance = getRuntimeKey() == 'node';
+
+// Synchronously require path and fs for Node.js environments
+// This avoids top-level await which is incompatible with CJS
 let path: any;
 let fs: any;
 if (isNodeInstance) {
-  path = await import('path');
-  fs = await import('fs');
+  // Use require for synchronous loading in Node.js
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  path = require('path');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  fs = require('fs');
 }
 
 export function getValueOrFileContents(value?: string, ignore?: boolean) {
