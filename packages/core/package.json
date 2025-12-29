@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@better-auth/utils": "^0.3.0",
-    "@llmops/gateway": "workspace:*",
+    "@llmops/gateway": "workspace:^",
     "hono": "^4.10.7",
     "kysely": "^0.28.8",
     "pino": "^10.1.0"

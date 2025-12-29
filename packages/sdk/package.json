@@ -37,8 +37,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@llmops/app": "workspace:*",
-    "@llmops/core": "workspace:*"
+    "@llmops/app": "workspace:^",
+    "@llmops/core": "workspace:^"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
