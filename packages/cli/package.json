@@ -22,7 +22,7 @@
   "types": "./dist/index.d.mts",
   "exports": "./dist/index.mjs",
   "bin": {
-    "@llmops/cli": "./dist/index.mjs",
+    "cli": "./dist/index.mjs",
     "llmops": "./dist/index.mjs"
   },
   "publishConfig": {
