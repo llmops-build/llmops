@@ -8,6 +8,8 @@ const postgresMap = {
   text: ['character varying', 'varchar', 'text'],
   timestamp: ['timestamptz', 'timestamp', 'date'],
   jsonb: ['json', 'jsonb'],
+  integer: ['integer', 'int4', 'int', 'smallint', 'bigint', 'int2', 'int8'],
+  boolean: ['boolean', 'bool'],
 };
 
 const mysqlMap = {
