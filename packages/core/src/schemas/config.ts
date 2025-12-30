@@ -41,11 +41,20 @@ const providersSchema = providersObjectSchema.refine(
   'At least one provider must be configured'
 );
 
-const authSchema = z.object({
-  type: z.literal('basic'),
-  defaultUser: z.string(),
-  defaultPassword: z.string(),
-});
+/**
+ * Auth configuration schema
+ *
+ * Uses a flexible schema with passthrough to allow different auth providers.
+ * - Open source: basicAuth() from @llmops/sdk (type: 'basic')
+ * - Enterprise: enterpriseAuth() from @llmops/enterprise (type: 'better-auth', etc.)
+ *
+ * The actual auth handling is done by the auth middleware based on the type.
+ */
+const authSchema = z
+  .object({
+    type: z.string().min(1, 'Auth type is required'),
+  })
+  .passthrough();
 
 /**
  * Auto-migration configuration options:
@@ -79,6 +88,24 @@ export const llmopsConfigSchema = z.object({
 });
 
 /**
+ * Base auth configuration interface
+ * All auth providers must have at least a type field
+ */
+export interface AuthConfig {
+  readonly type: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Basic auth configuration (open source)
+ */
+export interface BasicAuthConfig extends AuthConfig {
+  readonly type: 'basic';
+  readonly defaultUser: string;
+  readonly defaultPassword: string;
+}
+
+/**
  * Validated LLMOps configuration with typed providers
  * Uses ProvidersConfig for proper provider-specific typing
  *
@@ -86,11 +113,12 @@ export const llmopsConfigSchema = z.object({
  */
 export type ValidatedLLMOpsConfig = Omit<
   z.infer<typeof llmopsConfigSchema>,
-  'providers' | 'autoMigrate' | 'schema'
+  'providers' | 'autoMigrate' | 'schema' | 'auth'
 > & {
   providers: ProvidersConfig;
   autoMigrate?: AutoMigrateConfig;
   schema: string;
+  auth: AuthConfig;
 };
 
 /**

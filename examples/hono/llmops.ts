@@ -1,4 +1,4 @@
-import { llmops } from '@llmops/sdk';
+import { basicAuth, llmops } from '@llmops/sdk';
 import { env } from 'node:process';
 import { Pool } from 'pg';
 
@@ -18,11 +18,10 @@ export default llmops({
   database: new Pool({
     connectionString: env.POSTGRES_URL || '',
   }),
-  auth: {
-    type: 'basic',
-    defaultUser: 'admin@llmops.local',
-    defaultPassword: 'password',
-  },
+  auth: basicAuth({
+    username: 'admin@llmops.local',
+    password: 'password',
+  }),
   // Auto-run migrations in development
   autoMigrate: 'development',
   // PostgreSQL schema name (defaults to 'llmops')
