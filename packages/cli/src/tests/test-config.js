@@ -14,6 +14,6 @@ export default llmops({
   auth: {
     type: 'basic',
     defaultUser: 'admin@llmops.local',
-    defaultPassword: 'password'
-  }
+    defaultPassword: 'password',
+  },
 });

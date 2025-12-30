@@ -70,20 +70,39 @@ export const llmopsConfigSchema = z.object({
     .union([z.boolean(), z.literal('development')])
     .optional()
     .default(false),
+  /**
+   * Database schema name for PostgreSQL connections.
+   * This sets the search_path on every connection.
+   * Defaults to 'llmops'. Set to 'public' to use the default PostgreSQL schema.
+   */
+  schema: z.string().optional().default('llmops'),
 });
 
 /**
  * Validated LLMOps configuration with typed providers
  * Uses ProvidersConfig for proper provider-specific typing
  *
- * Note: autoMigrate is optional in input but always present after validation
+ * Note: autoMigrate and schema are optional in input but always present after validation
  */
 export type ValidatedLLMOpsConfig = Omit<
   z.infer<typeof llmopsConfigSchema>,
-  'providers' | 'autoMigrate'
+  'providers' | 'autoMigrate' | 'schema'
 > & {
   providers: ProvidersConfig;
   autoMigrate?: AutoMigrateConfig;
+  schema: string;
+};
+
+/**
+ * Input type for LLMOps configuration (before validation)
+ * Users can omit optional fields like autoMigrate and schema
+ */
+export type LLMOpsConfigInput = Omit<
+  ValidatedLLMOpsConfig,
+  'autoMigrate' | 'schema'
+> & {
+  autoMigrate?: AutoMigrateConfig;
+  schema?: string;
 };
 
 export function validateLLMOpsConfig(config: unknown): ValidatedLLMOpsConfig {

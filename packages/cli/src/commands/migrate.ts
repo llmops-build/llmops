@@ -65,8 +65,9 @@ export const migrateCommand = command({
       process.exit(1);
     }
 
-    // Create database connection
-    const db = await createDatabaseFromConnection(config.database);
+    // Create database connection with schema option
+    const schema = config.schema ?? 'llmops';
+    const db = await createDatabaseFromConnection(config.database, { schema });
     if (!db) {
       logger.error('Failed to create database connection.');
       process.exit(1);
@@ -81,7 +82,8 @@ export const migrateCommand = command({
     const spinner = yoctoSpinner({ text: 'preparing migration...' }).start();
     const { toBeAdded, toBeCreated, runMigrations } = await getMigrations(
       db,
-      dbType
+      dbType,
+      { schema }
     );
 
     if (!toBeAdded.length && !toBeCreated.length) {

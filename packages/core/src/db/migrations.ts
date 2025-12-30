@@ -6,6 +6,17 @@ import { logger } from '../utils/logger';
 
 export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
 
+/**
+ * Options for migration operations
+ */
+export interface MigrationOptions {
+  /**
+   * PostgreSQL schema name to use.
+   * If provided, the schema will be created if it doesn't exist.
+   */
+  schema?: string;
+}
+
 const postgresMap = {
   uuid: ['character varying', 'varchar', 'text', 'uuid'],
   text: ['character varying', 'varchar', 'text'],
@@ -83,6 +94,42 @@ async function getPostgresSchema(db: Kysely<Database>): Promise<string> {
   return 'public';
 }
 
+/**
+ * Ensure the PostgreSQL schema exists, creating it if necessary
+ */
+async function ensurePostgresSchemaExists(
+  db: Kysely<Database>,
+  schema: string
+): Promise<void> {
+  if (schema === 'public') {
+    // public schema always exists
+    return;
+  }
+
+  try {
+    // Check if schema exists
+    const result = await sql<{ exists: boolean }>`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.schemata 
+        WHERE schema_name = ${schema}
+      ) as exists
+    `.execute(db);
+
+    if (!result.rows[0]?.exists) {
+      logger.info(`Creating PostgreSQL schema: ${schema}`);
+      await sql`CREATE SCHEMA IF NOT EXISTS ${sql.ref(schema)}`.execute(db);
+    }
+  } catch (error) {
+    logger.warn(`Could not ensure schema exists: ${error}`);
+    // Try to create anyway - the IF NOT EXISTS clause should handle races
+    try {
+      await sql`CREATE SCHEMA IF NOT EXISTS ${sql.ref(schema)}`.execute(db);
+    } catch {
+      // Ignore - schema might already exist
+    }
+  }
+}
+
 export interface MigrationResult {
   toBeCreated: Array<{
     table: string;
@@ -102,12 +149,19 @@ export interface MigrationResult {
 
 export async function getMigrations(
   db: Kysely<Database>,
-  dbType: DatabaseType
+  dbType: DatabaseType,
+  options?: MigrationOptions
 ): Promise<MigrationResult> {
   // For PostgreSQL, detect and log the current schema being used
   let currentSchema = 'public';
   if (dbType === 'postgres') {
-    currentSchema = await getPostgresSchema(db);
+    // If schema is provided in options, ensure it exists first
+    if (options?.schema) {
+      await ensurePostgresSchemaExists(db, options.schema);
+      currentSchema = options.schema;
+    } else {
+      currentSchema = await getPostgresSchema(db);
+    }
     logger.debug(`PostgreSQL migration: Using schema '${currentSchema}'`);
   }
 
@@ -381,12 +435,14 @@ export async function getMigrations(
  * @param db - Kysely database instance
  * @param dbType - Database type
  * @param autoMigrate - Auto-migrate configuration
+ * @param options - Migration options (schema, etc.)
  * @returns true if migrations were run, false otherwise
  */
 export async function runAutoMigrations(
   db: Kysely<Database>,
   dbType: DatabaseType,
-  autoMigrate: boolean | 'development'
+  autoMigrate: boolean | 'development',
+  options?: MigrationOptions
 ): Promise<{ ran: boolean; tables: string[]; fields: string[] }> {
   // Determine if we should run migrations
   const shouldMigrate =
@@ -398,7 +454,7 @@ export async function runAutoMigrations(
   }
 
   const { toBeCreated, toBeAdded, runMigrations, needsMigration } =
-    await getMigrations(db, dbType);
+    await getMigrations(db, dbType, options);
 
   if (!needsMigration) {
     logger.debug('Auto-migration: No migrations needed');

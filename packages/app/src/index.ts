@@ -35,10 +35,12 @@ const setConfigMiddleware = (
 };
 
 const createDatabaseMiddleware = (
-  validatedConfig: LLMOpsConfig
+  validatedConfig: ValidatedLLMOpsConfig
 ): MiddlewareHandler => {
   return async (c, next) => {
-    const db = await createDatabaseFromConnection(validatedConfig.database);
+    const db = await createDatabaseFromConnection(validatedConfig.database, {
+      schema: validatedConfig.schema,
+    });
     if (!db) {
       throw new Error('Failed to create database connection');
     }

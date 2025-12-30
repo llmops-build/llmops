@@ -26,4 +26,6 @@ export default llmops({
   },
   // Auto-run migrations in development
   autoMigrate: 'development',
+  // PostgreSQL schema name (defaults to 'llmops')
+  schema: 'llmops',
 });

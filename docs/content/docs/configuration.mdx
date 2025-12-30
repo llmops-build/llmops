@@ -131,6 +131,38 @@ For production deployments, we recommend running migrations manually using the C
 
 ---
 
+### schema
+
+The PostgreSQL schema name where LLMOps tables will be created. Defaults to `'llmops'`.
+
+```typescript
+schema: 'llmops'; // default
+```
+
+This option:
+
+- Creates the schema if it doesn't exist (during migrations)
+- Sets `search_path` on every database connection
+- Isolates LLMOps tables from your application's tables
+
+| Value      | Behavior                                  |
+| ---------- | ----------------------------------------- |
+| `'llmops'` | Uses dedicated `llmops` schema (default)  |
+| `'public'` | Uses the default PostgreSQL public schema |
+| `'custom'` | Uses a custom schema name of your choice  |
+
+```typescript
+// Use public schema (not recommended for production)
+schema: 'public';
+
+// Use a custom schema
+schema: 'my_llmops_schema';
+```
+
+Using a dedicated schema keeps LLMOps tables separate from your application tables, making it easier to manage and backup.
+
+---
+
 ## Providers Configuration
 
 All providers share these base options:
@@ -193,7 +225,11 @@ export default llmops({
     defaultPassword: process.env.LLMOPS_PASSWORD || 'password',
   },
 
+  // Auto-migrate only in development
   autoMigrate: 'development',
+
+  // PostgreSQL schema (defaults to 'llmops')
+  schema: 'llmops',
 });
 ```
 

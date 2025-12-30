@@ -7,10 +7,11 @@ import type { LLMOpsConfig } from '@llmops/core';
 type AutoMigrateConfig = boolean | 'development';
 
 /**
- * Extended config type with autoMigrate option
+ * Extended config type with autoMigrate and schema options
  */
 type LLMOpsConfigWithMigration = LLMOpsConfig & {
   autoMigrate?: AutoMigrateConfig;
+  schema?: string;
 };
 
 /**
@@ -60,8 +61,11 @@ export const createMigrationMiddleware = (
             return;
           }
 
-          // Create a fresh Kysely instance for migrations
-          const db = await createDatabaseFromConnection(rawConnection);
+          // Create a fresh Kysely instance for migrations with schema option
+          const schema = config.schema ?? 'llmops';
+          const db = await createDatabaseFromConnection(rawConnection, {
+            schema,
+          });
 
           if (!db) {
             console.warn(
@@ -70,7 +74,9 @@ export const createMigrationMiddleware = (
             return;
           }
 
-          const result = await runAutoMigrations(db, dbType, autoMigrate);
+          const result = await runAutoMigrations(db, dbType, autoMigrate, {
+            schema,
+          });
 
           if (result.ran) {
             console.log(

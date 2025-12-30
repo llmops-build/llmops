@@ -5,6 +5,7 @@ import {
   MysqlDialect,
   PostgresDialect,
   SqliteDialect,
+  CompiledQuery,
 } from 'kysely';
 import type { Database } from './schema';
 
@@ -16,6 +17,17 @@ export * from './migrations';
  * Supported database types
  */
 export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
+
+/**
+ * Options for creating a database connection
+ */
+export interface DatabaseOptions {
+  /**
+   * PostgreSQL schema name (sets search_path).
+   * Defaults to 'llmops'.
+   */
+  schema?: string;
+}
 
 /**
  * Database connection options
@@ -70,9 +82,13 @@ export function detectDatabaseType(db: unknown): DatabaseType | null {
 
 /**
  * Create database from raw connection
+ *
+ * @param rawConnection - The raw database connection (pg Pool, sqlite Database, etc.)
+ * @param options - Optional configuration (schema for PostgreSQL)
  */
 export async function createDatabaseFromConnection(
-  rawConnection: any
+  rawConnection: any,
+  options?: DatabaseOptions
 ): Promise<Kysely<Database> | null> {
   const dbType = detectDatabaseType(rawConnection);
 
@@ -81,6 +97,7 @@ export async function createDatabaseFromConnection(
   }
 
   let dialect: Dialect | undefined;
+  const schema = options?.schema ?? 'llmops';
 
   switch (dbType) {
     case 'sqlite':
@@ -110,7 +127,15 @@ export async function createDatabaseFromConnection(
       break;
 
     case 'postgres':
-      dialect = new PostgresDialect({ pool: rawConnection });
+      dialect = new PostgresDialect({
+        pool: rawConnection,
+        onCreateConnection: async (connection) => {
+          // Set search_path on every new connection
+          await connection.executeQuery(
+            CompiledQuery.raw(`SET search_path TO "${schema}"`)
+          );
+        },
+      });
       break;
 
     case 'mssql':
