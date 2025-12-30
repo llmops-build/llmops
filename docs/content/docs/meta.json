@@ -3,5 +3,11 @@
   "description": "The pluggable LLMOps toolkit for TypeScript Applications.",
   "icon": "Building",
   "root": true,
-  "pages": ["---Getting Started---", "index", "quickstart"]
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "quickstart",
+    "configuration",
+    "providers"
+  ]
 }

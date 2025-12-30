@@ -1,0 +1,218 @@
+---
+title: Configuration
+description: Learn about all configuration options for LLMOps.
+icon: Settings
+---
+
+The `llmops()` function accepts a configuration object that controls how LLMOps behaves. This page documents all available options.
+
+## Basic Example
+
+```typescript title="llmops.ts"
+import { llmops } from '@llmops/sdk';
+import { Pool } from 'pg';
+
+export default llmops({
+  basePath: '/llmops',
+  providers: {
+    openai: { apiKey: process.env.OPENAI_API_KEY },
+  },
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL,
+  }),
+  auth: {
+    type: 'basic',
+    defaultUser: 'admin@example.com',
+    defaultPassword: 'password',
+  },
+});
+```
+
+---
+
+## Configuration Options
+
+### basePath
+
+The URL path where LLMOps routes will be mounted. Must start with `/`.
+
+```typescript
+basePath: '/llmops';
+```
+
+This determines where the dashboard and API endpoints are accessible:
+
+- Dashboard: `http://localhost:3000/llmops`
+- API: `http://localhost:3000/llmops/api/genai/v1/chat/completions`
+
+---
+
+### providers
+
+An object containing your LLM provider configurations. At least one provider must be configured.
+
+```typescript
+providers: {
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+  },
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  },
+}
+```
+
+See [Providers](/docs/providers) below for detailed provider-specific options.
+
+---
+
+### database
+
+A PostgreSQL connection pool instance.
+
+```typescript
+import { Pool } from 'pg';
+
+database: new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+```
+
+You can also pass individual connection options:
+
+```typescript
+database: new Pool({
+  host: 'localhost',
+  port: 5432,
+  database: 'llmops',
+  user: 'postgres',
+  password: 'password',
+});
+```
+
+---
+
+### auth
+
+Authentication configuration for the LLMOps dashboard and API.
+
+```typescript
+auth: {
+  type: 'basic',
+  defaultUser: 'admin@example.com',
+  defaultPassword: 'secure-password',
+}
+```
+
+| Property          | Type      | Description                                               |
+| ----------------- | --------- | --------------------------------------------------------- |
+| `type`            | `'basic'` | Authentication type (currently only `basic` is supported) |
+| `defaultUser`     | `string`  | Username for authentication                               |
+| `defaultPassword` | `string`  | Password for authentication                               |
+
+---
+
+### autoMigrate
+
+Controls automatic database migration behavior on startup.
+
+| Value           | Behavior                                               |
+| --------------- | ------------------------------------------------------ |
+| `false`         | Never run migrations automatically (default)           |
+| `true`          | Always run migrations on startup                       |
+| `'development'` | Only run migrations when `NODE_ENV` is `'development'` |
+
+```typescript
+// Only auto-migrate in development
+autoMigrate: 'development';
+```
+
+For production deployments, we recommend running migrations manually using the CLI instead of `autoMigrate: true`.
+
+---
+
+## Providers Configuration
+
+All providers share these base options:
+
+| Property         | Type     | Required | Description                      |
+| ---------------- | -------- | -------- | -------------------------------- |
+| `apiKey`         | `string` | Yes      | API key for the provider         |
+| `customHost`     | `string` | No       | Custom base URL for the provider |
+| `requestTimeout` | `number` | No       | Request timeout in milliseconds  |
+
+```typescript
+providers: {
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+  },
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  },
+  openrouter: {
+    apiKey: process.env.OPENROUTER_API_KEY,
+  },
+}
+```
+
+You can configure multiple providers to use different models based on your needs. Once configured, you can create variants in the dashboard that use any of these providers.
+
+For detailed configuration options for each provider, see the [Providers](/docs/providers) page.
+
+---
+
+## Complete Example
+
+```typescript title="llmops.ts"
+import 'dotenv/config';
+import { llmops } from '@llmops/sdk';
+import { Pool } from 'pg';
+
+export default llmops({
+  basePath: '/llmops',
+
+  providers: {
+    openai: {
+      apiKey: process.env.OPENAI_API_KEY!,
+    },
+    anthropic: {
+      apiKey: process.env.ANTHROPIC_API_KEY!,
+    },
+    openrouter: {
+      apiKey: process.env.OPENROUTER_API_KEY!,
+    },
+  },
+
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL!,
+  }),
+
+  auth: {
+    type: 'basic',
+    defaultUser: process.env.LLMOPS_USER || 'admin@example.com',
+    defaultPassword: process.env.LLMOPS_PASSWORD || 'password',
+  },
+
+  autoMigrate: 'development',
+});
+```
+
+---
+
+## Environment Variables
+
+We recommend storing sensitive values in environment variables:
+
+```bash title=".env"
+# Database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+
+# Providers
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-...
+
+# Auth
+LLMOPS_USER=admin@example.com
+LLMOPS_PASSWORD=secure-password
+```

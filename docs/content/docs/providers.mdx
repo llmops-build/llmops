@@ -1,0 +1,396 @@
+---
+title: Providers
+description: Configure LLM providers for your LLMOps instance.
+icon: Plug
+---
+
+LLMOps supports 70+ AI providers through its unified gateway. This page lists all supported providers and their configuration options.
+
+## Base Configuration
+
+All providers share these base options:
+
+| Property         | Type     | Required | Description                      |
+| ---------------- | -------- | -------- | -------------------------------- |
+| `apiKey`         | `string` | Yes      | API key for the provider         |
+| `customHost`     | `string` | No       | Custom base URL for the provider |
+| `requestTimeout` | `number` | No       | Request timeout in milliseconds  |
+
+---
+
+## Major Cloud Providers
+
+### OpenAI
+
+```typescript
+providers: {
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+    openaiOrganization: 'org-xxx', // Optional
+    openaiProject: 'proj-xxx',     // Optional
+  },
+}
+```
+
+| Property             | Type     | Description            |
+| -------------------- | -------- | ---------------------- |
+| `openaiOrganization` | `string` | OpenAI organization ID |
+| `openaiProject`      | `string` | OpenAI project ID      |
+
+### Anthropic
+
+```typescript
+providers: {
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  },
+}
+```
+
+### Azure OpenAI
+
+```typescript
+providers: {
+  'azure-openai': {
+    apiKey: process.env.AZURE_OPENAI_API_KEY,
+    resourceName: 'my-resource',
+    deploymentId: 'gpt-4',
+    apiVersion: '2024-02-15-preview',
+  },
+}
+```
+
+| Property       | Type     | Description         |
+| -------------- | -------- | ------------------- |
+| `resourceName` | `string` | Azure resource name |
+| `deploymentId` | `string` | Azure deployment ID |
+| `apiVersion`   | `string` | Azure API version   |
+
+### Google Gemini
+
+```typescript
+providers: {
+  google: {
+    apiKey: process.env.GOOGLE_API_KEY,
+  },
+}
+```
+
+### Google Vertex AI
+
+```typescript
+providers: {
+  'vertex-ai': {
+    apiKey: '', // Required but not used
+    vertexProjectId: 'my-project',
+    vertexRegion: 'us-central1',
+    vertexServiceAccountJson: {
+      // Your service account JSON credentials
+    },
+  },
+}
+```
+
+| Property                   | Type     | Description                            |
+| -------------------------- | -------- | -------------------------------------- |
+| `vertexProjectId`          | `string` | Google Cloud project ID                |
+| `vertexRegion`             | `string` | Vertex AI region (e.g., `us-central1`) |
+| `vertexServiceAccountJson` | `object` | Service account JSON credentials       |
+
+### AWS Bedrock
+
+```typescript
+providers: {
+  bedrock: {
+    apiKey: '', // Required but not used
+    awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    awsRegion: 'us-east-1',
+  },
+}
+```
+
+| Property             | Type     | Description                                   |
+| -------------------- | -------- | --------------------------------------------- |
+| `awsAccessKeyId`     | `string` | AWS access key ID                             |
+| `awsSecretAccessKey` | `string` | AWS secret access key                         |
+| `awsSessionToken`    | `string` | AWS session token (for temporary credentials) |
+| `awsRegion`          | `string` | AWS region (e.g., `us-east-1`)                |
+
+---
+
+## Inference Providers
+
+### Groq
+
+```typescript
+providers: {
+  groq: {
+    apiKey: process.env.GROQ_API_KEY,
+  },
+}
+```
+
+### Together AI
+
+```typescript
+providers: {
+  'together-ai': {
+    apiKey: process.env.TOGETHER_API_KEY,
+  },
+}
+```
+
+### Fireworks AI
+
+```typescript
+providers: {
+  'fireworks-ai': {
+    apiKey: process.env.FIREWORKS_API_KEY,
+  },
+}
+```
+
+### Cerebras
+
+```typescript
+providers: {
+  cerebras: {
+    apiKey: process.env.CEREBRAS_API_KEY,
+  },
+}
+```
+
+### SambaNova
+
+```typescript
+providers: {
+  sambanova: {
+    apiKey: process.env.SAMBANOVA_API_KEY,
+  },
+}
+```
+
+### Lambda
+
+```typescript
+providers: {
+  lambda: {
+    apiKey: process.env.LAMBDA_API_KEY,
+  },
+}
+```
+
+### DeepInfra
+
+```typescript
+providers: {
+  deepinfra: {
+    apiKey: process.env.DEEPINFRA_API_KEY,
+  },
+}
+```
+
+---
+
+## Model Providers
+
+### DeepSeek
+
+```typescript
+providers: {
+  deepseek: {
+    apiKey: process.env.DEEPSEEK_API_KEY,
+  },
+}
+```
+
+### Mistral AI
+
+```typescript
+providers: {
+  'mistral-ai': {
+    apiKey: process.env.MISTRAL_API_KEY,
+  },
+}
+```
+
+### Cohere
+
+```typescript
+providers: {
+  cohere: {
+    apiKey: process.env.COHERE_API_KEY,
+  },
+}
+```
+
+### AI21
+
+```typescript
+providers: {
+  ai21: {
+    apiKey: process.env.AI21_API_KEY,
+  },
+}
+```
+
+### xAI (Grok)
+
+```typescript
+providers: {
+  'x-ai': {
+    apiKey: process.env.XAI_API_KEY,
+  },
+}
+```
+
+---
+
+## Aggregators & Routers
+
+### OpenRouter
+
+OpenRouter gives you access to hundreds of models through a single API key.
+
+```typescript
+providers: {
+  openrouter: {
+    apiKey: process.env.OPENROUTER_API_KEY,
+  },
+}
+```
+
+### Perplexity AI
+
+```typescript
+providers: {
+  'perplexity-ai': {
+    apiKey: process.env.PERPLEXITY_API_KEY,
+  },
+}
+```
+
+---
+
+## Embedding Providers
+
+### Jina
+
+```typescript
+providers: {
+  jina: {
+    apiKey: process.env.JINA_API_KEY,
+  },
+}
+```
+
+### Voyage
+
+```typescript
+providers: {
+  voyage: {
+    apiKey: process.env.VOYAGE_API_KEY,
+  },
+}
+```
+
+### Nomic
+
+```typescript
+providers: {
+  nomic: {
+    apiKey: process.env.NOMIC_API_KEY,
+  },
+}
+```
+
+---
+
+## Image Generation
+
+### Stability AI
+
+```typescript
+providers: {
+  'stability-ai': {
+    apiKey: process.env.STABILITY_API_KEY,
+  },
+}
+```
+
+### Replicate
+
+```typescript
+providers: {
+  replicate: {
+    apiKey: process.env.REPLICATE_API_KEY,
+  },
+}
+```
+
+### Segmind
+
+```typescript
+providers: {
+  segmind: {
+    apiKey: process.env.SEGMIND_API_KEY,
+  },
+}
+```
+
+---
+
+## Self-Hosted / Local
+
+### Ollama
+
+For local models running with Ollama:
+
+```typescript
+providers: {
+  ollama: {
+    apiKey: '', // Required but not used
+    customHost: 'http://localhost:11434',
+  },
+}
+```
+
+### Hugging Face
+
+```typescript
+providers: {
+  huggingface: {
+    apiKey: process.env.HF_API_KEY,
+    huggingfaceBaseUrl: 'https://api-inference.huggingface.co', // Optional
+  },
+}
+```
+
+---
+
+## All Supported Providers
+
+Here's the complete list of all 70+ supported providers:
+
+| Provider      | Key             | Provider              | Key            |
+| ------------- | --------------- | --------------------- | -------------- |
+| OpenAI        | `openai`        | Anthropic             | `anthropic`    |
+| Azure OpenAI  | `azure-openai`  | Google Gemini         | `google`       |
+| Vertex AI     | `vertex-ai`     | AWS Bedrock           | `bedrock`      |
+| AWS SageMaker | `sagemaker`     | Groq                  | `groq`         |
+| Together AI   | `together-ai`   | Fireworks AI          | `fireworks-ai` |
+| Cerebras      | `cerebras`      | SambaNova             | `sambanova`    |
+| Lambda        | `lambda`        | DeepInfra             | `deepinfra`    |
+| DeepSeek      | `deepseek`      | Mistral AI            | `mistral-ai`   |
+| Cohere        | `cohere`        | AI21                  | `ai21`         |
+| xAI           | `x-ai`          | OpenRouter            | `openrouter`   |
+| Perplexity AI | `perplexity-ai` | Jina                  | `jina`         |
+| Voyage        | `voyage`        | Nomic                 | `nomic`        |
+| Stability AI  | `stability-ai`  | Replicate             | `replicate`    |
+| Segmind       | `segmind`       | Ollama                | `ollama`       |
+| Hugging Face  | `huggingface`   | Cloudflare Workers AI | `workers-ai`   |
+| Anyscale      | `anyscale`      | Reka AI               | `reka-ai`      |
+| Moonshot      | `moonshot`      | Zhipu                 | `zhipu`        |
+| LingYi        | `lingyi`        | Nebius                | `nebius`       |
+| Oracle        | `oracle`        | Azure AI              | `azure-ai`     |
