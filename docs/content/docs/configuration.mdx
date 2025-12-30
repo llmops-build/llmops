@@ -9,7 +9,7 @@ The `llmops()` function accepts a configuration object that controls how LLMOps 
 ## Basic Example
 
 ```typescript title="llmops.ts"
-import { llmops } from '@llmops/sdk';
+import { llmops, basicAuth } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -20,11 +20,10 @@ export default llmops({
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
   }),
-  auth: {
-    type: 'basic',
-    defaultUser: 'admin@example.com',
-    defaultPassword: 'password',
-  },
+  auth: basicAuth({
+    username: 'admin@example.com',
+    password: 'password',
+  }),
 });
 ```
 
@@ -94,21 +93,23 @@ database: new Pool({
 
 ### auth
 
-Authentication configuration for the LLMOps dashboard and API.
+Authentication configuration for the LLMOps dashboard and API. Use the `basicAuth()` helper function to configure basic authentication.
 
 ```typescript
-auth: {
-  type: 'basic',
-  defaultUser: 'admin@example.com',
-  defaultPassword: 'secure-password',
-}
+import { basicAuth } from '@llmops/sdk';
+
+auth: basicAuth({
+  username: 'admin@example.com',
+  password: 'secure-password',
+});
 ```
 
-| Property          | Type      | Description                                               |
-| ----------------- | --------- | --------------------------------------------------------- |
-| `type`            | `'basic'` | Authentication type (currently only `basic` is supported) |
-| `defaultUser`     | `string`  | Username for authentication                               |
-| `defaultPassword` | `string`  | Password for authentication                               |
+| Property   | Type     | Description                 |
+| ---------- | -------- | --------------------------- |
+| `username` | `string` | Username for authentication |
+| `password` | `string` | Password for authentication |
+
+The `basicAuth()` function validates that both username and password are provided and returns a properly typed configuration object.
 
 ---
 
@@ -197,7 +198,7 @@ For detailed configuration options for each provider, see the [Providers](/docs/
 
 ```typescript title="llmops.ts"
 import 'dotenv/config';
-import { llmops } from '@llmops/sdk';
+import { llmops, basicAuth } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -219,11 +220,10 @@ export default llmops({
     connectionString: process.env.DATABASE_URL!,
   }),
 
-  auth: {
-    type: 'basic',
-    defaultUser: process.env.LLMOPS_USER || 'admin@example.com',
-    defaultPassword: process.env.LLMOPS_PASSWORD || 'password',
-  },
+  auth: basicAuth({
+    username: process.env.LLMOPS_USER || 'admin@example.com',
+    password: process.env.LLMOPS_PASSWORD || 'password',
+  }),
 
   // Auto-migrate only in development
   autoMigrate: 'development',

@@ -60,7 +60,7 @@ docker run -d \
 Create a file called `llmops.ts` to configure LLMOps:
 
 ```typescript title="llmops.ts"
-import { llmops } from '@llmops/sdk';
+import { llmops, basicAuth } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -73,11 +73,10 @@ export default llmops({
   database: new Pool({
     connectionString: process.env.POSTGRES_URL || '',
   }),
-  auth: {
-    type: 'basic',
-    defaultUser: 'admin@llmops.local',
-    defaultPassword: 'password',
-  },
+  auth: basicAuth({
+    username: 'admin@llmops.local',
+    password: 'password',
+  }),
   autoMigrate: true,
 });
 ```
