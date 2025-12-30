@@ -78,33 +78,17 @@ serve({ fetch: app.fetch, port: 3000 });
 
 ---
 
-## Supported Providers
-
-LLMOps supports 70+ AI providers through its unified gateway:
-
-| Category             | Providers                                                   |
-| -------------------- | ----------------------------------------------------------- |
-| **Major Cloud**      | OpenAI, Anthropic, Google Gemini, Azure OpenAI, AWS Bedrock |
-| **Open Source**      | Ollama, Hugging Face, Triton, Cortex                        |
-| **Specialized**      | Groq, Together AI, Fireworks AI, Cerebras, SambaNova        |
-| **Regional**         | DeepSeek, Zhipu, Moonshot, LingYi, Krutrim                  |
-| **Embeddings**       | Jina, Nomic, Voyage, Cohere                                 |
-| **Image Generation** | Stability AI, Replicate, Segmind, Recraft AI                |
-| **Routers**          | OpenRouter, Perplexity AI                                   |
-
----
-
 ## Architecture
 
 LLMOps is organized as a monorepo with focused packages:
 
 | Package           | Description                                   |
 | ----------------- | --------------------------------------------- |
-| `@llmops/core`    | Database layer, schemas, types, and utilities |
-| `@llmops/gateway` | AI Gateway for routing requests to providers  |
-| `@llmops/app`     | Full-stack dashboard with React and Hono      |
-| `@llmops/sdk`     | Express and Hono middleware integrations      |
-| `@llmops/cli`     | CLI for migrations and management             |
+| `@llmops/core`    | Database layer, schemas, types, and utilities (Internal) |
+| `@llmops/gateway` | AI Gateway for routing requests to providers (Internal) |
+| `@llmops/app`     | Full-stack dashboard with React and Hono (Internal)     |
+| `@llmops/sdk`     | Middlewares and Client initialization     |
+| `@llmops/cli`     | CLI for DB migrations             |
 
 ---
 
