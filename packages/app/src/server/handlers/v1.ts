@@ -17,6 +17,12 @@ function isBasicAuth(auth: AuthConfig): auth is BasicAuthConfig {
 
 const app = new Hono()
   .use('*', async (c, next) => {
+    // Check if auth was already handled by enterprise middleware
+    // Enterprise packages set c.set('authHandled', true) after authentication
+    if (c.get('authHandled')) {
+      return next();
+    }
+
     // Auth Middleware - handles basic auth (open source)
     const config = c.get('llmopsConfig');
 
@@ -28,13 +34,14 @@ const app = new Hono()
       return handler(c, next);
     }
 
-    // Unknown auth type - this could be an enterprise auth type
-    // that should be handled by enterprise middleware
-    // For now, reject unknown auth types in open source
+    // Unknown auth type without enterprise middleware
+    // This means user configured an enterprise auth type but didn't add enterprise middleware
     return c.json(
       {
-        error: 'Unsupported auth type',
-        message: `Auth type "${config.auth.type}" is not supported. Use basicAuth() from @llmops/sdk.`,
+        error: 'Auth middleware not configured',
+        message:
+          `Auth type "${config.auth.type}" requires @llmops/enterprise middleware. ` +
+          `Either use basicAuth() from @llmops/sdk or install @llmops/enterprise and add the auth middleware.`,
       },
       501
     );
