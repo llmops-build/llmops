@@ -26,6 +26,9 @@ export const recentSectionTableContainer = style({
   marginLeft: calc.negate(spacing.md),
   marginRight: calc.negate(spacing.md),
   width: calc.add('100%', calc.multiply(2, spacing.md)),
+  borderTopWidth: 1,
+  borderTopStyle: 'solid',
+  borderTopColor: colors.gray3,
 });
 
 export const gettingStartedCards = style([

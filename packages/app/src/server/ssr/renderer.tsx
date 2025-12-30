@@ -30,7 +30,7 @@ export const renderer = ({
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
   const faviconPath =
-    basePath === '/' ? '/assets/favicon.ico' : basePath + '/assets/favicon.ico';
+    basePath === '/' ? '/favicon.ico' : basePath + '/assets/favicon.ico';
 
   const entryCSSFiles =
     Object.keys(manifest)

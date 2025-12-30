@@ -21,6 +21,7 @@ const { app } = createApp({
     defaultUser: 'admin@llmops.local',
     defaultPassword: 'password',
   },
+  autoMigrate: true,
 });
 
 export default app;

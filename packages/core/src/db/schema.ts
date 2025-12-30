@@ -72,6 +72,12 @@ export const targetingRulesSchema = z.object({
   conditions: z.record(z.string(), z.unknown()).default({}), // JSONLogic conditions for advanced targeting
 });
 
+// Workspace settings table schema (single-tenant settings)
+export const workspaceSettingsSchema = z.object({
+  ...baseSchema,
+  name: z.string().nullable().optional(), // Workspace display name
+});
+
 /**
  * Zod inferred types (for runtime validation)
  */
@@ -82,6 +88,7 @@ export type Environment = z.infer<typeof environmentsSchema>;
 export type EnvironmentSecret = z.infer<typeof environmentSecretsSchema>;
 export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
+export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -147,6 +154,11 @@ export interface TargetingRulesTable extends BaseTable {
   conditions: ColumnType<Record<string, unknown>, string, string>;
 }
 
+// Workspace settings table (single-tenant settings)
+export interface WorkspaceSettingsTable extends BaseTable {
+  name: string | null;
+}
+
 /**
  * Main Kysely Database interface
  */
@@ -158,6 +170,7 @@ export interface Database {
   environment_secrets: EnvironmentSecretsTable;
   config_variants: ConfigVariantsTable;
   targeting_rules: TargetingRulesTable;
+  workspace_settings: WorkspaceSettingsTable;
 }
 
 /**
@@ -323,6 +336,16 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
+    workspace_settings: {
+      order: 8,
+      schema: workspaceSettingsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text', nullable: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
   },
 } as const;
 
@@ -337,4 +360,5 @@ export const schemas = {
   environment_secrets: environmentSecretsSchema,
   config_variants: configVariantsSchema,
   targeting_rules: targetingRulesSchema,
+  workspace_settings: workspaceSettingsSchema,
 } as const;
