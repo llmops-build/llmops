@@ -1,0 +1,55 @@
+---
+title: Environments
+description: Manage deployment stages for your LLM configurations.
+icon: Globe
+---
+
+Environments represent deployment stages where your LLM configurations run. Common examples include production, staging, and development.
+
+## Overview
+
+Each environment:
+
+- Has a unique name
+- Contains one secret for API authentication that can be rotated.
+- Can serve different variant configurations than other environments
+
+This allows you to safely test new model configurations in staging before promoting them to production.
+
+## Creating an Environment
+
+Navigate to the **Environments** section in the LLMOps dashboard to create a new environment.
+
+Give your environment a unique name (e.g., "Production", "Staging", "Development").
+
+## Environment Secrets
+
+Each environment has associated **secrets** that authenticate API requests. Think of them as API keys for that specific environment.
+
+When making an API request, include the environment secret in the `x-llmops-environment` header:
+
+```bash
+curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-llmops-config: your-config-id" \
+  -H "x-llmops-environment: your-environment-secret" \
+  -d '{"messages": [{"role": "user", "content": "Hello!"}]}'
+```
+
+## Production Environment
+
+One environment is marked as the **production** environment. This is the default environment used when no `x-llmops-environment` header is provided.
+
+This allows client-side applications to make requests without exposing environment secrets, while still routing to the correct configuration.
+
+## Example Setup
+
+A typical setup might include:
+
+| Environment     | Purpose                                     |
+| --------------- | ------------------------------------------- |
+| **Production**  | Stable, tested configurations for end users |
+| **Staging**     | Pre-release testing before production       |
+| **Development** | Experimental configurations for developers  |
+
+Each environment can serve different [variants](/docs/handbook/variants) of the same [config](/docs/handbook/configs), allowing you to test changes safely before they reach production.

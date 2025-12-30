@@ -1,0 +1,83 @@
+---
+title: Configs
+description: Named configuration endpoints for your LLM use cases.
+icon: FileCode
+---
+
+A Config represents a named configuration endpoint that can be referenced in API calls. Think of it as a specific LLM use case you want to manage, like "Customer Support Bot" or "Code Review Assistant".
+
+## Overview
+
+Each config:
+
+- Has a unique name and auto-generated config id.
+- Can have multiple [variants](/docs/handbook/variants) attached
+- Is referenced in API calls via the `x-llmops-config` header
+
+## Creating a Config
+
+Navigate to the **Configs** section in the LLMOps dashboard to create a new config.
+
+Each config has:
+
+| Property | Description                                                  |
+| -------- | ------------------------------------------------------------ |
+| **Name** | Human-readable name (e.g., "Customer Support Bot")           |
+| **Slug** | Auto-generated short ID (e.g., `xK9mP2nQ`) used in API calls |
+
+## Using Configs in API Calls
+
+Reference your config using the `x-llmops-config` header:
+
+```bash
+curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-llmops-config: xK9mP2nQ" \
+  -d '{"messages": [{"role": "user", "content": "Hello!"}]}'
+```
+
+You can use either the config's UUID or its short slug.
+
+## With the OpenAI SDK
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai',
+  apiKey: '', // Not needed for same-origin requests
+  defaultHeaders: {
+    'x-llmops-config': 'xK9mP2nQ',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o-mini', // Can be overridden by variant
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+```
+
+## Config Variants
+
+A config can have multiple [variants](/docs/handbook/variants) attached. Each variant represents a different model configuration (provider, model, parameters, system prompt).
+
+Different [environments](/docs/handbook/environments) can serve different variants of the same config:
+
+| Environment | Variant                     |
+| ----------- | --------------------------- |
+| Production  | GPT-4 Turbo (stable)        |
+| Staging     | Claude 3.5 Sonnet (testing) |
+| Development | Ollama Llama 3 (local)      |
+
+This allows you to test new model configurations safely before promoting them to production.
+
+## Example Use Cases
+
+| Config Name           | Description                                |
+| --------------------- | ------------------------------------------ |
+| Customer Support Bot  | Handles user inquiries with a helpful tone |
+| Code Review Assistant | Reviews code and suggests improvements     |
+| Content Summarizer    | Summarizes long documents                  |
+| Translation Service   | Translates text between languages          |
+
+Each of these could have multiple variants with different models, parameters, or system prompts depending on the environment.

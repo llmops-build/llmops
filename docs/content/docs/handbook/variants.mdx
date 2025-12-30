@@ -1,0 +1,94 @@
+---
+title: Variants
+description: Model configurations with versioning and rollback support.
+icon: GitBranch
+---
+
+A Variant is a specific model configuration that can be attached to [configs](/docs/handbook/configs). Variants contain the actual LLM settings: provider, model, parameters, and system prompt.
+
+## Overview
+
+Each variant:
+
+- Has a name for easy identification
+- Contains model configuration (provider, model, parameters)
+- Automatically creates versions when edited
+- Can be attached to multiple configs
+
+## Creating a Variant
+
+When creating or editing a variant, you configure:
+
+| Property          | Description                                               |
+| ----------------- | --------------------------------------------------------- |
+| **Name**          | Human-readable name (e.g., "GPT-4 Turbo - Helpful")       |
+| **Provider**      | The LLM provider (e.g., OpenAI, Anthropic)                |
+| **Model**         | The model to use (e.g., `gpt-4-turbo`, `claude-3-sonnet`) |
+| **System Prompt** | Instructions that define the assistant's behavior         |
+| **Parameters**    | Model parameters like temperature, max tokens, etc.       |
+
+## Model Parameters
+
+| Parameter             | Description                                                       | Range           |
+| --------------------- | ----------------------------------------------------------------- | --------------- |
+| **Temperature**       | Controls randomness. Lower = more focused, higher = more creative | 0 - 2           |
+| **Max Tokens**        | Maximum length of the response                                    | Varies by model |
+| **Top P**             | Nucleus sampling. Alternative to temperature                      | 0 - 1           |
+| **Frequency Penalty** | Reduces repetition of tokens                                      | -2 - 2          |
+| **Presence Penalty**  | Encourages new topics                                             | -2 - 2          |
+
+## Versioning
+
+Every time you edit a variant, a new **version** is created. This provides:
+
+- **Audit Trail**: See exactly what configuration was used at any point in time
+- **Safe Rollbacks**: Revert to a previous version if issues arise
+- **Version Pinning**: Production can use a specific version while staging tests newer versions
+
+### Version Pinning vs Latest
+
+When targeting a variant to an [environment](/docs/handbook/environments):
+
+| Mode               | Behavior                                                                 |
+| ------------------ | ------------------------------------------------------------------------ |
+| **Pinned Version** | Always serves the specified version (recommended for production)         |
+| **Latest**         | Automatically serves the newest version (useful for staging/development) |
+
+## Example Workflow
+
+1. **Create a variant** with your initial configuration
+   - Provider: OpenAI
+   - Model: gpt-4-turbo
+   - System Prompt: "You are a helpful assistant..."
+   - Temperature: 0.7
+   - _Creates Version 1_
+
+2. **Attach to a config** and set up targeting rules
+   - Production → Version 1 (pinned)
+   - Staging → Latest
+
+3. **Iterate on the variant**
+   - Update the system prompt
+   - _Creates Version 2_
+   - Staging automatically uses Version 2
+   - Production still uses Version 1
+
+4. **Promote to production**
+   - After testing in staging, update production targeting to Version 2
+
+## Multiple Variants per Config
+
+A single config can have multiple variants attached. This enables:
+
+- **A/B Testing**: Compare different model configurations
+- **Gradual Rollouts**: Slowly shift traffic to new configurations
+- **Fallback Options**: Use a backup variant if the primary fails
+
+## Example Variants
+
+| Variant Name          | Provider  | Model           | Use Case                        |
+| --------------------- | --------- | --------------- | ------------------------------- |
+| GPT-4 Turbo - Helpful | OpenAI    | gpt-4-turbo     | General assistance              |
+| Claude 3 - Concise    | Anthropic | claude-3-sonnet | Brief responses                 |
+| Llama 3 - Local       | Ollama    | llama3          | Development/testing             |
+| GPT-4o Mini - Fast    | OpenAI    | gpt-4o-mini     | Quick, cost-effective responses |

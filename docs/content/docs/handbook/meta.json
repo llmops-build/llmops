@@ -1,0 +1,6 @@
+{
+  "title": "Product Handbook",
+  "icon": "Book",
+  "defaultOpen": false,
+  "pages": ["environments", "configs", "variants"]
+}
