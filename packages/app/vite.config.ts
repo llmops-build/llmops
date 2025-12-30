@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { defineConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
 import { nodeAdapter } from '@hono/vite-dev-server/node';
 
 import svgr from 'vite-plugin-svgr';
@@ -74,7 +74,7 @@ const commonPlugins = [
   vanillaExtractPlugin(),
 ];
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode }): UserConfig => {
   if (mode === 'production') {
     return {
       base: './',
@@ -119,5 +119,5 @@ export default defineConfig(({ mode }) => {
       }),
       ...commonPlugins,
     ],
-  };
+  } as UserConfig;
 });
