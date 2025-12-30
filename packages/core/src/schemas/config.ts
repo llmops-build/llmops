@@ -46,7 +46,6 @@ const providersSchema = providersObjectSchema.refine(
  *
  * Uses a flexible schema with passthrough to allow different auth providers.
  * - Open source: basicAuth() from @llmops/sdk (type: 'basic')
- * - Enterprise: enterpriseAuth() from @llmops/enterprise (type: 'better-auth', etc.)
  *
  * The actual auth handling is done by the auth middleware based on the type.
  */
