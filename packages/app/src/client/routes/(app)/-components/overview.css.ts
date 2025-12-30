@@ -86,7 +86,16 @@ export const baseUrlBox = style({
   display: 'flex',
   alignItems: 'center',
   gap: spacing.xs,
+  marginRight: spacing.sm,
 });
+
+export const baseUrlLabel = style([
+  sprinkles({
+    fontSize: 'xs',
+    color: 'gray9',
+    fontFamily: 'mono',
+  }),
+]);
 
 export const baseUrlText = style({
   fontFamily: 'monospace',

@@ -43,6 +43,7 @@ import {
   sectionContainer,
   sectionTitle,
   baseUrlBox,
+  baseUrlLabel,
   baseUrlText,
   baseUrlCopyButton,
 } from './-components/overview.css';
@@ -131,6 +132,7 @@ function RouteComponent() {
         </div>
         <div className={headerGroup}>
           <div className={baseUrlBox}>
+            <span className={baseUrlLabel}>Base URL</span>
             <span className={baseUrlText}>{baseUrl}</span>
             <button
               type="button"
