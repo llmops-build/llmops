@@ -24,6 +24,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 import { useQueryClient } from '@tanstack/react-query';
 import { configByIdQueryOptions } from '@client/hooks/queries/useConfigById';
+import EmptyConfigsState from './empty-configs-state';
 
 type Config = {
   id: string;
@@ -89,6 +90,10 @@ export function ConfigsDataTable() {
       },
     },
   });
+
+  if (!data || data.length === 0) {
+    return <EmptyConfigsState />;
+  }
 
   return (
     <div>
