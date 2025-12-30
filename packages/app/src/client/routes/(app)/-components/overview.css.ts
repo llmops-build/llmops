@@ -81,3 +81,34 @@ export const sectionTitle = style([
     color: colors.gray12,
   },
 ]);
+
+export const baseUrlBox = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.xs,
+});
+
+export const baseUrlText = style({
+  fontFamily: 'monospace',
+  fontSize: '0.75rem',
+  color: colors.gray11,
+  backgroundColor: colors.gray3,
+  padding: `${spacing.xs} ${spacing.sm}`,
+  borderRadius: spacing.xs,
+});
+
+export const baseUrlCopyButton = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: spacing.xs,
+  border: 'none',
+  backgroundColor: 'transparent',
+  color: colors.gray9,
+  cursor: 'pointer',
+  borderRadius: spacing.xs,
+  ':hover': {
+    backgroundColor: colors.gray4,
+    color: colors.gray12,
+  },
+});

@@ -21,7 +21,14 @@ import {
   TableCell,
 } from '@ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
-import { Blocks, ChevronRight, Columns2, SlidersVertical } from 'lucide-react';
+import {
+  Blocks,
+  Check,
+  ChevronRight,
+  Columns2,
+  Copy,
+  SlidersVertical,
+} from 'lucide-react';
 import { Icon } from '@client/components/icons';
 import { Link } from '@tanstack/react-router';
 import { gridElement, workingArea } from './-components/area.css';
@@ -35,9 +42,14 @@ import {
   recentSectionTableContainer,
   sectionContainer,
   sectionTitle,
+  baseUrlBox,
+  baseUrlText,
+  baseUrlCopyButton,
 } from './-components/overview.css';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 import { formatDistance } from 'date-fns';
+
+import { useState } from 'react';
 
 export const Route = createFileRoute('/(app)/')({
   component: RouteComponent,
@@ -54,6 +66,18 @@ function RouteComponent() {
   const matches = useMatches();
   const navigate = useNavigate();
   const { data: configs } = useConfigList();
+  const [copied, setCopied] = useState(false);
+
+  const baseUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/api/genai/v1`
+      : '/api/genai/v1';
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(baseUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const recentConfigs = configs
     ?.slice()
@@ -105,7 +129,19 @@ function RouteComponent() {
           <Icon icon={ChevronRight} className={chevronStyle} />
           <Breadcrumbs items={breadcrumbItems} />
         </div>
-        <div className={headerGroup}></div>
+        <div className={headerGroup}>
+          <div className={baseUrlBox}>
+            <span className={baseUrlText}>{baseUrl}</span>
+            <button
+              type="button"
+              className={baseUrlCopyButton}
+              onClick={copyToClipboard}
+              aria-label="Copy base URL"
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </div>
+        </div>
       </Header>
       <div className={gridElement}>
         <div className={clsx(workingArea, overviewContainer)}>
