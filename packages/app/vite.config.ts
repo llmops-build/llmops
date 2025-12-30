@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { defineConfig } from 'vite';
 import { nodeAdapter } from '@hono/vite-dev-server/node';
 
@@ -8,6 +9,42 @@ import devServer, { defaultOptions } from '@hono/vite-dev-server';
 import react from '@vitejs/plugin-react';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
+
+function copyPublicToAssets() {
+  return {
+    name: 'copy-public-to-assets',
+    apply: 'build' as const,
+    writeBundle(options: { dir?: string }) {
+      const publicDir = path.resolve(__dirname, 'public');
+      const outDir = options.dir || path.resolve(__dirname, 'dist');
+      const assetsDir = path.resolve(outDir, 'assets');
+
+      if (!fs.existsSync(publicDir)) return;
+
+      if (!fs.existsSync(assetsDir)) {
+        fs.mkdirSync(assetsDir, { recursive: true });
+      }
+
+      const copyRecursive = (src: string, dest: string) => {
+        const stats = fs.statSync(src);
+        if (stats.isDirectory()) {
+          if (!fs.existsSync(dest)) {
+            fs.mkdirSync(dest, { recursive: true });
+          }
+          for (const file of fs.readdirSync(src)) {
+            copyRecursive(path.join(src, file), path.join(dest, file));
+          }
+        } else {
+          fs.copyFileSync(src, dest);
+        }
+      };
+
+      for (const file of fs.readdirSync(publicDir)) {
+        copyRecursive(path.join(publicDir, file), path.join(assetsDir, file));
+      }
+    },
+  };
+}
 
 const alias = {
   '@': path.resolve(__dirname, './src'),
@@ -41,6 +78,7 @@ export default defineConfig(({ mode }) => {
   if (mode === 'production') {
     return {
       base: './',
+      publicDir: false,
       resolve: {
         alias,
       },
@@ -53,7 +91,7 @@ export default defineConfig(({ mode }) => {
           input: ['./src/client/index.tsx', './src/client/styles/styles.css'],
         },
       },
-      plugins: commonPlugins,
+      plugins: [...commonPlugins, copyPublicToAssets()],
     };
   }
 

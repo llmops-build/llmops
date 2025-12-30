@@ -29,6 +29,8 @@ export const renderer = ({
 }) => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
+  const faviconPath =
+    basePath === '/' ? '/assets/favicon.ico' : basePath + '/assets/favicon.ico';
 
   const entryCSSFiles =
     Object.keys(manifest)
@@ -55,6 +57,7 @@ export const renderer = ({
           href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href={faviconPath} type="image/x-icon" />
         <style>{`
           /*! modern-normalize v3.0.1 | MIT License | https://github.com/sindresorhus/modern-normalize */
 
