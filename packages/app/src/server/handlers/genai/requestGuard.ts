@@ -28,12 +28,15 @@ export const createRequestGuardMiddleware = (): MiddlewareHandler => {
           }
         }
 
-        c.set('configId', headers['data']['x-llmops-config'])
-        c.set('envSec', headers['data']['x-llmops-environment'])
+        c.set('configId', headers['data']['x-llmops-config']);
+        c.set('envSec', headers['data']['x-llmops-environment']);
 
         await next();
       } else {
         // Environment ID present - allow cross-origin requests via CORS
+        c.set('configId', headers['data']['x-llmops-config']);
+        c.set('envSec', headers['data']['x-llmops-environment']);
+
         const corsMiddleware = cors({
           origin: '*',
           allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
