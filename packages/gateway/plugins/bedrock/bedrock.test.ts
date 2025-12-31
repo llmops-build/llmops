@@ -1,3 +1,4 @@
+import { describe, it, test, expect } from 'vitest';
 import { HookEventType, PluginContext, PluginParameters } from '../types';
 import { pluginHandler } from './index';
 import testCreds from './.creds.json';

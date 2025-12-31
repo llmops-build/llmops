@@ -1,8 +1,7 @@
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { ResponseService } from '../../../../../src/handlers/services/responseService';
 import { RequestContext } from '../../../../../src/handlers/services/requestContext';
-import { ProviderContext } from '../../../../../src/handlers/services/providerContext';
 import { HooksService } from '../../../../../src/handlers/services/hooksService';
-import { LogsService } from '../../../../../src/handlers/services/logsService';
 import { responseHandler } from '../../../../../src/handlers/responseHandlers';
 import { getRuntimeKey } from 'hono/adapter';
 import {
@@ -12,14 +11,12 @@ import {
 } from '../../../../../src/globals';
 
 // Mock dependencies
-jest.mock('../../responseHandlers');
-jest.mock('hono/adapter');
+vi.mock('../../../../../src/handlers/responseHandlers');
+vi.mock('hono/adapter');
 
 describe('ResponseService', () => {
   let mockRequestContext: RequestContext;
-  let mockProviderContext: ProviderContext;
   let mockHooksService: HooksService;
-  let mockLogsService: LogsService;
   let responseService: ResponseService;
 
   beforeEach(() => {
@@ -27,6 +24,7 @@ describe('ResponseService', () => {
       index: 0,
       traceId: 'trace-123',
       provider: 'openai',
+      providerOption: { provider: 'openai' },
       isStreaming: false,
       params: { model: 'gpt-4', messages: [] },
       strictOpenAiCompliance: true,
@@ -36,24 +34,16 @@ describe('ResponseService', () => {
       },
     } as unknown as RequestContext;
 
-    mockProviderContext = {} as ProviderContext;
-
     mockHooksService = {
       areSyncHooksAvailable: false,
+      hookSpan: { id: 'hook-span-123' },
     } as unknown as HooksService;
 
-    mockLogsService = {} as LogsService;
-
-    responseService = new ResponseService(
-      mockRequestContext,
-      mockProviderContext,
-      mockHooksService,
-      mockLogsService
-    );
+    responseService = new ResponseService(mockRequestContext, mockHooksService);
 
     // Reset mocks
-    jest.clearAllMocks();
-    (getRuntimeKey as jest.Mock).mockReturnValue('node');
+    vi.clearAllMocks();
+    (getRuntimeKey as Mock).mockReturnValue('node');
   });
 
   describe('create', () => {
@@ -113,7 +103,7 @@ describe('ResponseService', () => {
       const originalJson = { original: true };
       const responseJson = { response: true };
 
-      (responseHandler as jest.Mock).mockResolvedValue({
+      (responseHandler as Mock).mockResolvedValue({
         response: mappedResponse,
         originalResponseJson: originalJson,
         responseJson: responseJson,
@@ -134,16 +124,18 @@ describe('ResponseService', () => {
       const result = await responseService.create(options);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         false,
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
 
       expect(result.response).toEqual(mockResponse);
@@ -164,7 +156,7 @@ describe('ResponseService', () => {
         retryAttempt: 0,
       };
 
-      (responseHandler as jest.Mock).mockResolvedValue({
+      (responseHandler as Mock).mockResolvedValue({
         response: mockResponse,
         originalResponseJson: null,
         responseJson: null,
@@ -173,16 +165,18 @@ describe('ResponseService', () => {
       const result = await responseService.create(options);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         true, // isCacheHit should be true
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
 
       expect(mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)).toBe(
@@ -262,9 +256,7 @@ describe('ResponseService', () => {
 
       const serviceWithPortkey = new ResponseService(
         contextWithPortkey,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       const options = {
@@ -294,7 +286,7 @@ describe('ResponseService', () => {
         responseJson: { response: true },
       };
 
-      (responseHandler as jest.Mock).mockResolvedValue(expectedResult);
+      (responseHandler as Mock).mockResolvedValue(expectedResult);
 
       const result = await responseService.getResponse(
         mockResponse,
@@ -303,16 +295,18 @@ describe('ResponseService', () => {
       );
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         false,
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
 
       expect(result).toBe(expectedResult);
@@ -326,13 +320,11 @@ describe('ResponseService', () => {
 
       const streamingService = new ResponseService(
         streamingContext,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       const mockResponse = new Response('{}');
-      (responseHandler as jest.Mock).mockResolvedValue({
+      (responseHandler as Mock).mockResolvedValue({
         response: mockResponse,
         originalResponseJson: null,
         responseJson: null,
@@ -341,22 +333,24 @@ describe('ResponseService', () => {
       await streamingService.getResponse(mockResponse, 'chatComplete', false);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        streamingContext.honoContext,
         mockResponse,
         true, // isStreaming should be true
-        streamingContext.provider,
+        streamingContext.providerOption,
         'chatComplete',
         streamingContext.requestURL,
         false,
         streamingContext.params,
         streamingContext.strictOpenAiCompliance,
         streamingContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
     });
 
     it('should handle cache hit scenario', async () => {
       const mockResponse = new Response('{}');
-      (responseHandler as jest.Mock).mockResolvedValue({
+      (responseHandler as Mock).mockResolvedValue({
         response: mockResponse,
         originalResponseJson: null,
         responseJson: null,
@@ -365,16 +359,18 @@ describe('ResponseService', () => {
       await responseService.getResponse(mockResponse, 'chatComplete', true);
 
       expect(responseHandler).toHaveBeenCalledWith(
+        mockRequestContext.honoContext,
         mockResponse,
         mockRequestContext.isStreaming,
-        mockRequestContext.provider,
+        mockRequestContext.providerOption,
         'chatComplete',
         mockRequestContext.requestURL,
         true, // isCacheHit should be true
         mockRequestContext.params,
         mockRequestContext.strictOpenAiCompliance,
         mockRequestContext.honoContext.req.url,
-        mockHooksService.areSyncHooksAvailable
+        mockHooksService.areSyncHooksAvailable,
+        'hook-span-123'
       );
     });
   });
@@ -424,7 +420,7 @@ describe('ResponseService', () => {
     });
 
     it('should remove content-encoding for node runtime', () => {
-      (getRuntimeKey as jest.Mock).mockReturnValue('node');
+      (getRuntimeKey as Mock).mockReturnValue('node');
       const response = new Response('{}', {
         headers: { 'content-encoding': 'gzip' },
       });
@@ -435,7 +431,7 @@ describe('ResponseService', () => {
     });
 
     it('should keep content-encoding for non-brotli, non-node', () => {
-      (getRuntimeKey as jest.Mock).mockReturnValue('workerd');
+      (getRuntimeKey as Mock).mockReturnValue('workerd');
       const response = new Response('{}', {
         headers: { 'content-encoding': 'gzip' },
       });
@@ -461,9 +457,7 @@ describe('ResponseService', () => {
 
       const serviceWithPortkey = new ResponseService(
         contextWithPortkey,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
@@ -479,9 +473,7 @@ describe('ResponseService', () => {
 
       const serviceWithEmptyProvider = new ResponseService(
         contextWithEmptyProvider,
-        mockProviderContext,
-        mockHooksService,
-        mockLogsService
+        mockHooksService
       );
 
       serviceWithEmptyProvider.updateHeaders(mockResponse, 'MISS', 0);

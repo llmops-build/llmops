@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { Context } from 'hono';
 import {
   LogsService,
@@ -13,8 +14,8 @@ describe('LogsService', () => {
 
   beforeEach(() => {
     mockContext = {
-      get: jest.fn(),
-      set: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
     } as unknown as Context;
 
     logsService = new LogsService(mockContext);
@@ -22,7 +23,7 @@ describe('LogsService', () => {
 
   // Mock crypto for Node.js environment
   const mockCrypto = {
-    randomUUID: jest.fn(() => 'mock-uuid-123'),
+    randomUUID: vi.fn(() => 'mock-uuid-123'),
   };
   (global as any).crypto = mockCrypto;
 
@@ -262,14 +263,14 @@ describe('LogsService', () => {
   describe('requestLogs getter', () => {
     it('should return logs from context', () => {
       const mockLogs = [{ id: 'log1' }, { id: 'log2' }];
-      (mockContext.get as jest.Mock).mockReturnValue(mockLogs);
+      (mockContext.get as Mock).mockReturnValue(mockLogs);
 
       expect(logsService.requestLogs).toBe(mockLogs);
       expect(mockContext.get).toHaveBeenCalledWith('requestOptions');
     });
 
     it('should return empty array when no logs in context', () => {
-      (mockContext.get as jest.Mock).mockReturnValue(undefined);
+      (mockContext.get as Mock).mockReturnValue(undefined);
 
       expect(logsService.requestLogs).toEqual([]);
     });
@@ -279,7 +280,7 @@ describe('LogsService', () => {
     it('should add log to existing logs', () => {
       const existingLogs = [{ id: 'log1' }];
       const newLog = { id: 'log2' };
-      (mockContext.get as jest.Mock).mockReturnValue(existingLogs);
+      (mockContext.get as Mock).mockReturnValue(existingLogs);
 
       logsService.addRequestLog(newLog);
 
@@ -291,7 +292,7 @@ describe('LogsService', () => {
 
     it('should add log when no existing logs', () => {
       const newLog = { id: 'log1' };
-      (mockContext.get as jest.Mock).mockReturnValue([]);
+      (mockContext.get as Mock).mockReturnValue([]);
 
       logsService.addRequestLog(newLog);
 
@@ -309,7 +310,7 @@ describe('LogObjectBuilder', () => {
 
   beforeEach(() => {
     mockLogsService = {
-      addRequestLog: jest.fn(),
+      addRequestLog: vi.fn(),
     } as unknown as LogsService;
 
     mockRequestContext = {
@@ -441,7 +442,7 @@ describe('LogObjectBuilder', () => {
       const createdAt = new Date('2024-01-01T00:00:00Z');
       const currentTime = Date.now();
       const originalDateNow = Date.now;
-      Date.now = jest.fn(() => currentTime);
+      Date.now = vi.fn(() => currentTime);
 
       const result = logObjectBuilder.addExecutionTime(createdAt);
 
@@ -614,7 +615,7 @@ describe('LogObjectBuilder', () => {
 
   describe('Symbol.dispose', () => {
     it('should call commit when disposed', () => {
-      const commitSpy = jest.spyOn(logObjectBuilder, 'commit');
+      const commitSpy = vi.spyOn(logObjectBuilder, 'commit');
 
       logObjectBuilder[Symbol.dispose]();
 

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import testCreds from './.creds.json';
 import { handler as acuvityHandler } from './scan';
 
@@ -306,7 +307,7 @@ describe('acuvity handler', () => {
         'Missing expected structure. Received:',
         result.transformedData
       );
-      fail('Expected messages array to be defined');
+      expect.fail('Expected messages array to be defined');
     }
   });
 
@@ -353,7 +354,7 @@ describe('acuvity handler', () => {
         'Missing expected structure. Received:',
         result.transformedData
       );
-      fail('Expected messages array to be defined');
+      expect.fail('Expected messages array to be defined');
     }
   });
 
@@ -399,7 +400,7 @@ describe('acuvity handler', () => {
         'Missing expected structure. Received:',
         result.transformedData
       );
-      fail('Expected messages array to be defined');
+      expect.fail('Expected messages array to be defined');
     }
   });
 
@@ -451,7 +452,7 @@ describe('acuvity handler', () => {
         'Missing expected structure. Received:',
         result.transformedData
       );
-      fail('Expected messages array to be defined');
+      expect.fail('Expected messages array to be defined');
     }
   });
 
@@ -504,7 +505,7 @@ describe('acuvity handler', () => {
         'Missing expected structure. Received:',
         result.transformedData
       );
-      fail('Expected messages array to be defined');
+      expect.fail('Expected messages array to be defined');
     }
   });
 

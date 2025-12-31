@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { Context } from 'hono';
 import { RequestContext } from '../../../../../src/handlers/services/requestContext';
 import { Options, Params } from '../../../../../src/types/requestBody';
@@ -7,8 +8,8 @@ import { HooksManager } from '../../../../../src/middlewares/hooks';
 import { HookType } from '../../../../../src/middlewares/hooks/types';
 
 // Mock the transformToProviderRequest function
-jest.mock('../../../services/transformToProviderRequest', () => ({
-  transformToProviderRequest: jest.fn().mockReturnValue({ transformed: true }),
+vi.mock('../../../services/transformToProviderRequest', () => ({
+  transformToProviderRequest: vi.fn().mockReturnValue({ transformed: true }),
 }));
 
 describe('RequestContext', () => {
@@ -20,8 +21,8 @@ describe('RequestContext', () => {
 
   beforeEach(() => {
     mockContext = {
-      get: jest.fn(),
-      set: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
     } as unknown as Context;
 
     mockProviderOption = {
@@ -712,7 +713,7 @@ describe('RequestContext', () => {
   describe('hooksManager getter', () => {
     it('should return hooks manager from context', () => {
       const mockHooksManager = {} as HooksManager;
-      (mockContext.get as jest.Mock).mockReturnValue(mockHooksManager);
+      (mockContext.get as Mock).mockReturnValue(mockHooksManager);
 
       expect(requestContext.hooksManager).toBe(mockHooksManager);
       expect(mockContext.get).toHaveBeenCalledWith('hooksManager');
@@ -764,14 +765,14 @@ describe('RequestContext', () => {
   describe('requestOptions getter/setter', () => {
     it('should get request options from context', () => {
       const mockOptions = [{ option1: 'value1' }];
-      (mockContext.get as jest.Mock).mockReturnValue(mockOptions);
+      (mockContext.get as Mock).mockReturnValue(mockOptions);
 
       expect(requestContext.requestOptions).toBe(mockOptions);
       expect(mockContext.get).toHaveBeenCalledWith('requestOptions');
     });
 
     it('should return empty array when no options', () => {
-      (mockContext.get as jest.Mock).mockReturnValue(undefined);
+      (mockContext.get as Mock).mockReturnValue(undefined);
 
       expect(requestContext.requestOptions).toEqual([]);
     });
@@ -781,7 +782,7 @@ describe('RequestContext', () => {
     it('should append request options to existing options', () => {
       const existingOptions = [{ option1: 'value1' }];
       const newOption = { option2: 'value2' };
-      (mockContext.get as jest.Mock).mockReturnValue(existingOptions);
+      (mockContext.get as Mock).mockReturnValue(existingOptions);
 
       requestContext.appendRequestOptions(newOption);
 
@@ -793,7 +794,7 @@ describe('RequestContext', () => {
 
     it('should append to empty options array', () => {
       const newOption = { option1: 'value1' };
-      (mockContext.get as jest.Mock).mockReturnValue([]);
+      (mockContext.get as Mock).mockReturnValue([]);
 
       requestContext.appendRequestOptions(newOption);
 

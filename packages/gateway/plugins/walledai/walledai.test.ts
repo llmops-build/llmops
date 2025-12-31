@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { handler } from './walledprotect';
 import testCredsFile from './creds.json';
 import { HookEventType, PluginContext, PluginParameters } from '../types';

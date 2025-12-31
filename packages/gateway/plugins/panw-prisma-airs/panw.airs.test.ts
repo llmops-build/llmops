@@ -1,13 +1,18 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import type { MockedFunction } from 'vitest';
 import { handler as panwPrismaAirsHandler } from './intercept';
 
 // Mock the utils module
-jest.mock('../utils', () => ({
-  ...jest.requireActual('../utils'),
-  post: jest.fn(),
-}));
+vi.mock('../utils', async () => {
+  const actual = await vi.importActual('../utils');
+  return {
+    ...actual,
+    post: vi.fn(),
+  };
+});
 
 import * as utils from '../utils';
-const mockPost = utils.post as jest.MockedFunction<typeof utils.post>;
+const mockPost = utils.post as MockedFunction<typeof utils.post>;
 
 describe('PANW Prisma AIRS Guardrail', () => {
   const mockContext = {

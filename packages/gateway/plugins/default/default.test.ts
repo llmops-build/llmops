@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { handler as regexMatchHandler } from './regexMatch';
 import { handler as jsonSchemaHandler } from './jsonSchema';
 import { handler as jsonKeysHandler } from './jsonKeys';

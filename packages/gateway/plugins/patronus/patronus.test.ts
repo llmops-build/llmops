@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import testCreds from './.creds.json';
 import { handler as phiHandler } from './phi';
 import { handler as piiHandler } from './pii';

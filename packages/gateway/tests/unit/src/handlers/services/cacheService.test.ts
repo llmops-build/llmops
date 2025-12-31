@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, Mocked, Mock } from 'vitest';
 import { Context } from 'hono';
 import { CacheService } from '../../../../../src/handlers/services/cacheService';
 import { HooksService } from '../../../../../src/handlers/services/hooksService';
@@ -5,22 +6,22 @@ import { RequestContext } from '../../../../../src/handlers/services/requestCont
 import { endpointStrings } from '../../../../../src/providers/types';
 
 // Mock HooksService
-jest.mock('../hooksService');
+vi.mock('../hooksService');
 
 // Mock env function
-jest.mock('hono/adapter', () => ({
-  env: jest.fn(() => ({})),
+vi.mock('hono/adapter', () => ({
+  env: vi.fn(() => ({})),
 }));
 
 describe('CacheService', () => {
   let mockContext: Context;
-  let mockHooksService: jest.Mocked<HooksService>;
+  let mockHooksService: Mocked<HooksService>;
   let mockRequestContext: RequestContext;
   let cacheService: CacheService;
 
   beforeEach(() => {
     mockContext = {
-      get: jest.fn().mockReturnValue(undefined),
+      get: vi.fn().mockReturnValue(undefined),
     } as unknown as Context;
 
     mockHooksService = {
@@ -28,8 +29,8 @@ describe('CacheService', () => {
         beforeRequestHooksResult: [],
         afterRequestHooksResult: [],
       },
-      hasFailedHooks: jest.fn(),
-    } as unknown as jest.Mocked<HooksService>;
+      hasFailedHooks: vi.fn(),
+    } as unknown as Mocked<HooksService>;
 
     mockRequestContext = {
       endpoint: 'chatComplete' as endpointStrings,
@@ -72,15 +73,15 @@ describe('CacheService', () => {
 
   describe('getFromCacheFunction', () => {
     it('should return cache function from context', () => {
-      const mockCacheFunction = jest.fn();
-      (mockContext.get as jest.Mock).mockReturnValue(mockCacheFunction);
+      const mockCacheFunction = vi.fn();
+      (mockContext.get as Mock).mockReturnValue(mockCacheFunction);
 
       expect(cacheService.getFromCacheFunction).toBe(mockCacheFunction);
       expect(mockContext.get).toHaveBeenCalledWith('getFromCache');
     });
 
     it('should return undefined if no cache function', () => {
-      (mockContext.get as jest.Mock).mockReturnValue(undefined);
+      (mockContext.get as Mock).mockReturnValue(undefined);
 
       expect(cacheService.getFromCacheFunction).toBeUndefined();
     });
@@ -89,7 +90,7 @@ describe('CacheService', () => {
   describe('getCacheIdentifier', () => {
     it('should return cache identifier from context', () => {
       const mockIdentifier = 'cache-id-123';
-      (mockContext.get as jest.Mock).mockReturnValue(mockIdentifier);
+      (mockContext.get as Mock).mockReturnValue(mockIdentifier);
 
       expect(cacheService.getCacheIdentifier).toBe(mockIdentifier);
       expect(mockContext.get).toHaveBeenCalledWith('cacheIdentifier');
@@ -111,7 +112,7 @@ describe('CacheService', () => {
 
   describe('getCachedResponse', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('should return no-cache object for non-cacheable endpoints', async () => {
@@ -131,7 +132,7 @@ describe('CacheService', () => {
     });
 
     it('should return no-cache object when cache function is not available', async () => {
-      (mockContext.get as jest.Mock).mockReturnValue(undefined);
+      (mockContext.get as Mock).mockReturnValue(undefined);
 
       const result = await cacheService.getCachedResponse(
         mockRequestContext,
@@ -163,14 +164,14 @@ describe('CacheService', () => {
     });
 
     it('should return cache response when cache hit', async () => {
-      const mockCacheFunction = jest
+      const mockCacheFunction = vi
         .fn()
         .mockResolvedValue([
           '{"choices": [{"message": {"content": "cached response"}}]}',
           'HIT',
           'cache-key-123',
         ]);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;
@@ -188,10 +189,10 @@ describe('CacheService', () => {
     });
 
     it('should return cache miss when no cached response', async () => {
-      const mockCacheFunction = jest
+      const mockCacheFunction = vi
         .fn()
         .mockResolvedValue([null, 'MISS', 'cache-key-123']);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;
@@ -221,14 +222,14 @@ describe('CacheService', () => {
       });
       mockHooksService.hasFailedHooks.mockReturnValue(true);
 
-      const mockCacheFunction = jest
+      const mockCacheFunction = vi
         .fn()
         .mockResolvedValue([
           '{"choices": [{"message": {"content": "cached response"}}]}',
           'HIT',
           'cache-key-123',
         ]);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;
@@ -263,14 +264,14 @@ describe('CacheService', () => {
       });
       mockHooksService.hasFailedHooks.mockReturnValue(false);
 
-      const mockCacheFunction = jest
+      const mockCacheFunction = vi
         .fn()
         .mockResolvedValue([
           '{"choices": [{"message": {"content": "cached response"}}]}',
           'HIT',
           'cache-key-123',
         ]);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;
@@ -285,10 +286,8 @@ describe('CacheService', () => {
     });
 
     it('should handle cache function parameters correctly', async () => {
-      const mockCacheFunction = jest
-        .fn()
-        .mockResolvedValue([null, 'MISS', null]);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      const mockCacheFunction = vi.fn().mockResolvedValue([null, 'MISS', null]);
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;
@@ -309,10 +308,10 @@ describe('CacheService', () => {
     });
 
     it('should handle undefined cache status and key', async () => {
-      const mockCacheFunction = jest
+      const mockCacheFunction = vi
         .fn()
         .mockResolvedValue([null, undefined, undefined]);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;
@@ -328,8 +327,8 @@ describe('CacheService', () => {
     });
 
     it('should handle empty cache key', async () => {
-      const mockCacheFunction = jest.fn().mockResolvedValue([null, 'MISS', '']);
-      (mockContext.get as jest.Mock).mockImplementation((key: string) => {
+      const mockCacheFunction = vi.fn().mockResolvedValue([null, 'MISS', '']);
+      (mockContext.get as Mock).mockImplementation((key: string) => {
         if (key === 'getFromCache') return mockCacheFunction;
         if (key === 'cacheIdentifier') return 'cache-identifier';
         return undefined;

@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, Mocked } from 'vitest';
 import { HooksService } from '../../../../../src/handlers/services/hooksService';
 import { RequestContext } from '../../../../../src/handlers/services/requestContext';
 import { HooksManager, HookSpan } from '../../../../../src/middlewares/hooks';
@@ -9,24 +10,24 @@ import {
 } from '../../../../../src/middlewares/hooks/types';
 
 // Mock the HooksManager and HookSpan
-jest.mock('../../../middlewares/hooks');
+vi.mock('../../../middlewares/hooks');
 
 describe('HooksService', () => {
   let mockRequestContext: RequestContext;
-  let mockHooksManager: jest.Mocked<HooksManager>;
-  let mockHookSpan: jest.Mocked<HookSpan>;
+  let mockHooksManager: Mocked<HooksManager>;
+  let mockHookSpan: Mocked<HookSpan>;
   let hooksService: HooksService;
 
   beforeEach(() => {
     mockHookSpan = {
       id: 'span-123',
-      getHooksResult: jest.fn(),
-    } as unknown as jest.Mocked<HookSpan>;
+      getHooksResult: vi.fn(),
+    } as unknown as Mocked<HookSpan>;
 
     mockHooksManager = {
-      createSpan: jest.fn().mockReturnValue(mockHookSpan),
-      getHooksToExecute: jest.fn(),
-    } as unknown as jest.Mocked<HooksManager>;
+      createSpan: vi.fn().mockReturnValue(mockHookSpan),
+      getHooksToExecute: vi.fn(),
+    } as unknown as Mocked<HooksManager>;
 
     mockRequestContext = {
       params: { message: 'test' },
@@ -134,7 +135,7 @@ describe('HooksService', () => {
         ...mockRequestContext,
         hooksManager: {
           ...mockHooksManager,
-          createSpan: jest.fn().mockReturnValue(null),
+          createSpan: vi.fn().mockReturnValue(null),
         },
       } as unknown as RequestContext);
 

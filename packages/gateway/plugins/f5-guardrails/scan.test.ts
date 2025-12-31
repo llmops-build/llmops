@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { handler } from './scan';
 import testCreds from './.creds.json';
 import { PluginContext } from '../types';

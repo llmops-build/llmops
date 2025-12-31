@@ -1,11 +1,12 @@
+import { vi, describe, it, expect } from 'vitest';
 import testCreds from './.creds.json';
 import { handler as onlineHandler } from './online';
 import { PluginContext } from '../types';
 
 // This test file makes real API calls to Exa
 describe('exa online handler', () => {
-  // Setting longer timeout for API calls
-  jest.setTimeout(30000);
+  // Setting longer timeout for API calls - in Vitest, use test options instead
+  vi.setConfig({ testTimeout: 30000 });
 
   it('should only run on beforeRequestHook', async () => {
     const eventType = 'afterRequestHook';

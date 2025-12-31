@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { PluginContext } from '../types';
 import testCreds from './.creds.json';
 import { mistralGuardrailHandler } from './index';

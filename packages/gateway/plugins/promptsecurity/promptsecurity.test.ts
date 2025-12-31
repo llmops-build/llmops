@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { handler as protectPromptHandler } from './protectPrompt';
 import { handler as protectResponseHandler } from './protectResponse';
 

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { handler as textGuardContentHandler } from './textGuard';
 import { handler as piiHandler } from './pii';
 import testCredsFile from './.creds.json';

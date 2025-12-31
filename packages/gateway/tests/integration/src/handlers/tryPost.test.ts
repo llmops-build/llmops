@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
 import { RequestBuilder, URLBuilder } from './requestBuilder';
 import { join } from 'path';

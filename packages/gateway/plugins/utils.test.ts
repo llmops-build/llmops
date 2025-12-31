@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { PluginContext } from './types';
 import { getCurrentContentPart, setCurrentContentPart } from './utils';
 

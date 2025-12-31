@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { HookEventType, PluginContext } from '../types';
 import { handler as guardHandler } from './guard';
 import { handler as piiHandler } from './pii';

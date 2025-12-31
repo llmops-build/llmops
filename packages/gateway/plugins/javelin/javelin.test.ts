@@ -1,10 +1,12 @@
-// Mock fetch
-global.fetch = jest.fn();
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { handler as guardrailsHandler } from './guardrails';
+
+// Mock fetch
+global.fetch = vi.fn() as unknown as typeof fetch;
 
 describe('Javelin Guardrails Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Unified Guardrails Handler', () => {

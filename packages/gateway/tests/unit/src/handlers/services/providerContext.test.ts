@@ -1,35 +1,36 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ProviderContext } from '../../../../../src/handlers/services/providerContext';
 import { RequestContext } from '../../../../../src/handlers/services/requestContext';
 import Providers from '../../../../../src/providers';
 import { ANTHROPIC, AZURE_OPEN_AI } from '../../../../../src/globals';
 
 // Mock the Providers object
-jest.mock('../../../providers', () => ({
+vi.mock('../../../providers', () => ({
   openai: {
     api: {
-      headers: jest.fn(),
-      getBaseURL: jest.fn(),
-      getEndpoint: jest.fn(),
-      getProxyEndpoint: jest.fn(),
+      headers: vi.fn(),
+      getBaseURL: vi.fn(),
+      getEndpoint: vi.fn(),
+      getProxyEndpoint: vi.fn(),
     },
     requestHandlers: {
-      uploadFile: jest.fn(),
-      listFiles: jest.fn(),
+      uploadFile: vi.fn(),
+      listFiles: vi.fn(),
     },
   },
   anthropic: {
     api: {
-      headers: jest.fn(),
-      getBaseURL: jest.fn(),
-      getEndpoint: jest.fn(),
+      headers: vi.fn(),
+      getBaseURL: vi.fn(),
+      getEndpoint: vi.fn(),
     },
     requestHandlers: {},
   },
   'azure-openai': {
     api: {
-      headers: jest.fn(),
-      getBaseURL: jest.fn(),
-      getEndpoint: jest.fn(),
+      headers: vi.fn(),
+      getBaseURL: vi.fn(),
+      getEndpoint: vi.fn(),
     },
   },
 }));
@@ -84,7 +85,7 @@ describe('ProviderContext', () => {
   describe('getHeaders', () => {
     it('should call provider headers function with correct parameters', async () => {
       const mockHeaders = { authorization: 'Bearer sk-test' };
-      const mockHeadersFn = jest.fn().mockResolvedValue(mockHeaders);
+      const mockHeadersFn = vi.fn().mockResolvedValue(mockHeaders);
       Providers.openai.api.headers = mockHeadersFn;
 
       const context = new ProviderContext('openai');
@@ -103,7 +104,7 @@ describe('ProviderContext', () => {
 
     it('should handle async header generation', async () => {
       const mockHeaders = { 'x-api-key': 'test-key' };
-      const mockHeadersFn = jest.fn().mockResolvedValue(mockHeaders);
+      const mockHeadersFn = vi.fn().mockResolvedValue(mockHeaders);
       Providers.openai.api.headers = mockHeadersFn;
 
       const context = new ProviderContext('openai');
@@ -116,7 +117,7 @@ describe('ProviderContext', () => {
   describe('getBaseURL', () => {
     it('should call provider getBaseURL function with correct parameters', async () => {
       const mockBaseURL = 'https://api.openai.com';
-      const mockGetBaseURL = jest.fn().mockResolvedValue(mockBaseURL);
+      const mockGetBaseURL = vi.fn().mockResolvedValue(mockBaseURL);
       Providers.openai.api.getBaseURL = mockGetBaseURL;
 
       const context = new ProviderContext('openai');
@@ -133,7 +134,7 @@ describe('ProviderContext', () => {
 
     it('should handle custom base URLs', async () => {
       const customURL = 'https://custom.openai.com';
-      const mockGetBaseURL = jest.fn().mockResolvedValue(customURL);
+      const mockGetBaseURL = vi.fn().mockResolvedValue(customURL);
       Providers.openai.api.getBaseURL = mockGetBaseURL;
 
       const context = new ProviderContext('openai');
@@ -146,7 +147,7 @@ describe('ProviderContext', () => {
   describe('getEndpointPath', () => {
     it('should call provider getEndpoint function with correct parameters', () => {
       const mockEndpoint = '/v1/chat/completions';
-      const mockGetEndpoint = jest.fn().mockReturnValue(mockEndpoint);
+      const mockGetEndpoint = vi.fn().mockReturnValue(mockEndpoint);
       Providers.openai.api.getEndpoint = mockGetEndpoint;
 
       const context = new ProviderContext('openai');
@@ -208,9 +209,7 @@ describe('ProviderContext', () => {
     });
 
     it('should use provider-specific getProxyEndpoint when available', () => {
-      const mockGetProxyEndpoint = jest
-        .fn()
-        .mockReturnValue('/custom/endpoint');
+      const mockGetProxyEndpoint = vi.fn().mockReturnValue('/custom/endpoint');
       Providers.openai.api.getProxyEndpoint = mockGetProxyEndpoint;
 
       const mockContext = {
@@ -304,7 +303,7 @@ describe('ProviderContext', () => {
         },
       } as RequestContext;
 
-      const mockGetBaseURL = jest
+      const mockGetBaseURL = vi
         .fn()
         .mockResolvedValue('https://api.openai.com');
       Providers.openai.api.getBaseURL = mockGetBaseURL;
@@ -316,10 +315,10 @@ describe('ProviderContext', () => {
     });
 
     it('should return standard endpoint URL for non-proxy endpoints', async () => {
-      const mockGetBaseURL = jest
+      const mockGetBaseURL = vi
         .fn()
         .mockResolvedValue('https://api.openai.com');
-      const mockGetEndpoint = jest.fn().mockReturnValue('/v1/chat/completions');
+      const mockGetEndpoint = vi.fn().mockReturnValue('/v1/chat/completions');
       Providers.openai.api.getBaseURL = mockGetBaseURL;
       Providers.openai.api.getEndpoint = mockGetEndpoint;
 
@@ -335,7 +334,7 @@ describe('ProviderContext', () => {
         customHost: 'https://custom.openai.com',
       } as RequestContext;
 
-      const mockGetEndpoint = jest.fn().mockReturnValue('/v1/chat/completions');
+      const mockGetEndpoint = vi.fn().mockReturnValue('/v1/chat/completions');
       Providers.openai.api.getEndpoint = mockGetEndpoint;
 
       const context = new ProviderContext('openai');
@@ -386,7 +385,7 @@ describe('ProviderContext', () => {
 
   describe('getRequestHandler', () => {
     it('should return wrapped handler function when handler exists', () => {
-      const mockHandler = jest.fn().mockResolvedValue(new Response('success'));
+      const mockHandler = vi.fn().mockResolvedValue(new Response('success'));
       Providers.openai.requestHandlers!.uploadFile = mockHandler;
 
       const mockContext = {
@@ -416,7 +415,7 @@ describe('ProviderContext', () => {
     });
 
     it('should call handler with correct parameters when executed', async () => {
-      const mockHandler = jest.fn().mockResolvedValue(new Response('success'));
+      const mockHandler = vi.fn().mockResolvedValue(new Response('success'));
       Providers.openai.requestHandlers!.uploadFile = mockHandler;
 
       const mockContext = {
@@ -447,9 +446,9 @@ describe('ProviderContext', () => {
       // Create a provider without requestHandlers
       Providers['test-provider'] = {
         api: {
-          headers: jest.fn(),
-          getBaseURL: jest.fn(),
-          getEndpoint: jest.fn(),
+          headers: vi.fn(),
+          getBaseURL: vi.fn(),
+          getEndpoint: vi.fn(),
         },
       };
 

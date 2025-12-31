@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import testCreds from './.creds.json';
 import { handler as scanPromptHandler } from './scanPrompt';
 import { handler as scanResponseHandler } from './scanResponse';
