@@ -27,11 +27,12 @@ export const editorInput = style({
 export const editorPlaceholder = style({
   position: 'absolute',
   top: spacing.md,
-  left: spacing.sm,
+  left: spacing.md,
   color: colors.gray9,
   fontSize: '0.875rem',
   pointerEvents: 'none',
   userSelect: 'none',
+  lineHeight: '1.6',
 });
 
 // GitHub-style markdown theming
