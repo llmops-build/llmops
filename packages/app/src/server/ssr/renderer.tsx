@@ -18,6 +18,7 @@ export const renderer = ({
   basePath = '',
   dev = false,
   llmProviders,
+  authType,
 }: {
   basePath?: string;
   dev?: boolean;
@@ -26,6 +27,7 @@ export const renderer = ({
     name: string;
     imageURI: string;
   }[];
+  authType?: string;
 }) => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
@@ -285,7 +287,8 @@ export const renderer = ({
           {`
             window.bootstrapData = {
               basePath: "${basePath}",
-              llmProviders: ${JSON.stringify(llmProviders || [])}
+              llmProviders: ${JSON.stringify(llmProviders || [])},
+              authType: "${authType || 'basic'}"
             };
           `}
         </script>

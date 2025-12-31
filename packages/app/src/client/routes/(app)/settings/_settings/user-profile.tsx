@@ -14,15 +14,26 @@ export const Route = createFileRoute('/(app)/settings/_settings/user-profile')({
 });
 
 function RouteComponent() {
+  const authType = window.bootstrapData?.authType || 'basic';
+
+  if (authType === 'basic') {
+    return (
+      <div>
+        <div className={infoBox}>
+          <Info size={16} />
+          <span>
+            You are using basic authentication. Profile settings cannot be
+            changed in this mode.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className={infoBox}>
-        <Info size={16} />
-        <span>
-          You are using basic authentication. Profile settings cannot be changed
-          in this mode.
-        </span>
-      </div>
+      <h2>Profile</h2>
+      {/* Profile settings for non-basic auth will go here */}
     </div>
   );
 }

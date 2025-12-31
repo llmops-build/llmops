@@ -8,6 +8,7 @@ export interface BootstrapData {
     name: string;
     imageURI: string;
   }[];
+  authType?: 'basic' | 'clerk' | string;
 }
 
 declare global {

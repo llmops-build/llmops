@@ -28,12 +28,14 @@ app
     if (!c.req.path.startsWith('/api')) {
       const basePath = c.var.llmopsConfig?.basePath || '';
       const llmProviders = c.var.llmProviders || [];
+      const authType = c.var.llmopsConfig?.auth?.type || 'basic';
 
       return c.html(
         renderer({
           basePath,
           dev: (env.LLMOPS_DEV as unknown) === 'true',
           llmProviders,
+          authType,
         })
       );
     }
