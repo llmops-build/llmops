@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-// @ts-expect-error - virtual module
 import { mdxContent } from 'virtual:raw-mdx-content';
 
 const mdxFiles = mdxContent as Record<string, string>;
