@@ -1,0 +1,6 @@
+{
+  "title": "Integrations",
+  "defaultOpen": false,
+  "icon": "Blocks",
+  "pages": ["express", "hono"]
+}

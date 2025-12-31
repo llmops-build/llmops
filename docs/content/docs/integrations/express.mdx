@@ -1,0 +1,146 @@
+---
+title: Express
+description: Integrate LLMOps with Express.js applications
+icon: Express
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Learn how to integrate LLMOps into your Express.js application using the official middleware.
+
+## Installation
+
+Install the required dependencies:
+
+```bash tab="npm"
+npm install @llmops/sdk pg express
+```
+
+```bash tab="pnpm"
+pnpm add @llmops/sdk pg express
+```
+
+```bash tab="yarn"
+yarn add @llmops/sdk pg express
+```
+
+## Setup
+
+<Steps>
+<Step>
+
+### Create LLMOps configuration
+
+Create a `llmops.ts` file to configure your LLMOps instance:
+
+```typescript title="llmops.ts"
+import { llmops, basicAuth } from '@llmops/sdk';
+import { Pool } from 'pg';
+
+export default llmops({
+  basePath: '/llmops',
+  providers: {
+    openrouter: {
+      apiKey: process.env.OPENROUTER_API_KEY || '',
+    },
+  },
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL || '',
+  }),
+  auth: basicAuth({
+    username: 'admin@llmops.local',
+    password: 'password',
+  }),
+  autoMigrate: true,
+});
+```
+
+</Step>
+
+<Step>
+
+### Create Express server
+
+Set up your Express server with the LLMOps middleware:
+
+```typescript title="server.ts"
+import 'dotenv/config';
+import express from 'express';
+import { createLLMOpsMiddleware } from '@llmops/sdk/express';
+import llmopsClient from './llmops';
+
+const app = express();
+const port = 3000;
+
+app.use(express.json());
+
+// Mount LLMOps middleware
+app.use('/llmops', createLLMOpsMiddleware(llmopsClient));
+
+app.listen(port, () => {
+  console.log(`LLMOps running at http://localhost:${port}/llmops`);
+});
+```
+
+</Step>
+
+<Step>
+
+### Set environment variables
+
+Create a `.env` file with your configuration:
+
+```bash title=".env"
+DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+OPENROUTER_API_KEY=sk-or-your-api-key
+```
+
+</Step>
+
+<Step>
+
+### Run the server
+
+Start your Express server:
+
+```bash
+npx tsx server.ts
+```
+
+Your LLMOps instance is now available at `http://localhost:3000/llmops`.
+
+</Step>
+</Steps>
+
+## API Endpoints
+
+Once mounted, the following endpoints are available:
+
+| Endpoint                 | Description           |
+| ------------------------ | --------------------- |
+| `GET /llmops/health`     | Health check endpoint |
+| `/llmops/api/genai/v1/*` | OpenAI-compatible API |
+| `GET /llmops`            | LLMOps dashboard UI   |
+
+## Making Requests
+
+Use the OpenAI SDK to make requests to your LLMOps instance:
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai',
+  apiKey: 'your-environment-secret',
+  defaultHeaders: {
+    'x-llmops-config': 'your-config-id',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+
+console.log(response.choices[0].message.content);
+```

@@ -40,6 +40,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "shiki": "^3.20.0",
+    "simple-icons": "^16.3.0",
     "tailwind-merge": "^3.4.0",
     "vite": "^7.2.7"
   },
