@@ -1,0 +1,14 @@
+curl -X 'POST' \
+  'http://localhost:3000/llmops/api/genai/v1/chat/completions' \
+  -H 'accept: application/json' \
+  -H 'x-llmops-config: ugfah4iC' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "model": "gpt-4o-mini",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, how are you?"
+    }
+  ]
+}'

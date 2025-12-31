@@ -1,9 +1,10 @@
 // API utility functions for making HTTP requests
 
 /**
- * Get LLMOps headers from the configuration inputs
+ * Get LLMOps configuration from the inputs
+ * @returns {{ headers: Record<string, string>, apiKey: string }}
  */
-function getLLMOpsHeaders() {
+function getLLMOpsConfig() {
   const headers = {};
 
   const configId = document.getElementById('llmops-config-id')?.value?.trim();
@@ -13,11 +14,10 @@ function getLLMOpsHeaders() {
     headers['x-llmops-config'] = configId;
   }
 
-  if (envSecret) {
-    headers['x-llmops-environment'] = envSecret;
-  }
-
-  return headers;
+  return {
+    headers,
+    apiKey: envSecret || '', // Environment secret is required and passed as apiKey
+  };
 }
 
 /**
@@ -27,16 +27,21 @@ async function makeAPICall(method, endpoint, body = null, customHeaders = {}) {
   const baseURL = window.location.origin;
   const url = `${baseURL}${endpoint}`;
 
-  // Merge LLMOps headers with custom headers
-  const llmopsHeaders = getLLMOpsHeaders();
+  // Get LLMOps config (headers and apiKey)
+  const llmopsConfig = getLLMOpsConfig();
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...llmopsConfig.headers,
+    ...customHeaders,
+  };
+
+  // Add Authorization header with apiKey (env secret) - required
+  headers['Authorization'] = `Bearer ${llmopsConfig.apiKey}`;
 
   const options = {
     method: method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...llmopsHeaders,
-      ...customHeaders,
-    },
+    headers,
   };
 
   if (body && (method === 'POST' || method === 'PUT')) {
@@ -141,14 +146,14 @@ async function testOpenAIChat() {
     // Import OpenAI dynamically (since we're in a browser environment)
     const OpenAI = (await import('https://cdn.skypack.dev/openai')).default;
 
-    // Get LLMOps headers for the request
-    const llmopsHeaders = getLLMOpsHeaders();
+    // Get LLMOps config (headers and apiKey)
+    const llmopsConfig = getLLMOpsConfig();
 
     const openai = new OpenAI({
       baseURL: window.location.origin + '/llmops/api/v1/genai',
-      apiKey: '',
+      apiKey: llmopsConfig.apiKey, // Environment secret is required
       dangerouslyAllowBrowser: true, // Note: In production, API calls should go through your backend
-      defaultHeaders: llmopsHeaders,
+      defaultHeaders: llmopsConfig.headers,
     });
 
     const chatCompletion = await openai.chat.completions.create({

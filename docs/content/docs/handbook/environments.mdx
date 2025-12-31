@@ -26,21 +26,34 @@ Give your environment a unique name (e.g., "Production", "Staging", "Development
 
 Each environment has associated **secrets** that authenticate API requests. Think of them as API keys for that specific environment.
 
-When making an API request, include the environment secret in the `x-llmops-environment` header:
+When making an API request, pass the environment secret as the `apiKey` in your OpenAI client configuration. This is sent via the standard `Authorization: Bearer <secret>` header:
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+  apiKey: 'your-environment-secret', // Environment secret goes here
+  defaultHeaders: {
+    'x-llmops-config': 'your-config-id',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  messages: [{ role: 'user', content: 'Hello!' }],
+  model: 'gpt-4o-mini',
+});
+```
+
+Or with curl:
 
 ```bash
 curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-environment-secret" \
   -H "x-llmops-config: your-config-id" \
-  -H "x-llmops-environment: your-environment-secret" \
   -d '{"messages": [{"role": "user", "content": "Hello!"}]}'
 ```
-
-## Production Environment
-
-One environment is marked as the **production** environment. This is the default environment used when no `x-llmops-environment` header is provided.
-
-This allows client-side applications to make requests without exposing environment secrets, while still routing to the correct configuration.
 
 ## Example Setup
 

@@ -24,6 +24,15 @@ const openApiSpec = {
       description: 'Local development server',
     },
   ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        description: 'Environment secret as Bearer token',
+      },
+    },
+  },
   paths: {
     '/': {
       get: {
@@ -59,22 +68,13 @@ const openApiSpec = {
       post: {
         summary: 'Chat completions',
         description: 'OpenAI-compatible chat completions endpoint',
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: 'x-llmops-config',
             in: 'header',
             required: true,
             description: 'LLMOps Config ID (UUID or short slug)',
-            schema: {
-              type: 'string',
-            },
-          },
-          {
-            name: 'x-llmops-environment',
-            in: 'header',
-            required: false,
-            description:
-              'Environment secret (optional - uses production if not provided)',
             schema: {
               type: 'string',
             },
@@ -170,8 +170,8 @@ const openApiSpec = {
           '400': {
             description: 'Invalid request headers',
           },
-          '403': {
-            description: 'Cross-origin requests require an environment ID',
+          '401': {
+            description: 'Missing or invalid Authorization header',
           },
         },
       },
