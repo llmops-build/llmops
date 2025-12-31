@@ -7,6 +7,7 @@ import { createEnvironmentSecretDataLayer } from './environmentSecrets';
 import { createTargetingRulesDataLayer } from './targetingRules';
 import { createVariantDataLayer } from './variants';
 import { createVariantVersionsDataLayer } from './variantVersions';
+import { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 export const createDataLayer = async (db: Kysely<Database>) => {
   return {
@@ -17,5 +18,6 @@ export const createDataLayer = async (db: Kysely<Database>) => {
     ...createTargetingRulesDataLayer(db),
     ...createVariantDataLayer(db),
     ...createVariantVersionsDataLayer(db),
+    ...createWorkspaceSettingsDataLayer(db),
   };
 };

@@ -12,9 +12,8 @@ import {
   variantPropertyRow,
   variantPropertyLabel,
   variantPropertyValue,
-  environmentHighlight,
-  environmentNameHighlight,
 } from '../../_variants/-components/variants.css';
+import { infoBox, infoBoxHighlight } from '@client/styles/info-box.css';
 import { Icon } from '@client/components/icons';
 import { Save } from 'lucide-react';
 
@@ -162,9 +161,9 @@ function TargetingForm({
         </Button>
       </div>
       <div className={variantContainer}>
-        <div className={environmentHighlight}>
+        <div className={infoBox}>
           The selected variant will be served to all requests in the{' '}
-          <span className={environmentNameHighlight}>{environment.name}</span>{' '}
+          <span className={infoBoxHighlight}>{environment.name}</span>{' '}
           environment
         </div>
 

@@ -6,6 +6,7 @@ import environments from '@server/handlers/environments';
 import providers from '@server/handlers/providers';
 import targeting from '@server/handlers/targeting';
 import variants from '@server/handlers/variants';
+import workspaceSettings from '@server/handlers/workspace-settings';
 import type { AuthConfig, BasicAuthConfig } from '@llmops/core';
 
 /**
@@ -50,6 +51,7 @@ const app = new Hono()
   .route('/environments', environments)
   .route('/providers', providers)
   .route('/targeting', targeting)
-  .route('/variants', variants);
+  .route('/variants', variants)
+  .route('/workspace-settings', workspaceSettings);
 
 export default app;
