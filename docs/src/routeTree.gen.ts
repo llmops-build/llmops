@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
+import { Route as ApiLlmsTxtRouteImport } from './routes/api/llms-txt'
 import { Route as ApiMdxSplatRouteImport } from './routes/api/mdx.$'
+import { Route as ApiLlmsTxtSplatRouteImport } from './routes/api/llms-txt.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,41 +31,77 @@ const ApiSearchRoute = ApiSearchRouteImport.update({
   path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLlmsTxtRoute = ApiLlmsTxtRouteImport.update({
+  id: '/api/llms-txt',
+  path: '/api/llms-txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMdxSplatRoute = ApiMdxSplatRouteImport.update({
   id: '/api/mdx/$',
   path: '/api/mdx/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLlmsTxtSplatRoute = ApiLlmsTxtSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => ApiLlmsTxtRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/api/llms-txt/$': typeof ApiLlmsTxtSplatRoute
   '/api/mdx/$': typeof ApiMdxSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/api/llms-txt/$': typeof ApiLlmsTxtSplatRoute
   '/api/mdx/$': typeof ApiMdxSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/api/llms-txt/$': typeof ApiLlmsTxtSplatRoute
   '/api/mdx/$': typeof ApiMdxSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/search' | '/docs/$' | '/api/mdx/$'
+  fullPaths:
+    | '/'
+    | '/api/llms-txt'
+    | '/api/search'
+    | '/docs/$'
+    | '/api/llms-txt/$'
+    | '/api/mdx/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/search' | '/docs/$' | '/api/mdx/$'
-  id: '__root__' | '/' | '/api/search' | '/docs/$' | '/api/mdx/$'
+  to:
+    | '/'
+    | '/api/llms-txt'
+    | '/api/search'
+    | '/docs/$'
+    | '/api/llms-txt/$'
+    | '/api/mdx/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/llms-txt'
+    | '/api/search'
+    | '/docs/$'
+    | '/api/llms-txt/$'
+    | '/api/mdx/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiLlmsTxtRoute: typeof ApiLlmsTxtRouteWithChildren
   ApiSearchRoute: typeof ApiSearchRoute
   DocsSplatRoute: typeof DocsSplatRoute
   ApiMdxSplatRoute: typeof ApiMdxSplatRoute
@@ -92,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/llms-txt': {
+      id: '/api/llms-txt'
+      path: '/api/llms-txt'
+      fullPath: '/api/llms-txt'
+      preLoaderRoute: typeof ApiLlmsTxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/mdx/$': {
       id: '/api/mdx/$'
       path: '/api/mdx/$'
@@ -99,11 +144,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMdxSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/llms-txt/$': {
+      id: '/api/llms-txt/$'
+      path: '/$'
+      fullPath: '/api/llms-txt/$'
+      preLoaderRoute: typeof ApiLlmsTxtSplatRouteImport
+      parentRoute: typeof ApiLlmsTxtRoute
+    }
   }
 }
 
+interface ApiLlmsTxtRouteChildren {
+  ApiLlmsTxtSplatRoute: typeof ApiLlmsTxtSplatRoute
+}
+
+const ApiLlmsTxtRouteChildren: ApiLlmsTxtRouteChildren = {
+  ApiLlmsTxtSplatRoute: ApiLlmsTxtSplatRoute,
+}
+
+const ApiLlmsTxtRouteWithChildren = ApiLlmsTxtRoute._addFileChildren(
+  ApiLlmsTxtRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiLlmsTxtRoute: ApiLlmsTxtRouteWithChildren,
   ApiSearchRoute: ApiSearchRoute,
   DocsSplatRoute: DocsSplatRoute,
   ApiMdxSplatRoute: ApiMdxSplatRoute,
