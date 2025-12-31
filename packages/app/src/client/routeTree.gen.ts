@@ -12,10 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
+import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
+import { Route as appSettingsIndexRouteImport } from './routes/(app)/settings/index'
+import { Route as appSettingsSettingsRouteImport } from './routes/(app)/settings/_settings'
 import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(app)/environments/$environment/route'
 import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
+import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
+import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
 import { Route as appEnvironmentsEnvironmentTabsRouteImport } from './routes/(app)/environments/$environment/_tabs'
 import { Route as appConfigsIdVariantsRouteImport } from './routes/(app)/configs/$id/_variants'
 import { Route as appConfigsIdTabsRouteImport } from './routes/(app)/configs/$id/_tabs'
@@ -42,6 +47,20 @@ const appConfigsRoute = appConfigsRouteImport.update({
   path: '/configs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appSettingsRouteRoute = appSettingsRouteRouteImport.update({
+  id: '/(app)/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const appSettingsIndexRoute = appSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appSettingsRouteRoute,
+} as any)
+const appSettingsSettingsRoute = appSettingsSettingsRouteImport.update({
+  id: '/_settings',
+  getParentRoute: () => appSettingsRouteRoute,
+} as any)
 const appEnvironmentsEnvironmentRouteRoute =
   appEnvironmentsEnvironmentRouteRouteImport.update({
     id: '/$environment',
@@ -64,6 +83,18 @@ const appConfigsIdIndexRoute = appConfigsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appConfigsIdRouteRoute,
 } as any)
+const appSettingsSettingsWorkspaceGeneralRoute =
+  appSettingsSettingsWorkspaceGeneralRouteImport.update({
+    id: '/workspace-general',
+    path: '/workspace-general',
+    getParentRoute: () => appSettingsSettingsRoute,
+  } as any)
+const appSettingsSettingsUserProfileRoute =
+  appSettingsSettingsUserProfileRouteImport.update({
+    id: '/user-profile',
+    path: '/user-profile',
+    getParentRoute: () => appSettingsSettingsRoute,
+  } as any)
 const appEnvironmentsEnvironmentTabsRoute =
   appEnvironmentsEnvironmentTabsRouteImport.update({
     id: '/_tabs',
@@ -121,11 +152,15 @@ const appConfigsIdTargetingTargetingEnvironmentRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/settings': typeof appSettingsSettingsRouteWithChildren
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/settings/': typeof appSettingsIndexRoute
+  '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
+  '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/configs/$id/': typeof appConfigsIdIndexRoute
   '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
@@ -140,8 +175,11 @@ export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
   '/': typeof appIndexRoute
+  '/settings': typeof appSettingsIndexRoute
   '/configs/$id': typeof appConfigsIdIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
+  '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
+  '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
@@ -152,14 +190,19 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
   '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
+  '/(app)/settings/_settings': typeof appSettingsSettingsRouteWithChildren
+  '/(app)/settings/': typeof appSettingsIndexRoute
   '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
   '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
   '/(app)/environments/$environment/_tabs': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
+  '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/(app)/configs/$id/_tabs/settings': typeof appConfigsIdTabsSettingsRoute
@@ -173,11 +216,15 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/settings'
     | '/configs'
     | '/environments'
     | '/'
     | '/configs/$id'
     | '/environments/$environment'
+    | '/settings/'
+    | '/settings/user-profile'
+    | '/settings/workspace-general'
     | '/configs/$id/'
     | '/environments/$environment/'
     | '/configs/$id/settings'
@@ -192,8 +239,11 @@ export interface FileRouteTypes {
     | '/configs'
     | '/environments'
     | '/'
+    | '/settings'
     | '/configs/$id'
     | '/environments/$environment'
+    | '/settings/user-profile'
+    | '/settings/workspace-general'
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
@@ -203,14 +253,19 @@ export interface FileRouteTypes {
     | '/configs/$id/variants/$variant'
   id:
     | '__root__'
+    | '/(app)/settings'
     | '/(app)/configs'
     | '/(app)/environments'
     | '/(app)/'
     | '/(app)/configs/$id'
     | '/(app)/environments/$environment'
+    | '/(app)/settings/_settings'
+    | '/(app)/settings/'
     | '/(app)/configs/$id/_tabs'
     | '/(app)/configs/$id/_variants'
     | '/(app)/environments/$environment/_tabs'
+    | '/(app)/settings/_settings/user-profile'
+    | '/(app)/settings/_settings/workspace-general'
     | '/(app)/configs/$id/'
     | '/(app)/environments/$environment/'
     | '/(app)/configs/$id/_tabs/settings'
@@ -223,6 +278,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appConfigsRoute: typeof appConfigsRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
   appIndexRoute: typeof appIndexRoute
@@ -251,6 +307,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appConfigsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/settings': {
+      id: '/(app)/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof appSettingsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(app)/settings/': {
+      id: '/(app)/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof appSettingsIndexRouteImport
+      parentRoute: typeof appSettingsRouteRoute
+    }
+    '/(app)/settings/_settings': {
+      id: '/(app)/settings/_settings'
+      path: ''
+      fullPath: '/settings'
+      preLoaderRoute: typeof appSettingsSettingsRouteImport
+      parentRoute: typeof appSettingsRouteRoute
+    }
     '/(app)/environments/$environment': {
       id: '/(app)/environments/$environment'
       path: '/$environment'
@@ -278,6 +355,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/configs/$id/'
       preLoaderRoute: typeof appConfigsIdIndexRouteImport
       parentRoute: typeof appConfigsIdRouteRoute
+    }
+    '/(app)/settings/_settings/workspace-general': {
+      id: '/(app)/settings/_settings/workspace-general'
+      path: '/workspace-general'
+      fullPath: '/settings/workspace-general'
+      preLoaderRoute: typeof appSettingsSettingsWorkspaceGeneralRouteImport
+      parentRoute: typeof appSettingsSettingsRoute
+    }
+    '/(app)/settings/_settings/user-profile': {
+      id: '/(app)/settings/_settings/user-profile'
+      path: '/user-profile'
+      fullPath: '/settings/user-profile'
+      preLoaderRoute: typeof appSettingsSettingsUserProfileRouteImport
+      parentRoute: typeof appSettingsSettingsRoute
     }
     '/(app)/environments/$environment/_tabs': {
       id: '/(app)/environments/$environment/_tabs'
@@ -351,6 +442,33 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface appSettingsSettingsRouteChildren {
+  appSettingsSettingsUserProfileRoute: typeof appSettingsSettingsUserProfileRoute
+  appSettingsSettingsWorkspaceGeneralRoute: typeof appSettingsSettingsWorkspaceGeneralRoute
+}
+
+const appSettingsSettingsRouteChildren: appSettingsSettingsRouteChildren = {
+  appSettingsSettingsUserProfileRoute: appSettingsSettingsUserProfileRoute,
+  appSettingsSettingsWorkspaceGeneralRoute:
+    appSettingsSettingsWorkspaceGeneralRoute,
+}
+
+const appSettingsSettingsRouteWithChildren =
+  appSettingsSettingsRoute._addFileChildren(appSettingsSettingsRouteChildren)
+
+interface appSettingsRouteRouteChildren {
+  appSettingsSettingsRoute: typeof appSettingsSettingsRouteWithChildren
+  appSettingsIndexRoute: typeof appSettingsIndexRoute
+}
+
+const appSettingsRouteRouteChildren: appSettingsRouteRouteChildren = {
+  appSettingsSettingsRoute: appSettingsSettingsRouteWithChildren,
+  appSettingsIndexRoute: appSettingsIndexRoute,
+}
+
+const appSettingsRouteRouteWithChildren =
+  appSettingsRouteRoute._addFileChildren(appSettingsRouteRouteChildren)
 
 interface appConfigsIdTabsRouteChildren {
   appConfigsIdTabsSettingsRoute: typeof appConfigsIdTabsSettingsRoute
@@ -458,6 +576,7 @@ const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appConfigsRoute: appConfigsRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
   appIndexRoute: appIndexRoute,
