@@ -12,6 +12,7 @@ import {
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { baseOptions } from '@/lib/layout.shared';
 import { source } from '@/lib/source';
+import { CopyMarkdownButton } from '@/components/copy-markdown';
 
 export const Route = createFileRoute('/docs/$')({
   component: Page,
@@ -42,7 +43,9 @@ const clientLoader = browserCollections.docs.createClientLoader({
     return (
       <DocsPage toc={toc}>
         <DocsTitle>{frontmatter.title}</DocsTitle>
-        <DocsDescription>{frontmatter.description}</DocsDescription>
+        <div className="max-w-3xs">
+          <CopyMarkdownButton />
+        </div>
         <DocsBody>
           <MDX
             components={{
