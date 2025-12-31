@@ -74,12 +74,15 @@ const CheckIcon = () => (
   </svg>
 );
 
+const AI_PROMPT = `Read https://llmops.build/llms.txt/docs/runbook.md and integrate LLMOps in this application.
+Use a separate branch for the changes.`;
+
 const Hero = () => {
   const [copied, setCopied] = useState(false);
   const { stars, loading } = useGitHubStars();
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText('npm i @llmops/sdk');
+    await navigator.clipboard.writeText(AI_PROMPT);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -98,29 +101,29 @@ const Hero = () => {
             A pluggable <span className="text-gray-12">LLMOps</span> toolkit for
             TypeScript applications
           </h1>
-          <div className="w-full px-3 border flex gap-3 border-solid border-gray-4 h-10 rounded-md items-center">
-            <span className="text-gray-8 leading-10">~</span>
-            <div className="font-mono leading-10 text-gray-12 text-sm flex-1">
-              <span>npm i </span>
-              <span className="text-accent-9">@llmops/sdk</span>
+          <div className="w-full border border-solid border-gray-4 rounded-md">
+            <div className="w-full px-3 py-2 flex gap-3 items-start border-b border-solid border-gray-4">
+              <pre className="text-gray-11 text-sm flex-1 whitespace-pre-wrap font-mono leading-5">
+                {AI_PROMPT}
+              </pre>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="text-gray-8 hover:text-gray-12 transition-colors cursor-pointer bg-transparent border-none p-1"
+                aria-label="Copy prompt to clipboard"
+              >
+                {copied ? <CheckIcon /> : <CopyIcon />}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="text-gray-8 hover:text-gray-12 transition-colors cursor-pointer bg-transparent border-none p-1"
-              aria-label="Copy to clipboard"
-            >
-              {copied ? <CheckIcon /> : <CopyIcon />}
-            </button>
             <a
               href="https://github.com/llmops-build/llmops"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-8 hover:text-gray-12 transition-colors p-1 flex items-center gap-1"
-              aria-label="View on GitHub"
+              className="w-full px-3 py-2 flex gap-2 items-center text-gray-8 hover:text-gray-12 hover:bg-gray-2 transition-colors rounded-b-md"
             >
               <GitHubLogo className="w-4 h-4 fill-current" />
-              <span className="text-sm font-mono leading-4 inline-block w-[3ch] h-4">
+              <span className="text-sm">llmops-build/llmops</span>
+              <span className="text-sm font-mono ml-auto">
                 {loading ? <StarsSkeleton /> : stars && formatStars(stars)}
               </span>
             </a>

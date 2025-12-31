@@ -1,0 +1,220 @@
+---
+title: AI Integration Runbook
+description: Step-by-step guide for AI agents to integrate LLMOps into a project.
+---
+
+# LLMOps Integration Runbook
+
+This is a structured guide for AI agents to integrate LLMOps into a TypeScript project.
+
+## Prerequisites
+
+Before starting, verify the following:
+
+- [ ] Node.js 18+ is installed
+- [ ] Project uses TypeScript
+- [ ] Project uses one of the supported frameworks mentioned in https://llmops.build/llms.txt integrations list. 
+- [ ] PostgreSQL database is available (or can be set up via Docker)
+
+## Step 1: Install Dependencies
+
+Install the LLMOps SDK and PostgreSQL client:
+
+```bash
+npm install @llmops/sdk pg
+```
+
+If using TypeScript, also install types:
+
+```bash
+npm install -D @types/pg
+```
+
+## Step 2: Set Up PostgreSQL Database
+
+If no PostgreSQL database exists, create one using Docker:
+
+```bash
+docker run -d \
+  --name llmops-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=llmops \
+  -p 5432:5432 \
+  postgres:16
+```
+
+The connection string will be:
+
+```
+postgresql://postgres:password@localhost:5432/llmops
+```
+
+If a PostgreSQL database already exists, use that connection string or create a new database for LLMOps.
+
+## Step 3: Create Environment Variables
+
+Add these environment variables to `.env` file (create if it doesn't exist):
+
+```bash
+# Database
+DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+
+# LLM Provider (at least one is required)
+OPENROUTER_API_KEY=sk-or-your-api-key
+# Or use other providers:
+# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Make sure `.env` is in `.gitignore`.
+
+## Step 4: Create LLMOps Configuration File
+
+Create a new file `llmops.ts` (or `llmops.config.ts`) in the project root or `src/` directory:
+
+```typescript
+import { llmops, basicAuth } from '@llmops/sdk';
+import { Pool } from 'pg';
+
+export default llmops({
+  basePath: '/llmops',
+  providers: {
+    openrouter: {
+      apiKey: process.env.OPENROUTER_API_KEY || '',
+    },
+    // Add other providers as needed based on available API keys
+  },
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL || '',
+  }),
+  auth: basicAuth({
+    username: process.env.LLMOPS_USER || 'admin@llmops.local',
+    password: process.env.LLMOPS_PASSWORD || 'password',
+  }),
+  autoMigrate: 'development', // Auto-migrate in development only
+});
+```
+
+## Step 5: Integrate Middleware
+
+### For Express
+
+Modify the main server file (e.g., `server.ts`, `app.ts`, or `index.ts`):
+
+```typescript
+import 'dotenv/config';
+import express from 'express';
+import { createLLMOpsMiddleware } from '@llmops/sdk/express';
+import llmopsClient from './llmops'; // Adjust path as needed
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+// Mount LLMOps middleware
+app.use('/llmops', createLLMOpsMiddleware(llmopsClient));
+
+// ... rest of your routes
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+  console.log(`LLMOps dashboard at http://localhost:${port}/llmops`);
+});
+```
+
+### For Hono
+
+Modify the main server file:
+
+```typescript
+import 'dotenv/config';
+import { Hono } from 'hono';
+import { serve } from '@hono/node-server';
+import { createLLMOpsMiddleware } from '@llmops/sdk/hono';
+import llmopsClient from './llmops'; // Adjust path as needed
+
+const app = new Hono();
+const port = process.env.PORT || 3000;
+
+// Mount LLMOps middleware
+app.use('/llmops/*', createLLMOpsMiddleware(llmopsClient));
+
+// ... rest of your routes
+
+serve({ fetch: app.fetch, port }, (info) => {
+  console.log(`Server running at http://localhost:${info.port}`);
+  console.log(`LLMOps dashboard at http://localhost:${info.port}/llmops`);
+});
+```
+
+## Step 6: Verify Installation
+
+1. Start the server:
+
+   ```bash
+   npm run dev
+   # or
+   npx tsx server.ts
+   ```
+
+2. Open the LLMOps dashboard in a browser:
+
+   ```
+   http://localhost:3000/llmops
+   ```
+
+3. Log in with the credentials from the config (default: `admin@llmops.local` / `password`)
+
+4. The dashboard should load and show the main interface
+
+## Step 7: Create a Config (Optional)
+
+To use the LLM gateway, create a config in the dashboard:
+
+1. Go to Configs section
+2. Create a new config (e.g., "My Assistant")
+3. Add a variant with your preferred model settings
+4. Note the config ID for API calls
+
+## Troubleshooting
+
+### Database Connection Error
+
+- Verify PostgreSQL is running: `docker ps` or check your database server
+- Check DATABASE_URL is correct in `.env`
+- Ensure the database exists
+
+### Module Not Found Errors
+
+- Run `npm install` again
+- Check import paths match file locations
+- Verify `tsconfig.json` has proper module resolution
+
+### Provider API Errors
+
+- Verify API keys are set in `.env`
+- Check API key is valid and has credits
+- Ensure the provider is configured in `llmops.ts`
+
+## File Structure After Integration
+
+```
+project/
+├── .env                 # Environment variables (DATABASE_URL, API keys)
+├── llmops.ts           # LLMOps configuration
+├── server.ts           # Server with LLMOps middleware
+├── package.json        # Dependencies including @llmops/sdk and pg
+└── ...
+```
+
+## Summary
+
+After completing these steps, you will have:
+
+1. LLMOps SDK installed with PostgreSQL client
+2. Database connection configured
+3. LLMOps middleware mounted at `/llmops`
+4. Dashboard accessible for managing configs and variants
+5. OpenAI-compatible API available at `/llmops/api/genai/v1/`
