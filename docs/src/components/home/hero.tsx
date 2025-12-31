@@ -74,7 +74,7 @@ const CheckIcon = () => (
   </svg>
 );
 
-const AI_PROMPT = `Read https://llmops.build/llms.txt/docs/runbook.md and integrate LLMOps in this application.
+const AI_PROMPT = `Read https://llmops.build/llms.txt/runbook.md and integrate LLMOps in this application.
 Use a separate branch for the changes.`;
 
 const Hero = () => {
@@ -95,7 +95,7 @@ const Hero = () => {
       )}
     >
       <div className="grid grid-cols-1 w-full h-full place-items-center gap-8">
-        <div className="flex flex-col items-center gap-6 w-full max-w-sm justify-center">
+        <div className="flex flex-col items-center gap-6 w-full max-w-md justify-center">
           <LogoAnimation />
           <h1 className="text-2xl text-center text-gray-11 text-pretty font-normal">
             A pluggable <span className="text-gray-12">LLMOps</span> toolkit for
@@ -103,13 +103,13 @@ const Hero = () => {
           </h1>
           <div className="w-full border border-solid border-gray-4 rounded-md">
             <div className="w-full px-3 py-2 flex gap-3 items-start border-b border-solid border-gray-4">
-              <pre className="text-gray-11 text-sm flex-1 whitespace-pre-wrap font-mono leading-5">
+              <pre className="text-gray-11 text-sm flex-1 font-mono whitespace-pre-wrap break-all leading-5">
                 {AI_PROMPT}
               </pre>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="text-gray-8 hover:text-gray-12 transition-colors cursor-pointer bg-transparent border-none p-1"
+                className="text-gray-8 hover:text-gray-12 transition-colors cursor-pointer bg-transparent border-none p-1 shrink-0"
                 aria-label="Copy prompt to clipboard"
               >
                 {copied ? <CheckIcon /> : <CopyIcon />}
