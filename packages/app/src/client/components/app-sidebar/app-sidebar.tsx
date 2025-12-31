@@ -17,10 +17,17 @@ import {
 } from 'lucide-react';
 import Logo from '@client/components/icons/llmops.svg?react';
 import type React from 'react';
-import { comingSoonTooltip } from './app-sidebar.css';
+import {
+  comingSoonTooltip,
+  sidebarSectionTitle,
+  sidebarSectionTitleHidden,
+} from './app-sidebar.css';
 import { logoWithDarkmode } from '@client/styles/logo.css';
+import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 
 export function AppSidebar() {
+  const { isCollapsed } = useSidebarWidth();
+
   return (
     <Sidebar>
       <SidebarHeader></SidebarHeader>
@@ -37,7 +44,11 @@ export function AppSidebar() {
             Settings
           </Link>
         </SidebarItem>
-        <br />
+        <span
+          className={`${sidebarSectionTitle} ${isCollapsed ? sidebarSectionTitleHidden : ''}`}
+        >
+          Workspace
+        </span>
         <SidebarItem asChild>
           <Link to="/configs">
             <Icon icon={SlidersVertical} />
