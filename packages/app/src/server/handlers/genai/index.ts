@@ -15,9 +15,9 @@ app
   .get('/health', async (c) => {
     return c.json({ status: 'healthy' });
   })
-  // LLMOps request validation (x-llmops-config, x-llmops-environment)
+  // LLMOps request validation (x-llmops-config, Authorization)
   .use('*', requestValidator)
-  // Request guard (CORS handling, sets configId/envSec in context)
+  // Request guard (extracts envSec from apiKey, CORS handling)
   .use('*', createRequestGuardMiddleware())
   // Adapter: translates LLMOps config to Portkey gateway format
   .use('*', createGatewayAdapterMiddleware())
