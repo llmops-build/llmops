@@ -1,33 +1,27 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { source } from '@/lib/source';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+// @ts-expect-error - virtual module
+import { mdxContent } from 'virtual:raw-mdx-content';
 
-async function getMdxContent(slugs: string[]): Promise<Response> {
-  const page = source.getPage(slugs);
-  if (!page) {
-    return new Response('Not found', { status: 404 });
+const mdxFiles = mdxContent as Record<string, string>;
+
+function getMdxContent(slugs: string[]): Response {
+  const slug = slugs.join('/');
+
+  // Try direct path first (e.g., quickstart)
+  let content = mdxFiles[slug];
+
+  // Try index for directory paths (e.g., handbook -> handbook/index)
+  if (!content) {
+    content = mdxFiles[`${slug}/index`];
   }
 
-  // Read the raw MDX file
-  const filePath = path.join(process.cwd(), 'content/docs', ...slugs) + '.mdx';
+  // Handle root docs index
+  if (!content && slug === '') {
+    content = mdxFiles['index'];
+  }
 
-  // Also try with index.mdx for directory paths
-  let content: string;
-  try {
-    content = await fs.readFile(filePath, 'utf-8');
-  } catch {
-    try {
-      const indexPath = path.join(
-        process.cwd(),
-        'content/docs',
-        ...slugs,
-        'index.mdx'
-      );
-      content = await fs.readFile(indexPath, 'utf-8');
-    } catch {
-      return new Response('File not found', { status: 404 });
-    }
+  if (!content) {
+    return new Response('Not found', { status: 404 });
   }
 
   return new Response(content, {
