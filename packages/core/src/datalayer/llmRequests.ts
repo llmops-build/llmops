@@ -1,0 +1,492 @@
+import { LLMOpsError } from '@/error';
+import type { Database } from '@/schemas';
+import type { Kysely } from 'kysely';
+import { sql } from 'kysely';
+import { randomUUID } from 'node:crypto';
+import z from 'zod';
+
+/**
+ * Schema for inserting a new LLM request log
+ */
+const insertLLMRequestSchema = z.object({
+  requestId: z.string().uuid(),
+  configId: z.string().uuid().nullable().optional(),
+  variantId: z.string().uuid().nullable().optional(),
+  provider: z.string(),
+  model: z.string(),
+  promptTokens: z.number().int().default(0),
+  completionTokens: z.number().int().default(0),
+  totalTokens: z.number().int().default(0),
+  cachedTokens: z.number().int().default(0),
+  cost: z.number().int().default(0),
+  inputCost: z.number().int().default(0),
+  outputCost: z.number().int().default(0),
+  endpoint: z.string(),
+  statusCode: z.number().int(),
+  latencyMs: z.number().int().default(0),
+  isStreaming: z.boolean().default(false),
+  userId: z.string().nullable().optional(),
+  tags: z.record(z.string(), z.string()).default({}),
+});
+
+export type LLMRequestInsert = z.infer<typeof insertLLMRequestSchema>;
+
+/**
+ * Schema for listing LLM requests
+ */
+const listRequestsSchema = z.object({
+  limit: z.number().int().positive().max(1000).default(100),
+  offset: z.number().int().nonnegative().default(0),
+  configId: z.string().uuid().optional(),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+});
+
+/**
+ * Schema for date range queries
+ */
+const dateRangeSchema = z.object({
+  startDate: z.date(),
+  endDate: z.date(),
+});
+
+/**
+ * Schema for cost summary with grouping
+ */
+const costSummarySchema = z.object({
+  startDate: z.date(),
+  endDate: z.date(),
+  groupBy: z.enum(['day', 'hour', 'model', 'provider', 'config']).optional(),
+});
+
+export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
+  return {
+    /**
+     * Batch insert LLM request logs
+     * Used by the BatchWriter service for efficient writes
+     */
+    batchInsertRequests: async (requests: LLMRequestInsert[]) => {
+      if (requests.length === 0) return { count: 0 };
+
+      // Validate all requests
+      const validatedRequests = await Promise.all(
+        requests.map(async (req) => {
+          const result = await insertLLMRequestSchema.safeParseAsync(req);
+          if (!result.success) {
+            throw new LLMOpsError(
+              `Invalid request data: ${result.error.message}`
+            );
+          }
+          return result.data;
+        })
+      );
+
+      const now = new Date().toISOString();
+      const values = validatedRequests.map((req) => ({
+        id: randomUUID(),
+        requestId: req.requestId,
+        configId: req.configId ?? null,
+        variantId: req.variantId ?? null,
+        provider: req.provider,
+        model: req.model,
+        promptTokens: req.promptTokens,
+        completionTokens: req.completionTokens,
+        totalTokens: req.totalTokens,
+        cachedTokens: req.cachedTokens,
+        cost: req.cost,
+        inputCost: req.inputCost,
+        outputCost: req.outputCost,
+        endpoint: req.endpoint,
+        statusCode: req.statusCode,
+        latencyMs: req.latencyMs,
+        isStreaming: req.isStreaming,
+        userId: req.userId ?? null,
+        tags: JSON.stringify(req.tags),
+        createdAt: now,
+        updatedAt: now,
+      }));
+
+      await db.insertInto('llm_requests').values(values).execute();
+
+      return { count: values.length };
+    },
+
+    /**
+     * Insert a single LLM request log
+     */
+    insertRequest: async (request: LLMRequestInsert) => {
+      const result = await insertLLMRequestSchema.safeParseAsync(request);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid request data: ${result.error.message}`);
+      }
+
+      const req = result.data;
+      const now = new Date().toISOString();
+
+      return db
+        .insertInto('llm_requests')
+        .values({
+          id: randomUUID(),
+          requestId: req.requestId,
+          configId: req.configId ?? null,
+          variantId: req.variantId ?? null,
+          provider: req.provider,
+          model: req.model,
+          promptTokens: req.promptTokens,
+          completionTokens: req.completionTokens,
+          totalTokens: req.totalTokens,
+          cachedTokens: req.cachedTokens,
+          cost: req.cost,
+          inputCost: req.inputCost,
+          outputCost: req.outputCost,
+          endpoint: req.endpoint,
+          statusCode: req.statusCode,
+          latencyMs: req.latencyMs,
+          isStreaming: req.isStreaming,
+          userId: req.userId ?? null,
+          tags: JSON.stringify(req.tags),
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returningAll()
+        .executeTakeFirst();
+    },
+
+    /**
+     * List LLM requests with filtering and pagination
+     */
+    listRequests: async (params?: z.infer<typeof listRequestsSchema>) => {
+      const result = await listRequestsSchema.safeParseAsync(params || {});
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { limit, offset, configId, provider, model, startDate, endDate } =
+        result.data;
+
+      let query = db
+        .selectFrom('llm_requests')
+        .selectAll()
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .offset(offset);
+
+      if (configId) {
+        query = query.where('configId', '=', configId);
+      }
+      if (provider) {
+        query = query.where('provider', '=', provider);
+      }
+      if (model) {
+        query = query.where('model', '=', model);
+      }
+      if (startDate) {
+        query = query.where(
+          sql<boolean>`"createdAt" >= ${startDate.toISOString()}`
+        );
+      }
+      if (endDate) {
+        query = query.where(
+          sql<boolean>`"createdAt" <= ${endDate.toISOString()}`
+        );
+      }
+
+      return query.execute();
+    },
+
+    /**
+     * Get a single request by requestId
+     */
+    getRequestByRequestId: async (requestId: string) => {
+      return db
+        .selectFrom('llm_requests')
+        .selectAll()
+        .where('requestId', '=', requestId)
+        .executeTakeFirst();
+    },
+
+    /**
+     * Get total cost for a date range
+     */
+    getTotalCost: async (params: z.infer<typeof dateRangeSchema>) => {
+      const result = await dateRangeSchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate } = result.data;
+
+      const data = await db
+        .selectFrom('llm_requests')
+        .select([
+          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
+          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
+          sql<number>`COALESCE(SUM("promptTokens"), 0)`.as('totalPromptTokens'),
+          sql<number>`COALESCE(SUM("completionTokens"), 0)`.as(
+            'totalCompletionTokens'
+          ),
+          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COUNT(*)`.as('requestCount'),
+        ])
+        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .executeTakeFirst();
+
+      return data;
+    },
+
+    /**
+     * Get cost breakdown by model
+     */
+    getCostByModel: async (params: z.infer<typeof dateRangeSchema>) => {
+      const result = await dateRangeSchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate } = result.data;
+
+      return db
+        .selectFrom('llm_requests')
+        .select([
+          'provider',
+          'model',
+          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
+          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
+          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COUNT(*)`.as('requestCount'),
+          sql<number>`AVG("latencyMs")`.as('avgLatencyMs'),
+        ])
+        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .groupBy(['provider', 'model'])
+        .orderBy(sql`SUM(cost)`, 'desc')
+        .execute();
+    },
+
+    /**
+     * Get cost breakdown by provider
+     */
+    getCostByProvider: async (params: z.infer<typeof dateRangeSchema>) => {
+      const result = await dateRangeSchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate } = result.data;
+
+      return db
+        .selectFrom('llm_requests')
+        .select([
+          'provider',
+          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
+          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
+          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COUNT(*)`.as('requestCount'),
+          sql<number>`AVG("latencyMs")`.as('avgLatencyMs'),
+        ])
+        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .groupBy('provider')
+        .orderBy(sql`SUM(cost)`, 'desc')
+        .execute();
+    },
+
+    /**
+     * Get cost breakdown by config
+     */
+    getCostByConfig: async (params: z.infer<typeof dateRangeSchema>) => {
+      const result = await dateRangeSchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate } = result.data;
+
+      return db
+        .selectFrom('llm_requests')
+        .leftJoin('configs', 'llm_requests.configId', 'configs.id')
+        .select([
+          'llm_requests.configId',
+          'configs.name as configName',
+          'configs.slug as configSlug',
+          sql<number>`COALESCE(SUM(llm_requests.cost), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM(llm_requests."inputCost"), 0)`.as(
+            'totalInputCost'
+          ),
+          sql<number>`COALESCE(SUM(llm_requests."outputCost"), 0)`.as(
+            'totalOutputCost'
+          ),
+          sql<number>`COALESCE(SUM(llm_requests."totalTokens"), 0)`.as(
+            'totalTokens'
+          ),
+          sql<number>`COUNT(*)`.as('requestCount'),
+        ])
+        .where(
+          sql<boolean>`llm_requests."createdAt" >= ${startDate.toISOString()}`
+        )
+        .where(
+          sql<boolean>`llm_requests."createdAt" <= ${endDate.toISOString()}`
+        )
+        .groupBy(['llm_requests.configId', 'configs.name', 'configs.slug'])
+        .orderBy(sql`SUM(llm_requests.cost)`, 'desc')
+        .execute();
+    },
+
+    /**
+     * Get daily cost summary
+     */
+    getDailyCosts: async (params: z.infer<typeof dateRangeSchema>) => {
+      const result = await dateRangeSchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate } = result.data;
+
+      return db
+        .selectFrom('llm_requests')
+        .select([
+          sql<string>`DATE("createdAt")`.as('date'),
+          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
+          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
+          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COUNT(*)`.as('requestCount'),
+        ])
+        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .groupBy(sql`DATE("createdAt")`)
+        .orderBy(sql`DATE("createdAt")`, 'asc')
+        .execute();
+    },
+
+    /**
+     * Get cost summary with flexible grouping
+     */
+    getCostSummary: async (params: z.infer<typeof costSummarySchema>) => {
+      const result = await costSummarySchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate, groupBy } = result.data;
+
+      // Base query with date filter
+      const baseQuery = db
+        .selectFrom('llm_requests')
+        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`);
+
+      // Add grouping based on parameter
+      switch (groupBy) {
+        case 'day':
+          return baseQuery
+            .select([
+              sql<string>`DATE("createdAt")`.as('groupKey'),
+              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .groupBy(sql`DATE("createdAt")`)
+            .orderBy(sql`DATE("createdAt")`, 'asc')
+            .execute();
+
+        case 'hour':
+          return baseQuery
+            .select([
+              sql<string>`DATE_TRUNC('hour', "createdAt")`.as('groupKey'),
+              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .groupBy(sql`DATE_TRUNC('hour', "createdAt")`)
+            .orderBy(sql`DATE_TRUNC('hour', "createdAt")`, 'asc')
+            .execute();
+
+        case 'model':
+          return baseQuery
+            .select([
+              sql<string>`provider || '/' || model`.as('groupKey'),
+              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .groupBy(['provider', 'model'])
+            .orderBy(sql`SUM(cost)`, 'desc')
+            .execute();
+
+        case 'provider':
+          return baseQuery
+            .select([
+              sql<string>`provider`.as('groupKey'),
+              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .groupBy('provider')
+            .orderBy(sql`SUM(cost)`, 'desc')
+            .execute();
+
+        case 'config':
+          return baseQuery
+            .select([
+              sql<string>`COALESCE("configId"::text, 'no-config')`.as(
+                'groupKey'
+              ),
+              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .groupBy('configId')
+            .orderBy(sql`SUM(cost)`, 'desc')
+            .execute();
+
+        default:
+          // No grouping - return totals
+          return baseQuery
+            .select([
+              sql<string>`'total'`.as('groupKey'),
+              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .execute();
+      }
+    },
+
+    /**
+     * Get request count and stats for a time range
+     */
+    getRequestStats: async (params: z.infer<typeof dateRangeSchema>) => {
+      const result = await dateRangeSchema.safeParseAsync(params);
+      if (!result.success) {
+        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
+      }
+
+      const { startDate, endDate } = result.data;
+
+      const data = await db
+        .selectFrom('llm_requests')
+        .select([
+          sql<number>`COUNT(*)`.as('totalRequests'),
+          sql<number>`COUNT(CASE WHEN "statusCode" >= 200 AND "statusCode" < 300 THEN 1 END)`.as(
+            'successfulRequests'
+          ),
+          sql<number>`COUNT(CASE WHEN "statusCode" >= 400 THEN 1 END)`.as(
+            'failedRequests'
+          ),
+          sql<number>`COUNT(CASE WHEN "isStreaming" = true THEN 1 END)`.as(
+            'streamingRequests'
+          ),
+          sql<number>`AVG("latencyMs")`.as('avgLatencyMs'),
+          sql<number>`MAX("latencyMs")`.as('maxLatencyMs'),
+          sql<number>`MIN("latencyMs")`.as('minLatencyMs'),
+        ])
+        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .executeTakeFirst();
+
+      return data;
+    },
+  };
+};

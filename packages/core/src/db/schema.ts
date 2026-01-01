@@ -78,6 +78,41 @@ export const workspaceSettingsSchema = z.object({
   name: z.string().nullable().optional(), // Workspace display name
 });
 
+// LLM Requests table schema - stores request logs with cost tracking
+export const llmRequestsSchema = z.object({
+  ...baseSchema,
+  requestId: z.string().uuid(), // Unique request identifier for tracing
+
+  // Foreign keys (nullable for direct gateway calls without config)
+  configId: z.string().uuid().nullable().optional(), // FK -> configs.id
+  variantId: z.string().uuid().nullable().optional(), // FK -> variants.id
+
+  // Provider & Model
+  provider: z.string(), // e.g., "openai", "anthropic", "openrouter"
+  model: z.string(), // e.g., "gpt-4o", "claude-3-sonnet"
+
+  // Token Usage
+  promptTokens: z.number().int().default(0),
+  completionTokens: z.number().int().default(0),
+  totalTokens: z.number().int().default(0),
+  cachedTokens: z.number().int().default(0), // For cache-aware pricing
+
+  // Cost (stored in micro-dollars for precision: $0.001 = 1000)
+  cost: z.number().int().default(0), // Total cost in micro-dollars
+  inputCost: z.number().int().default(0), // Input/prompt cost in micro-dollars
+  outputCost: z.number().int().default(0), // Output/completion cost in micro-dollars
+
+  // Request Metadata
+  endpoint: z.string(), // "chat/completions", "completions", "embeddings", etc.
+  statusCode: z.number().int(), // HTTP status code (200, 400, 500, etc.)
+  latencyMs: z.number().int().default(0), // Request latency in milliseconds
+  isStreaming: z.boolean().default(false), // Whether request used streaming
+
+  // Optional identifiers (for future budget tracking)
+  userId: z.string().nullable().optional(), // User identifier from request
+  tags: z.record(z.string(), z.string()).default({}), // Custom tags/metadata
+});
+
 /**
  * Zod inferred types (for runtime validation)
  */
@@ -89,6 +124,7 @@ export type EnvironmentSecret = z.infer<typeof environmentSecretsSchema>;
 export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
+export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -159,6 +195,28 @@ export interface WorkspaceSettingsTable extends BaseTable {
   name: string | null;
 }
 
+// LLM Requests table - request logs with cost tracking
+export interface LLMRequestsTable extends BaseTable {
+  requestId: string;
+  configId: string | null;
+  variantId: string | null;
+  provider: string;
+  model: string;
+  promptTokens: ColumnType<number, number | undefined, number | undefined>;
+  completionTokens: ColumnType<number, number | undefined, number | undefined>;
+  totalTokens: ColumnType<number, number | undefined, number | undefined>;
+  cachedTokens: ColumnType<number, number | undefined, number | undefined>;
+  cost: ColumnType<number, number | undefined, number | undefined>;
+  inputCost: ColumnType<number, number | undefined, number | undefined>;
+  outputCost: ColumnType<number, number | undefined, number | undefined>;
+  endpoint: string;
+  statusCode: number;
+  latencyMs: ColumnType<number, number | undefined, number | undefined>;
+  isStreaming: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+  userId: string | null;
+  tags: ColumnType<Record<string, string>, string, string>;
+}
+
 /**
  * Main Kysely Database interface
  */
@@ -171,6 +229,7 @@ export interface Database {
   config_variants: ConfigVariantsTable;
   targeting_rules: TargetingRulesTable;
   workspace_settings: WorkspaceSettingsTable;
+  llm_requests: LLMRequestsTable;
 }
 
 /**
@@ -346,6 +405,41 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
+    llm_requests: {
+      order: 9,
+      schema: llmRequestsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        requestId: { type: 'uuid' },
+        configId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'configs', column: 'id' },
+        },
+        variantId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'variants', column: 'id' },
+        },
+        provider: { type: 'text' },
+        model: { type: 'text' },
+        promptTokens: { type: 'integer', default: 0 },
+        completionTokens: { type: 'integer', default: 0 },
+        totalTokens: { type: 'integer', default: 0 },
+        cachedTokens: { type: 'integer', default: 0 },
+        cost: { type: 'integer', default: 0 },
+        inputCost: { type: 'integer', default: 0 },
+        outputCost: { type: 'integer', default: 0 },
+        endpoint: { type: 'text' },
+        statusCode: { type: 'integer' },
+        latencyMs: { type: 'integer', default: 0 },
+        isStreaming: { type: 'boolean', default: false },
+        userId: { type: 'text', nullable: true },
+        tags: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
   },
 } as const;
 
@@ -361,4 +455,5 @@ export const schemas = {
   config_variants: configVariantsSchema,
   targeting_rules: targetingRulesSchema,
   workspace_settings: workspaceSettingsSchema,
+  llm_requests: llmRequestsSchema,
 } as const;

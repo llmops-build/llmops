@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { basicAuth } from 'hono/basic-auth';
+import analytics from '@server/handlers/analytics';
 import configs from '@server/handlers/configs';
 import environments from '@server/handlers/environments';
 
@@ -47,6 +48,7 @@ const app = new Hono()
       501
     );
   })
+  .route('/analytics', analytics)
   .route('/configs', configs)
   .route('/environments', environments)
   .route('/providers', providers)
