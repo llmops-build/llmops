@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css';
+import { calc } from '@vanilla-extract/css-utils';
 import { colors, spacing, sprinkles } from '@ui';
 
 export const overviewGrid = style({
@@ -111,9 +112,12 @@ export const emptyState = style([
 ]);
 
 export const tableContainer = style({
-  border: `1px solid ${colors.gray4}`,
-  borderRadius: spacing.sm,
-  overflow: 'hidden',
+  marginLeft: calc.negate(spacing.md),
+  marginRight: calc.negate(spacing.md),
+  width: calc.add('100%', calc.multiply(2, spacing.md)),
+  borderTopWidth: 1,
+  borderTopStyle: 'solid',
+  borderTopColor: colors.gray3,
 });
 
 export const filterContainer = style({
@@ -236,5 +240,102 @@ export const loadingSpinner = style([
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
+  },
+]);
+
+// Request table styles
+export const timestampCell = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+]);
+
+export const cellStack = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+});
+
+export const providerText = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray9',
+  }),
+]);
+
+export const modelText = style([
+  sprinkles({
+    fontSize: 'sm',
+    fontFamily: 'mono',
+  }),
+]);
+
+export const tokenSubtext = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray9',
+  }),
+]);
+
+// Daily costs chart styles
+export const dailyCostsContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.sm,
+});
+
+export const dailyCostRow = style([
+  sprinkles({
+    fontFamily: 'mono',
+    fontSize: 'xs',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+]);
+
+export const dailyCostDate = style([
+  sprinkles({
+    color: 'gray9',
+  }),
+  {
+    width: '80px',
+  },
+]);
+
+export const dailyCostBarContainer = style({
+  flex: 1,
+  height: '20px',
+  backgroundColor: colors.gray3,
+  borderRadius: '4px',
+  overflow: 'hidden',
+});
+
+export const dailyCostBar = style({
+  height: '100%',
+  backgroundColor: colors.accent9,
+});
+
+export const dailyCostValue = style([
+  sprinkles({
+    color: 'gray11',
+  }),
+  {
+    width: '70px',
+    textAlign: 'right',
+  },
+]);
+
+export const dailyCostRequests = style([
+  sprinkles({
+    color: 'gray9',
+  }),
+  {
+    width: '50px',
+    textAlign: 'right',
   },
 ]);

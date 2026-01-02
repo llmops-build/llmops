@@ -19,8 +19,9 @@ import {
   statusBadge,
   statusSuccess,
   statusError,
+  timestampCell,
 } from '../-components/observability.css';
-import { formatDistance } from 'date-fns';
+import { format } from 'date-fns';
 import clsx from 'clsx';
 
 export const Route = createFileRoute(
@@ -80,10 +81,11 @@ function RouteComponent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHeaderCell>Time</TableHeaderCell>
-              <TableHeaderCell>Provider / Model</TableHeaderCell>
+              <TableHeaderCell>Timestamp</TableHeaderCell>
+              <TableHeaderCell>Provider</TableHeaderCell>
+              <TableHeaderCell>Model</TableHeaderCell>
               <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Tokens</TableHeaderCell>
+              <TableHeaderCell>Tokens (In → Out)</TableHeaderCell>
               <TableHeaderCell>Cost</TableHeaderCell>
               <TableHeaderCell>Latency</TableHeaderCell>
             </TableRow>
@@ -92,23 +94,15 @@ function RouteComponent() {
             {requests.map((request) => (
               <TableRow key={request.id}>
                 <TableCell>
-                  {formatDistance(new Date(request.createdAt), new Date(), {
-                    addSuffix: true,
-                  })}
+                  <span className={timestampCell}>
+                    {format(new Date(request.createdAt), 'yyyy-MM-dd HH:mm:ss')}
+                  </span>
                 </TableCell>
                 <TableCell>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '2px',
-                    }}
-                  >
-                    <span style={{ fontSize: '12px', color: 'var(--gray9)' }}>
-                      {request.provider}
-                    </span>
-                    <span style={{ fontSize: '13px' }}>{request.model}</span>
-                  </div>
+                  <span className={timestampCell}>{request.provider}</span>
+                </TableCell>
+                <TableCell>
+                  <span className={timestampCell}>{request.model}</span>
                 </TableCell>
                 <TableCell>
                   <span
@@ -123,19 +117,10 @@ function RouteComponent() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '2px',
-                    }}
-                  >
-                    <span>{request.totalTokens.toLocaleString()}</span>
-                    <span style={{ fontSize: '11px', color: 'var(--gray9)' }}>
-                      {request.promptTokens.toLocaleString()} in /{' '}
-                      {request.completionTokens.toLocaleString()} out
-                    </span>
-                  </div>
+                  <span className={timestampCell}>
+                    {request.promptTokens.toLocaleString()} →{' '}
+                    {request.completionTokens.toLocaleString()}
+                  </span>
                 </TableCell>
                 <TableCell>{formatCost(request.cost)}</TableCell>
                 <TableCell>{request.latencyMs}ms</TableCell>

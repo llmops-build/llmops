@@ -17,6 +17,13 @@ import {
   chartPlaceholder,
   emptyState,
   loadingSpinner,
+  dailyCostsContainer,
+  dailyCostRow,
+  dailyCostDate,
+  dailyCostBarContainer,
+  dailyCostBar,
+  dailyCostValue,
+  dailyCostRequests,
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
@@ -167,63 +174,29 @@ function DailyCostsChart({ data }: { data: DailyCostData[] }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div className={dailyCostsContainer}>
       {data.slice(-14).map((day) => {
         const cost = Number(day.totalCost);
         const reqCount = Number(day.requestCount);
         return (
-          <div
-            key={day.date}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-            }}
-          >
-            <span style={{ width: '80px', color: 'var(--gray9)' }}>
+          <div key={day.date} className={dailyCostRow}>
+            <span className={dailyCostDate}>
               {new Date(day.date).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
               })}
             </span>
-            <div
-              style={{
-                flex: 1,
-                height: '20px',
-                backgroundColor: 'var(--gray3)',
-                borderRadius: '4px',
-                overflow: 'hidden',
-              }}
-            >
+            <div className={dailyCostBarContainer}>
               <div
+                className={dailyCostBar}
                 style={{
-                  height: '100%',
                   width: `${(cost / maxCost) * 100}%`,
-                  backgroundColor: 'var(--accent9)',
                   minWidth: cost > 0 ? '2px' : 0,
                 }}
               />
             </div>
-            <span
-              style={{
-                width: '70px',
-                textAlign: 'right',
-                color: 'var(--gray11)',
-              }}
-            >
-              {formatCost(day.totalCost)}
-            </span>
-            <span
-              style={{
-                width: '50px',
-                textAlign: 'right',
-                color: 'var(--gray9)',
-              }}
-            >
-              {reqCount}req
-            </span>
+            <span className={dailyCostValue}>{formatCost(day.totalCost)}</span>
+            <span className={dailyCostRequests}>{reqCount}req</span>
           </div>
         );
       })}

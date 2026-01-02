@@ -1,6 +1,12 @@
 import { style, keyframes } from '@vanilla-extract/css';
 import { colors, spacing, sprinkles } from '@ui';
 
+export const datePickerWrapper = style({
+  display: 'flex',
+  gap: spacing.xs,
+  alignItems: 'center',
+});
+
 export const datePickerTrigger = style([
   sprinkles({
     display: 'flex',

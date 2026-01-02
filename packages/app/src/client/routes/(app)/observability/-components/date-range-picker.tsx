@@ -151,7 +151,7 @@ export function DateRangePicker() {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+    <div className={styles.datePickerWrapper}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <button
