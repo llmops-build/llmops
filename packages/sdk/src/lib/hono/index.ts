@@ -14,7 +14,9 @@ export function createLLMOpsMiddleware(
       urlPath = urlPath.slice(basePath.length) || '/';
     }
 
-    const url = new URL(urlPath, c.req.url);
+    // Preserve query string from original URL
+    const originalUrl = new URL(c.req.url);
+    const url = new URL(urlPath + originalUrl.search, c.req.url);
 
     // Clone headers from incoming request
     const headers = new Headers();

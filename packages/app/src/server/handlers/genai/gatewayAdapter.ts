@@ -252,6 +252,9 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       // Store variant config in context for reference
       c.set('variantConfig', variantConfig);
       c.set('variantModel', variantConfig.model || data.modelName);
+      // Store resolved IDs for cost tracking (configId from header may be a slug)
+      c.set('configId', data.configId);
+      c.set('variantId', data.variantId);
 
       await next();
     } catch (error) {

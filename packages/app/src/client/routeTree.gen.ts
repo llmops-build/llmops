@@ -13,14 +13,20 @@ import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
+import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
 import { Route as appSettingsIndexRouteImport } from './routes/(app)/settings/index'
+import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index'
 import { Route as appSettingsSettingsRouteImport } from './routes/(app)/settings/_settings'
+import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
 import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(app)/environments/$environment/route'
 import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
 import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
 import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
+import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
+import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
+import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
 import { Route as appEnvironmentsEnvironmentTabsRouteImport } from './routes/(app)/environments/$environment/_tabs'
 import { Route as appConfigsIdVariantsRouteImport } from './routes/(app)/configs/$id/_variants'
 import { Route as appConfigsIdTabsRouteImport } from './routes/(app)/configs/$id/_tabs'
@@ -52,15 +58,30 @@ const appSettingsRouteRoute = appSettingsRouteRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appObservabilityRouteRoute = appObservabilityRouteRouteImport.update({
+  id: '/(app)/observability',
+  path: '/observability',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const appSettingsIndexRoute = appSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appSettingsRouteRoute,
 } as any)
+const appObservabilityIndexRoute = appObservabilityIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appObservabilityRouteRoute,
+} as any)
 const appSettingsSettingsRoute = appSettingsSettingsRouteImport.update({
   id: '/_settings',
   getParentRoute: () => appSettingsRouteRoute,
 } as any)
+const appObservabilityObservabilityRoute =
+  appObservabilityObservabilityRouteImport.update({
+    id: '/_observability',
+    getParentRoute: () => appObservabilityRouteRoute,
+  } as any)
 const appEnvironmentsEnvironmentRouteRoute =
   appEnvironmentsEnvironmentRouteRouteImport.update({
     id: '/$environment',
@@ -94,6 +115,24 @@ const appSettingsSettingsUserProfileRoute =
     id: '/user-profile',
     path: '/user-profile',
     getParentRoute: () => appSettingsSettingsRoute,
+  } as any)
+const appObservabilityObservabilityRequestsRoute =
+  appObservabilityObservabilityRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => appObservabilityObservabilityRoute,
+  } as any)
+const appObservabilityObservabilityOverviewRoute =
+  appObservabilityObservabilityOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
+    getParentRoute: () => appObservabilityObservabilityRoute,
+  } as any)
+const appObservabilityObservabilityCostsRoute =
+  appObservabilityObservabilityCostsRouteImport.update({
+    id: '/costs',
+    path: '/costs',
+    getParentRoute: () => appObservabilityObservabilityRoute,
   } as any)
 const appEnvironmentsEnvironmentTabsRoute =
   appEnvironmentsEnvironmentTabsRouteImport.update({
@@ -152,13 +191,18 @@ const appConfigsIdTargetingTargetingEnvironmentRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/observability': typeof appObservabilityObservabilityRouteWithChildren
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/observability/': typeof appObservabilityIndexRoute
   '/settings/': typeof appSettingsIndexRoute
+  '/observability/costs': typeof appObservabilityObservabilityCostsRoute
+  '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
+  '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/configs/$id/': typeof appConfigsIdIndexRoute
@@ -175,9 +219,13 @@ export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
   '/': typeof appIndexRoute
+  '/observability': typeof appObservabilityIndexRoute
   '/settings': typeof appSettingsIndexRoute
   '/configs/$id': typeof appConfigsIdIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
+  '/observability/costs': typeof appObservabilityObservabilityCostsRoute
+  '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
+  '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
@@ -190,17 +238,23 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
   '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
+  '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
   '/(app)/settings/_settings': typeof appSettingsSettingsRouteWithChildren
+  '/(app)/observability/': typeof appObservabilityIndexRoute
   '/(app)/settings/': typeof appSettingsIndexRoute
   '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
   '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
   '/(app)/environments/$environment/_tabs': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
+  '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
+  '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
@@ -216,13 +270,18 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/observability'
     | '/settings'
     | '/configs'
     | '/environments'
     | '/'
     | '/configs/$id'
     | '/environments/$environment'
+    | '/observability/'
     | '/settings/'
+    | '/observability/costs'
+    | '/observability/overview'
+    | '/observability/requests'
     | '/settings/user-profile'
     | '/settings/workspace-general'
     | '/configs/$id/'
@@ -239,9 +298,13 @@ export interface FileRouteTypes {
     | '/configs'
     | '/environments'
     | '/'
+    | '/observability'
     | '/settings'
     | '/configs/$id'
     | '/environments/$environment'
+    | '/observability/costs'
+    | '/observability/overview'
+    | '/observability/requests'
     | '/settings/user-profile'
     | '/settings/workspace-general'
     | '/configs/$id/settings'
@@ -253,17 +316,23 @@ export interface FileRouteTypes {
     | '/configs/$id/variants/$variant'
   id:
     | '__root__'
+    | '/(app)/observability'
     | '/(app)/settings'
     | '/(app)/configs'
     | '/(app)/environments'
     | '/(app)/'
     | '/(app)/configs/$id'
     | '/(app)/environments/$environment'
+    | '/(app)/observability/_observability'
     | '/(app)/settings/_settings'
+    | '/(app)/observability/'
     | '/(app)/settings/'
     | '/(app)/configs/$id/_tabs'
     | '/(app)/configs/$id/_variants'
     | '/(app)/environments/$environment/_tabs'
+    | '/(app)/observability/_observability/costs'
+    | '/(app)/observability/_observability/overview'
+    | '/(app)/observability/_observability/requests'
     | '/(app)/settings/_settings/user-profile'
     | '/(app)/settings/_settings/workspace-general'
     | '/(app)/configs/$id/'
@@ -278,6 +347,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appConfigsRoute: typeof appConfigsRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
@@ -314,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appSettingsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/observability': {
+      id: '/(app)/observability'
+      path: '/observability'
+      fullPath: '/observability'
+      preLoaderRoute: typeof appObservabilityRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/settings/': {
       id: '/(app)/settings/'
       path: '/'
@@ -321,12 +398,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appSettingsIndexRouteImport
       parentRoute: typeof appSettingsRouteRoute
     }
+    '/(app)/observability/': {
+      id: '/(app)/observability/'
+      path: '/'
+      fullPath: '/observability/'
+      preLoaderRoute: typeof appObservabilityIndexRouteImport
+      parentRoute: typeof appObservabilityRouteRoute
+    }
     '/(app)/settings/_settings': {
       id: '/(app)/settings/_settings'
       path: ''
       fullPath: '/settings'
       preLoaderRoute: typeof appSettingsSettingsRouteImport
       parentRoute: typeof appSettingsRouteRoute
+    }
+    '/(app)/observability/_observability': {
+      id: '/(app)/observability/_observability'
+      path: ''
+      fullPath: '/observability'
+      preLoaderRoute: typeof appObservabilityObservabilityRouteImport
+      parentRoute: typeof appObservabilityRouteRoute
     }
     '/(app)/environments/$environment': {
       id: '/(app)/environments/$environment'
@@ -369,6 +460,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/user-profile'
       preLoaderRoute: typeof appSettingsSettingsUserProfileRouteImport
       parentRoute: typeof appSettingsSettingsRoute
+    }
+    '/(app)/observability/_observability/requests': {
+      id: '/(app)/observability/_observability/requests'
+      path: '/requests'
+      fullPath: '/observability/requests'
+      preLoaderRoute: typeof appObservabilityObservabilityRequestsRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
+    '/(app)/observability/_observability/overview': {
+      id: '/(app)/observability/_observability/overview'
+      path: '/overview'
+      fullPath: '/observability/overview'
+      preLoaderRoute: typeof appObservabilityObservabilityOverviewRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
+    '/(app)/observability/_observability/costs': {
+      id: '/(app)/observability/_observability/costs'
+      path: '/costs'
+      fullPath: '/observability/costs'
+      preLoaderRoute: typeof appObservabilityObservabilityCostsRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
     }
     '/(app)/environments/$environment/_tabs': {
       id: '/(app)/environments/$environment/_tabs'
@@ -442,6 +554,43 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface appObservabilityObservabilityRouteChildren {
+  appObservabilityObservabilityCostsRoute: typeof appObservabilityObservabilityCostsRoute
+  appObservabilityObservabilityOverviewRoute: typeof appObservabilityObservabilityOverviewRoute
+  appObservabilityObservabilityRequestsRoute: typeof appObservabilityObservabilityRequestsRoute
+}
+
+const appObservabilityObservabilityRouteChildren: appObservabilityObservabilityRouteChildren =
+  {
+    appObservabilityObservabilityCostsRoute:
+      appObservabilityObservabilityCostsRoute,
+    appObservabilityObservabilityOverviewRoute:
+      appObservabilityObservabilityOverviewRoute,
+    appObservabilityObservabilityRequestsRoute:
+      appObservabilityObservabilityRequestsRoute,
+  }
+
+const appObservabilityObservabilityRouteWithChildren =
+  appObservabilityObservabilityRoute._addFileChildren(
+    appObservabilityObservabilityRouteChildren,
+  )
+
+interface appObservabilityRouteRouteChildren {
+  appObservabilityObservabilityRoute: typeof appObservabilityObservabilityRouteWithChildren
+  appObservabilityIndexRoute: typeof appObservabilityIndexRoute
+}
+
+const appObservabilityRouteRouteChildren: appObservabilityRouteRouteChildren = {
+  appObservabilityObservabilityRoute:
+    appObservabilityObservabilityRouteWithChildren,
+  appObservabilityIndexRoute: appObservabilityIndexRoute,
+}
+
+const appObservabilityRouteRouteWithChildren =
+  appObservabilityRouteRoute._addFileChildren(
+    appObservabilityRouteRouteChildren,
+  )
 
 interface appSettingsSettingsRouteChildren {
   appSettingsSettingsUserProfileRoute: typeof appSettingsSettingsUserProfileRoute
@@ -576,6 +725,7 @@ const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appConfigsRoute: appConfigsRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,

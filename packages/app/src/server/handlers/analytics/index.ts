@@ -74,11 +74,36 @@ interface DbWithAnalytics {
 }
 
 /**
+ * Parse date string and set to start of day (00:00:00.000)
+ */
+function parseStartDate(dateStr: string): Date {
+  const date = new Date(dateStr);
+  // If only date is provided (no time component), it's already at 00:00:00 UTC
+  return date;
+}
+
+/**
+ * Parse date string and set to end of day (23:59:59.999)
+ * This ensures that when users specify endDate=2026-01-02, all records from that day are included
+ */
+function parseEndDate(dateStr: string): Date {
+  const date = new Date(dateStr);
+  // Check if time component was provided (contains 'T' or has non-zero time)
+  if (!dateStr.includes('T') && !dateStr.includes(':')) {
+    // Only date provided - set to end of day
+    date.setUTCHours(23, 59, 59, 999);
+  }
+  return date;
+}
+
+/**
  * Date range query schema
+ * - startDate: parsed as start of day (00:00:00.000)
+ * - endDate: parsed as end of day (23:59:59.999) when only date is provided
  */
 const dateRangeSchema = z.object({
-  startDate: z.string().transform((s) => new Date(s)),
-  endDate: z.string().transform((s) => new Date(s)),
+  startDate: z.string().transform(parseStartDate),
+  endDate: z.string().transform(parseEndDate),
 });
 
 /**
@@ -114,8 +139,10 @@ const app = new Hono()
           configId: query.configId,
           provider: query.provider,
           model: query.model,
-          startDate: query.startDate ? new Date(query.startDate) : undefined,
-          endDate: query.endDate ? new Date(query.endDate) : undefined,
+          startDate: query.startDate
+            ? parseStartDate(query.startDate)
+            : undefined,
+          endDate: query.endDate ? parseEndDate(query.endDate) : undefined,
         });
 
         return c.json(successResponse(requests, 200));

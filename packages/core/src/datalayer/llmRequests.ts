@@ -61,6 +61,13 @@ const costSummarySchema = z.object({
   groupBy: z.enum(['day', 'hour', 'model', 'provider', 'config']).optional(),
 });
 
+/**
+ * Helper to create column reference for SQL
+ * Uses sql.ref() to properly quote column names for the database
+ */
+const col = (name: string) => sql.ref(name);
+const tableCol = (table: string, name: string) => sql.ref(`${table}.${name}`);
+
 export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
   return {
     /**
@@ -184,12 +191,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       }
       if (startDate) {
         query = query.where(
-          sql<boolean>`"createdAt" >= ${startDate.toISOString()}`
+          sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`
         );
       }
       if (endDate) {
         query = query.where(
-          sql<boolean>`"createdAt" <= ${endDate.toISOString()}`
+          sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`
         );
       }
 
@@ -221,18 +228,26 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       const data = await db
         .selectFrom('llm_requests')
         .select([
-          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
-          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
-          sql<number>`COALESCE(SUM("promptTokens"), 0)`.as('totalPromptTokens'),
-          sql<number>`COALESCE(SUM("completionTokens"), 0)`.as(
+          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
+            'totalInputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
+            'totalOutputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('promptTokens')}), 0)`.as(
+            'totalPromptTokens'
+          ),
+          sql<number>`COALESCE(SUM(${col('completionTokens')}), 0)`.as(
             'totalCompletionTokens'
           ),
-          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+            'totalTokens'
+          ),
           sql<number>`COUNT(*)`.as('requestCount'),
         ])
-        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
         .executeTakeFirst();
 
       return data;
@@ -254,17 +269,23 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         .select([
           'provider',
           'model',
-          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
-          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
-          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
+            'totalInputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
+            'totalOutputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+            'totalTokens'
+          ),
           sql<number>`COUNT(*)`.as('requestCount'),
-          sql<number>`AVG("latencyMs")`.as('avgLatencyMs'),
+          sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
         ])
-        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
         .groupBy(['provider', 'model'])
-        .orderBy(sql`SUM(cost)`, 'desc')
+        .orderBy(sql`SUM(${col('cost')})`, 'desc')
         .execute();
     },
 
@@ -283,17 +304,23 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         .selectFrom('llm_requests')
         .select([
           'provider',
-          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
-          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
-          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
+            'totalInputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
+            'totalOutputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+            'totalTokens'
+          ),
           sql<number>`COUNT(*)`.as('requestCount'),
-          sql<number>`AVG("latencyMs")`.as('avgLatencyMs'),
+          sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
         ])
-        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
         .groupBy('provider')
-        .orderBy(sql`SUM(cost)`, 'desc')
+        .orderBy(sql`SUM(${col('cost')})`, 'desc')
         .execute();
     },
 
@@ -315,26 +342,28 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           'llm_requests.configId',
           'configs.name as configName',
           'configs.slug as configSlug',
-          sql<number>`COALESCE(SUM(llm_requests.cost), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(llm_requests."inputCost"), 0)`.as(
+          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'cost')}), 0)`.as(
+            'totalCost'
+          ),
+          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'inputCost')}), 0)`.as(
             'totalInputCost'
           ),
-          sql<number>`COALESCE(SUM(llm_requests."outputCost"), 0)`.as(
+          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'outputCost')}), 0)`.as(
             'totalOutputCost'
           ),
-          sql<number>`COALESCE(SUM(llm_requests."totalTokens"), 0)`.as(
+          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'totalTokens')}), 0)`.as(
             'totalTokens'
           ),
           sql<number>`COUNT(*)`.as('requestCount'),
         ])
         .where(
-          sql<boolean>`llm_requests."createdAt" >= ${startDate.toISOString()}`
+          sql<boolean>`${tableCol('llm_requests', 'createdAt')} >= ${startDate.toISOString()}`
         )
         .where(
-          sql<boolean>`llm_requests."createdAt" <= ${endDate.toISOString()}`
+          sql<boolean>`${tableCol('llm_requests', 'createdAt')} <= ${endDate.toISOString()}`
         )
         .groupBy(['llm_requests.configId', 'configs.name', 'configs.slug'])
-        .orderBy(sql`SUM(llm_requests.cost)`, 'desc')
+        .orderBy(sql`SUM(${tableCol('llm_requests', 'cost')})`, 'desc')
         .execute();
     },
 
@@ -352,17 +381,23 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       return db
         .selectFrom('llm_requests')
         .select([
-          sql<string>`DATE("createdAt")`.as('date'),
-          sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM("inputCost"), 0)`.as('totalInputCost'),
-          sql<number>`COALESCE(SUM("outputCost"), 0)`.as('totalOutputCost'),
-          sql<number>`COALESCE(SUM("totalTokens"), 0)`.as('totalTokens'),
+          sql<string>`DATE(${col('createdAt')})`.as('date'),
+          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
+          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
+            'totalInputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
+            'totalOutputCost'
+          ),
+          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+            'totalTokens'
+          ),
           sql<number>`COUNT(*)`.as('requestCount'),
         ])
-        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
-        .groupBy(sql`DATE("createdAt")`)
-        .orderBy(sql`DATE("createdAt")`, 'asc')
+        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
+        .groupBy(sql`DATE(${col('createdAt')})`)
+        .orderBy(sql`DATE(${col('createdAt')})`, 'asc')
         .execute();
     },
 
@@ -380,66 +415,70 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       // Base query with date filter
       const baseQuery = db
         .selectFrom('llm_requests')
-        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`);
+        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
 
       // Add grouping based on parameter
       switch (groupBy) {
         case 'day':
           return baseQuery
             .select([
-              sql<string>`DATE("createdAt")`.as('groupKey'),
-              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<string>`DATE(${col('createdAt')})`.as('groupKey'),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
-            .groupBy(sql`DATE("createdAt")`)
-            .orderBy(sql`DATE("createdAt")`, 'asc')
+            .groupBy(sql`DATE(${col('createdAt')})`)
+            .orderBy(sql`DATE(${col('createdAt')})`, 'asc')
             .execute();
 
         case 'hour':
           return baseQuery
             .select([
-              sql<string>`DATE_TRUNC('hour', "createdAt")`.as('groupKey'),
-              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<string>`DATE_TRUNC('hour', ${col('createdAt')})`.as(
+                'groupKey'
+              ),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
-            .groupBy(sql`DATE_TRUNC('hour', "createdAt")`)
-            .orderBy(sql`DATE_TRUNC('hour', "createdAt")`, 'asc')
+            .groupBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`)
+            .orderBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`, 'asc')
             .execute();
 
         case 'model':
           return baseQuery
             .select([
-              sql<string>`provider || '/' || model`.as('groupKey'),
-              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<string>`${col('provider')} || '/' || ${col('model')}`.as(
+                'groupKey'
+              ),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
             .groupBy(['provider', 'model'])
-            .orderBy(sql`SUM(cost)`, 'desc')
+            .orderBy(sql`SUM(${col('cost')})`, 'desc')
             .execute();
 
         case 'provider':
           return baseQuery
             .select([
-              sql<string>`provider`.as('groupKey'),
-              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<string>`${col('provider')}`.as('groupKey'),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
             .groupBy('provider')
-            .orderBy(sql`SUM(cost)`, 'desc')
+            .orderBy(sql`SUM(${col('cost')})`, 'desc')
             .execute();
 
         case 'config':
           return baseQuery
             .select([
-              sql<string>`COALESCE("configId"::text, 'no-config')`.as(
+              sql<string>`COALESCE(${col('configId')}::text, 'no-config')`.as(
                 'groupKey'
               ),
-              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
             .groupBy('configId')
-            .orderBy(sql`SUM(cost)`, 'desc')
+            .orderBy(sql`SUM(${col('cost')})`, 'desc')
             .execute();
 
         default:
@@ -447,7 +486,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           return baseQuery
             .select([
               sql<string>`'total'`.as('groupKey'),
-              sql<number>`COALESCE(SUM(cost), 0)`.as('totalCost'),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
             .execute();
@@ -469,21 +508,21 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         .selectFrom('llm_requests')
         .select([
           sql<number>`COUNT(*)`.as('totalRequests'),
-          sql<number>`COUNT(CASE WHEN "statusCode" >= 200 AND "statusCode" < 300 THEN 1 END)`.as(
+          sql<number>`COUNT(CASE WHEN ${col('statusCode')} >= 200 AND ${col('statusCode')} < 300 THEN 1 END)`.as(
             'successfulRequests'
           ),
-          sql<number>`COUNT(CASE WHEN "statusCode" >= 400 THEN 1 END)`.as(
+          sql<number>`COUNT(CASE WHEN ${col('statusCode')} >= 400 THEN 1 END)`.as(
             'failedRequests'
           ),
-          sql<number>`COUNT(CASE WHEN "isStreaming" = true THEN 1 END)`.as(
+          sql<number>`COUNT(CASE WHEN ${col('isStreaming')} = true THEN 1 END)`.as(
             'streamingRequests'
           ),
-          sql<number>`AVG("latencyMs")`.as('avgLatencyMs'),
-          sql<number>`MAX("latencyMs")`.as('maxLatencyMs'),
-          sql<number>`MIN("latencyMs")`.as('minLatencyMs'),
+          sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
+          sql<number>`MAX(${col('latencyMs')})`.as('maxLatencyMs'),
+          sql<number>`MIN(${col('latencyMs')})`.as('minLatencyMs'),
         ])
-        .where(sql<boolean>`"createdAt" >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`"createdAt" <= ${endDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
         .executeTakeFirst();
 
       return data;
