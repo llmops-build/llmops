@@ -187,6 +187,37 @@ export const useRequestStats = (dateRange: DateRange, enabled = true) => {
   });
 };
 
+export type LLMRequest = {
+  id: string;
+  requestId: string;
+  configId: string | null;
+  variantId: string | null;
+  provider: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  cachedTokens: number;
+  cost: number;
+  inputCost: number;
+  outputCost: number;
+  endpoint: string;
+  statusCode: number;
+  latencyMs: number;
+  isStreaming: boolean;
+  userId: string | null;
+  tags: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PaginatedRequestsResponse = {
+  data: LLMRequest[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 /**
  * List LLM requests with filtering and pagination
  */
@@ -217,29 +248,16 @@ export const useRequestList = (
 
       const response = await hc.v1.analytics.requests.$get({ query });
       const result = await response.json();
-      return ('data' in result ? result.data : []) as Array<{
-        id: string;
-        requestId: string;
-        configId: string | null;
-        variantId: string | null;
-        provider: string;
-        model: string;
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
-        cachedTokens: number;
-        cost: number;
-        inputCost: number;
-        outputCost: number;
-        endpoint: string;
-        statusCode: number;
-        latencyMs: number;
-        isStreaming: boolean;
-        userId: string | null;
-        tags: Record<string, string>;
-        createdAt: string;
-        updatedAt: string;
-      }>;
+      return (
+        'data' in result
+          ? result.data
+          : {
+              data: [],
+              total: 0,
+              limit: params.limit ?? 100,
+              offset: params.offset ?? 0,
+            }
+      ) as PaginatedRequestsResponse;
     },
     enabled,
   });

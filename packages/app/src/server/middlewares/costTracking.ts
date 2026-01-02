@@ -288,13 +288,13 @@ export function createCostTrackingMiddleware(
     // Get provider and model from context (set by gateway adapter)
     const variantModel = c.get('variantModel') || context.model;
 
-    // Try to determine provider from portkey config header
+    // Try to determine provider from llmops config header
     let provider = 'unknown';
-    const portkeyConfigHeader = c.req.header('x-portkey-config');
-    if (portkeyConfigHeader) {
+    const llmopsConfigHeader = c.req.header('x-llmops-config');
+    if (llmopsConfigHeader) {
       try {
-        const portkeyConfig = JSON.parse(portkeyConfigHeader);
-        provider = portkeyConfig.provider || provider;
+        const llmopsConfig = JSON.parse(llmopsConfigHeader);
+        provider = llmopsConfig.provider || provider;
       } catch {
         // Ignore parse errors
       }

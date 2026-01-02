@@ -83,5 +83,7 @@ export const observabilityContent = style([
   {
     flex: 1,
     overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
   },
 ]);

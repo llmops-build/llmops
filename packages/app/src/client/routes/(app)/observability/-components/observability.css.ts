@@ -69,6 +69,18 @@ export const sectionTitle = style([
   {
     fontSize: '1rem',
     fontWeight: 500,
+    margin: 0,
+  },
+]);
+
+export const sectionTitleStandalone = style([
+  sprinkles({
+    fontFamily: 'mono',
+    color: 'gray12',
+  }),
+  {
+    fontSize: '1rem',
+    fontWeight: 500,
     marginBottom: spacing.md,
     marginTop: spacing.lg,
   },
@@ -118,6 +130,7 @@ export const tableContainer = style({
   borderTopWidth: 1,
   borderTopStyle: 'solid',
   borderTopColor: colors.gray3,
+  overflowX: 'auto',
 });
 
 export const filterContainer = style({
@@ -244,10 +257,18 @@ export const loadingSpinner = style([
 ]);
 
 // Request table styles
+export const tableCell = style({
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  maxWidth: '200px',
+});
+
 export const timestampCell = style([
   sprinkles({
     fontFamily: 'mono',
   }),
+  tableCell,
 ]);
 
 export const cellStack = style({
@@ -339,3 +360,97 @@ export const dailyCostRequests = style([
     textAlign: 'right',
   },
 ]);
+
+// Requests header styles
+export const requestsHeader = style({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: spacing.md,
+  marginTop: spacing.lg,
+});
+
+export const columnToggleList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+  padding: spacing.xs,
+  minWidth: '160px',
+});
+
+export const columnToggleItem = style([
+  sprinkles({
+    fontSize: 'sm',
+    fontFamily: 'mono',
+    padding: 'xs',
+    borderRadius: 'xs',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+    cursor: 'pointer',
+    color: colors.gray11,
+    ':hover': {
+      backgroundColor: colors.gray3,
+    },
+  },
+]);
+
+export const columnToggleCheckbox = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '16px',
+  height: '16px',
+  borderRadius: '3px',
+  border: `1px solid ${colors.gray6}`,
+  backgroundColor: colors.gray2,
+  color: colors.accent11,
+  flexShrink: 0,
+  selectors: {
+    '&[data-checked="true"]': {
+      backgroundColor: colors.accent9,
+      borderColor: colors.accent9,
+      color: colors.gray1,
+    },
+  },
+});
+
+// Requests page wrapper
+export const requestsPageWrapper = style({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+});
+
+// Pagination styles
+export const paginationContainer = style({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: `${spacing.md} ${spacing.md}`,
+  borderTop: `1px solid ${colors.gray4}`,
+  backgroundColor: colors.gray1,
+  marginLeft: calc.negate(spacing.md),
+  marginRight: calc.negate(spacing.md),
+  marginBottom: calc.negate(spacing.md),
+  width: calc.add('100%', calc.multiply(2, spacing.md)),
+  marginTop: 'auto',
+  flexShrink: 0,
+});
+
+export const paginationInfo = style([
+  sprinkles({
+    fontSize: 'sm',
+    fontFamily: 'mono',
+    color: 'gray10',
+  }),
+]);
+
+export const paginationControls = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+});

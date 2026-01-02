@@ -13,15 +13,15 @@ import {
   statsCardLabel,
   statsCardValue,
   statsCardSubvalue,
-  sectionTitle,
+  emptyState,
+  loadingSpinner,
+  sectionTitleStandalone,
   costBreakdownGrid,
   breakdownCard,
   breakdownTitle,
   breakdownItem,
   breakdownItemLabel,
   breakdownItemValue,
-  emptyState,
-  loadingSpinner,
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
@@ -116,7 +116,7 @@ function RouteComponent() {
         </div>
       </div>
 
-      <h3 className={sectionTitle}>Cost Breakdown</h3>
+      <h3 className={sectionTitleStandalone}>Cost Breakdown</h3>
       <div className={costBreakdownGrid}>
         {byProvider && byProvider.length > 0 && (
           <div className={breakdownCard}>

@@ -12,7 +12,7 @@ import {
   statsCardLabel,
   statsCardValue,
   statsCardSubvalue,
-  sectionTitle,
+  sectionTitleStandalone,
   chartContainer,
   chartPlaceholder,
   emptyState,
@@ -138,7 +138,7 @@ function RouteComponent() {
         </div>
       </div>
 
-      <h3 className={sectionTitle}>Daily Costs</h3>
+      <h3 className={sectionTitleStandalone}>Daily Costs</h3>
       <div className={chartContainer}>
         {dailyCosts && dailyCosts.length > 0 ? (
           <DailyCostsChart data={dailyCosts} />

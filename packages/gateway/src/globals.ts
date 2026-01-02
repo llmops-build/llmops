@@ -1,6 +1,6 @@
 import { endpointStrings } from './providers/types';
 
-export const POWERED_BY: string = 'portkey';
+export const POWERED_BY: string = 'llmops';
 
 export const MAX_RETRY_LIMIT_MS = 60 * 1000; // 60 seconds
 

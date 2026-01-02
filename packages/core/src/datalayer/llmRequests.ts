@@ -163,6 +163,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
 
     /**
      * List LLM requests with filtering and pagination
+     * Returns data and total count for pagination
      */
     listRequests: async (params?: z.infer<typeof listRequestsSchema>) => {
       const result = await listRequestsSchema.safeParseAsync(params || {});
@@ -173,34 +174,50 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       const { limit, offset, configId, provider, model, startDate, endDate } =
         result.data;
 
-      let query = db
-        .selectFrom('llm_requests')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset);
+      // Build base query with filters
+      let baseQuery = db.selectFrom('llm_requests');
 
       if (configId) {
-        query = query.where('configId', '=', configId);
+        baseQuery = baseQuery.where('configId', '=', configId);
       }
       if (provider) {
-        query = query.where('provider', '=', provider);
+        baseQuery = baseQuery.where('provider', '=', provider);
       }
       if (model) {
-        query = query.where('model', '=', model);
+        baseQuery = baseQuery.where('model', '=', model);
       }
       if (startDate) {
-        query = query.where(
+        baseQuery = baseQuery.where(
           sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`
         );
       }
       if (endDate) {
-        query = query.where(
+        baseQuery = baseQuery.where(
           sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`
         );
       }
 
-      return query.execute();
+      // Get total count
+      const countResult = await baseQuery
+        .select(sql<number>`COUNT(*)`.as('total'))
+        .executeTakeFirst();
+
+      const total = Number(countResult?.total ?? 0);
+
+      // Get paginated data
+      const data = await baseQuery
+        .selectAll()
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .offset(offset)
+        .execute();
+
+      return {
+        data,
+        total,
+        limit,
+        offset,
+      };
     },
 
     /**
