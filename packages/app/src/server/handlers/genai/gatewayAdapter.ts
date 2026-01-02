@@ -219,7 +219,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
 
         // Clone headers from the original request
         const newHeaders = new Headers(c.req.raw.headers);
-        newHeaders.set('x-portkey-config', JSON.stringify(portkeyConfig));
+        newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
 
         // Create a completely new Request object with the merged body
         // This is the proper way to replace request body in Hono
@@ -243,15 +243,15 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
           {};
       } else {
         // For non-chat requests, just set the header
-        c.req.raw.headers.set(
-          'x-portkey-config',
-          JSON.stringify(portkeyConfig)
-        );
+        c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
       }
 
       // Store variant config in context for reference
       c.set('variantConfig', variantConfig);
       c.set('variantModel', variantConfig.model || data.modelName);
+      // Store resolved IDs for cost tracking (configId from header may be a slug)
+      c.set('configId', data.configId);
+      c.set('variantId', data.variantId);
 
       await next();
     } catch (error) {

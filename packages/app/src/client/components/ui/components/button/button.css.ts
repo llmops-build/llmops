@@ -182,8 +182,8 @@ export const buttonRecipe = recipe({
             backgroundColor: colors.gray2,
           },
           '&[data-disabled]': {
-            color: colors.gray8,
-            borderColor: colors.gray8,
+            color: colors.gray6,
+            borderColor: colors.gray4,
             cursor: 'not-allowed',
           },
         },

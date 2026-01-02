@@ -470,7 +470,11 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         );
       }
 
-      return versionData;
+      return {
+        ...versionData,
+        configId: resolvedConfigId,
+        variantId: configVariant.variantId,
+      };
     },
   };
 };

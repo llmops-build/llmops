@@ -8,12 +8,13 @@ export const zv = <T extends ZodType, Target extends keyof ValidationTargets>(
 ) =>
   zValidator(target, schema, (result, c) => {
     if (!result.success) {
-      /**
-       * @todo handle error properly
-       */
       return c.json(
         {
           message: 'Bad Request',
+          errors: result.error.issues.map((issue) => ({
+            path: issue.path.join('.'),
+            message: issue.message,
+          })),
         },
         400
       );

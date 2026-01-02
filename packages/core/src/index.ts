@@ -6,3 +6,4 @@ export * from './cache';
 export * from './utils/logger';
 export * from './utils/id';
 export * from './datalayer';
+export * from './pricing';

@@ -4,6 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import { requestValidator } from './requestValidator';
 import { createRequestGuardMiddleware } from './requestGuard';
 import { createGatewayAdapterMiddleware } from './gatewayAdapter';
+import { createCostTrackingMiddleware } from '@server/middlewares/costTracking';
 import gateway from '@llmops/gateway';
 
 const app = new Hono();
@@ -19,6 +20,8 @@ app
   .use('*', requestValidator)
   // Request guard (extracts envSec from apiKey, CORS handling)
   .use('*', createRequestGuardMiddleware())
+  // Cost tracking middleware (captures usage and costs from responses)
+  .use('*', createCostTrackingMiddleware())
   // Adapter: translates LLMOps config to Portkey gateway format
   .use('*', createGatewayAdapterMiddleware())
   // Mount the gateway at root - gateway routes already have /v1 prefix
