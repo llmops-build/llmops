@@ -71,7 +71,7 @@ function RouteComponent() {
 
   const baseUrl =
     typeof window !== 'undefined'
-      ? `${window.location.origin}/api/genai/v1`
+      ? `${window.location.origin}${window.bootstrapData?.basePath === '/' ? '' : window.bootstrapData?.basePath || ''}/api/genai/v1`
       : '/api/genai/v1';
 
   const copyToClipboard = async () => {
