@@ -89,6 +89,7 @@ When adding new API functionality, follow this end-to-end workflow:
    - Extract `.data` field from API responses
 
 **Example Query Hook:**
+
 ```typescript
 export const useConfigList = () => {
   return useQuery({
@@ -102,6 +103,7 @@ export const useConfigList = () => {
 ```
 
 **Example Mutation Hook:**
+
 ```typescript
 export const useCreateConfig = () => {
   return useMutation({

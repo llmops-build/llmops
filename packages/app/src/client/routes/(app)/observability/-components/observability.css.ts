@@ -12,7 +12,7 @@ export const statsCard = style([
   sprinkles({
     padding: 'md',
     borderColor: 'gray4',
-    borderRadius: 'md',
+    borderRadius: 'xs',
     display: 'flex',
     flexDirection: 'column',
     gap: 'sm',
@@ -75,7 +75,7 @@ export const sectionTitle = style([
 
 export const chartContainer = style({
   border: `1px solid ${colors.gray4}`,
-  borderRadius: spacing.sm,
+  borderRadius: spacing.xs,
   backgroundColor: colors.gray2,
   padding: spacing.md,
   minHeight: '300px',
@@ -152,7 +152,7 @@ export const costBreakdownGrid = style({
 export const breakdownCard = style([
   sprinkles({
     padding: 'md',
-    borderRadius: 'md',
+    borderRadius: 'xs',
   }),
   {
     border: `1px solid ${colors.gray4}`,

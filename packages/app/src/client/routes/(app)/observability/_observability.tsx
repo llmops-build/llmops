@@ -21,6 +21,7 @@ import {
 } from './-components/observability-sidebar.css';
 import { ObservabilitySidebar } from './-components/observability-sidebar';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
+import { DateRangePicker } from './-components/date-range-picker';
 
 export const Route = createFileRoute('/(app)/observability/_observability')({
   component: RouteComponent,
@@ -70,6 +71,7 @@ function RouteComponent() {
           <Icon icon={ChevronRight} className={chevronStyle} />
           <Breadcrumbs items={breadcrumbItems} />
         </div>
+        <DateRangePicker />
       </Header>
       <div className={gridElement}>
         <div className={clsx(workingArea, observabilityLayout)}>

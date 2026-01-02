@@ -1,7 +1,6 @@
 import { Icon } from '@client/components/icons';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { DollarSign, Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
 import {
   useTotalCost,
   useCostByModel,
@@ -38,16 +37,11 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  // Default to last 30 days
-  const dateRange = useMemo(() => {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-    };
-  }, []);
+  const search = useSearch({ from: '/(app)/observability' });
+  const dateRange = {
+    startDate: search.from ?? '',
+    endDate: search.to ?? '',
+  };
 
   const { data: totalCost, isLoading: isLoadingCost } = useTotalCost(dateRange);
   const { data: byModel, isLoading: isLoadingModel } =
@@ -95,18 +89,18 @@ function RouteComponent() {
     <div>
       <div className={overviewGrid}>
         <div className={statsCard}>
-          <span className={statsCardLabel}>Total Cost (30d)</span>
+          <span className={statsCardLabel}>Total Cost</span>
           <p className={statsCardValue}>{totalCost?.totalCostFormatted}</p>
         </div>
         <div className={statsCard}>
-          <span className={statsCardLabel}>Input Cost (30d)</span>
+          <span className={statsCardLabel}>Input Cost</span>
           <p className={statsCardValue}>{totalCost?.totalInputCostFormatted}</p>
           <span className={statsCardSubvalue}>
             {totalCost?.totalPromptTokens.toLocaleString()} tokens
           </span>
         </div>
         <div className={statsCard}>
-          <span className={statsCardLabel}>Output Cost (30d)</span>
+          <span className={statsCardLabel}>Output Cost</span>
           <p className={statsCardValue}>
             {totalCost?.totalOutputCostFormatted}
           </p>
@@ -115,7 +109,7 @@ function RouteComponent() {
           </span>
         </div>
         <div className={statsCard}>
-          <span className={statsCardLabel}>Requests (30d)</span>
+          <span className={statsCardLabel}>Requests</span>
           <p className={statsCardValue}>
             {totalCost?.requestCount.toLocaleString()}
           </p>

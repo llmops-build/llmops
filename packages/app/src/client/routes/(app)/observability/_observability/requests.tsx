@@ -1,7 +1,7 @@
 import { Icon } from '@client/components/icons';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { List, Loader2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRequestList } from '@client/hooks/queries/useAnalytics';
 import {
   Table,
@@ -16,8 +16,6 @@ import {
   emptyState,
   loadingSpinner,
   tableContainer,
-  filterContainer,
-  dateRangeSelector,
   statusBadge,
   statusSuccess,
   statusError,
@@ -40,23 +38,13 @@ export const Route = createFileRoute(
 function RouteComponent() {
   const [limit] = useState(50);
   const [offset] = useState(0);
-
-  // Default to last 7 days
-  const dateRange = useMemo(() => {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
-    return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-    };
-  }, []);
+  const search = useSearch({ from: '/(app)/observability' });
 
   const { data: requests, isLoading } = useRequestList({
     limit,
     offset,
-    startDate: dateRange.startDate,
-    endDate: dateRange.endDate,
+    startDate: search.from,
+    endDate: search.to,
   });
 
   // Convert micro-dollars to formatted string
@@ -87,10 +75,6 @@ function RouteComponent() {
 
   return (
     <div>
-      <div className={filterContainer}>
-        <span className={dateRangeSelector}>Last 7 days</span>
-      </div>
-
       <h3 className={sectionTitle}>Request Logs</h3>
       <div className={tableContainer}>
         <Table>

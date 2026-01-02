@@ -74,36 +74,61 @@ interface DbWithAnalytics {
 }
 
 /**
- * Parse date string and set to start of day (00:00:00.000)
+ * Parse ISO date string to Date object
+ * Accepts both ISO strings (2026-01-02T10:30:00.000Z) and date-only strings (2026-01-02)
  */
-function parseStartDate(dateStr: string): Date {
+function parseDate(dateStr: string): Date {
   const date = new Date(dateStr);
-  // If only date is provided (no time component), it's already at 00:00:00 UTC
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date string: ${dateStr}`);
+  }
   return date;
 }
 
 /**
- * Parse date string and set to end of day (23:59:59.999)
- * This ensures that when users specify endDate=2026-01-02, all records from that day are included
+ * Parse date string for start of range
+ * - ISO strings are used as-is
+ * - Date-only strings (YYYY-MM-DD) are treated as start of day UTC
+ */
+function parseStartDate(dateStr: string): Date {
+  return parseDate(dateStr);
+}
+
+/**
+ * Parse date string for end of range
+ * - ISO strings are used as-is
+ * - Date-only strings (YYYY-MM-DD) are set to end of day (23:59:59.999 UTC)
  */
 function parseEndDate(dateStr: string): Date {
-  const date = new Date(dateStr);
-  // Check if time component was provided (contains 'T' or has non-zero time)
-  if (!dateStr.includes('T') && !dateStr.includes(':')) {
-    // Only date provided - set to end of day
+  const date = parseDate(dateStr);
+  // Check if time component was provided (contains 'T')
+  if (!dateStr.includes('T')) {
+    // Only date provided - set to end of day UTC
     date.setUTCHours(23, 59, 59, 999);
   }
   return date;
 }
 
 /**
+ * Zod schema for ISO date strings
+ * Validates that the string can be parsed as a valid date
+ */
+const isoDateString = z
+  .string()
+  .refine((val) => !isNaN(new Date(val).getTime()), {
+    message:
+      'Invalid date format. Expected ISO 8601 string (e.g., 2026-01-02T10:30:00.000Z) or date string (e.g., 2026-01-02)',
+  });
+
+/**
  * Date range query schema
- * - startDate: parsed as start of day (00:00:00.000)
- * - endDate: parsed as end of day (23:59:59.999) when only date is provided
+ * Accepts ISO 8601 date strings or date-only strings (YYYY-MM-DD)
+ * - startDate: Used as-is for ISO strings, start of day for date-only
+ * - endDate: Used as-is for ISO strings, end of day (23:59:59.999) for date-only
  */
 const dateRangeSchema = z.object({
-  startDate: z.string().transform(parseStartDate),
-  endDate: z.string().transform(parseEndDate),
+  startDate: isoDateString.transform(parseStartDate),
+  endDate: isoDateString.transform(parseEndDate),
 });
 
 /**
@@ -124,8 +149,8 @@ const app = new Hono()
         configId: z.string().uuid().optional(),
         provider: z.string().optional(),
         model: z.string().optional(),
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
+        startDate: isoDateString.optional(),
+        endDate: isoDateString.optional(),
       })
     ),
     async (c) => {

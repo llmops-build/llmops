@@ -1,7 +1,6 @@
 import { Icon } from '@client/components/icons';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { BarChart3, Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
 import {
   useTotalCost,
   useRequestStats,
@@ -33,16 +32,11 @@ export const Route = createFileRoute(
 });
 
 function RouteComponent() {
-  // Default to last 30 days
-  const dateRange = useMemo(() => {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-    };
-  }, []);
+  const search = useSearch({ from: '/(app)/observability' });
+  const dateRange = {
+    startDate: search.from ?? '',
+    endDate: search.to ?? '',
+  };
 
   const { data: totalCost, isLoading: isLoadingCost } = useTotalCost(dateRange);
   const { data: stats, isLoading: isLoadingStats } = useRequestStats(dateRange);
