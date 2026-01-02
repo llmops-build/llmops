@@ -24,7 +24,6 @@ const features: CardItem[] = [
     name: 'Cost Tracking',
     description:
       'Monitor and analyze LLM usage costs across providers and models.',
-    comingSoon: true,
   },
   {
     name: 'Observability',
