@@ -15,7 +15,6 @@
       <br />
       <a href="https://discord.gg/8teSTfmEKU">Discord</a>
       ·
-      ·
       <a href="https://github.com/llmops-build/llmops/issues">Issues</a>
     </p>
 </p>
@@ -25,3 +24,20 @@
 [![GitHub stars](https://img.shields.io/github/stars/llmops-build/llmops?style=flat&colorA=000000&colorB=000000)](https://github.com/llmops-build/llmops/stargazers)
 
 ## About the Project
+
+LLMOps is an open-source, pluggable toolkit designed for TypeScript teams to streamline LLM operations with a focus on developer experience. It provides a comprehensive solution for integrating, managing, and monitoring Large Language Model providers in your applications.
+
+### Key Features
+
+- **Unified Provider Interface**: Support for 70+ LLM providers including OpenAI, Anthropic, Azure, Bedrock, Mistral, and more
+- **OpenAI SDK Compatible**: Drop-in replacement API that works with any OpenAI SDK client - just change the base URL
+- **Observability**: Full request/response logging, cost tracking, and performance monitoring
+- **TypeScript-First**: Built with TypeScript for excellent type safety and developer experience
+
+Visit our [documentation](https://llmops.build/docs) for detailed setup instructions and examples.
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
+
+Whether you're fixing bugs, improving documentation, or proposing new features, we appreciate your help in making LLMOps better.
