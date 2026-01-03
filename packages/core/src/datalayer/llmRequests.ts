@@ -198,30 +198,16 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         tags,
       } = result.data;
 
-      console.log('[listRequests] Parsed filters:', {
-        configId,
-        variantId,
-        environmentId,
-        provider,
-        model,
-      });
-
       // Build base query with filters
       let baseQuery = db.selectFrom('llm_requests');
 
       if (configId) {
-        console.log('[listRequests] Adding configId filter:', configId);
         baseQuery = baseQuery.where('configId', '=', configId);
       }
       if (variantId) {
-        console.log('[listRequests] Adding variantId filter:', variantId);
         baseQuery = baseQuery.where('variantId', '=', variantId);
       }
       if (environmentId) {
-        console.log(
-          '[listRequests] Adding environmentId filter:',
-          environmentId
-        );
         baseQuery = baseQuery.where('environmentId', '=', environmentId);
       }
       if (provider) {
@@ -257,15 +243,8 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         }
       }
 
-      // Log the compiled SQL for debugging
-      const countQuery = baseQuery.select(sql<number>`COUNT(*)`.as('total'));
-      console.log('[listRequests] Count SQL:', countQuery.compile().sql);
-      console.log(
-        '[listRequests] Count params:',
-        countQuery.compile().parameters
-      );
-
       // Get total count
+      const countQuery = baseQuery.select(sql<number>`COUNT(*)`.as('total'));
       const countResult = await countQuery.executeTakeFirst();
 
       const total = Number(countResult?.total ?? 0);

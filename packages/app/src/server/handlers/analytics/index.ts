@@ -204,14 +204,6 @@ const app = new Hono()
       const db = c.get('db') as unknown as DbWithAnalytics;
       const query = c.req.valid('query');
 
-      console.log('[Analytics] Request filters:', {
-        configId: query.configId,
-        variantId: query.variantId,
-        environmentId: query.environmentId,
-        startDate: query.startDate,
-        endDate: query.endDate,
-      });
-
       // Parse tags from JSON string if provided
       let parsedTags: Record<string, string[]> | undefined;
       if (query.tags) {
