@@ -96,6 +96,16 @@ function RouteComponent() {
     provider: false,
   });
 
+  // Parse tags from URL search params
+  const parsedTags = useMemo(() => {
+    if (!search.tags) return undefined;
+    try {
+      return JSON.parse(search.tags) as Record<string, string[]>;
+    } catch {
+      return undefined;
+    }
+  }, [search.tags]);
+
   // Reset pagination when filters change
   useEffect(() => {
     setOffset(0);
@@ -105,12 +115,14 @@ function RouteComponent() {
     search.configId,
     search.variantId,
     search.environmentId,
+    search.tags,
   ]);
 
   console.log('[Requests] Search params:', {
     configId: search.configId,
     variantId: search.variantId,
     environmentId: search.environmentId,
+    tags: search.tags,
   });
 
   const { data: requestsResponse, isLoading } = useRequestList({
@@ -121,6 +133,7 @@ function RouteComponent() {
     configId: search.configId,
     variantId: search.variantId,
     environmentId: search.environmentId,
+    tags: parsedTags,
   });
 
   const { data: configs } = useConfigList();

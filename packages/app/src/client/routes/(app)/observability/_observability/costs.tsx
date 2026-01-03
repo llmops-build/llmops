@@ -1,6 +1,7 @@
 import { Icon } from '@client/components/icons';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { DollarSign, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useTotalCost } from '@client/hooks/queries/useAnalytics';
 import {
   overviewGrid,
@@ -31,12 +32,23 @@ function RouteComponent() {
     endDate: search.to ?? '',
   };
 
+  // Parse tags from URL search params
+  const parsedTags = useMemo(() => {
+    if (!search.tags) return undefined;
+    try {
+      return JSON.parse(search.tags) as Record<string, string[]>;
+    } catch {
+      return undefined;
+    }
+  }, [search.tags]);
+
   // Build params with filters from search
   const analyticsParams = {
     ...dateRange,
     configId: search.configId,
     variantId: search.variantId,
     environmentId: search.environmentId,
+    tags: parsedTags,
   };
 
   const { data: totalCost, isLoading } = useTotalCost(analyticsParams);

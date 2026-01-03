@@ -45,7 +45,7 @@ const listRequestsSchema = z.object({
   model: z.string().optional(),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  tags: z.record(z.string(), z.string()).optional(),
+  tags: z.record(z.string(), z.array(z.string())).optional(), // { key: [value1, value2] }
 });
 
 /**
@@ -57,6 +57,7 @@ const dateRangeSchema = z.object({
   configId: z.string().uuid().optional(),
   variantId: z.string().uuid().optional(),
   environmentId: z.string().uuid().optional(),
+  tags: z.record(z.string(), z.array(z.string())).optional(), // { key: [value1, value2] }
 });
 
 /**
@@ -68,6 +69,7 @@ const costSummarySchema = z.object({
   configId: z.string().uuid().optional(),
   variantId: z.string().uuid().optional(),
   environmentId: z.string().uuid().optional(),
+  tags: z.record(z.string(), z.array(z.string())).optional(), // { key: [value1, value2] }
   groupBy: z.enum(['day', 'hour', 'model', 'provider', 'config']).optional(),
 });
 
@@ -238,12 +240,20 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`
         );
       }
-      // Filter by tags - check if all provided tag key-value pairs are present in the JSON
+      // Filter by tags - OR within same key, AND between keys
       if (tags && Object.keys(tags).length > 0) {
-        for (const [key, value] of Object.entries(tags)) {
-          baseQuery = baseQuery.where(
-            sql<boolean>`${col('tags')}->>${key} = ${value}`
-          );
+        for (const [key, values] of Object.entries(tags)) {
+          if (values.length === 0) continue;
+          if (values.length === 1) {
+            baseQuery = baseQuery.where(
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+            );
+          } else {
+            const valueList = sql.join(values.map((v) => sql`${v}`));
+            baseQuery = baseQuery.where(
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+            );
+          }
         }
       }
 
@@ -296,7 +306,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
       }
 
-      const { startDate, endDate, configId, variantId, environmentId } =
+      const { startDate, endDate, configId, variantId, environmentId, tags } =
         result.data;
 
       let query = db
@@ -331,6 +341,22 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       }
       if (environmentId) {
         query = query.where('environmentId', '=', environmentId);
+      }
+      // Filter by tags - OR within same key, AND between keys
+      if (tags && Object.keys(tags).length > 0) {
+        for (const [key, values] of Object.entries(tags)) {
+          if (values.length === 0) continue;
+          if (values.length === 1) {
+            query = query.where(
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+            );
+          } else {
+            const valueList = sql.join(values.map((v) => sql`${v}`));
+            query = query.where(
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+            );
+          }
+        }
       }
 
       const data = await query.executeTakeFirst();
@@ -502,6 +528,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         configId,
         variantId,
         environmentId,
+        tags,
       } = result.data;
 
       // Base query with date filter
@@ -519,6 +546,22 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       }
       if (environmentId) {
         baseQuery = baseQuery.where('environmentId', '=', environmentId);
+      }
+      // Filter by tags - OR within same key, AND between keys
+      if (tags && Object.keys(tags).length > 0) {
+        for (const [key, values] of Object.entries(tags)) {
+          if (values.length === 0) continue;
+          if (values.length === 1) {
+            baseQuery = baseQuery.where(
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+            );
+          } else {
+            const valueList = sql.join(values.map((v) => sql`${v}`));
+            baseQuery = baseQuery.where(
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+            );
+          }
+        }
       }
 
       // Add grouping based on parameter
@@ -611,7 +654,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
       }
 
-      const { startDate, endDate, configId, variantId, environmentId } =
+      const { startDate, endDate, configId, variantId, environmentId, tags } =
         result.data;
 
       let query = db
@@ -643,10 +686,41 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       if (environmentId) {
         query = query.where('environmentId', '=', environmentId);
       }
+      // Filter by tags - OR within same key, AND between keys
+      if (tags && Object.keys(tags).length > 0) {
+        for (const [key, values] of Object.entries(tags)) {
+          if (values.length === 0) continue;
+          if (values.length === 1) {
+            query = query.where(
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+            );
+          } else {
+            const valueList = sql.join(values.map((v) => sql`${v}`));
+            query = query.where(
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+            );
+          }
+        }
+      }
 
       const data = await query.executeTakeFirst();
 
       return data;
+    },
+
+    /**
+     * Get all distinct tag key-value pairs from llm_requests
+     * Used for populating tag filter dropdowns in the UI
+     */
+    getDistinctTags: async () => {
+      const data = await sql<{ key: string; value: string }>`
+        SELECT DISTINCT key, value
+        FROM llm_requests, jsonb_each_text(tags) AS t(key, value)
+        WHERE tags != '{}'::jsonb
+        ORDER BY key, value
+      `.execute(db);
+
+      return data.rows;
     },
   };
 };

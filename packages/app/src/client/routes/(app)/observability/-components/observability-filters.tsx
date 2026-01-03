@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Filter, ChevronDown } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '@ui';
+import { Popover, PopoverTrigger, PopoverContent, ComboboxMultiple } from '@ui';
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
+import { useDistinctTags } from '@client/hooks/queries/useAnalytics';
 import type { ObservabilitySearchParams } from '../route';
 import * as styles from './observability-filters.css';
 
@@ -17,12 +18,42 @@ export function ObservabilityFilters() {
   const { data: configs } = useConfigList();
   // Only fetch variants when a config is selected
   const { data: configVariants } = useConfigVariants(search.configId || '');
+  const { data: distinctTags } = useDistinctTags();
 
-  const activeFilterCount = [
-    search.environmentId,
-    search.configId,
-    search.variantId,
-  ].filter(Boolean).length;
+  // Group tags by key
+  const tagsByKey = useMemo(() => {
+    if (!distinctTags) return {};
+    return distinctTags.reduce(
+      (acc, { key, value }) => {
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(value);
+        return acc;
+      },
+      {} as Record<string, string[]>
+    );
+  }, [distinctTags]);
+
+  // Parse selected tags from URL search params
+  const selectedTags = useMemo(() => {
+    if (!search.tags) return {} as Record<string, string[]>;
+    try {
+      return JSON.parse(search.tags) as Record<string, string[]>;
+    } catch {
+      return {} as Record<string, string[]>;
+    }
+  }, [search.tags]);
+
+  // Count selected tag values
+  const selectedTagCount = useMemo(() => {
+    return Object.values(selectedTags).reduce(
+      (sum, values) => sum + values.length,
+      0
+    );
+  }, [selectedTags]);
+
+  const activeFilterCount =
+    [search.environmentId, search.configId, search.variantId].filter(Boolean)
+      .length + selectedTagCount;
 
   const handleEnvironmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value || undefined;
@@ -61,6 +92,31 @@ export function ObservabilityFilters() {
       replace: true,
     });
   };
+
+  const handleTagChange = useCallback(
+    (key: string, values: string[]) => {
+      const newTags = { ...selectedTags };
+
+      if (values.length === 0) {
+        delete newTags[key];
+      } else {
+        newTags[key] = values;
+      }
+
+      const tagsJson =
+        Object.keys(newTags).length > 0 ? JSON.stringify(newTags) : undefined;
+
+      navigate({
+        to: '.',
+        search: (prev: ObservabilitySearchParams) => ({
+          ...prev,
+          tags: tagsJson,
+        }),
+        replace: true,
+      });
+    },
+    [selectedTags, navigate]
+  );
 
   const clearFilters = () => {
     navigate({
@@ -185,6 +241,28 @@ export function ObservabilityFilters() {
               ))}
             </select>
           </div>
+
+          {/* Tags section - only show if there are tags */}
+          {Object.keys(tagsByKey).length > 0 && (
+            <div className={styles.tagsSection}>
+              <div className={styles.tagsSectionHeader}>Tags</div>
+              {Object.entries(tagsByKey).map(([key, values]) => (
+                <div key={key} className={styles.tagComboboxWrapper}>
+                  <ComboboxMultiple<string>
+                    items={values}
+                    label={key}
+                    placeholder={`Select ${key}...`}
+                    value={selectedTags[key] || []}
+                    onValueChange={(newValues) =>
+                      handleTagChange(key, newValues)
+                    }
+                    itemToString={(item) => item || ''}
+                    multiple
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

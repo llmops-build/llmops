@@ -10,6 +10,7 @@ export interface AnalyticsFilters {
   configId?: string;
   variantId?: string;
   environmentId?: string;
+  tags?: Record<string, string[]>;
 }
 
 export type DateRangeWithFilters = DateRange & AnalyticsFilters;
@@ -27,6 +28,10 @@ export const useTotalCost = (params: DateRangeWithFilters, enabled = true) => {
         ...(params.configId && { configId: params.configId }),
         ...(params.variantId && { variantId: params.variantId }),
         ...(params.environmentId && { environmentId: params.environmentId }),
+        ...(params.tags &&
+          Object.keys(params.tags).length > 0 && {
+            tags: JSON.stringify(params.tags),
+          }),
       };
       const response = await hc.v1.analytics.costs.total.$get({
         query,
@@ -169,6 +174,10 @@ export const useCostSummary = (
         ...(params.configId && { configId: params.configId }),
         ...(params.variantId && { variantId: params.variantId }),
         ...(params.environmentId && { environmentId: params.environmentId }),
+        ...(params.tags &&
+          Object.keys(params.tags).length > 0 && {
+            tags: JSON.stringify(params.tags),
+          }),
       };
       const response = await hc.v1.analytics.costs.summary.$get({
         query,
@@ -201,6 +210,10 @@ export const useRequestStats = (
         ...(params.configId && { configId: params.configId }),
         ...(params.variantId && { variantId: params.variantId }),
         ...(params.environmentId && { environmentId: params.environmentId }),
+        ...(params.tags &&
+          Object.keys(params.tags).length > 0 && {
+            tags: JSON.stringify(params.tags),
+          }),
       };
       const response = await hc.v1.analytics.stats.$get({
         query,
@@ -267,7 +280,7 @@ export const useRequestList = (
     model?: string;
     startDate?: string;
     endDate?: string;
-    tags?: Record<string, string>;
+    tags?: Record<string, string[]>;
   } = {},
   enabled = true
 ) => {
@@ -343,5 +356,23 @@ export const useRequestById = (requestId: string, enabled = true) => {
       } | null;
     },
     enabled: enabled && !!requestId,
+  });
+};
+
+/**
+ * Get distinct tag key-value pairs from all requests
+ */
+export const useDistinctTags = (enabled = true) => {
+  return useQuery({
+    queryKey: ['analytics', 'tags'],
+    queryFn: async () => {
+      const response = await hc.v1.analytics.tags.$get();
+      const result = await response.json();
+      return ('data' in result ? result.data : []) as Array<{
+        key: string;
+        value: string;
+      }>;
+    },
+    enabled,
   });
 };

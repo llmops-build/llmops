@@ -51,12 +51,23 @@ function RouteComponent() {
     endDate: search.to ?? '',
   };
 
+  // Parse tags from URL search params
+  const parsedTags = useMemo(() => {
+    if (!search.tags) return undefined;
+    try {
+      return JSON.parse(search.tags) as Record<string, string[]>;
+    } catch {
+      return undefined;
+    }
+  }, [search.tags]);
+
   // Build params with filters from search
   const analyticsParams = {
     ...dateRange,
     configId: search.configId,
     variantId: search.variantId,
     environmentId: search.environmentId,
+    tags: parsedTags,
   };
 
   // Calculate the time range to determine the appropriate interval

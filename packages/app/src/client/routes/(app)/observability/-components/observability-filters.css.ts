@@ -165,3 +165,31 @@ export const filterSelect = style([
     },
   },
 ]);
+
+// Tags section styles
+export const tagsSection = style({
+  borderTop: `1px solid ${colors.gray4}`,
+  paddingTop: spacing.sm,
+  marginTop: spacing.xs,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.sm,
+});
+
+export const tagsSectionHeader = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+  }),
+  {
+    color: colors.gray9,
+    letterSpacing: '0.03em',
+    marginBottom: spacing.sm,
+  },
+]);
+
+export const tagComboboxWrapper = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+});

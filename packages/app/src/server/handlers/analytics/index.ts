@@ -26,7 +26,7 @@ interface DbWithAnalytics {
     model?: string;
     startDate?: Date;
     endDate?: Date;
-    tags?: Record<string, string>;
+    tags?: Record<string, string[]>;
   }) => Promise<unknown[]>;
   getRequestByRequestId: (requestId: string) => Promise<unknown | undefined>;
   getTotalCost: (params: {
@@ -35,6 +35,7 @@ interface DbWithAnalytics {
     configId?: string;
     variantId?: string;
     environmentId?: string;
+    tags?: Record<string, string[]>;
   }) => Promise<
     | {
         totalCost: number;
@@ -69,6 +70,7 @@ interface DbWithAnalytics {
     configId?: string;
     variantId?: string;
     environmentId?: string;
+    tags?: Record<string, string[]>;
     groupBy?: 'day' | 'hour' | 'model' | 'provider' | 'config';
   }) => Promise<unknown[]>;
   getRequestStats: (params: {
@@ -77,6 +79,7 @@ interface DbWithAnalytics {
     configId?: string;
     variantId?: string;
     environmentId?: string;
+    tags?: Record<string, string[]>;
   }) => Promise<
     | {
         totalRequests: number;
@@ -89,6 +92,7 @@ interface DbWithAnalytics {
       }
     | undefined
   >;
+  getDistinctTags: () => Promise<Array<{ key: string; value: string }>>;
 }
 
 /**
@@ -156,7 +160,20 @@ const dateRangeWithFiltersSchema = dateRangeSchema.extend({
   configId: z.string().uuid().optional(),
   variantId: z.string().uuid().optional(),
   environmentId: z.string().uuid().optional(),
+  tags: z.string().optional(), // JSON string of Record<string, string[]>
 });
+
+/**
+ * Parse tags JSON string to Record<string, string[]>
+ */
+function parseTags(tagsJson?: string): Record<string, string[]> | undefined {
+  if (!tagsJson) return undefined;
+  try {
+    return JSON.parse(tagsJson);
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Analytics API routes for cost and usage tracking
@@ -196,7 +213,7 @@ const app = new Hono()
       });
 
       // Parse tags from JSON string if provided
-      let parsedTags: Record<string, string> | undefined;
+      let parsedTags: Record<string, string[]> | undefined;
       if (query.tags) {
         try {
           parsedTags = JSON.parse(query.tags);
@@ -267,7 +284,7 @@ const app = new Hono()
    */
   .get('/costs/total', zv('query', dateRangeWithFiltersSchema), async (c) => {
     const db = c.get('db') as unknown as DbWithAnalytics;
-    const { startDate, endDate, configId, variantId, environmentId } =
+    const { startDate, endDate, configId, variantId, environmentId, tags } =
       c.req.valid('query');
 
     try {
@@ -277,6 +294,7 @@ const app = new Hono()
         configId,
         variantId,
         environmentId,
+        tags: parseTags(tags),
       });
       if (!data) {
         return c.json(
@@ -419,6 +437,7 @@ const app = new Hono()
         configId,
         variantId,
         environmentId,
+        tags,
       } = c.req.valid('query');
 
       try {
@@ -429,6 +448,7 @@ const app = new Hono()
           configId,
           variantId,
           environmentId,
+          tags: parseTags(tags),
         });
         return c.json(successResponse(data, 200));
       } catch (error) {
@@ -447,7 +467,7 @@ const app = new Hono()
    */
   .get('/stats', zv('query', dateRangeWithFiltersSchema), async (c) => {
     const db = c.get('db') as unknown as DbWithAnalytics;
-    const { startDate, endDate, configId, variantId, environmentId } =
+    const { startDate, endDate, configId, variantId, environmentId, tags } =
       c.req.valid('query');
 
     try {
@@ -457,6 +477,7 @@ const app = new Hono()
         configId,
         variantId,
         environmentId,
+        tags: parseTags(tags),
       });
       if (!data) {
         return c.json(
@@ -497,6 +518,22 @@ const app = new Hono()
         internalServerError('Failed to fetch request stats', 500),
         500
       );
+    }
+  })
+
+  /**
+   * GET /analytics/tags
+   * Get distinct tag key-value pairs from all requests
+   */
+  .get('/tags', async (c) => {
+    const db = c.get('db') as unknown as DbWithAnalytics;
+
+    try {
+      const tags = await db.getDistinctTags();
+      return c.json(successResponse(tags, 200));
+    } catch (error) {
+      console.error('Error fetching distinct tags:', error);
+      return c.json(internalServerError('Failed to fetch tags', 500), 500);
     }
   });
 
