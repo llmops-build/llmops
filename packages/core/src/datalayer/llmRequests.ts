@@ -443,6 +443,9 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
               sql<string>`DATE(${col('createdAt')})`.as('groupKey'),
               sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
+              sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+                'totalTokens'
+              ),
             ])
             .groupBy(sql`DATE(${col('createdAt')})`)
             .orderBy(sql`DATE(${col('createdAt')})`, 'asc')
@@ -456,6 +459,9 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
               ),
               sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
+              sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+                'totalTokens'
+              ),
             ])
             .groupBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`)
             .orderBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`, 'asc')

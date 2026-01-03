@@ -1,10 +1,11 @@
 import { Icon } from '@client/components/icons';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { BarChart3, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 import {
   useTotalCost,
   useRequestStats,
-  useDailyCosts,
+  useCostSummary,
 } from '@client/hooks/queries/useAnalytics';
 import {
   AreaChart,
@@ -50,12 +51,30 @@ function RouteComponent() {
     endDate: search.to ?? '',
   };
 
+  // Calculate the time range to determine the appropriate interval
+  const groupBy = useMemo(() => {
+    if (!dateRange.startDate || !dateRange.endDate) {
+      return 'day' as const;
+    }
+    const start = new Date(dateRange.startDate);
+    const end = new Date(dateRange.endDate);
+    const diffMs = end.getTime() - start.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    const diffDays = diffHours / 24;
+
+    if (diffDays > 5) {
+      return 'day' as const;
+    } else {
+      return 'hour' as const;
+    }
+  }, [dateRange.startDate, dateRange.endDate]);
+
   const { data: totalCost, isLoading: isLoadingCost } = useTotalCost(dateRange);
   const { data: stats, isLoading: isLoadingStats } = useRequestStats(dateRange);
-  const { data: dailyCosts, isLoading: isLoadingDaily } =
-    useDailyCosts(dateRange);
+  const { data: timeSeriesData, isLoading: isLoadingTimeSeries } =
+    useCostSummary({ ...dateRange, groupBy });
 
-  const isLoading = isLoadingCost || isLoadingStats || isLoadingDaily;
+  const isLoading = isLoadingCost || isLoadingStats || isLoadingTimeSeries;
 
   if (isLoading) {
     return (
@@ -91,18 +110,37 @@ function RouteComponent() {
     return isNaN(num) ? '0' : Math.round(num).toString();
   };
 
-  // Format daily data for charts
-  const chartData = (dailyCosts ?? []).map((day) => ({
-    date: new Date(day.date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }),
-    cost: Number(day.totalCost) || 0,
-    requests: Number(day.requestCount) || 0,
-    tokens: Number(day.totalTokens) || 0,
-    promptTokens: Number(day.totalInputCost) || 0,
-    completionTokens: Number(day.totalOutputCost) || 0,
-  }));
+  // Format time series data for charts
+  const chartData = useMemo(() => {
+    if (!timeSeriesData) return [];
+
+    return timeSeriesData.map((item) => {
+      const date = new Date(item.groupKey);
+      let label: string;
+
+      if (groupBy === 'day') {
+        label = date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
+      } else {
+        // Hour interval
+        label = date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          hour12: true,
+        });
+      }
+
+      return {
+        date: label,
+        cost: Number(item.totalCost) || 0,
+        requests: Number(item.requestCount) || 0,
+        tokens: Number(item.totalTokens) || 0,
+      };
+    });
+  }, [timeSeriesData, groupBy]);
 
   // Cost values are in microdollars (1/1,000,000 of a dollar)
   const formatCost = (value: number) => {

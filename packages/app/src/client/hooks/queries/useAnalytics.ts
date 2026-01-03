@@ -155,6 +155,7 @@ export const useCostSummary = (
         groupKey: string;
         totalCost: number;
         requestCount: number;
+        totalTokens?: number;
       }>;
     },
     enabled,
