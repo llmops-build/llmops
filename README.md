@@ -31,6 +31,7 @@ LLMOps is an open-source, pluggable toolkit designed for TypeScript teams to str
 
 - **Unified Provider Interface**: Support for 70+ LLM providers including OpenAI, Anthropic, Azure, Bedrock, Mistral, and more
 - **OpenAI SDK Compatible**: Drop-in replacement API that works with any OpenAI SDK client - just change the base URL
+- **Prompt Management**: Version, organize, and deploy prompts with a centralized prompt registry
 - **Observability**: Full request/response logging, cost tracking, and performance monitoring
 - **TypeScript-First**: Built with TypeScript for excellent type safety and developer experience
 
