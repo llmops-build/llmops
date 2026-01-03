@@ -72,7 +72,8 @@
     "lucide-react": "^0.556.0",
     "motion": "^12.23.25",
     "react-aria-components": "^1.13.0",
-    "react-hook-form": "^7.68.0"
+    "react-hook-form": "^7.68.0",
+    "recharts": "^3.6.0"
   },
   "peerDependencies": {
     "react": "^19.2.1",

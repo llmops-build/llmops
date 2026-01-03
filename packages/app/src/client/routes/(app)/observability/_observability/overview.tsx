@@ -4,7 +4,19 @@ import { BarChart3, Loader2 } from 'lucide-react';
 import {
   useTotalCost,
   useRequestStats,
+  useDailyCosts,
 } from '@client/hooks/queries/useAnalytics';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import {
   overviewGrid,
   statsCard,
@@ -13,6 +25,10 @@ import {
   statsCardSubvalue,
   emptyState,
   loadingSpinner,
+  chartContainer,
+  chartsGrid,
+  chartWrapper,
+  chartTitle,
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
@@ -36,8 +52,10 @@ function RouteComponent() {
 
   const { data: totalCost, isLoading: isLoadingCost } = useTotalCost(dateRange);
   const { data: stats, isLoading: isLoadingStats } = useRequestStats(dateRange);
+  const { data: dailyCosts, isLoading: isLoadingDaily } =
+    useDailyCosts(dateRange);
 
-  const isLoading = isLoadingCost || isLoadingStats;
+  const isLoading = isLoadingCost || isLoadingStats || isLoadingDaily;
 
   if (isLoading) {
     return (
@@ -71,6 +89,42 @@ function RouteComponent() {
     if (value == null) return '0';
     const num = Number(value);
     return isNaN(num) ? '0' : Math.round(num).toString();
+  };
+
+  // Format daily data for charts
+  const chartData = (dailyCosts ?? []).map((day) => ({
+    date: new Date(day.date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }),
+    cost: Number(day.totalCost) || 0,
+    requests: Number(day.requestCount) || 0,
+    tokens: Number(day.totalTokens) || 0,
+    promptTokens: Number(day.totalInputCost) || 0,
+    completionTokens: Number(day.totalOutputCost) || 0,
+  }));
+
+  // Cost values are in microdollars (1/1,000,000 of a dollar)
+  const formatCost = (value: number) => {
+    const dollars = value / 1_000_000;
+    if (dollars >= 1000) {
+      return `$${(dollars / 1000).toFixed(1)}k`;
+    }
+    if (dollars >= 1) {
+      return `$${dollars.toFixed(2)}`;
+    }
+    if (dollars >= 0.01) {
+      return `$${dollars.toFixed(2)}`;
+    }
+    return `$${dollars.toFixed(4)}`;
+  };
+  const formatTokens = (value: number) =>
+    value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString();
+
+  const chartColors = {
+    cost: '#10b981',
+    requests: '#6366f1',
+    tokens: '#f59e0b',
   };
 
   return (
@@ -124,6 +178,138 @@ function RouteComponent() {
           </div>
         </div>
       </div>
+
+      {chartData.length > 0 && (
+        <div className={chartsGrid}>
+          <div className={chartWrapper}>
+            <span className={chartTitle}>Cost Over Time</span>
+            <div className={chartContainer}>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: '#888' }}
+                    axisLine={{ stroke: '#444' }}
+                    tickLine={{ stroke: '#444' }}
+                  />
+                  <YAxis
+                    tickFormatter={formatCost}
+                    tick={{ fontSize: 11, fill: '#888' }}
+                    axisLine={{ stroke: '#444' }}
+                    tickLine={{ stroke: '#444' }}
+                    width={70}
+                  />
+                  <Tooltip
+                    formatter={(value) => [
+                      formatCost(Number(value) || 0),
+                      'Cost',
+                    ]}
+                    contentStyle={{
+                      backgroundColor: '#1a1a1a',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                    }}
+                    labelStyle={{ color: '#888' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="cost"
+                    stroke={chartColors.cost}
+                    fill={chartColors.cost}
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className={chartWrapper}>
+            <span className={chartTitle}>Requests Over Time</span>
+            <div className={chartContainer}>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: '#888' }}
+                    axisLine={{ stroke: '#444' }}
+                    tickLine={{ stroke: '#444' }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: '#888' }}
+                    axisLine={{ stroke: '#444' }}
+                    tickLine={{ stroke: '#444' }}
+                    width={50}
+                  />
+                  <Tooltip
+                    formatter={(value) => [Number(value) || 0, 'Requests']}
+                    contentStyle={{
+                      backgroundColor: '#1a1a1a',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                    }}
+                    labelStyle={{ color: '#888' }}
+                  />
+                  <Bar
+                    dataKey="requests"
+                    fill={chartColors.requests}
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className={chartWrapper}>
+            <span className={chartTitle}>Tokens Over Time</span>
+            <div className={chartContainer}>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: '#888' }}
+                    axisLine={{ stroke: '#444' }}
+                    tickLine={{ stroke: '#444' }}
+                  />
+                  <YAxis
+                    tickFormatter={formatTokens}
+                    tick={{ fontSize: 11, fill: '#888' }}
+                    axisLine={{ stroke: '#444' }}
+                    tickLine={{ stroke: '#444' }}
+                    width={50}
+                  />
+                  <Tooltip
+                    formatter={(value) => [
+                      formatTokens(Number(value) || 0),
+                      'Tokens',
+                    ]}
+                    contentStyle={{
+                      backgroundColor: '#1a1a1a',
+                      border: '1px solid #333',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                    }}
+                    labelStyle={{ color: '#888' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="tokens"
+                    stroke={chartColors.tokens}
+                    fill={chartColors.tokens}
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -454,3 +454,27 @@ export const paginationControls = style({
   alignItems: 'center',
   gap: spacing.sm,
 });
+
+export const chartsGrid = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+  gap: spacing.md,
+  marginTop: spacing.lg,
+});
+
+export const chartWrapper = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.sm,
+});
+
+export const chartTitle = style([
+  sprinkles({
+    fontFamily: 'mono',
+    color: 'gray11',
+    fontSize: 'sm',
+  }),
+  {
+    fontWeight: 500,
+  },
+]);
