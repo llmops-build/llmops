@@ -31,7 +31,15 @@ function RouteComponent() {
     endDate: search.to ?? '',
   };
 
-  const { data: totalCost, isLoading } = useTotalCost(dateRange);
+  // Build params with filters from search
+  const analyticsParams = {
+    ...dateRange,
+    configId: search.configId,
+    variantId: search.variantId,
+    environmentId: search.environmentId,
+  };
+
+  const { data: totalCost, isLoading } = useTotalCost(analyticsParams);
 
   if (isLoading) {
     return (

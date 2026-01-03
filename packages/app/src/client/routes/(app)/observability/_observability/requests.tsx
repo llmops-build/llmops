@@ -8,7 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRequestList } from '@client/hooks/queries/useAnalytics';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 import {
@@ -96,11 +96,31 @@ function RouteComponent() {
     provider: false,
   });
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setOffset(0);
+  }, [
+    search.from,
+    search.to,
+    search.configId,
+    search.variantId,
+    search.environmentId,
+  ]);
+
+  console.log('[Requests] Search params:', {
+    configId: search.configId,
+    variantId: search.variantId,
+    environmentId: search.environmentId,
+  });
+
   const { data: requestsResponse, isLoading } = useRequestList({
     limit: PAGE_SIZE,
     offset,
     startDate: search.from,
     endDate: search.to,
+    configId: search.configId,
+    variantId: search.variantId,
+    environmentId: search.environmentId,
   });
 
   const { data: configs } = useConfigList();

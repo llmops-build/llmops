@@ -20,13 +20,22 @@ interface DbWithAnalytics {
     limit?: number;
     offset?: number;
     configId?: string;
+    variantId?: string;
+    environmentId?: string;
     provider?: string;
     model?: string;
     startDate?: Date;
     endDate?: Date;
+    tags?: Record<string, string>;
   }) => Promise<unknown[]>;
   getRequestByRequestId: (requestId: string) => Promise<unknown | undefined>;
-  getTotalCost: (params: { startDate: Date; endDate: Date }) => Promise<
+  getTotalCost: (params: {
+    startDate: Date;
+    endDate: Date;
+    configId?: string;
+    variantId?: string;
+    environmentId?: string;
+  }) => Promise<
     | {
         totalCost: number;
         totalInputCost: number;
@@ -57,9 +66,18 @@ interface DbWithAnalytics {
   getCostSummary: (params: {
     startDate: Date;
     endDate: Date;
+    configId?: string;
+    variantId?: string;
+    environmentId?: string;
     groupBy?: 'day' | 'hour' | 'model' | 'provider' | 'config';
   }) => Promise<unknown[]>;
-  getRequestStats: (params: { startDate: Date; endDate: Date }) => Promise<
+  getRequestStats: (params: {
+    startDate: Date;
+    endDate: Date;
+    configId?: string;
+    variantId?: string;
+    environmentId?: string;
+  }) => Promise<
     | {
         totalRequests: number;
         successfulRequests: number;
@@ -132,6 +150,15 @@ const dateRangeSchema = z.object({
 });
 
 /**
+ * Date range query schema with optional filters
+ */
+const dateRangeWithFiltersSchema = dateRangeSchema.extend({
+  configId: z.string().uuid().optional(),
+  variantId: z.string().uuid().optional(),
+  environmentId: z.string().uuid().optional(),
+});
+
+/**
  * Analytics API routes for cost and usage tracking
  */
 const app = new Hono()
@@ -147,27 +174,51 @@ const app = new Hono()
         limit: z.string().transform(Number).optional(),
         offset: z.string().transform(Number).optional(),
         configId: z.string().uuid().optional(),
+        variantId: z.string().uuid().optional(),
+        environmentId: z.string().uuid().optional(),
         provider: z.string().optional(),
         model: z.string().optional(),
         startDate: isoDateString.optional(),
         endDate: isoDateString.optional(),
+        tags: z.string().optional(), // JSON string of key-value pairs
       })
     ),
     async (c) => {
       const db = c.get('db') as unknown as DbWithAnalytics;
       const query = c.req.valid('query');
 
+      console.log('[Analytics] Request filters:', {
+        configId: query.configId,
+        variantId: query.variantId,
+        environmentId: query.environmentId,
+        startDate: query.startDate,
+        endDate: query.endDate,
+      });
+
+      // Parse tags from JSON string if provided
+      let parsedTags: Record<string, string> | undefined;
+      if (query.tags) {
+        try {
+          parsedTags = JSON.parse(query.tags);
+        } catch {
+          // Ignore invalid JSON, treat as no tags filter
+        }
+      }
+
       try {
         const requests = await db.listRequests({
           limit: query.limit,
           offset: query.offset,
           configId: query.configId,
+          variantId: query.variantId,
+          environmentId: query.environmentId,
           provider: query.provider,
           model: query.model,
           startDate: query.startDate
             ? parseStartDate(query.startDate)
             : undefined,
           endDate: query.endDate ? parseEndDate(query.endDate) : undefined,
+          tags: parsedTags,
         });
 
         return c.json(successResponse(requests, 200));
@@ -212,14 +263,21 @@ const app = new Hono()
 
   /**
    * GET /analytics/costs/total
-   * Get total costs for a date range
+   * Get total costs for a date range with optional filters
    */
-  .get('/costs/total', zv('query', dateRangeSchema), async (c) => {
+  .get('/costs/total', zv('query', dateRangeWithFiltersSchema), async (c) => {
     const db = c.get('db') as unknown as DbWithAnalytics;
-    const { startDate, endDate } = c.req.valid('query');
+    const { startDate, endDate, configId, variantId, environmentId } =
+      c.req.valid('query');
 
     try {
-      const data = await db.getTotalCost({ startDate, endDate });
+      const data = await db.getTotalCost({
+        startDate,
+        endDate,
+        configId,
+        variantId,
+        environmentId,
+      });
       if (!data) {
         return c.json(
           successResponse(
@@ -340,13 +398,13 @@ const app = new Hono()
 
   /**
    * GET /analytics/costs/summary
-   * Get cost summary with flexible grouping
+   * Get cost summary with flexible grouping and optional filters
    */
   .get(
     '/costs/summary',
     zv(
       'query',
-      dateRangeSchema.extend({
+      dateRangeWithFiltersSchema.extend({
         groupBy: z
           .enum(['day', 'hour', 'model', 'provider', 'config'])
           .optional(),
@@ -354,10 +412,24 @@ const app = new Hono()
     ),
     async (c) => {
       const db = c.get('db') as unknown as DbWithAnalytics;
-      const { startDate, endDate, groupBy } = c.req.valid('query');
+      const {
+        startDate,
+        endDate,
+        groupBy,
+        configId,
+        variantId,
+        environmentId,
+      } = c.req.valid('query');
 
       try {
-        const data = await db.getCostSummary({ startDate, endDate, groupBy });
+        const data = await db.getCostSummary({
+          startDate,
+          endDate,
+          groupBy,
+          configId,
+          variantId,
+          environmentId,
+        });
         return c.json(successResponse(data, 200));
       } catch (error) {
         console.error('Error fetching cost summary:', error);
@@ -371,14 +443,21 @@ const app = new Hono()
 
   /**
    * GET /analytics/stats
-   * Get request statistics for a date range
+   * Get request statistics for a date range with optional filters
    */
-  .get('/stats', zv('query', dateRangeSchema), async (c) => {
+  .get('/stats', zv('query', dateRangeWithFiltersSchema), async (c) => {
     const db = c.get('db') as unknown as DbWithAnalytics;
-    const { startDate, endDate } = c.req.valid('query');
+    const { startDate, endDate, configId, variantId, environmentId } =
+      c.req.valid('query');
 
     try {
-      const data = await db.getRequestStats({ startDate, endDate });
+      const data = await db.getRequestStats({
+        startDate,
+        endDate,
+        configId,
+        variantId,
+        environmentId,
+      });
       if (!data) {
         return c.json(
           successResponse(

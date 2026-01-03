@@ -52,6 +52,10 @@ export type ObservabilitySearchParams = {
   from?: string;
   to?: string;
   range?: string;
+  environmentId?: string;
+  configId?: string;
+  variantId?: string;
+  tags?: string; // JSON string of key-value pairs
 };
 
 export const Route = createFileRoute('/(app)/observability')({
@@ -84,10 +88,20 @@ export const Route = createFileRoute('/(app)/observability')({
       }
     }
 
+    // Extract filter params
+    const environmentId = search.environmentId as string | undefined;
+    const configId = search.configId as string | undefined;
+    const variantId = search.variantId as string | undefined;
+    const tags = search.tags as string | undefined;
+
     return {
       range: range,
       from,
       to,
+      ...(environmentId && { environmentId }),
+      ...(configId && { configId }),
+      ...(variantId && { variantId }),
+      ...(tags && { tags }),
     };
   },
   staticData: {

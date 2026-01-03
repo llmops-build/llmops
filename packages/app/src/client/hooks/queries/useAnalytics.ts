@@ -6,15 +6,30 @@ export interface DateRange {
   endDate: string;
 }
 
+export interface AnalyticsFilters {
+  configId?: string;
+  variantId?: string;
+  environmentId?: string;
+}
+
+export type DateRangeWithFilters = DateRange & AnalyticsFilters;
+
 /**
- * Get total costs for a date range
+ * Get total costs for a date range with optional filters
  */
-export const useTotalCost = (dateRange: DateRange, enabled = true) => {
+export const useTotalCost = (params: DateRangeWithFilters, enabled = true) => {
   return useQuery({
-    queryKey: ['analytics', 'costs', 'total', dateRange],
+    queryKey: ['analytics', 'costs', 'total', params],
     queryFn: async () => {
+      const query = {
+        startDate: params.startDate,
+        endDate: params.endDate,
+        ...(params.configId && { configId: params.configId }),
+        ...(params.variantId && { variantId: params.variantId }),
+        ...(params.environmentId && { environmentId: params.environmentId }),
+      };
       const response = await hc.v1.analytics.costs.total.$get({
-        query: dateRange,
+        query,
       });
       const result = await response.json();
       return ('data' in result ? result.data : null) as {
@@ -136,10 +151,10 @@ export const useDailyCosts = (dateRange: DateRange, enabled = true) => {
 };
 
 /**
- * Get cost summary with flexible grouping
+ * Get cost summary with flexible grouping and optional filters
  */
 export const useCostSummary = (
-  params: DateRange & {
+  params: DateRangeWithFilters & {
     groupBy?: 'day' | 'hour' | 'model' | 'provider' | 'config';
   },
   enabled = true
@@ -147,8 +162,16 @@ export const useCostSummary = (
   return useQuery({
     queryKey: ['analytics', 'costs', 'summary', params],
     queryFn: async () => {
+      const query = {
+        startDate: params.startDate,
+        endDate: params.endDate,
+        ...(params.groupBy && { groupBy: params.groupBy }),
+        ...(params.configId && { configId: params.configId }),
+        ...(params.variantId && { variantId: params.variantId }),
+        ...(params.environmentId && { environmentId: params.environmentId }),
+      };
       const response = await hc.v1.analytics.costs.summary.$get({
-        query: params,
+        query,
       });
       const result = await response.json();
       return ('data' in result ? result.data : []) as Array<{
@@ -163,14 +186,24 @@ export const useCostSummary = (
 };
 
 /**
- * Get request statistics
+ * Get request statistics with optional filters
  */
-export const useRequestStats = (dateRange: DateRange, enabled = true) => {
+export const useRequestStats = (
+  params: DateRangeWithFilters,
+  enabled = true
+) => {
   return useQuery({
-    queryKey: ['analytics', 'stats', dateRange],
+    queryKey: ['analytics', 'stats', params],
     queryFn: async () => {
+      const query = {
+        startDate: params.startDate,
+        endDate: params.endDate,
+        ...(params.configId && { configId: params.configId }),
+        ...(params.variantId && { variantId: params.variantId }),
+        ...(params.environmentId && { environmentId: params.environmentId }),
+      };
       const response = await hc.v1.analytics.stats.$get({
-        query: dateRange,
+        query,
       });
       const result = await response.json();
       return ('data' in result ? result.data : null) as {
@@ -193,6 +226,7 @@ export type LLMRequest = {
   requestId: string;
   configId: string | null;
   variantId: string | null;
+  environmentId: string | null;
   provider: string;
   model: string;
   promptTokens: number;
@@ -227,10 +261,13 @@ export const useRequestList = (
     limit?: number;
     offset?: number;
     configId?: string;
+    variantId?: string;
+    environmentId?: string;
     provider?: string;
     model?: string;
     startDate?: string;
     endDate?: string;
+    tags?: Record<string, string>;
   } = {},
   enabled = true
 ) => {
@@ -241,10 +278,16 @@ export const useRequestList = (
         ...(params.limit !== undefined && { limit: String(params.limit) }),
         ...(params.offset !== undefined && { offset: String(params.offset) }),
         ...(params.configId && { configId: params.configId }),
+        ...(params.variantId && { variantId: params.variantId }),
+        ...(params.environmentId && { environmentId: params.environmentId }),
         ...(params.provider && { provider: params.provider }),
         ...(params.model && { model: params.model }),
         ...(params.startDate && { startDate: params.startDate }),
         ...(params.endDate && { endDate: params.endDate }),
+        ...(params.tags &&
+          Object.keys(params.tags).length > 0 && {
+            tags: JSON.stringify(params.tags),
+          }),
       };
 
       const response = await hc.v1.analytics.requests.$get({ query });

@@ -39,18 +39,24 @@ const listRequestsSchema = z.object({
   limit: z.number().int().positive().max(1000).default(100),
   offset: z.number().int().nonnegative().default(0),
   configId: z.string().uuid().optional(),
+  variantId: z.string().uuid().optional(),
+  environmentId: z.string().uuid().optional(),
   provider: z.string().optional(),
   model: z.string().optional(),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
+  tags: z.record(z.string(), z.string()).optional(),
 });
 
 /**
- * Schema for date range queries
+ * Schema for date range queries with optional filters
  */
 const dateRangeSchema = z.object({
   startDate: z.date(),
   endDate: z.date(),
+  configId: z.string().uuid().optional(),
+  variantId: z.string().uuid().optional(),
+  environmentId: z.string().uuid().optional(),
 });
 
 /**
@@ -59,6 +65,9 @@ const dateRangeSchema = z.object({
 const costSummarySchema = z.object({
   startDate: z.date(),
   endDate: z.date(),
+  configId: z.string().uuid().optional(),
+  variantId: z.string().uuid().optional(),
+  environmentId: z.string().uuid().optional(),
   groupBy: z.enum(['day', 'hour', 'model', 'provider', 'config']).optional(),
 });
 
@@ -174,14 +183,44 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
       }
 
-      const { limit, offset, configId, provider, model, startDate, endDate } =
-        result.data;
+      const {
+        limit,
+        offset,
+        configId,
+        variantId,
+        environmentId,
+        provider,
+        model,
+        startDate,
+        endDate,
+        tags,
+      } = result.data;
+
+      console.log('[listRequests] Parsed filters:', {
+        configId,
+        variantId,
+        environmentId,
+        provider,
+        model,
+      });
 
       // Build base query with filters
       let baseQuery = db.selectFrom('llm_requests');
 
       if (configId) {
+        console.log('[listRequests] Adding configId filter:', configId);
         baseQuery = baseQuery.where('configId', '=', configId);
+      }
+      if (variantId) {
+        console.log('[listRequests] Adding variantId filter:', variantId);
+        baseQuery = baseQuery.where('variantId', '=', variantId);
+      }
+      if (environmentId) {
+        console.log(
+          '[listRequests] Adding environmentId filter:',
+          environmentId
+        );
+        baseQuery = baseQuery.where('environmentId', '=', environmentId);
       }
       if (provider) {
         baseQuery = baseQuery.where('provider', '=', provider);
@@ -199,11 +238,25 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`
         );
       }
+      // Filter by tags - check if all provided tag key-value pairs are present in the JSON
+      if (tags && Object.keys(tags).length > 0) {
+        for (const [key, value] of Object.entries(tags)) {
+          baseQuery = baseQuery.where(
+            sql<boolean>`${col('tags')}->>${key} = ${value}`
+          );
+        }
+      }
+
+      // Log the compiled SQL for debugging
+      const countQuery = baseQuery.select(sql<number>`COUNT(*)`.as('total'));
+      console.log('[listRequests] Count SQL:', countQuery.compile().sql);
+      console.log(
+        '[listRequests] Count params:',
+        countQuery.compile().parameters
+      );
 
       // Get total count
-      const countResult = await baseQuery
-        .select(sql<number>`COUNT(*)`.as('total'))
-        .executeTakeFirst();
+      const countResult = await countQuery.executeTakeFirst();
 
       const total = Number(countResult?.total ?? 0);
 
@@ -235,7 +288,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
     },
 
     /**
-     * Get total cost for a date range
+     * Get total cost for a date range with optional filters
      */
     getTotalCost: async (params: z.infer<typeof dateRangeSchema>) => {
       const result = await dateRangeSchema.safeParseAsync(params);
@@ -243,9 +296,10 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
       }
 
-      const { startDate, endDate } = result.data;
+      const { startDate, endDate, configId, variantId, environmentId } =
+        result.data;
 
-      const data = await db
+      let query = db
         .selectFrom('llm_requests')
         .select([
           sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
@@ -267,8 +321,19 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           sql<number>`COUNT(*)`.as('requestCount'),
         ])
         .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
-        .executeTakeFirst();
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
+
+      if (configId) {
+        query = query.where('configId', '=', configId);
+      }
+      if (variantId) {
+        query = query.where('variantId', '=', variantId);
+      }
+      if (environmentId) {
+        query = query.where('environmentId', '=', environmentId);
+      }
+
+      const data = await query.executeTakeFirst();
 
       return data;
     },
@@ -422,7 +487,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
     },
 
     /**
-     * Get cost summary with flexible grouping
+     * Get cost summary with flexible grouping and optional filters
      */
     getCostSummary: async (params: z.infer<typeof costSummarySchema>) => {
       const result = await costSummarySchema.safeParseAsync(params);
@@ -430,13 +495,31 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
       }
 
-      const { startDate, endDate, groupBy } = result.data;
+      const {
+        startDate,
+        endDate,
+        groupBy,
+        configId,
+        variantId,
+        environmentId,
+      } = result.data;
 
       // Base query with date filter
-      const baseQuery = db
+      let baseQuery = db
         .selectFrom('llm_requests')
         .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
         .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
+
+      // Apply optional filters
+      if (configId) {
+        baseQuery = baseQuery.where('configId', '=', configId);
+      }
+      if (variantId) {
+        baseQuery = baseQuery.where('variantId', '=', variantId);
+      }
+      if (environmentId) {
+        baseQuery = baseQuery.where('environmentId', '=', environmentId);
+      }
 
       // Add grouping based on parameter
       switch (groupBy) {
@@ -520,7 +603,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
     },
 
     /**
-     * Get request count and stats for a time range
+     * Get request count and stats for a time range with optional filters
      */
     getRequestStats: async (params: z.infer<typeof dateRangeSchema>) => {
       const result = await dateRangeSchema.safeParseAsync(params);
@@ -528,9 +611,10 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
       }
 
-      const { startDate, endDate } = result.data;
+      const { startDate, endDate, configId, variantId, environmentId } =
+        result.data;
 
-      const data = await db
+      let query = db
         .selectFrom('llm_requests')
         .select([
           sql<number>`COUNT(*)`.as('totalRequests'),
@@ -548,8 +632,19 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           sql<number>`MIN(${col('latencyMs')})`.as('minLatencyMs'),
         ])
         .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
-        .executeTakeFirst();
+        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
+
+      if (configId) {
+        query = query.where('configId', '=', configId);
+      }
+      if (variantId) {
+        query = query.where('variantId', '=', variantId);
+      }
+      if (environmentId) {
+        query = query.where('environmentId', '=', environmentId);
+      }
+
+      const data = await query.executeTakeFirst();
 
       return data;
     },

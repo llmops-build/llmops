@@ -51,6 +51,14 @@ function RouteComponent() {
     endDate: search.to ?? '',
   };
 
+  // Build params with filters from search
+  const analyticsParams = {
+    ...dateRange,
+    configId: search.configId,
+    variantId: search.variantId,
+    environmentId: search.environmentId,
+  };
+
   // Calculate the time range to determine the appropriate interval
   const groupBy = useMemo(() => {
     if (!dateRange.startDate || !dateRange.endDate) {
@@ -69,10 +77,12 @@ function RouteComponent() {
     }
   }, [dateRange.startDate, dateRange.endDate]);
 
-  const { data: totalCost, isLoading: isLoadingCost } = useTotalCost(dateRange);
-  const { data: stats, isLoading: isLoadingStats } = useRequestStats(dateRange);
+  const { data: totalCost, isLoading: isLoadingCost } =
+    useTotalCost(analyticsParams);
+  const { data: stats, isLoading: isLoadingStats } =
+    useRequestStats(analyticsParams);
   const { data: timeSeriesData, isLoading: isLoadingTimeSeries } =
-    useCostSummary({ ...dateRange, groupBy });
+    useCostSummary({ ...analyticsParams, groupBy });
 
   const isLoading = isLoadingCost || isLoadingStats || isLoadingTimeSeries;
 
