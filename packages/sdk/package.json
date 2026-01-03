@@ -13,6 +13,13 @@
     "url": "git+https://github.com/llmops-build/llmops.git",
     "directory": "packages/sdk"
   },
+  "keywords": [
+    "llmops",
+    "ai",
+    "llm",
+    "typescript",
+    "openai"
+  ],
   "author": "chtushar",
   "files": [
     "dist"
