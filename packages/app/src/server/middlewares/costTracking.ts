@@ -161,6 +161,7 @@ declare module 'hono' {
     variantConfig?: Record<string, unknown>;
     variantModel?: string;
     variantId?: string;
+    environmentId?: string;
     __costTrackingContext?: RequestContext;
   }
 }
@@ -300,6 +301,17 @@ export function createCostTrackingMiddleware(
       }
     }
 
+    // Extract metadata from request body for custom tags
+    // OpenAI SDK supports metadata: Record<string, string> (up to 16 key-value pairs)
+    let customTags: Record<string, string> = {};
+    if (body.metadata && typeof body.metadata === 'object') {
+      customTags = Object.fromEntries(
+        Object.entries(body.metadata as Record<string, unknown>).filter(
+          ([k, v]) => typeof k === 'string' && typeof v === 'string'
+        )
+      ) as Record<string, string>;
+    }
+
     // Skip if we couldn't determine basic info
     if (!variantModel) {
       log(`Skipping request tracking - no model info`);
@@ -332,6 +344,7 @@ export function createCostTrackingMiddleware(
             model: variantModel,
             configId: c.get('configId'),
             variantId: c.get('variantId'),
+            environmentId: c.get('environmentId'),
             endpoint: context.endpoint,
             statusCode,
             latencyMs,
@@ -344,6 +357,7 @@ export function createCostTrackingMiddleware(
                   cachedTokens: usage.cachedTokens,
                 }
               : null,
+            tags: customTags,
             batchWriter,
             trackErrors,
             log,
@@ -387,11 +401,13 @@ export function createCostTrackingMiddleware(
         model: variantModel,
         configId: c.get('configId'),
         variantId: c.get('variantId'),
+        environmentId: c.get('environmentId'),
         endpoint: context.endpoint,
         statusCode,
         latencyMs,
         isStreaming: false,
         usage,
+        tags: customTags,
         batchWriter,
         trackErrors,
         log,
@@ -409,6 +425,7 @@ async function processUsageAndLog(params: {
   model: string;
   configId?: string;
   variantId?: string;
+  environmentId?: string;
   endpoint: string;
   statusCode: number;
   latencyMs: number;
@@ -419,6 +436,7 @@ async function processUsageAndLog(params: {
     totalTokens: number;
     cachedTokens?: number;
   } | null;
+  tags?: Record<string, string>;
   batchWriter: ReturnType<typeof getGlobalBatchWriter>;
   trackErrors: boolean;
   log: (msg: string) => void;
@@ -429,11 +447,13 @@ async function processUsageAndLog(params: {
     model,
     configId,
     variantId,
+    environmentId,
     endpoint,
     statusCode,
     latencyMs,
     isStreaming,
     usage,
+    tags = {},
     batchWriter,
     trackErrors,
     log,
@@ -479,6 +499,7 @@ async function processUsageAndLog(params: {
     requestId,
     configId: configId || null,
     variantId: variantId || null,
+    environmentId: environmentId || null,
     provider,
     model,
     promptTokens: usage?.promptTokens || 0,
@@ -492,7 +513,7 @@ async function processUsageAndLog(params: {
     statusCode,
     latencyMs,
     isStreaming,
-    tags: {},
+    tags,
   };
 
   // Enqueue for batch insert

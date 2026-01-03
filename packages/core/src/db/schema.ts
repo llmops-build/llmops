@@ -86,6 +86,7 @@ export const llmRequestsSchema = z.object({
   // Foreign keys (nullable for direct gateway calls without config)
   configId: z.string().uuid().nullable().optional(), // FK -> configs.id
   variantId: z.string().uuid().nullable().optional(), // FK -> variants.id
+  environmentId: z.string().uuid().nullable().optional(), // FK -> environments.id
 
   // Provider & Model
   provider: z.string(), // e.g., "openai", "anthropic", "openrouter"
@@ -200,6 +201,7 @@ export interface LLMRequestsTable extends BaseTable {
   requestId: string;
   configId: string | null;
   variantId: string | null;
+  environmentId: string | null;
   provider: string;
   model: string;
   promptTokens: ColumnType<number, number | undefined, number | undefined>;
@@ -420,6 +422,11 @@ export const SCHEMA_METADATA = {
           type: 'uuid',
           nullable: true,
           references: { table: 'variants', column: 'id' },
+        },
+        environmentId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'environments', column: 'id' },
         },
         provider: { type: 'text' },
         model: { type: 'text' },

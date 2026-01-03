@@ -474,6 +474,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         ...versionData,
         configId: resolvedConfigId,
         variantId: configVariant.variantId,
+        environmentId,
       };
     },
   };

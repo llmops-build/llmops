@@ -158,10 +158,18 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
 
     try {
       // Fetch variant data from database
-      const data = await db.getVariantJsonDataForConfig({
+      const data = (await db.getVariantJsonDataForConfig({
         configId,
         envSecret: envSec,
-      });
+      })) as {
+        configId: string;
+        variantId: string;
+        environmentId: string;
+        version: number;
+        provider: string;
+        modelName: string;
+        jsonData: Record<string, unknown>;
+      };
 
       // Parse variant config
       const variantConfig = variantJsonDataSchema.parse(
@@ -252,6 +260,13 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       // Store resolved IDs for cost tracking (configId from header may be a slug)
       c.set('configId', data.configId);
       c.set('variantId', data.variantId);
+      c.set('environmentId', data.environmentId);
+      // environmentId is returned from getVariantJsonDataForConfig
+      c.set(
+        'environmentId',
+        (data as { environmentId?: string }).environmentId
+      );
+      c.set('environmentId', data.environmentId);
 
       await next();
     } catch (error) {
