@@ -6,7 +6,10 @@ import {
   validateLLMOpsConfig,
   type ValidatedLLMOpsConfig,
 } from '@llmops/core';
-import { createDatabaseFromConnection } from '@llmops/core/db';
+import {
+  createDatabaseFromConnection,
+  detectDatabaseType,
+} from '@llmops/core/db';
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 import { createSeedMiddleware } from '@server/middlewares/seed';
 import { createMigrationMiddleware } from '@server/middlewares/migration';
@@ -39,14 +42,26 @@ const createDatabaseMiddleware = (
   validatedConfig: ValidatedLLMOpsConfig
 ): MiddlewareHandler => {
   return async (c, next) => {
-    const db = await createDatabaseFromConnection(validatedConfig.database, {
-      schema: validatedConfig.schema,
-    });
-    if (!db) {
+    const kyselyDb = await createDatabaseFromConnection(
+      validatedConfig.database,
+      {
+        schema: validatedConfig.schema,
+      }
+    );
+    if (!kyselyDb) {
       throw new Error('Failed to create database connection');
     }
-    const dataLayer = await createDataLayer(db);
+
+    // Detect database type
+    const dbType = detectDatabaseType(validatedConfig.database);
+    if (!dbType) {
+      throw new Error('Failed to detect database type');
+    }
+
+    const dataLayer = await createDataLayer(kyselyDb);
     c.set('db', dataLayer);
+    c.set('kyselyDb', kyselyDb);
+    c.set('dbType', dbType);
 
     // Check if setup is complete and set it in context
     const setupComplete = await dataLayer.isSetupComplete();
@@ -89,7 +104,7 @@ export const createApp = (config: LLMOpsConfig) => {
     .use('*', createDatabaseMiddleware(validatedConfig))
     .use('*', createSeedMiddleware())
     .use('*', createLLMProvidersMiddleware(validatedConfig))
-    .use('*', createAuthClientMiddleware(validatedConfig))
+    .use('*', createAuthClientMiddleware())
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);
 
