@@ -75,6 +75,7 @@ export const createMigrationMiddleware = (
           }
 
           const result = await runAutoMigrations(db, dbType, autoMigrate, {
+            rawConnection,
             schema,
           });
 

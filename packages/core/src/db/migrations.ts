@@ -1,5 +1,6 @@
 import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
+import { getMigrations as getAuthMigrations } from 'better-auth/db';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
@@ -15,6 +16,7 @@ export interface MigrationOptions {
    * If provided, the schema will be created if it doesn't exist.
    */
   schema?: string;
+  rawConnection?: unknown;
 }
 
 const postgresMap = {
@@ -110,7 +112,7 @@ async function ensurePostgresSchemaExists(
     // Check if schema exists
     const result = await sql<{ exists: boolean }>`
       SELECT EXISTS (
-        SELECT 1 FROM information_schema.schemata 
+        SELECT 1 FROM information_schema.schemata
         WHERE schema_name = ${schema}
       ) as exists
     `.execute(db);
@@ -409,10 +411,19 @@ export async function getMigrations(
     }
   }
 
+  const {
+    toBeAdded: authChangesToBeAdded,
+    toBeCreated: authChangesToBeCreated,
+    runMigrations: runAuthMigrations,
+  } = await getAuthMigrations({
+    database: options?.rawConnection,
+  });
+
   async function runMigrations() {
     for (const migration of migrations) {
       await migration.execute();
     }
+    await runAuthMigrations();
   }
 
   async function compileMigrations() {
@@ -421,12 +432,16 @@ export async function getMigrations(
   }
 
   return {
-    toBeCreated,
-    toBeAdded,
+    toBeCreated: [...toBeCreated, ...authChangesToBeCreated],
+    toBeAdded: [...toBeAdded, ...authChangesToBeAdded],
     runMigrations,
     compileMigrations,
     migrations,
-    needsMigration: toBeCreated.length > 0 || toBeAdded.length > 0,
+    needsMigration:
+      toBeCreated.length > 0 ||
+      toBeAdded.length > 0 ||
+      authChangesToBeCreated.length > 0 ||
+      authChangesToBeAdded.length > 0,
   };
 }
 
