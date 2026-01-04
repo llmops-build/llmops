@@ -47,6 +47,11 @@ const createDatabaseMiddleware = (
     }
     const dataLayer = await createDataLayer(db);
     c.set('db', dataLayer);
+
+    // Check if setup is complete and set it in context
+    const setupComplete = await dataLayer.isSetupComplete();
+    c.set('setupComplete', setupComplete);
+
     await next();
   };
 };

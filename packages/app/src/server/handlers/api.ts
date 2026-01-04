@@ -1,6 +1,7 @@
 import { Hono, type ContextVariableMap } from 'hono';
 import v1 from '@server/handlers/v1';
 import genaiV1 from '@server/handlers/genai';
+import authHandlers from '@server/handlers/auth';
 
 const app = new Hono<{
   Variables: {
@@ -12,9 +13,13 @@ const app = new Hono<{
 }>();
 
 export const routes = app
+  // Auth routes handled by better-auth
   .on(['POST', 'GET'], '/auth/*', (c) => {
     return c.get('authClient').handler(c.req.raw);
   })
+  // Setup status endpoint (no auth required)
+  .route('/auth', authHandlers)
+  // Session middleware for all other routes
   .use('*', async (c, next) => {
     const session = await c
       .get('authClient')

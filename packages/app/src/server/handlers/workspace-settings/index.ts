@@ -26,12 +26,12 @@ const app = new Hono()
       'json',
       z.object({
         name: z.string().nullable().optional(),
+        setupComplete: z.boolean().optional(),
       })
     ),
     async (c) => {
       const db = c.get('db');
       const body = c.req.valid('json');
-
       try {
         const settings = await db.updateWorkspaceSettings(body);
         return c.json(successResponse(settings, 200));

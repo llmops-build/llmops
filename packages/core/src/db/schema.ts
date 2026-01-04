@@ -76,6 +76,7 @@ export const targetingRulesSchema = z.object({
 export const workspaceSettingsSchema = z.object({
   ...baseSchema,
   name: z.string().nullable().optional(), // Workspace display name
+  setupComplete: z.boolean().default(false), // Whether initial setup has been completed
 });
 
 // LLM Requests table schema - stores request logs with cost tracking
@@ -194,6 +195,7 @@ export interface TargetingRulesTable extends BaseTable {
 // Workspace settings table (single-tenant settings)
 export interface WorkspaceSettingsTable extends BaseTable {
   name: string | null;
+  setupComplete: ColumnType<boolean, boolean | undefined, boolean | undefined>;
 }
 
 // LLM Requests table - request logs with cost tracking
@@ -403,6 +405,7 @@ export const SCHEMA_METADATA = {
       fields: {
         id: { type: 'uuid', primaryKey: true },
         name: { type: 'text', nullable: true },
+        setupComplete: { type: 'boolean', default: false },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },

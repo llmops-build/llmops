@@ -14,6 +14,7 @@ declare module 'hono' {
     llmProviders: LLMProvider[];
     db: Awaited<ReturnType<typeof createDataLayer>>;
     authClient: Auth<BetterAuthOptions>;
+    setupComplete: boolean;
   }
 }
 

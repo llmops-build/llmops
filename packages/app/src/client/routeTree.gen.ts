@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
+import { Route as authSigninRouteImport } from './routes/(auth)/signin'
+import { Route as authSetupRouteImport } from './routes/(auth)/setup'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
@@ -41,6 +43,16 @@ import { Route as appConfigsIdTargetingTargetingEnvironmentRouteImport } from '.
 const appIndexRoute = appIndexRouteImport.update({
   id: '/(app)/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authSigninRoute = authSigninRouteImport.update({
+  id: '/(auth)/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authSetupRoute = authSetupRouteImport.update({
+  id: '/(auth)/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appEnvironmentsRoute = appEnvironmentsRouteImport.update({
@@ -195,6 +207,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/setup': typeof authSetupRoute
+  '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
@@ -218,6 +232,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/setup': typeof authSetupRoute
+  '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
   '/observability': typeof appObservabilityIndexRoute
   '/settings': typeof appSettingsIndexRoute
@@ -242,6 +258,8 @@ export interface FileRoutesById {
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
+  '/(auth)/setup': typeof authSetupRoute
+  '/(auth)/signin': typeof authSigninRoute
   '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
@@ -274,6 +292,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/configs'
     | '/environments'
+    | '/setup'
+    | '/signin'
     | '/'
     | '/configs/$id'
     | '/environments/$environment'
@@ -297,6 +317,8 @@ export interface FileRouteTypes {
   to:
     | '/configs'
     | '/environments'
+    | '/setup'
+    | '/signin'
     | '/'
     | '/observability'
     | '/settings'
@@ -320,6 +342,8 @@ export interface FileRouteTypes {
     | '/(app)/settings'
     | '/(app)/configs'
     | '/(app)/environments'
+    | '/(auth)/setup'
+    | '/(auth)/signin'
     | '/(app)/'
     | '/(app)/configs/$id'
     | '/(app)/environments/$environment'
@@ -351,6 +375,8 @@ export interface RootRouteChildren {
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appConfigsRoute: typeof appConfigsRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
+  authSetupRoute: typeof authSetupRoute
+  authSigninRoute: typeof authSigninRoute
   appIndexRoute: typeof appIndexRoute
 }
 
@@ -361,6 +387,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof appIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/signin': {
+      id: '/(auth)/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof authSigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/setup': {
+      id: '/(auth)/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof authSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/environments': {
@@ -729,6 +769,8 @@ const rootRouteChildren: RootRouteChildren = {
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appConfigsRoute: appConfigsRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
+  authSetupRoute: authSetupRoute,
+  authSigninRoute: authSigninRoute,
   appIndexRoute: appIndexRoute,
 }
 export const routeTree = rootRouteImport

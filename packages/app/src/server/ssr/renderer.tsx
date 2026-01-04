@@ -19,6 +19,7 @@ export const renderer = ({
   dev = false,
   llmProviders,
   authType,
+  setupComplete = false,
 }: {
   basePath?: string;
   dev?: boolean;
@@ -28,6 +29,7 @@ export const renderer = ({
     imageURI: string;
   }[];
   authType?: string;
+  setupComplete?: boolean;
 }) => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
@@ -46,7 +48,7 @@ export const renderer = ({
     });
 
   return renderToString(
-    <html lang="en" className="dark">
+    <html lang="en" className="">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -288,7 +290,8 @@ export const renderer = ({
             window.bootstrapData = {
               basePath: "${basePath}",
               llmProviders: ${JSON.stringify(llmProviders || [])},
-              authType: "${authType || 'basic'}"
+              authType: "${authType || 'basic'}",
+              setupComplete: ${setupComplete}
             };
           `}
         </script>
