@@ -13,7 +13,7 @@ Before starting, verify the following:
 
 - [ ] Node.js 18+ is installed
 - [ ] Project uses TypeScript
-- [ ] Project uses one of the supported frameworks mentioned in https://llmops.build/llms.txt integrations list. 
+- [ ] Project uses one of the supported frameworks mentioned in https://llmops.build/llms.txt integrations list.
 - [ ] PostgreSQL database is available (or can be set up via Docker)
 
 ## Step 1: Install Dependencies
@@ -92,7 +92,6 @@ export default llmops({
     username: process.env.LLMOPS_USER || 'admin@llmops.local',
     password: process.env.LLMOPS_PASSWORD || 'password',
   }),
-  autoMigrate: 'development', // Auto-migrate in development only
 });
 ```
 

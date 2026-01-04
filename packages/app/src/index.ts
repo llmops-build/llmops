@@ -11,6 +11,7 @@ import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 import { createSeedMiddleware } from '@server/middlewares/seed';
 import { createMigrationMiddleware } from '@server/middlewares/migration';
 import type { LLMProvider } from '@server/types';
+import { createAuthClientMiddleware } from '@server/middlewares/auth';
 
 const MODELS_DEV_LOGOS = 'https://models.dev/logos';
 
@@ -83,6 +84,7 @@ export const createApp = (config: LLMOpsConfig) => {
     .use('*', createDatabaseMiddleware(validatedConfig))
     .use('*', createSeedMiddleware())
     .use('*', createLLMProvidersMiddleware(validatedConfig))
+    .use('*', createAuthClientMiddleware(validatedConfig))
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);
 

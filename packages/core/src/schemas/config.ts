@@ -55,14 +55,6 @@ const authSchema = z
   })
   .passthrough();
 
-/**
- * Auto-migration configuration options:
- * - true: Always run migrations on startup
- * - false: Never run migrations on startup (default)
- * - 'development': Only run migrations when NODE_ENV is 'development'
- */
-export type AutoMigrateConfig = boolean | 'development';
-
 export const llmopsConfigSchema = z.object({
   database: z.any(),
   auth: authSchema,
@@ -74,10 +66,6 @@ export const llmopsConfigSchema = z.object({
       'Base path must start with a forward slash'
     ),
   providers: providersSchema,
-  autoMigrate: z
-    .union([z.boolean(), z.literal('development')])
-    .optional()
-    .default(false),
   /**
    * Database schema name for PostgreSQL connections.
    * This sets the search_path on every connection.
@@ -108,27 +96,22 @@ export interface BasicAuthConfig extends AuthConfig {
  * Validated LLMOps configuration with typed providers
  * Uses ProvidersConfig for proper provider-specific typing
  *
- * Note: autoMigrate and schema are optional in input but always present after validation
+ * Note: schema is optional in input but always present after validation
  */
 export type ValidatedLLMOpsConfig = Omit<
   z.infer<typeof llmopsConfigSchema>,
-  'providers' | 'autoMigrate' | 'schema' | 'auth'
+  'providers' | 'schema' | 'auth'
 > & {
   providers: ProvidersConfig;
-  autoMigrate?: AutoMigrateConfig;
   schema: string;
   auth: AuthConfig;
 };
 
 /**
  * Input type for LLMOps configuration (before validation)
- * Users can omit optional fields like autoMigrate and schema
+ * Users can omit optional fields like schema
  */
-export type LLMOpsConfigInput = Omit<
-  ValidatedLLMOpsConfig,
-  'autoMigrate' | 'schema'
-> & {
-  autoMigrate?: AutoMigrateConfig;
+export type LLMOpsConfigInput = Omit<ValidatedLLMOpsConfig, 'schema'> & {
   schema?: string;
 };
 

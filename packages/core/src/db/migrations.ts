@@ -4,6 +4,7 @@ import { getMigrations as getAuthMigrations } from 'better-auth/db';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
+import { getAuthClientOptions } from '@/auth';
 
 export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
 
@@ -411,13 +412,12 @@ export async function getMigrations(
     }
   }
 
+  const authOptions = getAuthClientOptions(options?.rawConnection);
   const {
     toBeAdded: authChangesToBeAdded,
     toBeCreated: authChangesToBeCreated,
     runMigrations: runAuthMigrations,
-  } = await getAuthMigrations({
-    database: options?.rawConnection,
-  });
+  } = await getAuthMigrations(authOptions);
 
   async function runMigrations() {
     for (const migration of migrations) {
@@ -446,28 +446,17 @@ export async function getMigrations(
 }
 
 /**
- * Run migrations if needed based on autoMigrate config
+ * Run migrations if needed
  * @param db - Kysely database instance
  * @param dbType - Database type
- * @param autoMigrate - Auto-migrate configuration
  * @param options - Migration options (schema, etc.)
  * @returns true if migrations were run, false otherwise
  */
 export async function runAutoMigrations(
   db: Kysely<Database>,
   dbType: DatabaseType,
-  autoMigrate: boolean | 'development',
   options?: MigrationOptions
 ): Promise<{ ran: boolean; tables: string[]; fields: string[] }> {
-  // Determine if we should run migrations
-  const shouldMigrate =
-    autoMigrate === true ||
-    (autoMigrate === 'development' && process.env.NODE_ENV === 'development');
-
-  if (!shouldMigrate) {
-    return { ran: false, tables: [], fields: [] };
-  }
-
   const { toBeCreated, toBeAdded, runMigrations, needsMigration } =
     await getMigrations(db, dbType, options);
 

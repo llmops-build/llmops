@@ -113,25 +113,6 @@ The `basicAuth()` function validates that both username and password are provide
 
 ---
 
-### autoMigrate
-
-Controls automatic database migration behavior on startup.
-
-| Value           | Behavior                                               |
-| --------------- | ------------------------------------------------------ |
-| `false`         | Never run migrations automatically (default)           |
-| `true`          | Always run migrations on startup                       |
-| `'development'` | Only run migrations when `NODE_ENV` is `'development'` |
-
-```typescript
-// Only auto-migrate in development
-autoMigrate: 'development';
-```
-
-For production deployments, we recommend running migrations manually using the CLI instead of `autoMigrate: true`.
-
----
-
 ### schema
 
 The PostgreSQL schema name where LLMOps tables will be created. Defaults to `'llmops'`.
@@ -224,9 +205,6 @@ export default llmops({
     username: process.env.LLMOPS_USER || 'admin@example.com',
     password: process.env.LLMOPS_PASSWORD || 'password',
   }),
-
-  // Auto-migrate only in development
-  autoMigrate: 'development',
 
   // PostgreSQL schema (defaults to 'llmops')
   schema: 'llmops',

@@ -20,11 +20,6 @@ function isBasicAuth(auth: AuthConfig): auth is BasicAuthConfig {
 const app = new Hono()
   .use('*', async (c, next) => {
     // Check if auth was already handled by enterprise middleware
-    // Enterprise packages set c.set('authHandled', true) after authentication
-    if (c.get('authHandled')) {
-      return next();
-    }
-
     // Auth Middleware - handles basic auth (open source)
     const config = c.get('llmopsConfig');
 
