@@ -1,7 +1,9 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button } from '@ui';
 import { authClient } from '@client/lib/auth';
+import Logo from '@client/components/icons/llmops.svg?react';
+import { logoWithDarkmode } from '@client/styles/logo.css';
 import * as styles from './-styles/auth.css';
 
 export const Route = createFileRoute('/(auth)/signin' as any)({
@@ -9,7 +11,6 @@ export const Route = createFileRoute('/(auth)/signin' as any)({
 });
 
 function SignInPage() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,7 @@ function SignInPage() {
       }
 
       // Redirect to home on success
-      navigate({ to: '/' });
+      window.location.href = '/';
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {
@@ -42,58 +43,89 @@ function SignInPage() {
 
   return (
     <div className={styles.authContainer}>
-      <div className={styles.authCard}>
-        <div className={styles.authHeader}>
-          <h1 className={styles.authTitle}>Welcome back</h1>
-          <p className={styles.authDescription}>
-            Sign in to your LLMOps account
+      {/* Left Panel */}
+      <div className={styles.leftPanel}>
+        <div className={styles.logo}>
+          <Logo
+            className={logoWithDarkmode()}
+            viewBox="450 550 1100 1500"
+            style={{ height: 22, width: 18 }}
+          />
+          LLMOps
+        </div>
+        <blockquote className={styles.testimonial}>
+          "This platform has transformed how we manage our LLM infrastructure.
+          The observability and config management features are exactly what we
+          needed." - Engineering Team
+        </blockquote>
+      </div>
+
+      {/* Right Panel */}
+      <div className={styles.rightPanel}>
+        <Link to={'/setup' as any} className={styles.topLink}>
+          Create account
+        </Link>
+
+        <div className={styles.formContainer}>
+          <div className={styles.authHeader}>
+            <h1 className={styles.authTitle}>Welcome back</h1>
+            <p className={styles.authDescription}>
+              Enter your credentials to sign in to your account
+            </p>
+          </div>
+
+          <form className={styles.authForm} onSubmit={handleSubmit}>
+            <div className={styles.authField}>
+              <label className={styles.authLabel} htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                className={styles.authInput}
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div className={styles.authField}>
+              <label className={styles.authLabel} htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                className={styles.authInput}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && <div className={styles.authError}>{error}</div>}
+
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={isLoading}
+              className={styles.authButton}
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </form>
+
+          <p className={styles.authFooter}>
+            Don't have an account?{' '}
+            <Link to={'/setup' as any} className={styles.authLink}>
+              Create one
+            </Link>
           </p>
         </div>
-
-        <form className={styles.authForm} onSubmit={handleSubmit}>
-          <div className={styles.authField}>
-            <label className={styles.authLabel} htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              className={styles.authInput}
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          <div className={styles.authField}>
-            <label className={styles.authLabel} htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              className={styles.authInput}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-          </div>
-
-          {error && <div className={styles.authError}>{error}</div>}
-
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isLoading}
-            className={styles.authButton}
-          >
-            {isLoading ? 'Signing in...' : 'Sign in'}
-          </Button>
-        </form>
       </div>
     </div>
   );

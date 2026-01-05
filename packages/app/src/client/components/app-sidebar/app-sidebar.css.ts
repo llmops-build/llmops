@@ -78,14 +78,18 @@ export const menuSection = style({
   padding: spacing.sm,
 });
 
-export const menuSectionLabel = style({
-  fontSize: '0.6875rem',
-  fontWeight: 500,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: colors.gray9,
-  marginBottom: spacing.sm,
-});
+export const menuSectionLabel = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    letterSpacing: '0.05em',
+    color: colors.gray9,
+    marginBottom: spacing.sm,
+  },
+]);
 
 export const themeSwitcher = style({
   display: 'flex',
@@ -141,7 +145,7 @@ export const menuItem = style({
   gap: spacing.sm,
   fontSize: '0.875rem',
   lineHeight: '1rem',
-  color: colors.gray11,
+  color: colors.gray9,
   selectors: {
     '&[data-highlighted]': {
       zIndex: 0,
