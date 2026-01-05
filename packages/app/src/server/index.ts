@@ -29,6 +29,7 @@ app
       const basePath = c.var.llmopsConfig?.basePath || '';
       const llmProviders = c.var.llmProviders || [];
       const authType = c.var.llmopsConfig?.auth?.type || 'basic';
+      const setupComplete = c.var.setupComplete ?? false;
 
       return c.html(
         renderer({
@@ -36,6 +37,7 @@ app
           dev: (env.LLMOPS_DEV as unknown) === 'true',
           llmProviders,
           authType,
+          setupComplete,
         })
       );
     }

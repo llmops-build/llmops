@@ -9,7 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
+import { Route as authSigninRouteImport } from './routes/(auth)/signin'
+import { Route as authSetupRouteImport } from './routes/(auth)/setup'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
@@ -38,30 +41,44 @@ import { Route as appConfigsIdTabsSettingsRouteImport } from './routes/(app)/con
 import { Route as appConfigsIdVariantsVariantsVariantRouteImport } from './routes/(app)/configs/$id/_variants/variants/$variant'
 import { Route as appConfigsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/configs/$id/_targeting/targeting/$environment'
 
+const appRouteRoute = appRouteRouteImport.update({
+  id: '/(app)',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const appIndexRoute = appIndexRouteImport.update({
-  id: '/(app)/',
+  id: '/',
   path: '/',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const authSigninRoute = authSigninRouteImport.update({
+  id: '/(auth)/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authSetupRoute = authSetupRouteImport.update({
+  id: '/(auth)/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appEnvironmentsRoute = appEnvironmentsRouteImport.update({
-  id: '/(app)/environments',
+  id: '/environments',
   path: '/environments',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => appRouteRoute,
 } as any)
 const appConfigsRoute = appConfigsRouteImport.update({
-  id: '/(app)/configs',
+  id: '/configs',
   path: '/configs',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => appRouteRoute,
 } as any)
 const appSettingsRouteRoute = appSettingsRouteRouteImport.update({
-  id: '/(app)/settings',
+  id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => appRouteRoute,
 } as any)
 const appObservabilityRouteRoute = appObservabilityRouteRouteImport.update({
-  id: '/(app)/observability',
+  id: '/observability',
   path: '/observability',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => appRouteRoute,
 } as any)
 const appSettingsIndexRoute = appSettingsIndexRouteImport.update({
   id: '/',
@@ -195,6 +212,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/setup': typeof authSetupRoute
+  '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
   '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
@@ -218,6 +237,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/setup': typeof authSetupRoute
+  '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
   '/observability': typeof appObservabilityIndexRoute
   '/settings': typeof appSettingsIndexRoute
@@ -238,10 +259,13 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/(app)': typeof appRouteRouteWithChildren
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
+  '/(auth)/setup': typeof authSetupRoute
+  '/(auth)/signin': typeof authSigninRoute
   '/(app)/': typeof appIndexRoute
   '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
@@ -274,6 +298,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/configs'
     | '/environments'
+    | '/setup'
+    | '/signin'
     | '/'
     | '/configs/$id'
     | '/environments/$environment'
@@ -297,6 +323,8 @@ export interface FileRouteTypes {
   to:
     | '/configs'
     | '/environments'
+    | '/setup'
+    | '/signin'
     | '/'
     | '/observability'
     | '/settings'
@@ -316,10 +344,13 @@ export interface FileRouteTypes {
     | '/configs/$id/variants/$variant'
   id:
     | '__root__'
+    | '/(app)'
     | '/(app)/observability'
     | '/(app)/settings'
     | '/(app)/configs'
     | '/(app)/environments'
+    | '/(auth)/setup'
+    | '/(auth)/signin'
     | '/(app)/'
     | '/(app)/configs/$id'
     | '/(app)/environments/$environment'
@@ -347,20 +378,39 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
-  appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
-  appConfigsRoute: typeof appConfigsRouteWithChildren
-  appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
-  appIndexRoute: typeof appIndexRoute
+  appRouteRoute: typeof appRouteRouteWithChildren
+  authSetupRoute: typeof authSetupRoute
+  authSigninRoute: typeof authSigninRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/(app)': {
+      id: '/(app)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof appRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/': {
       id: '/(app)/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof appIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(auth)/signin': {
+      id: '/(auth)/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof authSigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/setup': {
+      id: '/(auth)/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof authSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/environments': {
@@ -368,28 +418,28 @@ declare module '@tanstack/react-router' {
       path: '/environments'
       fullPath: '/environments'
       preLoaderRoute: typeof appEnvironmentsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/(app)/configs': {
       id: '/(app)/configs'
       path: '/configs'
       fullPath: '/configs'
       preLoaderRoute: typeof appConfigsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/(app)/settings': {
       id: '/(app)/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof appSettingsRouteRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/(app)/observability': {
       id: '/(app)/observability'
       path: '/observability'
       fullPath: '/observability'
       preLoaderRoute: typeof appObservabilityRouteRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/(app)/settings/': {
       id: '/(app)/settings/'
@@ -724,12 +774,30 @@ const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(
   appEnvironmentsRouteChildren,
 )
 
-const rootRouteChildren: RootRouteChildren = {
+interface appRouteRouteChildren {
+  appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
+  appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
+  appConfigsRoute: typeof appConfigsRouteWithChildren
+  appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
+  appIndexRoute: typeof appIndexRoute
+}
+
+const appRouteRouteChildren: appRouteRouteChildren = {
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appConfigsRoute: appConfigsRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
   appIndexRoute: appIndexRoute,
+}
+
+const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
+  appRouteRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  appRouteRoute: appRouteRouteWithChildren,
+  authSetupRoute: authSetupRoute,
+  authSigninRoute: authSigninRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

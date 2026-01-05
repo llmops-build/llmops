@@ -1,8 +1,10 @@
 import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
+import { getMigrations as getAuthMigrations } from 'better-auth/db';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
+import { getAuthClientOptions } from '@/auth';
 
 export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
 
@@ -15,6 +17,7 @@ export interface MigrationOptions {
    * If provided, the schema will be created if it doesn't exist.
    */
   schema?: string;
+  rawConnection?: unknown;
 }
 
 const postgresMap = {
@@ -110,7 +113,7 @@ async function ensurePostgresSchemaExists(
     // Check if schema exists
     const result = await sql<{ exists: boolean }>`
       SELECT EXISTS (
-        SELECT 1 FROM information_schema.schemata 
+        SELECT 1 FROM information_schema.schemata
         WHERE schema_name = ${schema}
       ) as exists
     `.execute(db);
@@ -409,10 +412,18 @@ export async function getMigrations(
     }
   }
 
+  const authOptions = getAuthClientOptions(options?.rawConnection);
+  const {
+    toBeAdded: authChangesToBeAdded,
+    toBeCreated: authChangesToBeCreated,
+    runMigrations: runAuthMigrations,
+  } = await getAuthMigrations(authOptions);
+
   async function runMigrations() {
     for (const migration of migrations) {
       await migration.execute();
     }
+    await runAuthMigrations();
   }
 
   async function compileMigrations() {
@@ -421,38 +432,31 @@ export async function getMigrations(
   }
 
   return {
-    toBeCreated,
-    toBeAdded,
+    toBeCreated: [...toBeCreated, ...authChangesToBeCreated],
+    toBeAdded: [...toBeAdded, ...authChangesToBeAdded],
     runMigrations,
     compileMigrations,
     migrations,
-    needsMigration: toBeCreated.length > 0 || toBeAdded.length > 0,
+    needsMigration:
+      toBeCreated.length > 0 ||
+      toBeAdded.length > 0 ||
+      authChangesToBeCreated.length > 0 ||
+      authChangesToBeAdded.length > 0,
   };
 }
 
 /**
- * Run migrations if needed based on autoMigrate config
+ * Run migrations if needed
  * @param db - Kysely database instance
  * @param dbType - Database type
- * @param autoMigrate - Auto-migrate configuration
  * @param options - Migration options (schema, etc.)
  * @returns true if migrations were run, false otherwise
  */
 export async function runAutoMigrations(
   db: Kysely<Database>,
   dbType: DatabaseType,
-  autoMigrate: boolean | 'development',
   options?: MigrationOptions
 ): Promise<{ ran: boolean; tables: string[]; fields: string[] }> {
-  // Determine if we should run migrations
-  const shouldMigrate =
-    autoMigrate === true ||
-    (autoMigrate === 'development' && process.env.NODE_ENV === 'development');
-
-  if (!shouldMigrate) {
-    return { ran: false, tables: [], fields: [] };
-  }
-
   const { toBeCreated, toBeAdded, runMigrations, needsMigration } =
     await getMigrations(db, dbType, options);
 

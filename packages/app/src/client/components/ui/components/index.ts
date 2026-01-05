@@ -66,3 +66,6 @@ export type { SliderProps } from './slider';
 
 export { Tooltip, BaseTooltip } from './tooltip';
 export type { TooltipProps } from './tooltip';
+
+export { Input } from './input';
+export type { InputProps } from './input';

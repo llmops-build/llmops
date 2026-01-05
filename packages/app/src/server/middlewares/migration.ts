@@ -2,40 +2,30 @@ import type { MiddlewareHandler } from 'hono';
 import type { LLMOpsConfig } from '@llmops/core';
 
 /**
- * Auto-migrate configuration type
+ * Extended config type with schema option
  */
-type AutoMigrateConfig = boolean | 'development';
-
-/**
- * Extended config type with autoMigrate and schema options
- */
-type LLMOpsConfigWithMigration = LLMOpsConfig & {
-  autoMigrate?: AutoMigrateConfig;
+type LLMOpsConfigWithSchema = LLMOpsConfig & {
   schema?: string;
 };
 
 /**
- * Creates a middleware that handles auto-migration based on config
+ * Creates a middleware that handles auto-migration on startup
  *
- * This middleware runs once on application startup and handles:
- * - autoMigrate: true - Always run migrations
- * - autoMigrate: false - Never run migrations (default)
- * - autoMigrate: 'development' - Only run when NODE_ENV is 'development'
+ * This middleware runs once on application startup and automatically
+ * runs database migrations if needed.
  *
  * IMPORTANT: This middleware should run BEFORE the seed middleware
  * but AFTER the database middleware creates the connection.
  */
 export const createMigrationMiddleware = (
-  config: LLMOpsConfigWithMigration
+  config: LLMOpsConfigWithSchema
 ): MiddlewareHandler => {
   let migrationComplete = false;
   let migrationPromise: Promise<void> | null = null;
 
   return async (c, next) => {
-    const autoMigrate = config.autoMigrate ?? false;
-
-    // Skip if migrations already complete or autoMigrate is false
-    if (migrationComplete || autoMigrate === false) {
+    // Skip if migrations already complete
+    if (migrationComplete) {
       await next();
       return;
     }
@@ -74,7 +64,8 @@ export const createMigrationMiddleware = (
             return;
           }
 
-          const result = await runAutoMigrations(db, dbType, autoMigrate, {
+          const result = await runAutoMigrations(db, dbType, {
+            rawConnection,
             schema,
           });
 

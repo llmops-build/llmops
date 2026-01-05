@@ -23,8 +23,6 @@ export default llmops({
     username: 'admin@llmops.local',
     password: 'password',
   }),
-  // Auto-run migrations in development
-  autoMigrate: 'development',
   // PostgreSQL schema name (defaults to 'llmops')
   schema: 'llmops',
 });
