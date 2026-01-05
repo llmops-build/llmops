@@ -1,6 +1,9 @@
 import type { MiddlewareHandler } from 'hono';
 import { betterAuth } from 'better-auth';
-import { getAuthClientOptions } from '@llmops/core';
+import {
+  getAuthClientOptions,
+  createWorkspaceSettingsDataLayer,
+} from '@llmops/core';
 
 /**
  * Creates auth client middleware that uses the pre-configured Kysely instance
@@ -12,12 +15,22 @@ export const createAuthClientMiddleware = (): MiddlewareHandler => {
     const kyselyDb = c.get('kyselyDb');
     const dbType = c.get('dbType');
 
+    // Create workspace settings data layer for the onUserCreated hook
+    const workspaceSettings = createWorkspaceSettingsDataLayer(kyselyDb);
+
     // Pass the pre-configured Kysely instance to Better Auth
     // This ensures it uses the correct schema (search_path)
     const authClient = betterAuth(
       getAuthClientOptions({
-        db: kyselyDb,
-        type: dbType,
+        database: {
+          db: kyselyDb,
+          type: dbType,
+        },
+        onUserCreated: async (userId: string) => {
+          // Set the first user as super admin and mark setup complete
+          await workspaceSettings.setSuperAdminId(userId);
+          await workspaceSettings.markSetupComplete();
+        },
       })
     );
     c.set('authClient', authClient);

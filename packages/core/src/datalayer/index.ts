@@ -12,6 +12,7 @@ import { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 export { createLLMRequestsDataLayer } from './llmRequests';
 export type { LLMRequestInsert } from './llmRequests';
+export { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 export const createDataLayer = async (db: Kysely<Database>) => {
   return {

@@ -28,7 +28,8 @@ app
     if (!c.req.path.startsWith('/api')) {
       const basePath = c.var.llmopsConfig?.basePath || '';
       const llmProviders = c.var.llmProviders || [];
-      const authType = c.var.llmopsConfig?.auth?.type || 'basic';
+      // Auth type is always 'better-auth' now
+      const authType = 'better-auth';
       const setupComplete = c.var.setupComplete ?? false;
 
       return c.html(

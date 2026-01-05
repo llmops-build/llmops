@@ -124,6 +124,11 @@ export const authError = style({
   borderRadius: '6px',
 });
 
+export const authFieldError = style({
+  fontSize: '0.75rem',
+  color: colors.error9,
+});
+
 export const authButton = style({
   height: '44px',
   width: '100%',

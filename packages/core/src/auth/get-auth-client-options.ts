@@ -9,20 +9,41 @@ export interface AuthClientDatabaseConfig {
   type: DatabaseType;
 }
 
+export interface AuthClientOptions {
+  /** Database configuration */
+  database: any | AuthClientDatabaseConfig;
+  /**
+   * Callback fired after a user is created (signs up) successfully.
+   * Use this to set up workspace settings like superAdminId.
+   */
+  onUserCreated?: (userId: string) => Promise<void>;
+}
+
 /**
  * Get Better Auth client options
  *
- * @param database - Either a raw database connection or a pre-configured Kysely instance
- *                   When using PostgreSQL with custom schema, pass { db, type } to ensure
- *                   Better Auth uses the correctly configured Kysely instance
+ * @param options - Auth client options including database config and hooks
  */
 export const getAuthClientOptions = (
-  database: any | AuthClientDatabaseConfig
+  options: AuthClientOptions
 ): BetterAuthOptions => {
+  const { database, onUserCreated } = options;
+
   return {
     database,
     emailAndPassword: {
       enabled: true,
     },
+    databaseHooks: onUserCreated
+      ? {
+          user: {
+            create: {
+              after: async (user) => {
+                await onUserCreated(user.id);
+              },
+            },
+          },
+        }
+      : undefined,
   };
 };

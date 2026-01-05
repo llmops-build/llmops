@@ -412,7 +412,9 @@ export async function getMigrations(
     }
   }
 
-  const authOptions = getAuthClientOptions(options?.rawConnection);
+  const authOptions = getAuthClientOptions({
+    database: options?.rawConnection,
+  });
   const {
     toBeAdded: authChangesToBeAdded,
     toBeCreated: authChangesToBeCreated,

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Button, Input } from '@ui';
 import { authClient } from '@client/lib/auth';
 import Logo from '@client/components/icons/llmops.svg?react';
@@ -10,32 +11,40 @@ export const Route = createFileRoute('/(auth)/signin' as any)({
   component: SignInPage,
 });
 
+interface SignInFormData {
+  email: string;
+  password: string;
+}
+
 function SignInPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignInFormData>();
+
+  const onSubmit = async (data: SignInFormData) => {
+    setServerError(null);
     setIsLoading(true);
 
     try {
       const result = await authClient.signIn.email({
-        email,
-        password,
+        email: data.email,
+        password: data.password,
       });
 
       if (result.error) {
-        setError(result.error.message || 'Failed to sign in');
+        setServerError(result.error.message || 'Failed to sign in');
         return;
       }
 
       // Redirect to home on success
       window.location.href = '/';
     } catch (err) {
-      setError('An unexpected error occurred');
+      setServerError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +74,7 @@ function SignInPage() {
             </p>
           </div>
 
-          <form className={styles.authForm} onSubmit={handleSubmit}>
+          <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
             <div className={styles.authField}>
               <label className={styles.authLabel} htmlFor="email">
                 Email
@@ -75,11 +84,20 @@ function SignInPage() {
                 type="email"
                 size="lg"
                 placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
                 autoComplete="email"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address',
+                  },
+                })}
               />
+              {errors.email && (
+                <span className={styles.authFieldError}>
+                  {errors.email.message}
+                </span>
+              )}
             </div>
 
             <div className={styles.authField}>
@@ -91,14 +109,21 @@ function SignInPage() {
                 type="password"
                 size="lg"
                 placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
                 autoComplete="current-password"
+                {...register('password', {
+                  required: 'Password is required',
+                })}
               />
+              {errors.password && (
+                <span className={styles.authFieldError}>
+                  {errors.password.message}
+                </span>
+              )}
             </div>
 
-            {error && <div className={styles.authError}>{error}</div>}
+            {serverError && (
+              <div className={styles.authError}>{serverError}</div>
+            )}
 
             <Button
               type="submit"

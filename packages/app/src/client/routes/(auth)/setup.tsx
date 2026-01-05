@@ -1,8 +1,8 @@
 import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Button, Input } from '@ui';
 import { authClient } from '@client/lib/auth';
-import { hc } from '@client/lib/hc';
 import Logo from '@client/components/icons/llmops.svg?react';
 import { logoWithDarkmode } from '@client/styles/logo.css';
 import * as styles from './-styles/auth.css';
@@ -11,57 +11,54 @@ export const Route = createFileRoute('/(auth)/setup' as any)({
   component: SetupPage,
 });
 
+interface SetupFormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 function SetupPage() {
   // If setup is already complete, redirect to signin
   const setupComplete = window.bootstrapData?.setupComplete ?? false;
   if (setupComplete) {
     return <Navigate to={'/signin' as any} />;
   }
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+
+  const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<SetupFormData>();
 
-    // Validate password length
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
+  const password = watch('password');
 
+  const onSubmit = async (data: SetupFormData) => {
+    setServerError(null);
     setIsLoading(true);
 
     try {
       const result = await authClient.signUp.email({
-        email,
-        password,
-        name,
+        email: data.email,
+        password: data.password,
+        name: data.name,
       });
 
       if (result.error) {
-        setError(result.error.message || 'Failed to create account');
+        setServerError(result.error.message || 'Failed to create account');
         return;
       }
 
-      // Get the user ID from the signup result
-      const userId = result.data?.user?.id;
-
-      // Set up workspace with superAdminId and mark setup complete
-      await hc.v1['workspace-settings'].$patch({
-        json: {
-          setupComplete: true,
-          superAdminId: userId,
-        },
-      });
-
+      // Backend automatically sets superAdminId and marks setup complete
+      // via BetterAuth's databaseHooks when user is created.
       // Reload the page to get fresh bootstrapData with setupComplete=true
       window.location.href = '/';
     } catch (err) {
-      setError('An unexpected error occurred');
+      setServerError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +92,7 @@ function SetupPage() {
             </p>
           </div>
 
-          <form className={styles.authForm} onSubmit={handleSubmit}>
+          <form className={styles.authForm} onSubmit={handleSubmit(onSubmit)}>
             <div className={styles.authField}>
               <label className={styles.authLabel} htmlFor="name">
                 Name
@@ -105,11 +102,14 @@ function SetupPage() {
                 type="text"
                 size="lg"
                 placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
                 autoComplete="name"
+                {...register('name', { required: 'Name is required' })}
               />
+              {errors.name && (
+                <span className={styles.authFieldError}>
+                  {errors.name.message}
+                </span>
+              )}
             </div>
 
             <div className={styles.authField}>
@@ -121,11 +121,20 @@ function SetupPage() {
                 type="email"
                 size="lg"
                 placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
                 autoComplete="email"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address',
+                  },
+                })}
               />
+              {errors.email && (
+                <span className={styles.authFieldError}>
+                  {errors.email.message}
+                </span>
+              )}
             </div>
 
             <div className={styles.authField}>
@@ -137,15 +146,48 @@ function SetupPage() {
                 type="password"
                 size="lg"
                 placeholder="Create a password (min. 8 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
                 autoComplete="new-password"
-                minLength={8}
+                {...register('password', {
+                  required: 'Password is required',
+                  minLength: {
+                    value: 8,
+                    message: 'Password must be at least 8 characters',
+                  },
+                })}
               />
+              {errors.password && (
+                <span className={styles.authFieldError}>
+                  {errors.password.message}
+                </span>
+              )}
             </div>
 
-            {error && <div className={styles.authError}>{error}</div>}
+            <div className={styles.authField}>
+              <label className={styles.authLabel} htmlFor="confirmPassword">
+                Confirm Password
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                size="lg"
+                placeholder="Confirm your password"
+                autoComplete="new-password"
+                {...register('confirmPassword', {
+                  required: 'Please confirm your password',
+                  validate: (value) =>
+                    value === password || 'Passwords do not match',
+                })}
+              />
+              {errors.confirmPassword && (
+                <span className={styles.authFieldError}>
+                  {errors.confirmPassword.message}
+                </span>
+              )}
+            </div>
+
+            {serverError && (
+              <div className={styles.authError}>{serverError}</div>
+            )}
 
             <Button
               type="submit"
