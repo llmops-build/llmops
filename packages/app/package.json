@@ -1,6 +1,6 @@
 {
   "name": "@llmops/app",
-  "version": "0.1.9-beta.4",
+  "version": "0.1.9-beta.5",
   "description": "LLMOps application with server and client",
   "type": "module",
   "license": "Apache-2.0",
