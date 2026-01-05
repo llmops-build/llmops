@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button, Input } from '@ui';
@@ -17,6 +17,7 @@ interface SignInFormData {
 }
 
 function SignInPage() {
+  const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,28 +27,32 @@ function SignInPage() {
     formState: { errors },
   } = useForm<SignInFormData>();
 
-  const onSubmit = async (data: SignInFormData) => {
+  const onSubmit = (data: SignInFormData) => {
     setServerError(null);
     setIsLoading(true);
 
-    try {
-      const result = await authClient.signIn.email({
+    authClient.signIn
+      .email({
         email: data.email,
         password: data.password,
+      })
+      .then((result) => {
+        if (result.error) {
+          setServerError(result.error.message || 'Failed to sign in');
+          return;
+        }
+
+        navigate({
+          to: '/',
+          reloadDocument: true,
+        });
+      })
+      .catch(() => {
+        setServerError('An unexpected error occurred');
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-
-      if (result.error) {
-        setServerError(result.error.message || 'Failed to sign in');
-        return;
-      }
-
-      // Redirect to home on success
-      window.location.href = '/';
-    } catch (err) {
-      setServerError('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
