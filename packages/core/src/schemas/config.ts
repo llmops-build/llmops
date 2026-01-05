@@ -41,23 +41,8 @@ const providersSchema = providersObjectSchema.refine(
   'At least one provider must be configured'
 );
 
-/**
- * Auth configuration schema
- *
- * Uses a flexible schema with passthrough to allow different auth providers.
- * - Open source: basicAuth() from @llmops/sdk (type: 'basic')
- *
- * The actual auth handling is done by the auth middleware based on the type.
- */
-const authSchema = z
-  .object({
-    type: z.string().min(1, 'Auth type is required'),
-  })
-  .passthrough();
-
 export const llmopsConfigSchema = z.object({
   database: z.any(),
-  auth: authSchema,
   basePath: z
     .string()
     .min(1, 'Base path is required and cannot be empty')
@@ -75,24 +60,6 @@ export const llmopsConfigSchema = z.object({
 });
 
 /**
- * Base auth configuration interface
- * All auth providers must have at least a type field
- */
-export interface AuthConfig {
-  readonly type: string;
-  [key: string]: unknown;
-}
-
-/**
- * Basic auth configuration (open source)
- */
-export interface BasicAuthConfig extends AuthConfig {
-  readonly type: 'basic';
-  readonly defaultUser: string;
-  readonly defaultPassword: string;
-}
-
-/**
  * Validated LLMOps configuration with typed providers
  * Uses ProvidersConfig for proper provider-specific typing
  *
@@ -100,11 +67,10 @@ export interface BasicAuthConfig extends AuthConfig {
  */
 export type ValidatedLLMOpsConfig = Omit<
   z.infer<typeof llmopsConfigSchema>,
-  'providers' | 'schema' | 'auth'
+  'providers' | 'schema'
 > & {
   providers: ProvidersConfig;
   schema: string;
-  auth: AuthConfig;
 };
 
 /**

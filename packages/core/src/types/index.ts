@@ -1,16 +1,9 @@
 import type {
   ValidatedLLMOpsConfig,
   LLMOpsConfigInput,
-  AuthConfig,
-  BasicAuthConfig,
 } from '../schemas/config';
 
-export type {
-  ValidatedLLMOpsConfig,
-  LLMOpsConfigInput,
-  AuthConfig,
-  BasicAuthConfig,
-};
+export type { ValidatedLLMOpsConfig, LLMOpsConfigInput };
 
 /**
  * LLMOpsConfig is the user-facing config type (allows optional fields)

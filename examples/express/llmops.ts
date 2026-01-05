@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { llmops, basicAuth } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
 import { env } from 'node:process';
 import { Pool } from 'pg';
 
@@ -18,10 +18,6 @@ export default llmops({
   },
   database: new Pool({
     connectionString: env.POSTGRES_URL || '',
-  }),
-  auth: basicAuth({
-    username: 'admin@llmops.local',
-    password: 'password',
   }),
   // PostgreSQL schema name (defaults to 'llmops')
   schema: 'llmops',

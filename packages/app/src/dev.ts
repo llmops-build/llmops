@@ -16,11 +16,6 @@ const { app } = createApp({
       apiKey: env.OPENAI_API_KEY || '',
     },
   },
-  auth: {
-    type: 'basic',
-    defaultUser: 'admin@llmops.local',
-    defaultPassword: 'password',
-  },
 });
 
 export default app;

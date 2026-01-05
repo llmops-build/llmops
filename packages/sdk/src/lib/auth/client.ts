@@ -1,8 +1,7 @@
 /**
  * Auth Client - Extensible authentication client for LLMOps
  *
- * Open source: BasicAuthClient with limited functionality
- * Enterprise: Can extend with full user management, RBAC, SSO, etc.
+ * Provides an interface that can be extended for different auth providers.
  */
 
 // ============================================
