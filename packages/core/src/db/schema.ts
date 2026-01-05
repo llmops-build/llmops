@@ -77,6 +77,7 @@ export const workspaceSettingsSchema = z.object({
   ...baseSchema,
   name: z.string().nullable().optional(), // Workspace display name
   setupComplete: z.boolean().default(false), // Whether initial setup has been completed
+  superAdminId: z.string().nullable().optional(), // The first user's ID - only this user can access the app
 });
 
 // LLM Requests table schema - stores request logs with cost tracking
@@ -196,6 +197,7 @@ export interface TargetingRulesTable extends BaseTable {
 export interface WorkspaceSettingsTable extends BaseTable {
   name: string | null;
   setupComplete: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+  superAdminId: string | null;
 }
 
 // LLM Requests table - request logs with cost tracking
@@ -406,6 +408,7 @@ export const SCHEMA_METADATA = {
         id: { type: 'uuid', primaryKey: true },
         name: { type: 'text', nullable: true },
         setupComplete: { type: 'boolean', default: false },
+        superAdminId: { type: 'text', nullable: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },

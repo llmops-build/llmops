@@ -7,10 +7,11 @@ import providers from '@server/handlers/providers';
 import targeting from '@server/handlers/targeting';
 import variants from '@server/handlers/variants';
 import workspaceSettings from '@server/handlers/workspace-settings';
-import { verifySession } from '@server/middlewares/verifySession';
+import { verifySuperAdmin } from '@server/middlewares/verifySession';
 
 const app = new Hono()
-  .use('*', verifySession)
+  // Verify user is authenticated AND is the super admin
+  .use('*', verifySuperAdmin)
   .route('/analytics', analytics)
   .route('/configs', configs)
   .route('/environments', environments)

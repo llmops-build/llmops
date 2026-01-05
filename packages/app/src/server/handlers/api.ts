@@ -1,4 +1,5 @@
 import { Hono, type ContextVariableMap } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import v1 from '@server/handlers/v1';
 import genaiV1 from '@server/handlers/genai';
 import authHandlers from '@server/handlers/auth';
@@ -13,6 +14,16 @@ const app = new Hono<{
 }>();
 
 export const routes = app
+  // Block signup if setup is already complete (single user mode)
+  .post('/auth/sign-up/*', async (c, next) => {
+    const setupComplete = c.get('setupComplete');
+    if (setupComplete) {
+      throw new HTTPException(403, {
+        message: 'Registration is disabled. Only one user is allowed.',
+      });
+    }
+    await next();
+  })
   // Auth routes handled by better-auth
   .on(['POST', 'GET'], '/auth/*', (c) => {
     return c.get('authClient').handler(c.req.raw);

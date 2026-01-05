@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button } from '@ui';
 import { authClient } from '@client/lib/auth';
@@ -53,19 +53,10 @@ function SignInPage() {
           />
           LLMOps
         </div>
-        <blockquote className={styles.testimonial}>
-          "This platform has transformed how we manage our LLM infrastructure.
-          The observability and config management features are exactly what we
-          needed." - Engineering Team
-        </blockquote>
       </div>
 
       {/* Right Panel */}
       <div className={styles.rightPanel}>
-        <Link to={'/setup' as any} className={styles.topLink}>
-          Create account
-        </Link>
-
         <div className={styles.formContainer}>
           <div className={styles.authHeader}>
             <h1 className={styles.authTitle}>Welcome back</h1>
@@ -118,13 +109,6 @@ function SignInPage() {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
-
-          <p className={styles.authFooter}>
-            Don't have an account?{' '}
-            <Link to={'/setup' as any} className={styles.authLink}>
-              Create one
-            </Link>
-          </p>
         </div>
       </div>
     </div>

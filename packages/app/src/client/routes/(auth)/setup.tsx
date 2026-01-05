@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button } from '@ui';
 import { authClient } from '@client/lib/auth';
@@ -12,6 +12,11 @@ export const Route = createFileRoute('/(auth)/setup' as any)({
 });
 
 function SetupPage() {
+  // If setup is already complete, redirect to signin
+  const setupComplete = window.bootstrapData?.setupComplete ?? false;
+  if (setupComplete) {
+    return <Navigate to={'/signin' as any} />;
+  }
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,8 +47,15 @@ function SetupPage() {
         return;
       }
 
+      // Get the user ID from the signup result
+      const userId = result.data?.user?.id;
+
+      // Set up workspace with superAdminId and mark setup complete
       await hc.v1['workspace-settings'].$patch({
-        json: { setupComplete: true },
+        json: {
+          setupComplete: true,
+          superAdminId: userId,
+        },
       });
 
       // Reload the page to get fresh bootstrapData with setupComplete=true
@@ -67,11 +79,6 @@ function SetupPage() {
           />
           LLMOps
         </div>
-        <blockquote className={styles.testimonial}>
-          "This platform has transformed how we manage our LLM infrastructure.
-          The observability and config management features are exactly what we
-          needed." - Engineering Team
-        </blockquote>
       </div>
 
       {/* Right Panel */}

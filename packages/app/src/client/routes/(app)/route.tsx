@@ -9,6 +9,10 @@ export const Route = createFileRoute('/(app)' as any)({
 function AppLayout() {
   const { data: session, isLoading } = useSession();
 
+  if (!window.bootstrapData?.setupComplete) {
+    return <Navigate to="/setup" />;
+  }
+
   if (isLoading) {
     return (
       <div className={loadingContainer}>
