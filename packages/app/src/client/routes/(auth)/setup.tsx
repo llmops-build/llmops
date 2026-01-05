@@ -1,4 +1,9 @@
-import { createFileRoute, Link, Navigate } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Link,
+  Navigate,
+  useNavigate,
+} from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button, Input } from '@ui';
@@ -20,6 +25,7 @@ interface SetupFormData {
 
 function SetupPage() {
   // If setup is already complete, redirect to signin
+  const navigate = useNavigate();
   const setupComplete = window.bootstrapData?.setupComplete ?? false;
   if (setupComplete) {
     return <Navigate to={'/signin' as any} />;
@@ -53,10 +59,10 @@ function SetupPage() {
         return;
       }
 
-      // Backend automatically sets superAdminId and marks setup complete
-      // via BetterAuth's databaseHooks when user is created.
-      // Reload the page to get fresh bootstrapData with setupComplete=true
-      window.location.href = '/';
+      navigate({
+        to: '/',
+        reloadDocument: true,
+      });
     } catch (err) {
       setServerError('An unexpected error occurred');
     } finally {
