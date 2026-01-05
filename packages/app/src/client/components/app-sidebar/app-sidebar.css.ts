@@ -199,3 +199,9 @@ export const sidebarSectionTitle = style([
 export const sidebarSectionTitleHidden = style({
   opacity: 0,
 });
+
+export const userMenuTriggerCollapsed = style({
+  ':hover': {
+    backgroundColor: 'transparent',
+  },
+});

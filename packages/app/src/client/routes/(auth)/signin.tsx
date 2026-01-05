@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Button } from '@ui';
+import { Button, Input } from '@ui';
 import { authClient } from '@client/lib/auth';
 import Logo from '@client/components/icons/llmops.svg?react';
 import { logoWithDarkmode } from '@client/styles/logo.css';
@@ -70,10 +70,10 @@ function SignInPage() {
               <label className={styles.authLabel} htmlFor="email">
                 Email
               </label>
-              <input
+              <Input
                 id="email"
                 type="email"
-                className={styles.authInput}
+                size="lg"
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -86,10 +86,10 @@ function SignInPage() {
               <label className={styles.authLabel} htmlFor="password">
                 Password
               </label>
-              <input
+              <Input
                 id="password"
                 type="password"
-                className={styles.authInput}
+                size="lg"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

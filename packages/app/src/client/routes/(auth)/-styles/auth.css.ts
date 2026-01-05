@@ -1,4 +1,4 @@
-import { colors, spacing } from '@ui';
+import { colors, spacing, sprinkles } from '@ui';
 import { style, keyframes } from '@vanilla-extract/css';
 
 // Split layout container
@@ -75,17 +75,21 @@ export const formContainer = style({
 export const authHeader = style({
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
+  alignItems: 'start',
   gap: spacing.sm,
-  textAlign: 'center',
 });
 
-export const authTitle = style({
-  fontSize: '1.5rem',
-  fontWeight: 600,
-  color: colors.gray12,
-  margin: 0,
-});
+export const authTitle = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    fontSize: '1.5rem',
+    fontWeight: 600,
+    color: colors.gray12,
+    margin: 0,
+  },
+]);
 
 export const authDescription = style({
   fontSize: '0.875rem',
@@ -109,25 +113,6 @@ export const authLabel = style({
   fontSize: '0.875rem',
   fontWeight: 500,
   color: colors.gray11,
-});
-
-export const authInput = style({
-  height: '44px',
-  padding: `0 ${spacing.md}`,
-  fontSize: '0.875rem',
-  backgroundColor: colors.gray3,
-  color: colors.gray12,
-  border: `1px solid ${colors.gray5}`,
-  borderRadius: '6px',
-  outline: 'none',
-  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-  '::placeholder': {
-    color: colors.gray8,
-  },
-  ':focus': {
-    borderColor: colors.gray7,
-    boxShadow: `0 0 0 1px ${colors.gray7}`,
-  },
 });
 
 export const authError = style({

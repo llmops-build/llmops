@@ -38,6 +38,7 @@ import {
   userEmail,
   userMenuChevron,
   userMenuTrigger,
+  userMenuTriggerCollapsed,
 } from './app-sidebar.css';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { useTheme, type Theme } from '@client/hooks/ui/useTheme';
@@ -65,7 +66,9 @@ function UserMenu() {
 
   return (
     <Menu.Root>
-      <Menu.Trigger className={userMenuTrigger}>
+      <Menu.Trigger
+        className={`${userMenuTrigger} ${isCollapsed ? userMenuTriggerCollapsed : ''}`}
+      >
         <span className={userAvatar}>{userInitial}</span>
         {!isCollapsed && (
           <>
