@@ -47,27 +47,30 @@ function SetupPage() {
     setServerError(null);
     setIsLoading(true);
 
-    try {
-      const result = await authClient.signUp.email({
+    authClient.signUp
+      .email({
         email: data.email,
         password: data.password,
         name: data.name,
-      });
+      })
+      .then((result) => {
+        if (result.error) {
+          console.log('Signup error:', result.error);
+          setServerError(result.error.message || 'Failed to create account');
+          return;
+        }
 
-      if (result.error) {
-        setServerError(result.error.message || 'Failed to create account');
-        return;
-      }
-
-      navigate({
-        to: '/',
-        reloadDocument: true,
+        navigate({
+          to: '/',
+          reloadDocument: true,
+        });
+      })
+      .catch((err) => {
+        setServerError('An unexpected error occurred');
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    } catch (err) {
-      setServerError('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
