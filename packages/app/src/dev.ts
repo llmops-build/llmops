@@ -8,14 +8,6 @@ const { app } = createApp({
     connectionString: env.POSTGRES_URL || '',
   }),
   basePath: '/',
-  providers: {
-    openrouter: {
-      apiKey: env.OPENROUTER_API_KEY || '',
-    },
-    openai: {
-      apiKey: env.OPENAI_API_KEY || '',
-    },
-  },
 });
 
 export default app;

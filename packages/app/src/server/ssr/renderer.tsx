@@ -17,17 +17,11 @@ const manifest: Manifest = existsSync(manifestPath)
 export const renderer = ({
   basePath = '',
   dev = false,
-  llmProviders,
   authType,
   setupComplete = false,
 }: {
   basePath?: string;
   dev?: boolean;
-  llmProviders?: {
-    key: string;
-    name: string;
-    imageURI: string;
-  }[];
   authType?: string;
   setupComplete?: boolean;
 }) => {
@@ -289,7 +283,6 @@ export const renderer = ({
           {`
             window.bootstrapData = {
               basePath: "${basePath}",
-              llmProviders: ${JSON.stringify(llmProviders || [])},
               authType: "${authType || 'basic'}",
               setupComplete: ${setupComplete}
             };

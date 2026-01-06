@@ -27,7 +27,6 @@ app
   .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
       const basePath = c.var.llmopsConfig?.basePath || '';
-      const llmProviders = c.var.llmProviders || [];
       // Auth type is always 'better-auth' now
       const authType = 'better-auth';
       const setupComplete = c.var.setupComplete ?? false;
@@ -36,7 +35,6 @@ app
         renderer({
           basePath,
           dev: (env.LLMOPS_DEV as unknown) === 'true',
-          llmProviders,
           authType,
           setupComplete,
         })
