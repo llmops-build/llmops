@@ -9,7 +9,7 @@ The `llmops()` function accepts a configuration object that controls how LLMOps 
 ## Basic Example
 
 ```typescript title="llmops.ts"
-import { llmops, basicAuth } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -19,10 +19,6 @@ export default llmops({
   },
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
-  }),
-  auth: basicAuth({
-    username: 'admin@example.com',
-    password: 'password',
   }),
 });
 ```
@@ -91,28 +87,6 @@ database: new Pool({
 
 ---
 
-### auth
-
-Authentication configuration for the LLMOps dashboard and API. Use the `basicAuth()` helper function to configure basic authentication.
-
-```typescript
-import { basicAuth } from '@llmops/sdk';
-
-auth: basicAuth({
-  username: 'admin@example.com',
-  password: 'secure-password',
-});
-```
-
-| Property   | Type     | Description                 |
-| ---------- | -------- | --------------------------- |
-| `username` | `string` | Username for authentication |
-| `password` | `string` | Password for authentication |
-
-The `basicAuth()` function validates that both username and password are provided and returns a properly typed configuration object.
-
----
-
 ### schema
 
 The PostgreSQL schema name where LLMOps tables will be created. Defaults to `'llmops'`.
@@ -149,11 +123,12 @@ Using a dedicated schema keeps LLMOps tables separate from your application tabl
 
 All providers share these base options:
 
-| Property         | Type     | Required | Description                      |
-| ---------------- | -------- | -------- | -------------------------------- |
-| `apiKey`         | `string` | Yes      | API key for the provider         |
-| `customHost`     | `string` | No       | Custom base URL for the provider |
-| `requestTimeout` | `number` | No       | Request timeout in milliseconds  |
+| Property         | Type       | Required | Description                               |
+| ---------------- | ---------- | -------- | ----------------------------------------- |
+| `apiKey`         | `string`   | Yes      | API key for the provider                  |
+| `customHost`     | `string`   | No       | Custom base URL for the provider          |
+| `requestTimeout` | `number`   | No       | Request timeout in milliseconds           |
+| `forwardHeaders` | `string[]` | No       | Headers to forward from incoming requests |
 
 ```typescript
 providers: {
@@ -179,7 +154,7 @@ For detailed configuration options for each provider, see the [Providers](/docs/
 
 ```typescript title="llmops.ts"
 import 'dotenv/config';
-import { llmops, basicAuth } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -201,11 +176,6 @@ export default llmops({
     connectionString: process.env.DATABASE_URL!,
   }),
 
-  auth: basicAuth({
-    username: process.env.LLMOPS_USER || 'admin@example.com',
-    password: process.env.LLMOPS_PASSWORD || 'password',
-  }),
-
   // PostgreSQL schema (defaults to 'llmops')
   schema: 'llmops',
 });
@@ -225,8 +195,4 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 OPENROUTER_API_KEY=sk-or-...
-
-# Auth
-LLMOPS_USER=admin@example.com
-LLMOPS_PASSWORD=secure-password
 ```

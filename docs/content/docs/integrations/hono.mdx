@@ -34,7 +34,7 @@ yarn add @llmops/sdk pg hono @hono/node-server
 Create a `llmops.ts` file to configure your LLMOps instance:
 
 ```typescript title="llmops.ts"
-import { llmops, basicAuth } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -46,10 +46,6 @@ export default llmops({
   },
   database: new Pool({
     connectionString: process.env.DATABASE_URL || '',
-  }),
-  auth: basicAuth({
-    username: 'admin@llmops.local',
-    password: 'password',
   }),
 });
 ```

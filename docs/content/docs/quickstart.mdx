@@ -66,7 +66,7 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
 Create a file called `llmops.ts` to configure LLMOps:
 
 ```typescript title="llmops.ts"
-import { llmops, basicAuth } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -78,10 +78,6 @@ export default llmops({
   },
   database: new Pool({
     connectionString: process.env.POSTGRES_URL || '',
-  }),
-  auth: basicAuth({
-    username: 'admin@llmops.local',
-    password: 'password',
   }),
 });
 ```

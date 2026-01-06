@@ -10,11 +10,12 @@ LLMOps supports 70+ AI providers through its unified gateway. This page lists al
 
 All providers share these base options:
 
-| Property         | Type     | Required | Description                      |
-| ---------------- | -------- | -------- | -------------------------------- |
-| `apiKey`         | `string` | Yes      | API key for the provider         |
-| `customHost`     | `string` | No       | Custom base URL for the provider |
-| `requestTimeout` | `number` | No       | Request timeout in milliseconds  |
+| Property         | Type       | Required | Description                               |
+| ---------------- | ---------- | -------- | ----------------------------------------- |
+| `apiKey`         | `string`   | Yes      | API key for the provider                  |
+| `customHost`     | `string`   | No       | Custom base URL for the provider          |
+| `requestTimeout` | `number`   | No       | Request timeout in milliseconds           |
+| `forwardHeaders` | `string[]` | No       | Headers to forward from incoming requests |
 
 ---
 
