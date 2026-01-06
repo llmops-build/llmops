@@ -59,12 +59,6 @@ Add these environment variables to `.env` file (create if it doesn't exist):
 ```bash
 # Database
 DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
-
-# LLM Provider (at least one is required)
-OPENROUTER_API_KEY=sk-or-your-api-key
-# Or use other providers:
-# OPENAI_API_KEY=sk-...
-# ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 Make sure `.env` is in `.gitignore`.
@@ -79,12 +73,6 @@ import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  providers: {
-    openrouter: {
-      apiKey: process.env.OPENROUTER_API_KEY || '',
-    },
-    // Add other providers as needed based on available API keys
-  },
   database: new Pool({
     connectionString: process.env.DATABASE_URL || '',
   }),
@@ -164,14 +152,17 @@ serve({ fetch: app.fetch, port }, (info) => {
 
 4. The dashboard should load and show the main interface
 
-## Step 7: Create a Config (Optional)
+## Step 7: Configure Providers and Create a Config
 
-To use the LLM gateway, create a config in the dashboard:
+To use the LLM gateway:
 
-1. Go to Configs section
-2. Create a new config (e.g., "My Assistant")
-3. Add a variant with your preferred model settings
-4. Note the config ID for API calls
+1. Go to **Settings** → **Workspace Providers**
+2. Add your LLM provider (e.g., OpenRouter, OpenAI, Anthropic)
+3. Enter your API key and save
+4. Go to Configs section
+5. Create a new config (e.g., "My Assistant")
+6. Add a variant with your preferred model settings
+7. Note the config ID for API calls
 
 ## Troubleshooting
 
@@ -189,9 +180,9 @@ To use the LLM gateway, create a config in the dashboard:
 
 ### Provider API Errors
 
-- Verify API keys are set in `.env`
-- Check API key is valid and has credits
-- Ensure the provider is configured in `llmops.ts`
+- Configure providers in the dashboard under Settings → Workspace Providers
+- Verify API key is valid and has credits
+- Ensure the provider is enabled
 
 ## File Structure After Integration
 

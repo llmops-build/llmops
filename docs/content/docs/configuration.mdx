@@ -14,9 +14,6 @@ import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  providers: {
-    openai: { apiKey: process.env.OPENAI_API_KEY },
-  },
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
   }),
@@ -39,25 +36,6 @@ This determines where the dashboard and API endpoints are accessible:
 
 - Dashboard: `http://localhost:3000/llmops`
 - API: `http://localhost:3000/llmops/api/genai/v1/chat/completions`
-
----
-
-### providers
-
-An object containing your LLM provider configurations. At least one provider must be configured.
-
-```typescript
-providers: {
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY,
-  },
-  anthropic: {
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  },
-}
-```
-
-See [Providers](/docs/providers) below for detailed provider-specific options.
 
 ---
 
@@ -119,34 +97,35 @@ Using a dedicated schema keeps LLMOps tables separate from your application tabl
 
 ---
 
-## Providers Configuration
+## Provider Configuration
 
-All providers share these base options:
+LLM providers are configured through the LLMOps dashboard, not in the configuration file. This allows you to:
 
-| Property         | Type       | Required | Description                               |
-| ---------------- | ---------- | -------- | ----------------------------------------- |
-| `apiKey`         | `string`   | Yes      | API key for the provider                  |
-| `customHost`     | `string`   | No       | Custom base URL for the provider          |
-| `requestTimeout` | `number`   | No       | Request timeout in milliseconds           |
-| `forwardHeaders` | `string[]` | No       | Headers to forward from incoming requests |
+- Add, update, or remove providers without code changes
+- Securely store API keys in the database
+- Change providers at runtime
 
-```typescript
-providers: {
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY,
-  },
-  anthropic: {
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  },
-  openrouter: {
-    apiKey: process.env.OPENROUTER_API_KEY,
-  },
-}
-```
+### Setting Up Providers
 
-You can configure multiple providers to use different models based on your needs. Once configured, you can create variants in the dashboard that use any of these providers.
+1. Open the LLMOps dashboard
+2. Navigate to **Settings** → **Workspace Providers**
+3. Click **Add Provider** and select your provider
+4. Enter your API credentials and save
 
-For detailed configuration options for each provider, see the [Providers](/docs/providers) page.
+### Supported Providers
+
+LLMOps supports 70+ AI providers including:
+
+- **OpenAI** - GPT-4, GPT-3.5, etc.
+- **Anthropic** - Claude 3, Claude 2, etc.
+- **Google** - Gemini, Vertex AI
+- **AWS Bedrock** - Claude, Llama, etc.
+- **Azure OpenAI** - Azure-hosted OpenAI models
+- **OpenRouter** - Access to 100+ models via single API
+- **Groq** - Fast inference for open models
+- **Together AI**, **Fireworks AI**, **DeepSeek**, and many more
+
+See the [Providers](/docs/providers) page for the complete list and provider-specific configuration options.
 
 ---
 
@@ -159,18 +138,6 @@ import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-
-  providers: {
-    openai: {
-      apiKey: process.env.OPENAI_API_KEY!,
-    },
-    anthropic: {
-      apiKey: process.env.ANTHROPIC_API_KEY!,
-    },
-    openrouter: {
-      apiKey: process.env.OPENROUTER_API_KEY!,
-    },
-  },
 
   database: new Pool({
     connectionString: process.env.DATABASE_URL!,
@@ -190,9 +157,6 @@ We recommend storing sensitive values in environment variables:
 ```bash title=".env"
 # Database
 DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
-
-# Providers
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-OPENROUTER_API_KEY=sk-or-...
 ```
+
+Provider API keys are stored securely in the database after being configured through the dashboard.
