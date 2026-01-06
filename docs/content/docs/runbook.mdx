@@ -74,7 +74,7 @@ Make sure `.env` is in `.gitignore`.
 Create a new file `llmops.ts` (or `llmops.config.ts`) in the project root or `src/` directory:
 
 ```typescript
-import { llmops, basicAuth } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
@@ -87,11 +87,7 @@ export default llmops({
   },
   database: new Pool({
     connectionString: process.env.DATABASE_URL || '',
-  }),
-  auth: basicAuth({
-    username: process.env.LLMOPS_USER || 'admin@llmops.local',
-    password: process.env.LLMOPS_PASSWORD || 'password',
-  }),
+  })
 });
 ```
 
