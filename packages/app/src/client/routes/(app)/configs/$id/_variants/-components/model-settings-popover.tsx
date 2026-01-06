@@ -1,10 +1,4 @@
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Slider,
-  Combobox,
-} from '@ui';
+import { Popover, PopoverTrigger, PopoverContent, Slider, Combobox } from '@ui';
 import { Menu } from '@base-ui/react/menu';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useProviderModels } from '@client/hooks/queries/useProviderModels';

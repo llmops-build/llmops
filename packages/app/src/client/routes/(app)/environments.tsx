@@ -72,7 +72,10 @@ function RouteComponent() {
     });
 
   const handleNavigateToNew = () => {
-    navigate({ to: '/environments/$environment', params: { environment: 'new' } });
+    navigate({
+      to: '/environments/$environment',
+      params: { environment: 'new' },
+    });
   };
 
   useEffect(() => {

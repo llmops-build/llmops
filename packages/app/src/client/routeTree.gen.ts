@@ -25,6 +25,7 @@ import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(a
 import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
 import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
+import { Route as appSettingsSettingsWorkspaceProvidersRouteImport } from './routes/(app)/settings/_settings/workspace-providers'
 import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
 import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
@@ -121,6 +122,12 @@ const appConfigsIdIndexRoute = appConfigsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appConfigsIdRouteRoute,
 } as any)
+const appSettingsSettingsWorkspaceProvidersRoute =
+  appSettingsSettingsWorkspaceProvidersRouteImport.update({
+    id: '/workspace-providers',
+    path: '/workspace-providers',
+    getParentRoute: () => appSettingsSettingsRoute,
+  } as any)
 const appSettingsSettingsWorkspaceGeneralRoute =
   appSettingsSettingsWorkspaceGeneralRouteImport.update({
     id: '/workspace-general',
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
+  '/settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
   '/configs/$id/': typeof appConfigsIdIndexRoute
   '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
@@ -249,6 +257,7 @@ export interface FileRoutesByTo {
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
+  '/settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
   '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
   '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
   '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
@@ -281,6 +290,7 @@ export interface FileRoutesById {
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
+  '/(app)/settings/_settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
   '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/(app)/configs/$id/_tabs/settings': typeof appConfigsIdTabsSettingsRoute
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/observability/requests'
     | '/settings/user-profile'
     | '/settings/workspace-general'
+    | '/settings/workspace-providers'
     | '/configs/$id/'
     | '/environments/$environment/'
     | '/configs/$id/settings'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/observability/requests'
     | '/settings/user-profile'
     | '/settings/workspace-general'
+    | '/settings/workspace-providers'
     | '/configs/$id/settings'
     | '/configs/$id/targeting'
     | '/configs/$id/variants'
@@ -366,6 +378,7 @@ export interface FileRouteTypes {
     | '/(app)/observability/_observability/requests'
     | '/(app)/settings/_settings/user-profile'
     | '/(app)/settings/_settings/workspace-general'
+    | '/(app)/settings/_settings/workspace-providers'
     | '/(app)/configs/$id/'
     | '/(app)/environments/$environment/'
     | '/(app)/configs/$id/_tabs/settings'
@@ -496,6 +509,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/configs/$id/'
       preLoaderRoute: typeof appConfigsIdIndexRouteImport
       parentRoute: typeof appConfigsIdRouteRoute
+    }
+    '/(app)/settings/_settings/workspace-providers': {
+      id: '/(app)/settings/_settings/workspace-providers'
+      path: '/workspace-providers'
+      fullPath: '/settings/workspace-providers'
+      preLoaderRoute: typeof appSettingsSettingsWorkspaceProvidersRouteImport
+      parentRoute: typeof appSettingsSettingsRoute
     }
     '/(app)/settings/_settings/workspace-general': {
       id: '/(app)/settings/_settings/workspace-general'
@@ -645,12 +665,15 @@ const appObservabilityRouteRouteWithChildren =
 interface appSettingsSettingsRouteChildren {
   appSettingsSettingsUserProfileRoute: typeof appSettingsSettingsUserProfileRoute
   appSettingsSettingsWorkspaceGeneralRoute: typeof appSettingsSettingsWorkspaceGeneralRoute
+  appSettingsSettingsWorkspaceProvidersRoute: typeof appSettingsSettingsWorkspaceProvidersRoute
 }
 
 const appSettingsSettingsRouteChildren: appSettingsSettingsRouteChildren = {
   appSettingsSettingsUserProfileRoute: appSettingsSettingsUserProfileRoute,
   appSettingsSettingsWorkspaceGeneralRoute:
     appSettingsSettingsWorkspaceGeneralRoute,
+  appSettingsSettingsWorkspaceProvidersRoute:
+    appSettingsSettingsWorkspaceProvidersRoute,
 }
 
 const appSettingsSettingsRouteWithChildren =

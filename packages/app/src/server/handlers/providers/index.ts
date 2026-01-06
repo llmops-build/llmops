@@ -245,6 +245,168 @@ const app = new Hono()
       console.error('Error fetching models:', error);
       return c.json(internalServerError('Failed to fetch models', 500), 500);
     }
-  });
+  })
+  // =============================================
+  // Provider Configs CRUD (stored configurations)
+  // =============================================
+
+  // List all provider configs
+  .get('/configs', async (c) => {
+    const db = c.get('db');
+
+    try {
+      const configs = await db.listProviderConfigs();
+      return c.json(successResponse(configs, 200));
+    } catch (error) {
+      console.error('Error fetching provider configs:', error);
+      return c.json(
+        internalServerError('Failed to fetch provider configs', 500),
+        500
+      );
+    }
+  })
+  // Get provider config by ID
+  .get(
+    '/configs/:id',
+    zv(
+      'param',
+      z.object({
+        id: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const { id } = c.req.valid('param');
+
+      try {
+        const config = await db.getProviderConfigById({ id });
+        if (!config) {
+          return c.json(
+            clientErrorResponse('Provider config not found', 404),
+            404
+          );
+        }
+        return c.json(successResponse(config, 200));
+      } catch (error) {
+        console.error('Error fetching provider config:', error);
+        return c.json(
+          internalServerError('Failed to fetch provider config', 500),
+          500
+        );
+      }
+    }
+  )
+  // Create or update provider config (upsert)
+  .post(
+    '/configs',
+    zv(
+      'json',
+      z.object({
+        providerId: z.string().min(1),
+        config: z.record(z.string(), z.unknown()),
+        enabled: z.boolean().optional(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const body = c.req.valid('json');
+
+      try {
+        const config = await db.upsertProviderConfig({
+          providerId: body.providerId,
+          config: body.config,
+          enabled: body.enabled ?? true,
+        });
+
+        if (!config) {
+          return c.json(
+            internalServerError('Failed to create/update provider config', 500),
+            500
+          );
+        }
+
+        return c.json(successResponse(config, 200));
+      } catch (error) {
+        console.error('Error creating/updating provider config:', error);
+        return c.json(
+          internalServerError('Failed to create/update provider config', 500),
+          500
+        );
+      }
+    }
+  )
+  // Update provider config
+  .patch(
+    '/configs/:id',
+    zv(
+      'param',
+      z.object({
+        id: z.string().uuid(),
+      })
+    ),
+    zv(
+      'json',
+      z.object({
+        config: z.record(z.string(), z.unknown()).optional(),
+        enabled: z.boolean().optional(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const { id } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      try {
+        const config = await db.updateProviderConfig({
+          id,
+          ...body,
+        });
+        if (!config) {
+          return c.json(
+            clientErrorResponse('Provider config not found', 404),
+            404
+          );
+        }
+        return c.json(successResponse(config, 200));
+      } catch (error) {
+        console.error('Error updating provider config:', error);
+        return c.json(
+          internalServerError('Failed to update provider config', 500),
+          500
+        );
+      }
+    }
+  )
+  // Delete provider config
+  .delete(
+    '/configs/:id',
+    zv(
+      'param',
+      z.object({
+        id: z.string().uuid(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db');
+      const { id } = c.req.valid('param');
+
+      try {
+        const config = await db.deleteProviderConfig({ id });
+        if (!config) {
+          return c.json(
+            clientErrorResponse('Provider config not found', 404),
+            404
+          );
+        }
+        return c.json(successResponse(config, 200));
+      } catch (error) {
+        console.error('Error deleting provider config:', error);
+        return c.json(
+          internalServerError('Failed to delete provider config', 500),
+          500
+        );
+      }
+    }
+  );
 
 export default app;
