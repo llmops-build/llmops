@@ -44,11 +44,6 @@ export default llmops({
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
   }),
-  auth: {
-    type: 'basic',
-    defaultUser: 'admin@example.com',
-    defaultPassword: 'password',
-  },
 });
 ```
 
