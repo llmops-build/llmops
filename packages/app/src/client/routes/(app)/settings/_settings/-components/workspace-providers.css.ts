@@ -68,6 +68,11 @@ export const providerLogo = style({
   height: '20px',
   borderRadius: '4px',
   objectFit: 'contain',
+  selectors: {
+    '.dark &': {
+      filter: 'brightness(0) invert(1)',
+    },
+  },
 });
 
 export const providerName = style({
