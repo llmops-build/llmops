@@ -6,6 +6,7 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import { cacheService } from '@server/services/cache';
 
 const app = new Hono()
   // Create a new targeting rule
@@ -39,6 +40,9 @@ const app = new Hono()
           enabled: body.enabled ?? true,
           conditions: body.conditions,
         });
+        if (rule) {
+          await cacheService.clear(`config:${rule.configId}`);
+        }
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error creating targeting rule:', error);
@@ -127,6 +131,7 @@ const app = new Hono()
             404
           );
         }
+        await cacheService.clear(`config:${rule.configId}`);
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error updating targeting rule:', error);
@@ -158,6 +163,7 @@ const app = new Hono()
             404
           );
         }
+        await cacheService.clear(`config:${rule.configId}`);
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error deleting targeting rule:', error);
@@ -291,6 +297,9 @@ const app = new Hono()
           configVariantId: body.configVariantId,
           variantVersionId: body.variantVersionId,
         });
+        if (rule) {
+          await cacheService.clear(`config:${rule.configId}`);
+        }
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error setting targeting for environment:', error);

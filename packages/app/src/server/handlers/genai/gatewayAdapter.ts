@@ -4,6 +4,7 @@ import {
   SupportedProviders,
   type VariantJsonData,
 } from '@llmops/core';
+import { cacheService } from '@server/services/cache';
 
 /**
  * Portkey Gateway Config format
@@ -157,11 +158,18 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
     }
 
     try {
-      // Fetch variant data from database
-      const data = (await db.getVariantJsonDataForConfig({
-        configId,
-        envSecret: envSec,
-      })) as {
+      // Fetch variant data from database (cached)
+      const data = (await cacheService.getOrSet(
+        `secret:${envSec}`,
+        () =>
+          db.getVariantJsonDataForConfig({
+            configId,
+            envSecret: envSec,
+          }),
+        {
+          namespace: `config:${configId}`,
+        }
+      )) as {
         configId: string;
         variantId: string;
         environmentId: string;
@@ -182,9 +190,16 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       const portkeyProvider = PROVIDER_MAP[data.provider] || data.provider;
 
       // Get API key from database (provider_configs table)
-      const providerConfig = await db.getProviderConfigByProviderId({
-        providerId: data.provider,
-      });
+      const providerConfig = await cacheService.getOrSet(
+        `provider:${data.provider}`,
+        () =>
+          db.getProviderConfigByProviderId({
+            providerId: data.provider,
+          }),
+        {
+          namespace: 'provider-configs',
+        }
+      );
 
       // Parse the config JSON to extract credentials
       const configData =
