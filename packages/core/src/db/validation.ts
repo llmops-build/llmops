@@ -26,10 +26,7 @@ export function validatePartialTableData<T extends TableName>(
 /**
  * Parse and validate data, throws on error
  */
-export function parseTableData<T extends TableName>(
-  table: T,
-  data: unknown
-) {
+export function parseTableData<T extends TableName>(table: T, data: unknown) {
   const schema = schemas[table];
   return schema.parse(data);
 }

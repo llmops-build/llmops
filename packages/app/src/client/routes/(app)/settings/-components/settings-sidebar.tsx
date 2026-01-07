@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { Icon } from '@client/components/icons';
-import { Building2, User } from 'lucide-react';
+import { Building2, Plug, User } from 'lucide-react';
 import {
   settingsSidebar,
   settingsSidebarItem,
@@ -23,6 +23,13 @@ export function SettingsSidebar() {
         <Link to="/settings/workspace-general" className={settingsSidebarItem}>
           <Icon icon={Building2} />
           General
+        </Link>
+        <Link
+          to="/settings/workspace-providers"
+          className={settingsSidebarItem}
+        >
+          <Icon icon={Plug} />
+          Providers
         </Link>
       </div>
     </nav>

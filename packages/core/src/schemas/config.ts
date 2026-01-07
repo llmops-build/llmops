@@ -1,45 +1,4 @@
-import { SupportedProviders, type ProvidersConfig } from '@/providers';
 import { z } from 'zod';
-
-/**
- * Provider configuration schema
- *
- * This is a flexible schema that allows any provider configuration.
- * The actual provider validation happens at the gateway level.
- * Uses passthrough() to allow provider-specific options.
- */
-const providerConfigSchema = z
-  .object({
-    apiKey: z.string().min(1, 'API key is required'),
-    customHost: z.string().optional(),
-    requestTimeout: z.number().optional(),
-    forwardHeaders: z.array(z.string()).optional(),
-  })
-  .passthrough(); // Allow additional provider-specific options
-
-/**
- * Build a partial object schema from SupportedProviders enum
- * Each provider key is optional, allowing users to configure only the providers they need
- */
-const providerEntries = Object.values(SupportedProviders).map(
-  (provider) => [provider, providerConfigSchema.optional()] as const
-);
-
-const providersObjectSchema = z.object(
-  Object.fromEntries(providerEntries) as {
-    [K in SupportedProviders]: z.ZodOptional<typeof providerConfigSchema>;
-  }
-);
-
-/**
- * Providers configuration - maps supported provider names to their configs
- * All providers are optional, but at least one must be configured
- */
-const providersSchema = providersObjectSchema.refine(
-  (providers) =>
-    Object.values(providers).some((v) => v !== undefined && v !== null),
-  'At least one provider must be configured'
-);
 
 export const llmopsConfigSchema = z.object({
   database: z.any(),
@@ -50,7 +9,6 @@ export const llmopsConfigSchema = z.object({
       (path) => path.startsWith('/'),
       'Base path must start with a forward slash'
     ),
-  providers: providersSchema,
   /**
    * Database schema name for PostgreSQL connections.
    * This sets the search_path on every connection.
@@ -60,16 +18,14 @@ export const llmopsConfigSchema = z.object({
 });
 
 /**
- * Validated LLMOps configuration with typed providers
- * Uses ProvidersConfig for proper provider-specific typing
+ * Validated LLMOps configuration
  *
  * Note: schema is optional in input but always present after validation
  */
 export type ValidatedLLMOpsConfig = Omit<
   z.infer<typeof llmopsConfigSchema>,
-  'providers' | 'schema'
+  'schema'
 > & {
-  providers: ProvidersConfig;
   schema: string;
 };
 

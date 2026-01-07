@@ -7,7 +7,7 @@ const UpdateOrCreateEnvironmentName = ({
   environment,
 }: {
   id: string | 'new';
-  environment?: { id: string; name: string, isProd: boolean };
+  environment?: { id: string; name: string; isProd: boolean };
 }) => {
   const { mutateAsync: createEnvironment } = useCreateEnvironment();
   const { mutateAsync: updateEnvironmentName } = useUpdateEnvironmentName();
@@ -16,7 +16,11 @@ const UpdateOrCreateEnvironmentName = ({
     <UpdateOrCreateName
       id={id}
       disabled={environment?.isProd}
-      tooltip={environment?.isProd ? "You can't rename Production environment." : undefined}
+      tooltip={
+        environment?.isProd
+          ? "You can't rename Production environment."
+          : undefined
+      }
       entity={environment}
       placeholder="Environment Name"
       onCreate={createEnvironment}

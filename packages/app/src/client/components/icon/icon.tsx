@@ -2,7 +2,10 @@ import type { ComponentPropsWithoutRef } from 'react';
 import { clsx } from 'clsx';
 import { iconRecipe, type IconVariants } from './icon.css';
 
-export interface IconProps extends Omit<ComponentPropsWithoutRef<'span'>, 'children'> {
+export interface IconProps extends Omit<
+  ComponentPropsWithoutRef<'span'>,
+  'children'
+> {
   children: React.ReactElement; // Lucide icon component
   size?: IconVariants['size'];
 }

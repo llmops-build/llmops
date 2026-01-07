@@ -3,11 +3,6 @@
 
 export interface BootstrapData {
   basePath?: string;
-  llmProviders?: {
-    key: string;
-    name: string;
-    imageURI: string;
-  }[];
   authType?: 'basic' | 'clerk' | string;
   setupComplete?: boolean;
 }

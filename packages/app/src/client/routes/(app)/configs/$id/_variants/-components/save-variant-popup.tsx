@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  Button,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Combobox,
-} from '@ui';
+import { Button, Popover, PopoverTrigger, PopoverContent, Combobox } from '@ui';
 import { Check, Save } from 'lucide-react';
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { Icon } from '@client/components/icons';

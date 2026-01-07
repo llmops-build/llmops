@@ -14,7 +14,7 @@ export const newConfigStateContent = style({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: spacing.md
+  gap: spacing.md,
 });
 
 export const newConfigStateTitle = style({
@@ -24,5 +24,5 @@ export const newConfigStateTitle = style({
   fontSize: '0.875rem',
   textAlign: 'center',
   maxWidth: '240px',
-  textWrap: 'balance'
-})
+  textWrap: 'balance',
+});

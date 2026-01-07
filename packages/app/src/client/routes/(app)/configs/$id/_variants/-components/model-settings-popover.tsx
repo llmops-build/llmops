@@ -1,13 +1,8 @@
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Slider,
-  Combobox,
-} from '@ui';
+import { Popover, PopoverTrigger, PopoverContent, Slider, Combobox } from '@ui';
 import { Menu } from '@base-ui/react/menu';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useProviderModels } from '@client/hooks/queries/useProviderModels';
+import { useConfiguredProviders } from '@client/hooks/queries/useConfiguredProviders';
 import * as styles from './model-settings.css';
 import { configTitleInput } from '../../../-components/configs.css';
 
@@ -16,15 +11,6 @@ type ProviderItem = {
   icon?: string;
   value: string;
 };
-
-const providers: ProviderItem[] | undefined =
-  window.bootstrapData?.llmProviders?.map((provider) => {
-    return {
-      label: provider.name,
-      icon: provider.imageURI,
-      value: provider.key,
-    };
-  });
 
 export type ModelSettings = {
   provider: string;
@@ -198,10 +184,19 @@ export function ModelSettingsPopover({
   value,
   onChange,
 }: ModelSettingsPopoverProps) {
+  const { data: configuredProviders } = useConfiguredProviders();
   const { data: models, isLoading } = useProviderModels(value.provider);
 
+  // Convert configured providers to ProviderItem format for Combobox
+  const providers: ProviderItem[] =
+    configuredProviders?.map((provider) => ({
+      label: provider.name,
+      icon: provider.logo,
+      value: provider.id,
+    })) || [];
+
   const selectedProviderItem =
-    providers?.find((p) => p.value === value.provider) || null;
+    providers.find((p) => p.value === value.provider) || null;
 
   const displayText = value.modelName
     ? value.modelName
@@ -274,22 +269,35 @@ export function ModelSettingsPopover({
           {/* Provider Selection */}
           <div className={styles.modelSettingsSection}>
             <span className={styles.modelSettingsSectionTitle}>Provider</span>
-            <Combobox<ProviderItem>
-              items={providers || []}
-              value={selectedProviderItem}
-              onValueChange={handleProviderChange}
-              itemToString={(item) => item?.label || ''}
-              itemToIcon={(item) =>
-                item?.icon ? (
-                  <img src={item.icon} alt="" className={styles.providerIcon} />
-                ) : (
-                  <span className={styles.modelSettingsTriggerIcon}>
-                    {item?.label?.charAt(0).toUpperCase() || '?'}
-                  </span>
-                )
-              }
-              placeholder="Select provider"
-            />
+            {providers.length > 0 ? (
+              <Combobox<ProviderItem>
+                items={providers}
+                value={selectedProviderItem}
+                onValueChange={handleProviderChange}
+                itemToString={(item) => item?.label || ''}
+                itemToIcon={(item) =>
+                  item?.icon ? (
+                    <img
+                      src={item.icon}
+                      alt=""
+                      className={styles.providerIcon}
+                    />
+                  ) : (
+                    <span className={styles.modelSettingsTriggerIcon}>
+                      {item?.label?.charAt(0).toUpperCase() || '?'}
+                    </span>
+                  )
+                }
+                placeholder="Select provider"
+              />
+            ) : (
+              <div
+                className={styles.modelMenuTrigger}
+                style={{ color: 'var(--gray9)' }}
+              >
+                No providers configured
+              </div>
+            )}
           </div>
 
           {/* Model Selection */}

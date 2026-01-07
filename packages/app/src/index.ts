@@ -13,21 +13,7 @@ import {
 import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 import { createSeedMiddleware } from '@server/middlewares/seed';
 import { createMigrationMiddleware } from '@server/middlewares/migration';
-import type { LLMProvider } from '@server/types';
 import { createAuthClientMiddleware } from '@server/middlewares/auth';
-
-const MODELS_DEV_LOGOS = 'https://models.dev/logos';
-
-/**
- * Convert provider key to display name
- * e.g., 'openai' -> 'OpenAI', 'azure-openai' -> 'Azure OpenAI'
- */
-function getProviderDisplayName(key: string): string {
-  return key
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 const setConfigMiddleware = (
   config: ValidatedLLMOpsConfig
@@ -71,27 +57,6 @@ const createDatabaseMiddleware = (
   };
 };
 
-/**
- * Create middleware that sets llmProviders from config
- * Provider metadata (name, logo) comes from models.dev
- */
-const createLLMProvidersMiddleware = (
-  config: ValidatedLLMOpsConfig
-): MiddlewareHandler => {
-  // Build providers list once at startup
-  const providers = config.providers || {};
-  const llmProviders: LLMProvider[] = Object.keys(providers).map((key) => ({
-    key,
-    name: getProviderDisplayName(key),
-    imageURI: `${MODELS_DEV_LOGOS}/${key}.svg`,
-  }));
-
-  return async (c, next) => {
-    c.set('llmProviders', llmProviders);
-    await next();
-  };
-};
-
 export const createApp = (config: LLMOpsConfig) => {
   // Validate the config immediately, this will throw and panic if invalid
   const validatedConfig = validateLLMOpsConfig(config);
@@ -103,7 +68,6 @@ export const createApp = (config: LLMOpsConfig) => {
     .use('*', createMigrationMiddleware(validatedConfig))
     .use('*', createDatabaseMiddleware(validatedConfig))
     .use('*', createSeedMiddleware())
-    .use('*', createLLMProvidersMiddleware(validatedConfig))
     .use('*', createAuthClientMiddleware())
     .route('/', mainApp)
     .basePath(validatedConfig.basePath);

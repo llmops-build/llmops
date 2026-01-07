@@ -133,16 +133,16 @@ function mergeChatCompletionBody(
  * Flow:
  * 1. Reads configId and envSec from context (set by requestGuard)
  * 2. Fetches variant config from database
- * 3. Translates to Portkey config format
- * 4. Sets x-portkey-config header for gateway consumption
- * 5. Modifies request body to merge variant config settings
+ * 3. Fetches provider API key from database (provider_configs table)
+ * 4. Translates to Portkey config format
+ * 5. Sets x-portkey-config header for gateway consumption
+ * 6. Modifies request body to merge variant config settings
  */
 export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
     const configId = c.get('configId');
     const envSec = c.get('envSec');
     const db = c.var.db;
-    const llmopsConfig = c.get('llmopsConfig');
 
     if (!configId) {
       return c.json(
@@ -181,15 +181,25 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       // Map provider name
       const portkeyProvider = PROVIDER_MAP[data.provider] || data.provider;
 
-      // Get API key from llmopsConfig providers
-      // Cast to access provider config by string key
-      const providers = llmopsConfig?.providers as
-        | Record<string, { apiKey?: string } | undefined>
-        | undefined;
-      const providerConfig = providers?.[data.provider];
-      const apiKey = providerConfig?.apiKey;
+      // Get API key from database (provider_configs table)
+      const providerConfig = await db.getProviderConfigByProviderId({
+        providerId: data.provider,
+      });
 
-      if (!apiKey) {
+      // Parse the config JSON to extract credentials
+      const configData =
+        typeof providerConfig?.config === 'string'
+          ? JSON.parse(providerConfig.config)
+          : providerConfig?.config;
+      const apiKey = configData?.apiKey;
+
+      // For most providers, apiKey is required. But some providers (like bedrock, vertex-ai)
+      // use different auth mechanisms
+      const requiresApiKey = !['bedrock', 'sagemaker', 'vertex-ai'].includes(
+        data.provider
+      );
+
+      if (requiresApiKey && !apiKey) {
         return c.json(
           {
             error: {
@@ -201,11 +211,69 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         );
       }
 
-      // Build Portkey config
+      // Build Portkey config with provider-specific fields
       const portkeyConfig: PortkeyConfig = {
         provider: portkeyProvider,
-        api_key: apiKey,
       };
+
+      // Add API key if present
+      if (apiKey) {
+        portkeyConfig.api_key = apiKey;
+      }
+
+      // Add custom host if configured
+      if (configData?.customHost) {
+        portkeyConfig.custom_host = configData.customHost;
+      }
+
+      // Map provider-specific fields to Portkey config format
+      // OpenAI specific
+      if (configData?.openaiOrganization) {
+        portkeyConfig.openai_organization = configData.openaiOrganization;
+      }
+      if (configData?.openaiProject) {
+        portkeyConfig.openai_project = configData.openaiProject;
+      }
+
+      // AWS Bedrock/SageMaker
+      if (configData?.awsAccessKeyId) {
+        portkeyConfig.aws_access_key_id = configData.awsAccessKeyId;
+      }
+      if (configData?.awsSecretAccessKey) {
+        portkeyConfig.aws_secret_access_key = configData.awsSecretAccessKey;
+      }
+      if (configData?.awsSessionToken) {
+        portkeyConfig.aws_session_token = configData.awsSessionToken;
+      }
+      if (configData?.awsRegion) {
+        portkeyConfig.aws_region = configData.awsRegion;
+      }
+
+      // Azure OpenAI
+      if (configData?.azureAuthMode) {
+        portkeyConfig.azure_auth_mode = configData.azureAuthMode;
+      }
+      if (configData?.deploymentId) {
+        portkeyConfig.azure_model_name = configData.deploymentId;
+      }
+
+      // Google Vertex AI
+      if (configData?.vertexProjectId) {
+        portkeyConfig.vertex_project_id = configData.vertexProjectId;
+      }
+      if (configData?.vertexRegion) {
+        portkeyConfig.vertex_region = configData.vertexRegion;
+      }
+      if (configData?.vertexServiceAccountJson) {
+        try {
+          portkeyConfig.vertex_service_account_json =
+            typeof configData.vertexServiceAccountJson === 'string'
+              ? JSON.parse(configData.vertexServiceAccountJson)
+              : configData.vertexServiceAccountJson;
+        } catch {
+          // If parsing fails, leave it as-is
+        }
+      }
 
       // Check if this is a chat completions request that needs body transformation
       const path = c.req.path;

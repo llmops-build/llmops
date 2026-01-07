@@ -11,8 +11,8 @@ const NewConfigState = () => {
     <div className={newConfigStateContainer}>
       <div className={newConfigStateContent}>
         <Logo
-            style={{ height: 128, width: 128 }}
-            className={logoWithDarkmode()}
+          style={{ height: 128, width: 128 }}
+          className={logoWithDarkmode()}
         />
         <div>
           <h2 className={newConfigStateTitle}>

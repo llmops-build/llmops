@@ -39,11 +39,6 @@ import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  providers: {
-    openrouter: {
-      apiKey: process.env.OPENROUTER_API_KEY || '',
-    },
-  },
   database: new Pool({
     connectionString: process.env.DATABASE_URL || '',
   }),
@@ -87,7 +82,6 @@ Create a `.env` file with your configuration:
 
 ```bash title=".env"
 DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
-OPENROUTER_API_KEY=sk-or-your-api-key
 ```
 
 </Step>

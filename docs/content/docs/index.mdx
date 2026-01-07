@@ -37,10 +37,6 @@ import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  providers: {
-    openai: { apiKey: process.env.OPENAI_API_KEY },
-    anthropic: { apiKey: process.env.ANTHROPIC_API_KEY },
-  },
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
   }),

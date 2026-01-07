@@ -4,9 +4,6 @@ import { base } from './header.css';
 
 export const Header = (headerProps: HTMLAttributes<HTMLElement>) => {
   return (
-    <header
-      {...headerProps}
-      className={clsx(base, headerProps.className)}
-    />
+    <header {...headerProps} className={clsx(base, headerProps.className)} />
   );
 };

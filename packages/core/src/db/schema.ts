@@ -80,6 +80,14 @@ export const workspaceSettingsSchema = z.object({
   superAdminId: z.string().nullable().optional(), // The first user's ID - only this user can access the app
 });
 
+// Provider configs table schema - stores provider configurations set through the dashboard
+export const providerConfigsSchema = z.object({
+  ...baseSchema,
+  providerId: z.string(), // e.g., "openai", "anthropic", "openrouter"
+  config: z.record(z.string(), z.unknown()), // JSON config matching provider-configs.ts interfaces
+  enabled: z.boolean().default(true), // Toggle without deleting
+});
+
 // LLM Requests table schema - stores request logs with cost tracking
 export const llmRequestsSchema = z.object({
   ...baseSchema,
@@ -127,6 +135,7 @@ export type EnvironmentSecret = z.infer<typeof environmentSecretsSchema>;
 export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
+export type ProviderConfig = z.infer<typeof providerConfigsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 
 /**
@@ -200,6 +209,13 @@ export interface WorkspaceSettingsTable extends BaseTable {
   superAdminId: string | null;
 }
 
+// Provider configs table - stores provider configurations
+export interface ProviderConfigsTable extends BaseTable {
+  providerId: string;
+  config: ColumnType<Record<string, unknown>, string, string>;
+  enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+}
+
 // LLM Requests table - request logs with cost tracking
 export interface LLMRequestsTable extends BaseTable {
   requestId: string;
@@ -235,6 +251,7 @@ export interface Database {
   config_variants: ConfigVariantsTable;
   targeting_rules: TargetingRulesTable;
   workspace_settings: WorkspaceSettingsTable;
+  provider_configs: ProviderConfigsTable;
   llm_requests: LLMRequestsTable;
 }
 
@@ -413,8 +430,20 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    llm_requests: {
+    provider_configs: {
       order: 9,
+      schema: providerConfigsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        providerId: { type: 'text', unique: true },
+        config: { type: 'jsonb', default: '{}' },
+        enabled: { type: 'boolean', default: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    llm_requests: {
+      order: 10,
       schema: llmRequestsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -468,5 +497,6 @@ export const schemas = {
   config_variants: configVariantsSchema,
   targeting_rules: targetingRulesSchema,
   workspace_settings: workspaceSettingsSchema,
+  provider_configs: providerConfigsSchema,
   llm_requests: llmRequestsSchema,
 } as const;
