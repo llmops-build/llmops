@@ -1,0 +1,25 @@
+{
+  "name": "llmops-standalone",
+  "version": "1.0.0",
+  "description": "Standalone LLMOps application with Docker support",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/server.ts --platform node --format esm",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@llmops/sdk": "workspace:*",
+    "hono": "^4.6.13",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
