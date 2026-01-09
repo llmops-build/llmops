@@ -1,28 +1,15 @@
 import './types'; // Import types for module augmentation
 import { Hono } from 'hono';
 import { renderer } from './ssr/renderer';
-import { serveStatic } from 'hono/serve-static';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { readFile } from 'fs/promises';
 import api from '@server/handlers/api';
 import { env } from 'node:process';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const app = new Hono();
 
+// Note: Static asset serving is handled in createApp (src/index.ts)
+// before the database/auth middlewares to avoid heavy initialization for asset requests
+
 app
-  .use(
-    '/assets/*',
-    serveStatic({
-      root: './',
-      getContent: async (path) => {
-        const file = await readFile(join(__dirname, path));
-        return file;
-      },
-    })
-  )
   .get('/health', (c) => c.json({ status: 'ok' }))
   .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
