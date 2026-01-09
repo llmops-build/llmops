@@ -9,14 +9,26 @@ import {
  * Creates auth client middleware that uses the pre-configured Kysely instance
  * from context. This ensures Better Auth uses the same database connection
  * with the correct schema (search_path) configuration.
+ *
+ * Only initializes the auth client for /api/* routes where it's actually needed.
  */
 export const createAuthClientMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
+    // Skip auth client initialization for non-API routes
+    if (!c.req.path.startsWith('/api')) {
+      await next();
+      return;
+    }
+
     const kyselyDb = c.get('kyselyDb');
     const dbType = c.get('dbType');
 
     // Create workspace settings data layer for the onUserCreated hook
     const workspaceSettings = createWorkspaceSettingsDataLayer(kyselyDb);
+
+    // Derive the base URL from the incoming request for origin validation
+    const url = new URL(c.req.url);
+    const baseURL = `${url.protocol}//${url.host}`;
 
     // Pass the pre-configured Kysely instance to Better Auth
     // This ensures it uses the correct schema (search_path)
@@ -26,6 +38,8 @@ export const createAuthClientMiddleware = (): MiddlewareHandler => {
           db: kyselyDb,
           type: dbType,
         },
+        baseURL,
+        trustedOrigins: [baseURL],
         onUserCreated: async (userId: string) => {
           // Set the first user as super admin and mark setup complete
           await workspaceSettings.setSuperAdminId(userId);
