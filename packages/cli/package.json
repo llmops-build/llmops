@@ -1,6 +1,6 @@
 {
   "name": "@llmops/cli",
-  "version": "0.2.4-beta.1",
+  "version": "0.2.4",
   "type": "module",
   "description": "LLMOps CLI - A pluggable LLMOps toolkit for TypeScript teams",
   "license": "Apache-2.0",
