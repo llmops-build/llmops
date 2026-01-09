@@ -6,6 +6,7 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import { cacheService } from '@server/services/cache';
 
 const MODELS_DEV_API = 'https://models.dev/api.json';
 const MODELS_DEV_LOGOS = 'https://models.dev/logos';
@@ -325,6 +326,11 @@ const app = new Hono()
           );
         }
 
+        await cacheService.delete(
+          `provider:${config.providerId}`,
+          'provider-configs'
+        );
+
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error creating/updating provider config:', error);
@@ -367,6 +373,10 @@ const app = new Hono()
             404
           );
         }
+        await cacheService.delete(
+          `provider:${config.providerId}`,
+          'provider-configs'
+        );
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error updating provider config:', error);
@@ -398,6 +408,10 @@ const app = new Hono()
             404
           );
         }
+        await cacheService.delete(
+          `provider:${config.providerId}`,
+          'provider-configs'
+        );
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error deleting provider config:', error);
