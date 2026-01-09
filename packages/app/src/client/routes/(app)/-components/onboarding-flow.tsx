@@ -136,7 +136,9 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
     <div className={styles.onboardingContainer}>
       <div className={styles.onboardingHeader}>
         <h1 className={styles.onboardingTitle}>
-          {hasProviders ? 'Create Your First Config' : 'Welcome to LLMOps'}
+          {hasProviders
+            ? 'Create Your First Config'
+            : 'Set Up Your First Provider'}
         </h1>
         <p className={styles.onboardingSubtitle}>
           {hasProviders
