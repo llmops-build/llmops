@@ -530,6 +530,12 @@ importers:
       '@types/pg':
         specifier: ^8.15.6
         version: 8.15.6
+      tsdown:
+        specifier: 0.17.0-beta.5
+        version: 0.17.0-beta.5(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
 

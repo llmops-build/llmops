@@ -46,6 +46,8 @@
   },
   "devDependencies": {
     "@hono/node-server": "^1.19.6",
-    "@types/pg": "^8.15.6"
+    "@types/pg": "^8.15.6",
+    "tsdown": "0.17.0-beta.5",
+    "typescript": "^5.9.3"
   }
 }

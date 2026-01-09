@@ -18,7 +18,7 @@ RUN pnpm install
 # Build the application
 RUN pnpm run build
 
-FROM node:18-alpine AS runtime
+FROM node:24-alpine AS runtime
 
 # Install pnpm
 RUN npm install -g pnpm
