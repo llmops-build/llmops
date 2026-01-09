@@ -22,7 +22,8 @@ export interface AuthClientOptions {
    */
   baseURL?: string;
   /**
-   * Additional trusted origins for CORS (e.g., production domains)
+   * Additional trusted origins for CORS (e.g., production domains).
+   * Set via AUTH_TRUSTED_ORIGINS environment variable (comma-separated).
    */
   trustedOrigins?: string[];
 }
