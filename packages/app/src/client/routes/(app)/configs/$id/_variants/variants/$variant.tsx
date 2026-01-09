@@ -30,6 +30,9 @@ import {
   SaveVariantPopup,
   type SaveVariantOptions,
 } from '../-components/save-variant-popup';
+import { useEnvironments } from '@client/hooks/queries/useEnvironments';
+import { useConfigById } from '@client/hooks/queries/useConfigById';
+import { DeploymentSuccessDialog } from '@client/components/deployment-success-dialog';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
@@ -64,10 +67,17 @@ function RouteComponent() {
     variant === 'new' ? '' : variant
   );
   const { data: targetingRules } = useTargetingRules(configId);
+  const { data: environments } = useEnvironments();
+  const { data: config } = useConfigById(configId);
   const [editorKey, setEditorKey] = useState<string>('new');
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     null
   );
+  const [deploymentSuccess, setDeploymentSuccess] = useState<{
+    open: boolean;
+    environmentName: string;
+    variantName: string;
+  }>({ open: false, environmentName: '', variantName: '' });
 
   const isNewVariant = variant === 'new';
 
@@ -237,6 +247,8 @@ function RouteComponent() {
 
     try {
       const jsonData = buildJsonData(data);
+      let deployedToEnvironment = false;
+      let savedVariantName = data.variant_name;
 
       if (options.mode === 'new_variant' || isNewVariant) {
         // Generate unique name when saving as new variant from existing
@@ -244,6 +256,8 @@ function RouteComponent() {
           options.mode === 'new_variant' && !isNewVariant
             ? generateUniqueVariantName(data.variant_name)
             : data.variant_name;
+
+        savedVariantName = variantName;
 
         // Create new variant with version 1
         const result = await createVariant.mutateAsync({
@@ -262,6 +276,7 @@ function RouteComponent() {
             configVariantId: result.configVariant.id,
             variantVersionId: result.version.id,
           });
+          deployedToEnvironment = true;
         }
       } else {
         // Create new version for existing variant
@@ -286,18 +301,43 @@ function RouteComponent() {
               configVariantId: configVariant.id,
               variantVersionId: versionResult.id,
             });
+            deployedToEnvironment = true;
           }
         }
       }
 
-      // Reset form and navigate away
+      // Reset form
       form.reset();
+
+      // If deployed to environment, show success dialog
+      if (deployedToEnvironment && options.environmentId) {
+        const environmentName =
+          environments?.find((e) => e.id === options.environmentId)?.name ??
+          'Unknown';
+        setDeploymentSuccess({
+          open: true,
+          environmentName,
+          variantName: savedVariantName,
+        });
+      } else {
+        // Navigate away immediately if no deployment
+        navigate({
+          to: '/configs/$id/variants',
+          params: { id: configId },
+        });
+      }
+    } catch (error) {
+      console.error('Error saving variant:', error);
+    }
+  };
+
+  const handleDeploymentDialogClose = (open: boolean) => {
+    setDeploymentSuccess((prev) => ({ ...prev, open }));
+    if (!open) {
       navigate({
         to: '/configs/$id/variants',
         params: { id: configId },
       });
-    } catch (error) {
-      console.error('Error saving variant:', error);
     }
   };
 
@@ -349,6 +389,14 @@ function RouteComponent() {
       <div className={variantContainer}>
         <VariantForm form={form} editorKey={editorKey} />
       </div>
+
+      <DeploymentSuccessDialog
+        open={deploymentSuccess.open}
+        onOpenChange={handleDeploymentDialogClose}
+        environmentName={deploymentSuccess.environmentName}
+        configSlug={config?.slug}
+        variantName={deploymentSuccess.variantName}
+      />
     </div>
   );
 }

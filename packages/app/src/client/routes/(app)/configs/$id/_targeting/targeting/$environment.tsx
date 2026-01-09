@@ -6,6 +6,7 @@ import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
 import { useTargetingRules } from '@client/hooks/queries/useTargetingRules';
 import { useSetTargeting } from '@client/hooks/mutations/useSetTargeting';
 import { useVariantVersions } from '@client/hooks/queries/useVariantVersions';
+import { useConfigById } from '@client/hooks/queries/useConfigById';
 import {
   variantContainer,
   variantHeader,
@@ -16,6 +17,7 @@ import {
 import { infoBox, infoBoxHighlight } from '@client/styles/info-box.css';
 import { Icon } from '@client/components/icons';
 import { Save } from 'lucide-react';
+import { DeploymentSuccessDialog } from '@client/components/deployment-success-dialog';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_targeting/targeting/$environment'
@@ -93,6 +95,7 @@ function TargetingForm({
 }: TargetingFormProps) {
   const navigate = useNavigate();
   const setTargeting = useSetTargeting();
+  const { data: config } = useConfigById(configId);
 
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     initialVariantId
@@ -100,6 +103,7 @@ function TargetingForm({
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     initialVariantVersionId ?? null
   );
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   // Get the variantId (not configVariantId) for fetching versions
   const selectedConfigVariant = variants.find(
@@ -137,14 +141,24 @@ function TargetingForm({
         configVariantId: selectedVariantId,
         variantVersionId: selectedVersionId,
       });
-      navigate({
-        to: '/configs/$id/targeting',
-        params: { id: configId },
-      });
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error setting targeting:', error);
     }
   };
+
+  const handleDialogClose = (open: boolean) => {
+    setShowSuccessDialog(open);
+    if (!open) {
+      navigate({
+        to: '/configs/$id/targeting',
+        params: { id: configId },
+      });
+    }
+  };
+
+  const selectedVariantName =
+    variants.find((v) => v.id === selectedVariantId)?.name ?? '';
 
   return (
     <div>
@@ -236,6 +250,14 @@ function TargetingForm({
             </div>
           )}
       </div>
+
+      <DeploymentSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={handleDialogClose}
+        environmentName={environment.name}
+        configSlug={config?.slug}
+        variantName={selectedVariantName}
+      />
     </div>
   );
 }
