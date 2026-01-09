@@ -9,8 +9,9 @@ export function createLLMOpsMiddleware(
   return async (c: Context, next: Next) => {
     let urlPath = c.req.path;
 
-    // Strip the base path if it exists
-    if (basePath && urlPath.startsWith(basePath)) {
+    // Strip the base path if it exists and is not just '/'
+    // We only strip if basePath is a real prefix (e.g., '/llmops')
+    if (basePath && basePath !== '/' && urlPath.startsWith(basePath)) {
       urlPath = urlPath.slice(basePath.length) || '/';
     }
 

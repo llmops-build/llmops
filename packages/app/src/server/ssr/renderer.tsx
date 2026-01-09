@@ -6,13 +6,20 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import type { Manifest } from 'vite';
+import { manifest as embeddedManifest } from '../generated/embedded-assets';
 
 const { renderToString } = reactServer;
 const thisDirecory = dirname(fileURLToPath(import.meta.url));
 const manifestPath = join(thisDirecory, './.vite/manifest.json');
-const manifest: Manifest = existsSync(manifestPath)
-  ? JSON.parse(readFileSync(manifestPath, 'utf-8'))
-  : {};
+
+// Use embedded manifest if available (production single-file mode),
+// otherwise try to read from filesystem
+const manifest: Manifest =
+  Object.keys(embeddedManifest).length > 0
+    ? (embeddedManifest as unknown as Manifest)
+    : existsSync(manifestPath)
+      ? JSON.parse(readFileSync(manifestPath, 'utf-8'))
+      : {};
 
 export const renderer = ({
   basePath = '',

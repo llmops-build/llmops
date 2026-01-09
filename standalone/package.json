@@ -1,0 +1,51 @@
+{
+  "name": "@llmops/standalone",
+  "version": "0.1.0",
+  "description": "Standalone Hono server for LLMOps",
+  "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "standalone"
+  },
+  "author": "chtushar",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "dev": "tsdown --watch",
+    "start": "node dist/index.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@llmops/sdk": "workspace:^",
+    "hono": "^4.10.7",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@hono/node-server": "^1.19.6",
+    "@types/pg": "^8.15.6"
+  }
+}

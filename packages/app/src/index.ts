@@ -14,6 +14,7 @@ import { createEnvValidatorMiddleware } from '@server/middlewares/env';
 import { createSeedMiddleware } from '@server/middlewares/seed';
 import { createMigrationMiddleware } from '@server/middlewares/migration';
 import { createAuthClientMiddleware } from '@server/middlewares/auth';
+import { createStaticAssetMiddleware } from '@server/middlewares/static-assets';
 
 const setConfigMiddleware = (
   config: ValidatedLLMOpsConfig
@@ -62,6 +63,9 @@ export const createApp = (config: LLMOpsConfig) => {
   const validatedConfig = validateLLMOpsConfig(config);
 
   const app = new Hono()
+    // Static assets must be served BEFORE any database/auth middlewares
+    // to avoid running heavy initialization for asset requests
+    .use('/assets/*', createStaticAssetMiddleware())
     .use('*', createEnvValidatorMiddleware())
     .use('*', setConfigMiddleware(validatedConfig))
     // Migration runs BEFORE database/seed to ensure tables exist
