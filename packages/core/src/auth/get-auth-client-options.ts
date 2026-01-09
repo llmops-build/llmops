@@ -17,6 +17,14 @@ export interface AuthClientOptions {
    * Use this to set up workspace settings like superAdminId.
    */
   onUserCreated?: (userId: string) => Promise<void>;
+  /**
+   * Base URL for the application (used for auth redirects and origin validation)
+   */
+  baseURL?: string;
+  /**
+   * Additional trusted origins for CORS (e.g., production domains)
+   */
+  trustedOrigins?: string[];
 }
 
 /**
@@ -27,10 +35,12 @@ export interface AuthClientOptions {
 export const getAuthClientOptions = (
   options: AuthClientOptions
 ): BetterAuthOptions => {
-  const { database, onUserCreated } = options;
+  const { database, onUserCreated, baseURL, trustedOrigins } = options;
 
   return {
     database,
+    baseURL,
+    trustedOrigins,
     emailAndPassword: {
       enabled: true,
     },
