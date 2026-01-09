@@ -33,17 +33,19 @@ import {
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useConfigById } from '@client/hooks/queries/useConfigById';
 import { DeploymentSuccessDialog } from '@client/components/deployment-success-dialog';
+import type { RouterContext } from '@client/routes/__root';
 
 export const Route = createFileRoute(
   '/(app)/configs/$id/_variants/variants/$variant'
 )({
   component: RouteComponent,
   loader: async ({ params, context }) => {
+    const ctx = context as RouterContext;
     if (params.variant === 'new') {
       return { title: 'New Variant' };
     }
 
-    const variant = await context.queryClient.ensureQueryData(
+    const variant = await ctx.queryClient.ensureQueryData(
       variantByIdQueryOptions(params.variant)
     );
 
@@ -75,9 +77,10 @@ function RouteComponent() {
   );
   const [deploymentSuccess, setDeploymentSuccess] = useState<{
     open: boolean;
+    environmentId: string;
     environmentName: string;
     variantName: string;
-  }>({ open: false, environmentName: '', variantName: '' });
+  }>({ open: false, environmentId: '', environmentName: '', variantName: '' });
 
   const isNewVariant = variant === 'new';
 
@@ -316,6 +319,7 @@ function RouteComponent() {
           'Unknown';
         setDeploymentSuccess({
           open: true,
+          environmentId: options.environmentId,
           environmentName,
           variantName: savedVariantName,
         });
@@ -393,6 +397,7 @@ function RouteComponent() {
       <DeploymentSuccessDialog
         open={deploymentSuccess.open}
         onOpenChange={handleDeploymentDialogClose}
+        environmentId={deploymentSuccess.environmentId}
         environmentName={deploymentSuccess.environmentName}
         configSlug={config?.slug}
         variantName={deploymentSuccess.variantName}

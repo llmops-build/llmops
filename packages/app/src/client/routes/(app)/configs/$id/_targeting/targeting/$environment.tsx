@@ -254,6 +254,7 @@ function TargetingForm({
       <DeploymentSuccessDialog
         open={showSuccessDialog}
         onOpenChange={handleDialogClose}
+        environmentId={environmentId}
         environmentName={environment.name}
         configSlug={config?.slug}
         variantName={selectedVariantName}

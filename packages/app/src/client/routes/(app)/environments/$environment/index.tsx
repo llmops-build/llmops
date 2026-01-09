@@ -1,15 +1,17 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 import { environmentByIdQueryOptions } from '@client/hooks/queries/useEnvironmentById';
+import type { RouterContext } from '@client/routes/__root';
 import NewEnvironmentState from './-components/new-environment-state';
 
 export const Route = createFileRoute('/(app)/environments/$environment/')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
+    const ctx = context as RouterContext;
     if (params.environment === 'new') {
       return { title: 'New Environment' };
     }
 
-    const environment = await context.queryClient.ensureQueryData(
+    const environment = await ctx.queryClient.ensureQueryData(
       environmentByIdQueryOptions(params.environment)
     );
 
