@@ -48,7 +48,9 @@ import {
   baseUrlCopyButton,
 } from './-components/overview.css';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
+import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
 import { formatDistance } from 'date-fns';
+import { OnboardingFlow } from './-components/onboarding-flow';
 
 import { useState } from 'react';
 
@@ -66,8 +68,16 @@ function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
   const navigate = useNavigate();
-  const { data: configs } = useConfigList();
+  const { data: configs, isLoading: configsLoading } = useConfigList();
+  const { data: providerConfigs, isLoading: providersLoading } =
+    useProviderConfigs();
   const [copied, setCopied] = useState(false);
+
+  const hasProviders = providerConfigs && providerConfigs.length > 0;
+  const hasNoConfigs = !configs || configs.length === 0;
+  const isLoading = configsLoading || providersLoading;
+  // Show onboarding when no configs exist (skip provider step if providers already exist)
+  const showOnboarding = !isLoading && hasNoConfigs;
 
   const baseUrl =
     typeof window !== 'undefined'
@@ -112,6 +122,35 @@ function RouteComponent() {
         prefix: match.staticData.customData?.icon,
       };
     });
+
+  // Show onboarding flow when no providers and no configs exist
+  if (showOnboarding) {
+    return (
+      <>
+        <Header className={headerStyle}>
+          <div className={headerGroup}>
+            <Button
+              onClick={() => {
+                toggleSidebar();
+              }}
+              size="icon"
+              variant="ghost"
+              scheme="gray"
+            >
+              <Icon icon={Columns2} />
+            </Button>
+            <Icon icon={ChevronRight} className={chevronStyle} />
+            <Breadcrumbs items={breadcrumbItems} />
+          </div>
+        </Header>
+        <div className={gridElement}>
+          <div className={clsx(workingArea, overviewContainer)}>
+            <OnboardingFlow hasProviders={hasProviders} />
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

@@ -311,17 +311,13 @@ function RouteComponent() {
               <AlertDialog.Close className={styles.cancelButton}>
                 Cancel
               </AlertDialog.Close>
-              <button
-                className={styles.deleteButton}
+              <Button
+                scheme="destructive"
                 onClick={handleDeleteProvider}
                 disabled={deleteProvider.isPending}
-                style={{
-                  backgroundColor: 'var(--error9)',
-                  color: 'white',
-                }}
               >
                 {deleteProvider.isPending ? 'Deleting...' : 'Delete'}
-              </button>
+              </Button>
             </div>
           </AlertDialog.Popup>
         </AlertDialog.Portal>

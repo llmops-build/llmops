@@ -39,7 +39,7 @@
   "scripts": {
     "build": "rm -rf dist && vite build && tsdown && rm -rf dist/assets dist/.vite",
     "clean": "rm -rf dist",
-    "dev": "vite",
+    "dev": "node scripts/reset-embedded-assets.js && vite",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
