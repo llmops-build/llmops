@@ -23,6 +23,8 @@
 [![npm version](https://img.shields.io/npm/v/@llmops/sdk.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/@llmops/sdk?primary=neutral&gray=neutral&theme=dark)
 [![GitHub stars](https://img.shields.io/github/stars/llmops-build/llmops?style=flat&colorA=000000&colorB=000000)](https://github.com/llmops-build/llmops/stargazers)
 
+### Deploy Standalone LLMOps
+
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/a_45hq?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## About the Project
