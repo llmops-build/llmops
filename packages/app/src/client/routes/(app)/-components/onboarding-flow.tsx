@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Check, ArrowRight, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useForm, useWatch } from 'react-hook-form';
+import { Check, Loader2 } from 'lucide-react';
 import { Combobox } from '@ui';
 import {
   useProvidersList,
@@ -10,7 +11,6 @@ import { useUpsertProviderConfig } from '@client/hooks/mutations/useUpsertProvid
 import { useCreateConfig } from '@client/hooks/mutations/useCreateConfig';
 import {
   getProviderFields,
-  getRequiredFields,
   type ProviderFieldDefinition,
 } from '../settings/_settings/-components/provider-field-definitions';
 import * as styles from './overview.css';
@@ -21,91 +21,113 @@ interface OnboardingFlowProps {
   hasProviders?: boolean;
 }
 
+interface ProviderFormData {
+  provider: ProviderInfo | null;
+  config: Record<string, string>;
+}
+
+interface ConfigFormData {
+  name: string;
+}
+
 export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
   const navigate = useNavigate();
-  // Start at config step if providers already exist
   const [step, setStep] = useState<OnboardingStep>(
     hasProviders ? 'config' : 'provider'
   );
-  const [selectedProvider, setSelectedProvider] = useState<ProviderInfo | null>(
-    null
-  );
-  const [configValues, setConfigValues] = useState<Record<string, string>>({});
-  const [configName, setConfigName] = useState('');
+  const [savedProvider, setSavedProvider] = useState<ProviderInfo | null>(null);
 
   const { data: availableProviders, isLoading: providersLoading } =
     useProvidersList();
   const upsertProvider = useUpsertProviderConfig();
   const createConfig = useCreateConfig();
 
-  // Update step if hasProviders changes
+  // Provider form
+  const providerForm = useForm<ProviderFormData>({
+    defaultValues: {
+      provider: null,
+      config: {},
+    },
+  });
+
+  // Config form
+  const configForm = useForm<ConfigFormData>({
+    defaultValues: {
+      name: '',
+    },
+  });
+
+  const selectedProvider = useWatch({
+    control: providerForm.control,
+    name: 'provider',
+  });
+
+  const configValues = useWatch({
+    control: providerForm.control,
+    name: 'config',
+  });
+
+  const configName = useWatch({
+    control: configForm.control,
+    name: 'name',
+  });
+
+  // Reset config values when provider changes
+  useEffect(() => {
+    providerForm.setValue('config', {});
+  }, [selectedProvider, providerForm]);
+
   useEffect(() => {
     if (hasProviders && step === 'provider') {
       setStep('config');
     }
   }, [hasProviders, step]);
 
-  const handleProviderChange = useCallback((provider: ProviderInfo | null) => {
-    setSelectedProvider(provider);
-    setConfigValues({});
-  }, []);
-
-  const handleConfigChange = useCallback((fieldName: string, value: string) => {
-    setConfigValues((prev) => ({ ...prev, [fieldName]: value }));
-  }, []);
-
-  const handleProviderSubmit = useCallback(async () => {
-    if (!selectedProvider) return;
-
-    const requiredFields = getRequiredFields(selectedProvider.id);
-    const missingRequired = requiredFields.some(
-      (field) => !configValues[field]?.trim()
-    );
-
-    if (missingRequired) {
-      return;
-    }
+  const handleProviderSubmit = providerForm.handleSubmit(async (data) => {
+    if (!data.provider) return;
 
     try {
       const config: Record<string, unknown> = {};
-      Object.entries(configValues).forEach(([key, value]) => {
-        if (value.trim()) {
+      Object.entries(data.config).forEach(([key, value]) => {
+        if (value?.trim()) {
           config[key] = value.trim();
         }
       });
 
       await upsertProvider.mutateAsync({
-        providerId: selectedProvider.id,
+        providerId: data.provider.id,
         config,
         enabled: true,
       });
 
+      setSavedProvider(data.provider);
       setStep('config');
     } catch (error) {
       console.error('Failed to save provider:', error);
     }
-  }, [selectedProvider, configValues, upsertProvider]);
+  });
 
-  const handleConfigSubmit = useCallback(async () => {
-    if (!configName.trim()) return;
+  const handleConfigSubmit = configForm.handleSubmit(async (data) => {
+    if (!data.name.trim()) return;
 
     try {
-      await createConfig.mutateAsync({ name: configName.trim() });
+      await createConfig.mutateAsync({ name: data.name.trim() });
       setStep('complete');
     } catch (error) {
       console.error('Failed to create config:', error);
     }
-  }, [configName, createConfig]);
+  });
 
-  const handleSkipConfig = useCallback(() => {
+  const handleSkipConfig = () => {
     navigate({ to: '/configs/$id', params: { id: 'new' } });
-  }, [navigate]);
+  };
 
-  const isProviderFormValid = useCallback(() => {
+  const isProviderFormValid = () => {
     if (!selectedProvider) return false;
-    const requiredFields = getRequiredFields(selectedProvider.id);
-    return requiredFields.every((field) => configValues[field]?.trim());
-  }, [selectedProvider, configValues]);
+    const fields = getProviderFields(selectedProvider.id);
+    const requiredFields = fields.filter((f) => f.required);
+    return requiredFields.every((field) => configValues?.[field.name]?.trim());
+  };
 
   const getStepStatus = (
     targetStep: OnboardingStep
@@ -116,7 +138,6 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
     const currentIndex = steps.indexOf(step);
     const targetIndex = steps.indexOf(targetStep);
 
-    // If hasProviders, provider step is always completed
     if (hasProviders && targetStep === 'provider') return 'completed';
 
     if (targetIndex < currentIndex) return 'completed';
@@ -132,219 +153,239 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
     );
   }
 
+  const providerStatus = getStepStatus('provider');
+  const configStatus = getStepStatus('config');
+
   return (
     <div className={styles.onboardingContainer}>
-      <div className={styles.onboardingHeader}>
-        <h1 className={styles.onboardingTitle}>
-          {hasProviders
-            ? 'Create Your First Config'
-            : 'Set Up Your First Provider'}
-        </h1>
-        <p className={styles.onboardingSubtitle}>
-          {hasProviders
-            ? 'You have providers set up. Now create a config to define routing rules and model settings.'
-            : "Let's get you started by setting up your first provider and config."}
-        </p>
-      </div>
-
-      {!hasProviders && (
-        <div className={styles.onboardingSteps}>
-          <div
-            className={styles.onboardingStep({
-              status: getStepStatus('provider'),
-            })}
-          >
-            {getStepStatus('provider') === 'completed' ? (
-              <Check size={16} />
-            ) : (
-              '1'
-            )}
-          </div>
-          <div className={styles.onboardingStepConnector} />
-          <div
-            className={styles.onboardingStep({
-              status: getStepStatus('config'),
-            })}
-          >
-            {getStepStatus('config') === 'completed' ? (
-              <Check size={16} />
-            ) : (
-              '2'
-            )}
-          </div>
-          <div className={styles.onboardingStepConnector} />
-          <div
-            className={styles.onboardingStep({
-              status: getStepStatus('complete'),
-            })}
-          >
-            {getStepStatus('complete') === 'completed' ? (
-              <Check size={16} />
-            ) : (
-              '3'
-            )}
-          </div>
-        </div>
-      )}
-
-      {step === 'provider' && (
-        <div className={styles.onboardingCard}>
-          <h2 className={styles.onboardingCardTitle}>Add a Provider</h2>
-          <p className={styles.onboardingSubtitle}>
-            Select an LLM provider to connect with.
-          </p>
-
-          <div className={styles.onboardingField}>
-            <label className={styles.onboardingFieldLabel}>Provider</label>
-            <Combobox<ProviderInfo>
-              items={availableProviders || []}
-              value={selectedProvider}
-              onValueChange={handleProviderChange}
-              itemToString={(item) => item?.name ?? ''}
-              itemToIcon={(item) =>
-                item?.logo ? (
-                  <img
-                    src={item.logo}
-                    alt={item.name}
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 2,
-                      objectFit: 'contain',
-                    }}
-                  />
-                ) : null
-              }
-              placeholder="Select a provider"
+      <div className={styles.onboardingTimeline}>
+        {/* Step 1: Setup Provider */}
+        <div className={styles.onboardingStepWrapper}>
+          <div className={styles.onboardingStepIndicator}>
+            <div
+              className={styles.onboardingStepCircle({
+                status: providerStatus,
+              })}
+            >
+              {providerStatus === 'completed' ? <Check size={14} /> : '1'}
+            </div>
+            <div
+              className={styles.onboardingStepLine({ status: providerStatus })}
             />
           </div>
+          <div className={styles.onboardingStepContent}>
+            <div className={styles.onboardingStepHeader}>
+              <h2 className={styles.onboardingStepTitle}>
+                Setup Provider to connect AI models
+              </h2>
+              <p className={styles.onboardingStepSubtitle}>
+                Add your LLM provider API key to get started
+              </p>
+            </div>
 
-          {selectedProvider && (
-            <div className={styles.onboardingForm}>
-              <ProviderConfigFields
-                providerId={selectedProvider.id}
-                configValues={configValues}
-                onChange={handleConfigChange}
+            {step === 'provider' && (
+              <form
+                onSubmit={handleProviderSubmit}
+                className={styles.onboardingCard}
+              >
+                <div className={styles.onboardingField}>
+                  <label className={styles.onboardingFieldLabel}>
+                    Provider
+                  </label>
+                  <Combobox<ProviderInfo>
+                    items={availableProviders || []}
+                    value={selectedProvider}
+                    onValueChange={(provider) =>
+                      providerForm.setValue('provider', provider)
+                    }
+                    itemToString={(item) => item?.name ?? ''}
+                    itemToIcon={(item) =>
+                      item?.logo ? (
+                        <img
+                          src={item.logo}
+                          alt={item.name}
+                          style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: 2,
+                            objectFit: 'contain',
+                          }}
+                        />
+                      ) : null
+                    }
+                    placeholder="Select a provider"
+                  />
+                </div>
+
+                {selectedProvider && (
+                  <div className={styles.onboardingForm}>
+                    <ProviderConfigFields
+                      providerId={selectedProvider.id}
+                      configValues={configValues || {}}
+                      onChange={(fieldName, value) =>
+                        providerForm.setValue(`config.${fieldName}`, value)
+                      }
+                    />
+                  </div>
+                )}
+
+                <div className={styles.onboardingActions}>
+                  <button
+                    type="submit"
+                    className={styles.onboardingButton({ variant: 'primary' })}
+                    disabled={
+                      !isProviderFormValid() || upsertProvider.isPending
+                    }
+                  >
+                    {upsertProvider.isPending ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Continue'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {providerStatus === 'completed' && savedProvider && (
+              <div className={styles.onboardingCard}>
+                <div className={styles.onboardingSuccessRow}>
+                  <div className={styles.onboardingSuccessIcon}>
+                    <Check size={12} />
+                  </div>
+                  <div className={styles.onboardingSuccessContent}>
+                    <p className={styles.onboardingSuccessTitle}>
+                      {savedProvider.name} added successfully
+                    </p>
+                    <p className={styles.onboardingSuccessSubtitle}>
+                      Your AI Provider is now integrated
+                    </p>
+                  </div>
+                  <Link
+                    className={styles.onboardingEditButton}
+                    to="/settings/workspace-providers"
+                  >
+                    Edit
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Step 2: Create Config */}
+        <div className={styles.onboardingStepWrapper}>
+          <div className={styles.onboardingStepIndicator}>
+            <div
+              className={styles.onboardingStepCircle({ status: configStatus })}
+            >
+              {configStatus === 'completed' ? <Check size={14} /> : '2'}
+            </div>
+            {configStatus !== 'completed' && (
+              <div
+                className={styles.onboardingStepLine({ status: configStatus })}
               />
+            )}
+          </div>
+          <div className={styles.onboardingStepContent}>
+            <div className={styles.onboardingStepHeader}>
+              <h2 className={styles.onboardingStepTitle}>
+                Create your first config
+              </h2>
+              <p className={styles.onboardingStepSubtitle}>
+                Configs let you define routing rules and model settings
+              </p>
             </div>
-          )}
 
-          <div className={styles.onboardingActions}>
-            <button
-              type="button"
-              className={styles.onboardingButton({ variant: 'primary' })}
-              disabled={!isProviderFormValid() || upsertProvider.isPending}
-              onClick={handleProviderSubmit}
-            >
-              {upsertProvider.isPending ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  Continue
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
+            {step === 'config' && (
+              <form
+                onSubmit={handleConfigSubmit}
+                className={styles.onboardingCard}
+              >
+                <div className={styles.onboardingForm}>
+                  <div className={styles.onboardingField}>
+                    <label className={styles.onboardingFieldLabel}>
+                      Config Name{' '}
+                      <span style={{ color: 'var(--error9)' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={styles.onboardingInput}
+                      {...configForm.register('name', { required: true })}
+                      placeholder="Coding Agent, Audit Agent, etc."
+                    />
+                    <span className={styles.onboardingFieldDescription}>
+                      A unique name to identify this configuration.
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.onboardingActions}>
+                  <button
+                    type="button"
+                    className={styles.onboardingButton({
+                      variant: 'secondary',
+                    })}
+                    onClick={handleSkipConfig}
+                  >
+                    Skip for now
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.onboardingButton({ variant: 'primary' })}
+                    disabled={!configName?.trim() || createConfig.isPending}
+                  >
+                    {createConfig.isPending ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Config'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {configStatus === 'completed' && (
+              <div className={styles.onboardingCard}>
+                <div className={styles.onboardingSuccessRow}>
+                  <div className={styles.onboardingSuccessIcon}>
+                    <Check size={12} />
+                  </div>
+                  <div className={styles.onboardingSuccessContent}>
+                    <p className={styles.onboardingSuccessTitle}>
+                      Config "{configName}" created successfully
+                    </p>
+                    <p className={styles.onboardingSuccessSubtitle}>
+                      You can now start configuring model variants and routing
+                      rules.
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.onboardingActions}>
+                  <button
+                    type="button"
+                    className={styles.onboardingButton({ variant: 'primary' })}
+                    onClick={() => navigate({ to: '/' })}
+                  >
+                    Go to Dashboard
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
-
-      {step === 'config' && (
-        <div className={styles.onboardingCard}>
-          <h2 className={styles.onboardingCardTitle}>
-            {hasProviders
-              ? 'Create Your First Config'
-              : 'Step 2: Create Your First Config'}
-          </h2>
-          <p
-            className={styles.onboardingSubtitle}
-            style={{ marginBottom: '1rem' }}
-          >
-            Configs let you define routing rules and model settings.
-          </p>
-
-          <div className={styles.onboardingForm}>
-            <div className={styles.onboardingField}>
-              <label className={styles.onboardingFieldLabel}>
-                Config Name <span style={{ color: 'var(--error9)' }}>*</span>
-              </label>
-              <input
-                type="text"
-                className={styles.onboardingInput}
-                value={configName}
-                onChange={(e) => setConfigName(e.target.value)}
-                placeholder="Coding Agent, Audit Agent, etc."
-              />
-              <span className={styles.onboardingFieldDescription}>
-                A unique name to identify this configuration.
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.onboardingActions}>
-            <button
-              type="button"
-              className={styles.onboardingButton({ variant: 'secondary' })}
-              onClick={handleSkipConfig}
-            >
-              Skip for now
-            </button>
-            <button
-              type="button"
-              className={styles.onboardingButton({ variant: 'primary' })}
-              disabled={!configName.trim() || createConfig.isPending}
-              onClick={handleConfigSubmit}
-            >
-              {createConfig.isPending ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  Create Config
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 'complete' && (
-        <div className={styles.onboardingCard}>
-          <div className={styles.completeContent}>
-            <div className={styles.successIcon}>
-              <Check size={24} />
-            </div>
-            <h2 className={styles.onboardingCardTitle}>You're all set!</h2>
-            <p
-              className={styles.onboardingSubtitle}
-              style={{ marginBottom: '1rem' }}
-            >
-              {hasProviders
-                ? 'Your config has been created. You can now start configuring model variants and routing rules.'
-                : 'Your provider and config have been created. You can now start configuring model variants and routing rules.'}
-            </p>
-            <button
-              type="button"
-              className={styles.onboardingButton({ variant: 'primary' })}
-              onClick={() => navigate({ to: '/' })}
-            >
-              Go to Dashboard
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
-// Provider config fields component (inline version)
+// Provider config fields component
 interface ProviderConfigFieldsProps {
   providerId: string;
   configValues: Record<string, string>;
