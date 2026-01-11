@@ -9,7 +9,9 @@ import {
 import { Menu } from '@base-ui/react/menu';
 import { Icon } from '@client/components/icons';
 import {
+  ArrowUpRight,
   Blocks,
+  BookOpen,
   ChevronDown,
   Globe,
   LogOut,
@@ -21,6 +23,8 @@ import {
   Telescope,
 } from 'lucide-react';
 import {
+  discordIcon,
+  footerLink,
   menuItem,
   menuItemIcon,
   menuPopup,
@@ -40,6 +44,7 @@ import {
   userMenuTrigger,
   userMenuTriggerCollapsed,
 } from './app-sidebar.css';
+import Discord from '@client/components/icons/discord.svg?react';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { useTheme, type Theme } from '@client/hooks/ui/useTheme';
 import { authClient } from '@client/lib/auth';
@@ -159,7 +164,30 @@ export function AppSidebar() {
           </Link>
         </SidebarItem>
       </SidebarContent>
-      <SidebarFooter></SidebarFooter>
+      <SidebarFooter>
+        <SidebarItem asChild className={footerLink}>
+          <a
+            href="https://llmops.build/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Icon icon={BookOpen} />
+            Documentation
+          </a>
+        </SidebarItem>
+        <SidebarItem asChild className={footerLink}>
+          <a
+            href="https://llmops.build/discord"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className={discordIcon}>
+              <Discord />
+            </span>
+            Support
+          </a>
+        </SidebarItem>
+      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -205,3 +205,16 @@ export const userMenuTriggerCollapsed = style({
     backgroundColor: 'transparent',
   },
 });
+
+export const footerLink = style({
+  color: colors.gray9,
+});
+
+export const discordIcon = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  width: '1rem',
+  height: '1rem',
+});

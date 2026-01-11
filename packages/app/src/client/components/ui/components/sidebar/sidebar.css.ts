@@ -94,9 +94,11 @@ export const footerRecipe = recipe({
     sprinkles({
       borderColor: 'gray6',
       padding: 'sm',
+      gap: 'xs',
     }),
     {
-      height: spacing['2xl'],
+      minHeight: spacing['2xl'],
+      marginTop: 'auto',
     },
   ],
   variants: {
@@ -108,8 +110,7 @@ export const footerRecipe = recipe({
       }),
       false: sprinkles({
         display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'row-reverse',
+        flexDirection: 'column',
       }),
     },
   },
