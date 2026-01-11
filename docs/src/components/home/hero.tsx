@@ -140,12 +140,15 @@ const Hero = () => {
               Get Started &rarr;
             </Link>
             <a
-              href="https://discord.gg/8teSTfmEKU"
+              href="https://railway.com/deploy/a_45hq?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic"
               target="_blank"
               rel="noopener noreferrer"
-              className="border border-gray-6 hover:border-gray-8 h-8 px-3 text-sm font-medium rounded flex items-center justify-center gap-1 transition-colors text-gray-10"
             >
-              Join Discord
+              <img
+                src="https://railway.com/button.svg"
+                alt="Deploy on Railway"
+                className="h-8"
+              />
             </a>
           </div>
         </div>
