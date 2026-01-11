@@ -140,7 +140,7 @@ const Hero = () => {
               Get Started &rarr;
             </Link>
             <a
-              href="https://railway.com/deploy/a_45hq?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic"
+              href="https://railway.com/deploy/llmops?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic"
               target="_blank"
               rel="noopener noreferrer"
             >
