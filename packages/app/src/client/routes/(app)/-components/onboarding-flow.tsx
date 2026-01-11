@@ -296,7 +296,8 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                 Create your first config
               </h2>
               <p className={styles.onboardingStepSubtitle}>
-                Configs let you define routing rules and model settings
+                Configs let you manage prompts and model configurations for
+                different environments.
               </p>
             </div>
 
