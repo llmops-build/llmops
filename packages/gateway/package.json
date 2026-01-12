@@ -1,6 +1,6 @@
 {
   "name": "@llmops/gateway",
-  "version": "0.2.7-beta.1",
+  "version": "0.2.7-beta.2",
   "description": "AI gateway for LLMOps (forked from Portkey)",
   "type": "module",
   "license": "Apache-2.0",
