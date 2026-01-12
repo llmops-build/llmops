@@ -3,6 +3,8 @@
  * Maps provider IDs to their specific configuration fields
  */
 
+import { getInternalProviderId } from '@shared/provider-id-mapping';
+
 export interface ProviderFieldDefinition {
   name: string;
   label: string;
@@ -486,19 +488,25 @@ export const providerFieldDefinitions: Record<string, ProviderFieldConfig> = {
 
 /**
  * Get field definitions for a specific provider
- * Falls back to base fields if provider-specific config not found
+ * Falls back to base fields if provider-specific config not found.
+ * Normalizes provider IDs from models.dev format to internal format.
  */
 export function getProviderFields(
   providerId: string
 ): ProviderFieldDefinition[] {
-  const config = providerFieldDefinitions[providerId];
+  // Normalize provider ID (e.g., 'azure-cognitive-services' -> 'azure-ai')
+  const normalizedId = getInternalProviderId(providerId);
+  const config = providerFieldDefinitions[normalizedId];
   return config?.fields || baseFields;
 }
 
 /**
  * Get required fields for a specific provider
+ * Normalizes provider IDs from models.dev format to internal format.
  */
 export function getRequiredFields(providerId: string): string[] {
-  const fields = getProviderFields(providerId);
+  // Normalize provider ID (e.g., 'azure-cognitive-services' -> 'azure-ai')
+  const normalizedId = getInternalProviderId(providerId);
+  const fields = getProviderFields(normalizedId);
   return fields.filter((f) => f.required).map((f) => f.name);
 }
