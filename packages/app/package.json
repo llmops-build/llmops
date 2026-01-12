@@ -72,6 +72,7 @@
     "lexical": "^0.39.0",
     "lucide-react": "^0.556.0",
     "motion": "^12.23.25",
+    "nunjucks": "^3.2.4",
     "react-aria-components": "^1.13.0",
     "react-hook-form": "^7.68.0",
     "recharts": "^3.6.0"
@@ -85,6 +86,7 @@
     "@hono/vite-build": "^1.8.0",
     "@hono/vite-dev-server": "^0.23.0",
     "@tanstack/router-plugin": "^1.139.14",
+    "@types/nunjucks": "^3.2.6",
     "@types/pg": "^8.15.6",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

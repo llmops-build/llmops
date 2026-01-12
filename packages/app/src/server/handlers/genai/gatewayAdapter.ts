@@ -5,6 +5,7 @@ import {
   type VariantJsonData,
 } from '@llmops/core';
 import { cacheService } from '@server/services/cache';
+import { renderTemplate } from '@server/lib/template-utils';
 
 /**
  * Portkey Gateway Config format
@@ -71,19 +72,38 @@ const PROVIDER_MAP: Record<string, string> = {
 /**
  * Merges variant config with the request body for chat completions.
  * Variant config takes precedence over request body values.
+ * If input variables are provided, they are used to render nunjucks templates in system_prompt.
  */
 function mergeChatCompletionBody(
   body: Record<string, unknown>,
   variantConfig: VariantJsonData,
-  modelName: string
+  modelName: string,
+  inputVariables?: Record<string, unknown>
 ): Record<string, unknown> {
   // Build messages array: prepend system prompt from variant if present
   const messages: Array<{ role: string; content: string }> = [];
 
   if (variantConfig.system_prompt) {
+    // Render nunjucks template with input variables if provided
+    let systemPromptContent = variantConfig.system_prompt;
+    if (inputVariables && Object.keys(inputVariables).length > 0) {
+      try {
+        systemPromptContent = renderTemplate(
+          variantConfig.system_prompt,
+          inputVariables
+        );
+      } catch (error) {
+        // If template rendering fails, use original prompt
+        console.warn(
+          'Template rendering failed, using original prompt:',
+          error
+        );
+      }
+    }
+
     messages.push({
       role: 'system',
-      content: variantConfig.system_prompt,
+      content: systemPromptContent,
     });
   }
 
@@ -302,11 +322,23 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       ) {
         // Get original body and merge with variant config
         const originalBody = await c.req.json();
+
+        // Extract input variables for nunjucks template rendering
+        // input can be provided in the request body to fill template variables
+        const inputVariables =
+          originalBody.input && typeof originalBody.input === 'object'
+            ? (originalBody.input as Record<string, unknown>)
+            : {};
+
         const mergedBody = mergeChatCompletionBody(
           originalBody,
           variantConfig,
-          data.modelName
+          data.modelName,
+          inputVariables
         );
+
+        // Remove 'input' from the final body as it's not part of OpenAI API spec
+        delete mergedBody.input;
 
         // Clone headers from the original request
         const newHeaders = new Headers(c.req.raw.headers);

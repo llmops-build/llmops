@@ -172,3 +172,26 @@ globalStyle(`${editorInput} a:hover`, {
 globalStyle(`${editorInput} s`, {
   textDecoration: 'line-through',
 });
+
+// Template variable (Nunjucks/Jinja2) theming
+export const templateVariable = style({
+  padding: '1px 4px',
+  borderRadius: '3px',
+  fontFamily: 'Geist Mono, monospace',
+  fontSize: '0.9em',
+});
+
+export const templateVariableToken = style({
+  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+  color: '#3b82f6', // blue-500
+});
+
+export const templateVariableBlock = style({
+  backgroundColor: 'rgba(168, 85, 247, 0.15)',
+  color: '#a855f7', // purple-500
+});
+
+export const templateVariableComment = style({
+  backgroundColor: 'rgba(107, 114, 128, 0.15)',
+  color: '#6b7280', // gray-500
+});

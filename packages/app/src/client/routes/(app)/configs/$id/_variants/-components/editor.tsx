@@ -11,7 +11,15 @@ import { ListNode, ListItemNode } from '@lexical/list';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
 import { LinkNode, AutoLinkNode } from '@lexical/link';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
-import { editorContainer, editorInput, editorPlaceholder } from './editor.css';
+import {
+  editorContainer,
+  editorInput,
+  editorPlaceholder,
+  templateVariable,
+  templateVariableToken,
+  templateVariableBlock,
+  templateVariableComment,
+} from './editor.css';
 import {
   AutoLinkPlugin,
   createLinkMatcherWithRegExp,
@@ -32,6 +40,9 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useEffect, useCallback } from 'react';
 import type { EditorState } from 'lexical';
 import type { JSX } from 'react/jsx-runtime';
+
+import { TemplateVariableNode } from './template-variable-node';
+import { TemplateVariablePlugin } from './template-variable-plugin';
 
 export type MarkdownEditorProps = {
   placeholder?: string;
@@ -127,6 +138,11 @@ const theme = {
   codeHighlight: {},
   link: 'editor-link',
   horizontalRule: 'editor-hr',
+  // Nunjucks/Jinja2 template variable theming
+  templateVariable: templateVariable,
+  templateVariableVariable: templateVariableToken,
+  templateVariableBlock: templateVariableBlock,
+  templateVariableComment: templateVariableComment,
 };
 
 const nodes = [
@@ -139,6 +155,7 @@ const nodes = [
   LinkNode,
   AutoLinkNode,
   HorizontalRuleNode,
+  TemplateVariableNode,
 ];
 
 function Placeholder({ text }: { text: string }) {
@@ -209,6 +226,7 @@ export function MarkdownEditor({
         <HorizontalRulePlugin />
         <LexicalLinkPlugin />
         <LexicalAutoLinkPlugin />
+        <TemplateVariablePlugin />
         <InitialValuePlugin value={value} />
         <OnChangeMarkdownPlugin onChange={onChange} />
       </LexicalComposer>

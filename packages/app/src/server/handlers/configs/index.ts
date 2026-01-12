@@ -1,4 +1,5 @@
 import { zv } from '@server/lib/zv';
+import { extractUniqueVariableNames } from '@server/lib/template-utils';
 import {
   clientErrorResponse,
   internalServerError,
@@ -118,6 +119,20 @@ const app = new Hono()
         const variants = await db.getConfigVariantsWithDetailsByConfigId({
           configId,
         });
+
+        // Log template variables from system_prompt in each variant's jsonData
+        for (const variant of variants) {
+          const jsonData = variant.jsonData as Record<string, unknown> | null;
+          if (jsonData && typeof jsonData.system_prompt === 'string') {
+            const systemPrompt = jsonData.system_prompt;
+            const templateVariables = extractUniqueVariableNames(systemPrompt);
+            console.log(
+              `[Variant: ${variant.name}] Template variables in system_prompt:`,
+              templateVariables
+            );
+          }
+        }
+
         return c.json(successResponse(variants, 200));
       } catch (error) {
         console.error('Error fetching config variants:', error);
