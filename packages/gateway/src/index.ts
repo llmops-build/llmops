@@ -294,3 +294,9 @@ app.delete('/v1/*', requestValidator, proxyHandler);
 export default app;
 
 export { default as Providers } from './providers';
+export {
+  getPortkeyProviderId,
+  getModelsDevProviderId,
+  MODELS_DEV_TO_PORTKEY_PROVIDER_MAP,
+  PORTKEY_TO_MODELS_DEV_PROVIDER_MAP,
+} from './providers/providerIdMapping';

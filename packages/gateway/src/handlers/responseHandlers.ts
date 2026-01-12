@@ -19,6 +19,7 @@ import { env } from 'hono/adapter';
 import { OpenAIModelResponseJSONToStreamGenerator } from '../providers/open-ai-base/createModelResponse';
 import { anthropicMessagesJsonToStreamGenerator } from '../providers/anthropic-base/utils/streamGenerator';
 import { endpointStrings } from '../providers/types';
+import { getPortkeyProviderId } from '../providers/providerIdMapping';
 
 /**
  * Handles various types of responses based on the specified parameters
@@ -56,7 +57,7 @@ export async function responseHandler(
   let responseTransformerFunction: Function | undefined;
   const responseContentType = response.headers?.get('content-type');
   const isSuccessStatusCode = [200, 246].includes(response.status);
-  const provider = providerOptions.provider;
+  const provider = getPortkeyProviderId(providerOptions.provider);
 
   const providerConfig = Providers[provider];
   let providerTransformers = Providers[provider]?.responseTransforms;

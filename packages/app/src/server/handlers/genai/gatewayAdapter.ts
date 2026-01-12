@@ -8,6 +8,26 @@ import { cacheService } from '@server/services/cache';
 import { renderTemplate } from '@server/lib/template-utils';
 
 /**
+ * Provider ID mapping from models.dev to Portkey gateway.
+ * models.dev uses different provider IDs than Portkey for some providers.
+ */
+const MODELS_DEV_TO_PORTKEY_PROVIDER_MAP: Record<string, string> = {
+  // models.dev uses 'reka', Portkey uses 'reka-ai'
+  reka: 'reka-ai',
+  // models.dev uses 'azure-cognitive-services' or 'azure', Portkey uses 'azure-openai'
+  'azure-cognitive-services': 'azure-openai',
+  azure: 'azure-openai',
+};
+
+/**
+ * Get the Portkey gateway provider ID for a given provider ID.
+ * Returns the original ID if no mapping exists.
+ */
+function getPortkeyProviderId(providerId: string): string {
+  return MODELS_DEV_TO_PORTKEY_PROVIDER_MAP[providerId] ?? providerId;
+}
+
+/**
  * Portkey Gateway Config format
  * @see packages/gateway/src/middlewares/requestValidator/schema/config.ts
  */
@@ -19,9 +39,18 @@ interface PortkeyConfig {
   aws_access_key_id?: string;
   aws_session_token?: string;
   aws_region?: string;
-  // Azure
+  // Azure OpenAI
+  azure_resource_name?: string;
+  azure_deployment_id?: string;
+  azure_api_version?: string;
   azure_model_name?: string;
   azure_auth_mode?: string;
+  azure_ad_token?: string;
+  azure_managed_client_id?: string;
+  azure_workload_client_id?: string;
+  azure_entra_client_id?: string;
+  azure_entra_client_secret?: string;
+  azure_entra_tenant_id?: string;
   // Google Vertex AI
   vertex_project_id?: string;
   vertex_region?: string;
@@ -206,8 +235,10 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
           : data.jsonData
       );
 
-      // Map provider name
-      const portkeyProvider = PROVIDER_MAP[data.provider] || data.provider;
+      // Map provider name - first check PROVIDER_MAP, then apply models.dev to Portkey mapping
+      const portkeyProvider = getPortkeyProviderId(
+        PROVIDER_MAP[data.provider] || data.provider
+      );
 
       // Get API key from database (provider_configs table)
       const providerConfig = await cacheService.getOrSet(
@@ -285,11 +316,39 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       }
 
       // Azure OpenAI
+      if (configData?.resourceName) {
+        portkeyConfig.azure_resource_name = configData.resourceName;
+      }
+      if (configData?.deploymentId) {
+        portkeyConfig.azure_deployment_id = configData.deploymentId;
+        // Also set azure_model_name for compatibility
+        portkeyConfig.azure_model_name = configData.deploymentId;
+      }
+      if (configData?.apiVersion) {
+        portkeyConfig.azure_api_version = configData.apiVersion;
+      }
       if (configData?.azureAuthMode) {
         portkeyConfig.azure_auth_mode = configData.azureAuthMode;
       }
-      if (configData?.deploymentId) {
-        portkeyConfig.azure_model_name = configData.deploymentId;
+      if (configData?.azureAdToken) {
+        portkeyConfig.azure_ad_token = configData.azureAdToken;
+      }
+      if (configData?.azureManagedClientId) {
+        portkeyConfig.azure_managed_client_id = configData.azureManagedClientId;
+      }
+      if (configData?.azureWorkloadClientId) {
+        portkeyConfig.azure_workload_client_id =
+          configData.azureWorkloadClientId;
+      }
+      if (configData?.azureEntraClientId) {
+        portkeyConfig.azure_entra_client_id = configData.azureEntraClientId;
+      }
+      if (configData?.azureEntraClientSecret) {
+        portkeyConfig.azure_entra_client_secret =
+          configData.azureEntraClientSecret;
+      }
+      if (configData?.azureEntraTenantId) {
+        portkeyConfig.azure_entra_tenant_id = configData.azureEntraTenantId;
       }
 
       // Google Vertex AI

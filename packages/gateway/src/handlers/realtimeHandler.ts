@@ -9,6 +9,7 @@ import {
   getURLForOutgoingConnection,
 } from './websocketUtils';
 import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
+import { getPortkeyProviderId } from '../providers/providerIdMapping';
 
 const getOutgoingWebSocket = async (url: string, options: RequestInit) => {
   let outgoingWebSocket: WebSocket | null = null;
@@ -34,7 +35,7 @@ export async function realTimeHandler(c: Context): Promise<Response> {
     const providerOptions = constructConfigFromRequestHeaders(
       requestHeaders
     ) as Options;
-    const provider = providerOptions.provider ?? '';
+    const provider = getPortkeyProviderId(providerOptions.provider ?? '');
     const apiConfig: ProviderAPIConfig = Providers[provider].api;
     const url = getURLForOutgoingConnection(
       apiConfig,
