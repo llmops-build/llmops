@@ -9,10 +9,13 @@ import Providers from '../../providers';
 import { RequestContext } from './requestContext';
 import { ANTHROPIC, AZURE_OPEN_AI } from '../../globals';
 import { GatewayError } from '../../errors/GatewayError';
+import { getPortkeyProviderId } from '../../providers/providerIdMapping';
 
 export class ProviderContext {
   constructor(private provider: string) {
-    if (!Providers[provider]) {
+    // Map models.dev provider ID to Portkey provider ID if needed
+    this.provider = getPortkeyProviderId(provider);
+    if (!Providers[this.provider]) {
       throw new GatewayError(`Provider ${provider} not found`);
     }
   }

@@ -2,6 +2,21 @@ import { Context } from 'hono';
 import { CONTENT_TYPES, POWERED_BY, VALID_PROVIDERS } from '../../globals';
 import { configSchema } from './schema/config';
 import { Environment } from '../../utils/env';
+import { getPortkeyProviderId } from '../../providers/providerIdMapping';
+
+/**
+ * Check if a provider ID is valid.
+ * Accepts both Portkey provider IDs and models.dev provider IDs that can be mapped.
+ */
+function isValidProvider(value: string): boolean {
+  // Check if the provider is directly valid
+  if (VALID_PROVIDERS.includes(value)) {
+    return true;
+  }
+  // Check if the mapped provider ID is valid (for models.dev IDs)
+  const mappedId = getPortkeyProviderId(value);
+  return VALID_PROVIDERS.includes(mappedId);
+}
 
 // Regex patterns for validation (defined once for reusability)
 const VALIDATION_PATTERNS = {
@@ -124,7 +139,7 @@ export const requestValidator = (c: Context, next: any) => {
   }
   if (
     requestHeaders[`x-${POWERED_BY}-provider`] &&
-    !VALID_PROVIDERS.includes(requestHeaders[`x-${POWERED_BY}-provider`])
+    !isValidProvider(requestHeaders[`x-${POWERED_BY}-provider`])
   ) {
     return new Response(
       JSON.stringify({

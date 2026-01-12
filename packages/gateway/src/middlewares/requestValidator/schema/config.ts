@@ -7,6 +7,21 @@ import {
   AZURE_OPEN_AI,
 } from '../../../globals';
 import { isValidCustomHost } from '..';
+import { getPortkeyProviderId } from '../../../providers/providerIdMapping';
+
+/**
+ * Check if a provider ID is valid.
+ * Accepts both Portkey provider IDs and models.dev provider IDs that can be mapped.
+ */
+function isValidProvider(value: string): boolean {
+  // Check if the provider is directly valid
+  if (VALID_PROVIDERS.includes(value)) {
+    return true;
+  }
+  // Check if the mapped provider ID is valid (for models.dev IDs)
+  const mappedId = getPortkeyProviderId(value);
+  return VALID_PROVIDERS.includes(mappedId);
+}
 
 export const configSchema: any = z
   .object({
@@ -38,7 +53,7 @@ export const configSchema: any = z
       .optional(),
     provider: z
       .string()
-      .refine((value) => VALID_PROVIDERS.includes(value), {
+      .refine((value) => isValidProvider(value), {
         message: `Invalid 'provider' value. Must be one of: ${VALID_PROVIDERS.join(
           ', '
         )}`,
@@ -109,8 +124,17 @@ export const configSchema: any = z
     openai_project: z.string().optional(),
     openai_organization: z.string().optional(),
     // AzureOpenAI specific
+    azure_resource_name: z.string().optional(),
+    azure_deployment_id: z.string().optional(),
+    azure_api_version: z.string().optional(),
     azure_model_name: z.string().optional(),
     azure_auth_mode: z.string().optional(),
+    azure_ad_token: z.string().optional(),
+    azure_managed_client_id: z.string().optional(),
+    azure_workload_client_id: z.string().optional(),
+    azure_entra_client_id: z.string().optional(),
+    azure_entra_client_secret: z.string().optional(),
+    azure_entra_tenant_id: z.string().optional(),
     strict_open_ai_compliance: z.boolean().optional(),
   })
   .refine(

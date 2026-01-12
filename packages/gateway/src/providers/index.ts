@@ -151,3 +151,9 @@ const Providers: { [key: string]: ProviderConfigs } = {
 };
 
 export default Providers;
+export {
+  getPortkeyProviderId,
+  getModelsDevProviderId,
+  MODELS_DEV_TO_PORTKEY_PROVIDER_MAP,
+  PORTKEY_TO_MODELS_DEV_PROVIDER_MAP,
+} from './providerIdMapping';
