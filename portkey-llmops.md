@@ -465,3 +465,260 @@ Ensure the provider config in the database has:
 | `packages/gateway/src/handlers/realtimeHandler.ts`                   | Map provider ID                           |
 | `packages/gateway/src/handlers/realtimeHandlerNode.ts`               | Map provider ID                           |
 | `packages/app/src/server/handlers/genai/gatewayAdapter.ts`           | Azure fields mapping, provider ID mapping |
+
+---
+
+## 8. Browser-Safe Provider ID Mapping
+
+### Problem
+
+The `@llmops/gateway` package exports provider ID mapping functions (`getPortkeyProviderId`, etc.), but importing from `@llmops/gateway` in frontend code causes a runtime error:
+
+```
+ReferenceError: process is not defined
+```
+
+This happens because `@llmops/gateway` imports a logger utility that uses `process.env` at module initialization time, which doesn't exist in browser environments.
+
+### Solution
+
+Create a separate browser-safe provider ID mapping in the app's shared directory that can be used by both client and server code.
+
+#### New File: `packages/app/src/shared/provider-id-mapping.ts`
+
+```typescript
+/**
+ * Provider ID mapping between models.dev and internal gateway IDs.
+ *
+ * models.dev uses different provider IDs than the internal gateway for some providers.
+ * This mapping allows converting from models.dev IDs to internal gateway IDs.
+ *
+ * This file is browser-safe and can be used in both client and server code.
+ */
+export const MODELS_DEV_TO_INTERNAL_PROVIDER_MAP: Record<string, string> = {
+  'azure-cognitive-services': 'azure-ai',
+  azure: 'azure-openai',
+};
+
+export const INTERNAL_TO_MODELS_DEV_PROVIDER_MAP: Record<string, string> =
+  Object.fromEntries(
+    Object.entries(MODELS_DEV_TO_INTERNAL_PROVIDER_MAP).map(([k, v]) => [v, k])
+  );
+
+export function getInternalProviderId(modelsDevProviderId: string): string {
+  return (
+    MODELS_DEV_TO_INTERNAL_PROVIDER_MAP[modelsDevProviderId] ??
+    modelsDevProviderId
+  );
+}
+
+export function getModelsDevProviderId(internalProviderId: string): string {
+  return (
+    INTERNAL_TO_MODELS_DEV_PROVIDER_MAP[internalProviderId] ??
+    internalProviderId
+  );
+}
+```
+
+### Usage
+
+In frontend code, import from the shared module instead of `@llmops/gateway`:
+
+```typescript
+// DON'T do this in frontend code - will cause "process is not defined" error
+import { getPortkeyProviderId } from '@llmops/gateway';
+
+// DO this instead - browser-safe
+import { getInternalProviderId } from '@shared/provider-id-mapping';
+```
+
+### Example: Provider Field Definitions
+
+The `provider-field-definitions.ts` uses the mapping to look up form fields for providers:
+
+```typescript
+// packages/app/src/client/routes/(app)/settings/_settings/-components/provider-field-definitions.ts
+
+import { getInternalProviderId } from '@shared/provider-id-mapping';
+
+export function getProviderFields(
+  providerId: string
+): ProviderFieldDefinition[] {
+  // Normalize provider ID (e.g., 'azure-cognitive-services' -> 'azure-ai')
+  const normalizedId = getInternalProviderId(providerId);
+  const config = providerFieldDefinitions[normalizedId];
+  return config?.fields || baseFields;
+}
+```
+
+### Key Points
+
+1. **Keep mappings in sync**: The mapping in `@shared/provider-id-mapping.ts` should match the mapping in `@llmops/gateway/src/providers/providerIdMapping.ts`
+
+2. **Use appropriate import based on context**:
+   - **Server-side code**: Can use either `@llmops/gateway` or `@shared/provider-id-mapping`
+   - **Client-side code**: Must use `@shared/provider-id-mapping`
+
+3. **Why two mappings exist**:
+   - `@llmops/gateway` mapping is authoritative for the gateway runtime
+   - `@shared/provider-id-mapping` is a browser-safe copy for UI code
+
+### Files Changed
+
+| File                                                                                                | Changes                                                        |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `packages/app/src/shared/provider-id-mapping.ts`                                                    | **NEW** - Browser-safe provider ID mapping                     |
+| `packages/app/src/client/routes/(app)/settings/_settings/-components/provider-field-definitions.ts` | Use `@shared/provider-id-mapping` instead of `@llmops/gateway` |
+
+---
+
+## 9. Provider Request Logging
+
+### Problem
+
+Need visibility into the actual HTTP requests being sent to LLM providers for debugging purposes.
+
+### Solution
+
+Added comprehensive request/response logging to the gateway's retry handler, which is where all provider HTTP requests are made.
+
+#### Modified File: `packages/gateway/src/handlers/retryHandler.ts`
+
+```typescript
+import { createLogger } from '../shared/utils/logger';
+
+const logger = createLogger('ProviderRequest');
+
+/**
+ * Sanitizes headers by masking sensitive values like API keys and tokens
+ */
+function sanitizeHeaders(
+  headers: HeadersInit | undefined
+): Record<string, string> {
+  if (!headers) return {};
+
+  const sanitized: Record<string, string> = {};
+  const sensitivePatterns =
+    /^(authorization|x-api-key|api-key|x-.*-key|x-.*-token|x-.*-secret|bearer)$/i;
+
+  const headersObj =
+    headers instanceof Headers
+      ? Object.fromEntries([...headers])
+      : Array.isArray(headers)
+        ? Object.fromEntries(headers)
+        : (headers as Record<string, string>);
+
+  for (const [key, value] of Object.entries(headersObj)) {
+    if (sensitivePatterns.test(key)) {
+      // Show first 8 chars and mask the rest
+      sanitized[key] =
+        value.length > 12 ? `${value.substring(0, 8)}...****` : '****';
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Logs the outgoing request to the provider
+ */
+function logProviderRequest(
+  url: string,
+  options: RequestInit,
+  attempt: number
+): void {
+  const sanitizedHeaders = sanitizeHeaders(options.headers);
+
+  let bodyPreview: string | undefined;
+  if (options.body) {
+    if (typeof options.body === 'string') {
+      try {
+        const parsed = JSON.parse(options.body);
+        const bodyStr = JSON.stringify(parsed, null, 2);
+        bodyPreview =
+          bodyStr.length > 2000 ? `${bodyStr.substring(0, 2000)}...` : bodyStr;
+      } catch {
+        bodyPreview =
+          options.body.length > 500
+            ? `${options.body.substring(0, 500)}...`
+            : options.body;
+      }
+    } else if (options.body instanceof FormData) {
+      bodyPreview = '[FormData]';
+    } else if (options.body instanceof ArrayBuffer) {
+      bodyPreview = `[ArrayBuffer: ${options.body.byteLength} bytes]`;
+    } else if (options.body instanceof ReadableStream) {
+      bodyPreview = '[ReadableStream]';
+    }
+  }
+
+  logger.debug(`Provider Request (attempt ${attempt})`, {
+    url,
+    method: options.method || 'GET',
+    headers: sanitizedHeaders,
+    body: bodyPreview,
+  });
+}
+
+/**
+ * Logs the provider response
+ */
+function logProviderResponse(
+  url: string,
+  response: Response,
+  attempt: number,
+  durationMs: number
+): void {
+  logger.debug(`Provider Response (attempt ${attempt})`, {
+    url,
+    status: response.status,
+    statusText: response.statusText,
+    durationMs,
+    headers: Object.fromEntries([...response.headers]),
+  });
+}
+```
+
+### Enabling Logging
+
+The logging uses DEBUG level. To see provider request logs, set the environment variable:
+
+```bash
+LOG_LEVEL=DEBUG
+```
+
+### Example Output
+
+```
+[2026-01-12T10:30:00.000Z] [ProviderRequest] [DEBUG] Provider Request (attempt 1) {
+  url: 'https://api.openai.com/v1/chat/completions',
+  method: 'POST',
+  headers: {
+    authorization: 'Bearer sk-...****',
+    'content-type': 'application/json'
+  },
+  body: '{\n  "model": "gpt-4o",\n  "messages": [{"role": "user", "content": "Hello"}]\n}'
+}
+
+[2026-01-12T10:30:01.234Z] [ProviderRequest] [DEBUG] Provider Response (attempt 1) {
+  url: 'https://api.openai.com/v1/chat/completions',
+  status: 200,
+  statusText: 'OK',
+  durationMs: 1234,
+  headers: { 'content-type': 'application/json', ... }
+}
+```
+
+### Security
+
+- API keys in headers are automatically masked (shows first 8 chars + `...****`)
+- Sensitive header patterns: `authorization`, `x-api-key`, `api-key`, `x-*-key`, `x-*-token`, `x-*-secret`, `bearer`
+- Request bodies are truncated to 2000 chars max
+
+### Files Changed
+
+| File                                            | Changes                                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `packages/gateway/src/handlers/retryHandler.ts` | Added `sanitizeHeaders()`, `logProviderRequest()`, `logProviderResponse()` functions |
