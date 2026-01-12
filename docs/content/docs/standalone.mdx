@@ -1,0 +1,321 @@
+---
+title: Standalone Docker Deployment
+description: Deploy LLMOps as a standalone Docker container
+icon: Container
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Deploy LLMOps as a standalone service using Docker. This is perfect for running LLMOps as a dedicated microservice or deploying to container platforms like Railway, Fly.io, or AWS ECS.
+
+## Quick Deploy
+
+Deploy instantly to Railway:
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/llmops?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
+## Docker Deployment
+
+<Steps>
+<Step>
+
+### Prerequisites
+
+- Docker installed on your system
+- PostgreSQL database (can be external or via Docker)
+
+</Step>
+
+<Step>
+
+### Set up PostgreSQL
+
+If you don't have a PostgreSQL database, create one using Docker:
+
+```bash
+docker run -d \
+  --name llmops-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=pg_llmops \
+  -p 5432:5432 \
+  postgres:16
+```
+
+Your database connection string will be:
+
+```bash
+POSTGRES_URL=postgresql://postgres:password@localhost:5432/pg_llmops
+```
+
+For production, use a managed PostgreSQL service like:
+
+- AWS RDS
+- Supabase
+- Neon
+- PlanetScale
+
+</Step>
+
+<Step>
+
+### Pull the Docker image
+
+Pull the latest LLMOps standalone image:
+
+```bash
+docker pull ghcr.io/llmops-build/llmops-standalone:latest
+```
+
+Or build from source:
+
+```bash
+git clone https://github.com/llmops-build/llmops.git
+cd llmops
+docker build -f standalone/Dockerfile -t llmops-standalone .
+```
+
+</Step>
+
+<Step>
+
+### Configure environment variables
+
+Create a `.env` file with your configuration:
+
+```bash title=".env"
+# Required: PostgreSQL connection string
+POSTGRES_URL=postgresql://postgres:password@localhost:5432/pg_llmops
+
+# Optional: Server port (default: 3000)
+PORT=3000
+```
+
+</Step>
+
+<Step>
+
+### Run the container
+
+Start the LLMOps standalone container:
+
+```bash
+docker run -d \
+  --name llmops-standalone \
+  --env-file .env \
+  -p 3000:3000 \
+  ghcr.io/llmops-build/llmops-standalone:latest
+```
+
+If using the locally built image:
+
+```bash
+docker run -d \
+  --name llmops-standalone \
+  --env-file .env \
+  -p 3000:3000 \
+  llmops-standalone
+```
+
+</Step>
+
+<Step>
+
+### Verify deployment
+
+Check that the container is running:
+
+```bash
+docker ps
+```
+
+Test the health endpoint:
+
+```bash
+curl http://localhost:3000/
+```
+
+You should see a response like:
+
+```json
+{
+  "status": "ok",
+  "message": "LLMOps Standalone Server",
+  "timestamp": "2024-01-12T10:30:00.000Z"
+}
+```
+
+Access the LLMOps dashboard at:
+
+```
+http://localhost:3000/
+```
+
+</Step>
+
+<Step>
+
+### Configure providers
+
+1. Open the dashboard at `http://localhost:3000`
+2. Go to **Settings** → **Workspace Providers**
+3. Add your LLM provider credentials (e.g., OpenRouter, OpenAI, Anthropic)
+4. Create a config to start routing requests
+
+</Step>
+</Steps>
+
+## Docker Compose
+
+For easier management, use Docker Compose:
+
+```yaml title="docker-compose.yml"
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pg_llmops
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  llmops:
+    image: ghcr.io/llmops-build/llmops-standalone:latest
+    environment:
+      POSTGRES_URL: postgresql://postgres:password@postgres:5432/pg_llmops
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+```
+
+Start the services:
+
+```bash
+docker-compose up -d
+```
+
+## Making API Requests
+
+Once deployed, you can make requests using any OpenAI SDK:
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/api/genai/v1',
+  apiKey: '<ENV SECRET>',
+  defaultHeaders: {
+    'x-llmops-config': 'your-config-id',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+
+console.log(response.choices[0].message.content);
+```
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `POSTGRES_URL` | Yes | - | PostgreSQL connection string |
+| `PORT` | No | `3000` | Server port |
+
+## Production Deployment
+
+### Railway
+
+1. Click the "Deploy on Railway" button above
+2. Configure the PostgreSQL database
+3. Set the `POSTGRES_URL` environment variable
+4. Deploy!
+
+Railway will automatically:
+- Provision a PostgreSQL database
+- Build and deploy the Docker image
+- Set up HTTPS with a custom domain
+- Handle scaling and monitoring
+
+### Fly.io
+
+```bash
+# Install flyctl
+curl -L https://fly.io/install.sh | sh
+
+# Create app
+fly launch
+
+# Set secrets
+fly secrets set POSTGRES_URL=your-connection-string
+
+# Deploy
+fly deploy
+```
+
+### AWS ECS
+
+1. Push image to ECR:
+```bash
+docker tag llmops-standalone:latest <account-id>.dkr.ecr.<region>.amazonaws.com/llmops-standalone:latest
+docker push <account-id>.dkr.ecr.<region>.amazonaws.com/llmops-standalone:latest
+```
+
+2. Create ECS task definition with the image
+3. Configure environment variables in task definition
+4. Create ECS service with Application Load Balancer
+5. Set up RDS PostgreSQL for the database
+
+## Troubleshooting
+
+### Container won't start
+
+Check logs:
+```bash
+docker logs llmops-standalone
+```
+
+Common issues:
+- Invalid `POSTGRES_URL` format
+- PostgreSQL not accessible from container
+- Port 3000 already in use
+
+### Database connection errors
+
+If using Docker Postgres on the same host:
+- Use `host.docker.internal` instead of `localhost` in `POSTGRES_URL`
+- Or use Docker Compose networking
+
+```bash
+POSTGRES_URL=postgresql://postgres:password@host.docker.internal:5432/pg_llmops
+```
+
+### Provider configuration
+
+- Configure providers through the dashboard UI, not environment variables
+- API keys are stored in the PostgreSQL database
+- Each workspace has independent provider configurations
+
+## Next Steps
+
+- [Configuration](/docs/configuration) - Learn about all configuration options
+- [Providers](/docs/providers) - Configure different LLM providers
+- [API Reference](/docs/api) - Explore the complete API
