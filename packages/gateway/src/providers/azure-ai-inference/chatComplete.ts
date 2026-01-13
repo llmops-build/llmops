@@ -92,6 +92,8 @@ export const AzureAIInferenceChatCompleteConfig: ProviderConfig = {
   },
   metadata: {
     param: 'metadata',
+    // Azure AI only allows metadata when store is enabled
+    transform: (params: Params) => (params.store ? params.metadata : undefined),
   },
   modalities: {
     param: 'modalities',

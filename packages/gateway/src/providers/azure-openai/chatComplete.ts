@@ -1,4 +1,5 @@
 import { AZURE_OPEN_AI } from '../../globals';
+import { Params } from '../../types/requestBody';
 import { OpenAIErrorResponseTransform } from '../openai/utils';
 import {
   ChatCompletionResponse,
@@ -87,6 +88,8 @@ export const AzureOpenAIChatCompleteConfig: ProviderConfig = {
   },
   metadata: {
     param: 'metadata',
+    // Azure only allows metadata when store is enabled
+    transform: (params: Params) => (params.store ? params.metadata : undefined),
   },
   modalities: {
     param: 'modalities',

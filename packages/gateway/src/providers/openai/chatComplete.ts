@@ -1,5 +1,5 @@
 import { ANTHROPIC, OPEN_AI } from '../../globals';
-import { ContentBlockChunk } from '../../types/requestBody';
+import { ContentBlockChunk, Params } from '../../types/requestBody';
 import {
   ChatCompletionResponse,
   ErrorResponse,
@@ -105,6 +105,8 @@ export const OpenAIChatCompleteConfig: ProviderConfig = {
   },
   metadata: {
     param: 'metadata',
+    // OpenAI only allows metadata when store is enabled
+    transform: (params: Params) => (params.store ? params.metadata : undefined),
   },
   modalities: {
     param: 'modalities',
