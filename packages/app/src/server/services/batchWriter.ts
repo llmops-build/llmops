@@ -9,6 +9,7 @@ export interface LLMRequestData {
   configId?: string | null;
   variantId?: string | null;
   environmentId?: string | null;
+  providerConfigId?: string | null;
   provider: string;
   model: string;
   promptTokens?: number;

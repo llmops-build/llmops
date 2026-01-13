@@ -98,6 +98,7 @@ export const llmRequestsSchema = z.object({
   configId: z.string().uuid().nullable().optional(), // FK -> configs.id
   variantId: z.string().uuid().nullable().optional(), // FK -> variants.id
   environmentId: z.string().uuid().nullable().optional(), // FK -> environments.id
+  providerConfigId: z.string().uuid().nullable().optional(), // FK -> provider_configs.id
 
   // Provider & Model
   provider: z.string(), // e.g., "openai", "anthropic", "openrouter"
@@ -224,6 +225,7 @@ export interface LLMRequestsTable extends BaseTable {
   configId: string | null;
   variantId: string | null;
   environmentId: string | null;
+  providerConfigId: string | null;
   provider: string;
   model: string;
   promptTokens: ColumnType<number, number | undefined, number | undefined>;
@@ -465,6 +467,11 @@ export const SCHEMA_METADATA = {
           type: 'uuid',
           nullable: true,
           references: { table: 'environments', column: 'id' },
+        },
+        providerConfigId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'provider_configs', column: 'id' },
         },
         provider: { type: 'text' },
         model: { type: 'text' },

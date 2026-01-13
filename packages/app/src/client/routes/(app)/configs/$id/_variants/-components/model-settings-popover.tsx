@@ -185,7 +185,15 @@ export function ModelSettingsPopover({
   onChange,
 }: ModelSettingsPopoverProps) {
   const { data: configuredProviders } = useConfiguredProviders();
-  const { data: models, isLoading } = useProviderModels(value.provider);
+
+  // Resolve the underlying provider ID (e.g. "openai") from the config UUID if necessary
+  // value.provider might be a UUID (specific config) or a string ID (generic/legacy)
+  const selectedProviderConfig = configuredProviders?.find(
+    (p) => p.configId === value.provider
+  );
+  const realProviderId = selectedProviderConfig?.id || value.provider;
+
+  const { data: models, isLoading } = useProviderModels(realProviderId);
 
   // Convert configured providers to ProviderItem format for Combobox
   const providers: ProviderItem[] =
@@ -194,7 +202,8 @@ export function ModelSettingsPopover({
         ? `${provider.customName} (${provider.name})`
         : provider.name,
       icon: provider.logo,
-      value: provider.id,
+      // Use configId (UUID) to uniquely identify this configuration
+      value: provider.configId,
     })) || [];
 
   const selectedProviderItem =

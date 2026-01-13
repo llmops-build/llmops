@@ -162,6 +162,7 @@ declare module 'hono' {
     variantModel?: string;
     variantId?: string;
     environmentId?: string;
+    providerConfigId?: string;
     __costTrackingContext?: RequestContext;
   }
 }
@@ -345,6 +346,7 @@ export function createCostTrackingMiddleware(
             configId: c.get('configId'),
             variantId: c.get('variantId'),
             environmentId: c.get('environmentId'),
+            providerConfigId: c.get('providerConfigId'),
             endpoint: context.endpoint,
             statusCode,
             latencyMs,
@@ -402,6 +404,7 @@ export function createCostTrackingMiddleware(
         configId: c.get('configId'),
         variantId: c.get('variantId'),
         environmentId: c.get('environmentId'),
+        providerConfigId: c.get('providerConfigId'),
         endpoint: context.endpoint,
         statusCode,
         latencyMs,
@@ -426,6 +429,7 @@ async function processUsageAndLog(params: {
   configId?: string;
   variantId?: string;
   environmentId?: string;
+  providerConfigId?: string;
   endpoint: string;
   statusCode: number;
   latencyMs: number;
@@ -448,6 +452,7 @@ async function processUsageAndLog(params: {
     configId,
     variantId,
     environmentId,
+    providerConfigId,
     endpoint,
     statusCode,
     latencyMs,
@@ -500,6 +505,7 @@ async function processUsageAndLog(params: {
     configId: configId || null,
     variantId: variantId || null,
     environmentId: environmentId || null,
+    providerConfigId: providerConfigId || null,
     provider,
     model,
     promptTokens: usage?.promptTokens || 0,

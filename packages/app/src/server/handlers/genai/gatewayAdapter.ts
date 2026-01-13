@@ -226,6 +226,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         environmentId: string;
         version: number;
         provider: string;
+        providerConfigId?: string; // Add optional specific config ID
         modelName: string;
         jsonData: Record<string, unknown>;
       };
@@ -243,12 +244,18 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       );
 
       // Get API key from database (provider_configs table)
+      // If we have a specific providerConfigId (UUID) from the variant, use that
+      // Otherwise fallback to looking up by provider ID string (legacy behavior)
       const providerConfig = await cacheService.getOrSet(
-        `provider:${data.provider}`,
+        data.providerConfigId
+          ? `provider-config:${data.providerConfigId}`
+          : `provider:${data.provider}`,
         () =>
-          db.getProviderConfigByProviderId({
-            providerId: data.provider,
-          }),
+          data.providerConfigId
+            ? db.getProviderConfigById({ id: data.providerConfigId })
+            : db.getProviderConfigByProviderId({
+                providerId: data.provider,
+              }),
         {
           namespace: 'provider-configs',
         }

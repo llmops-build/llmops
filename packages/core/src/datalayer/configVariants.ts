@@ -470,8 +470,29 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
         );
       }
 
+      // Backward compatibility: Resolve provider UUID to providerId string if necessary
+      // If versionData.provider is a UUID, it means it's pointing to a specific provider_config
+      // We need to resolve it to the underlying providerId (e.g., "openai") for the SDK/Gateway
+      let finalProvider = versionData.provider;
+      let providerConfigId: string | null = null;
+
+      if (UUID_REGEX.test(versionData.provider)) {
+        const providerConfig = await db
+          .selectFrom('provider_configs')
+          .select(['id', 'providerId'])
+          .where('id', '=', versionData.provider)
+          .executeTakeFirst();
+
+        if (providerConfig) {
+          finalProvider = providerConfig.providerId;
+          providerConfigId = providerConfig.id;
+        }
+      }
+
       return {
         ...versionData,
+        provider: finalProvider,
+        providerConfigId, // Expose the specific config ID if used
         configId: resolvedConfigId,
         variantId: configVariant.variantId,
         environmentId,

@@ -8,6 +8,8 @@ import {
   TableCell,
   Button,
 } from '@ui';
+import { useProvidersList } from '@client/hooks/queries/useProvidersList';
+import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
 import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
 import { Icon } from '@client/components/icons';
 import { Plus } from 'lucide-react';
@@ -32,7 +34,27 @@ function RouteComponent() {
   const queryClient = useQueryClient();
   const { data: configVariants, isLoading: loadingConfigVariants } =
     useConfigVariants(configId);
+  const { data: providers } = useProvidersList();
+  const { data: providerConfigs } = useProviderConfigs();
   const navigate = useNavigate();
+
+  const getProviderName = (providerId: string | null) => {
+    if (!providerId) return 'Unknown';
+
+    // Check if there's a custom config name for this provider
+    const config = providerConfigs?.find(
+      (p) => p.providerId === providerId || p.id === providerId
+    );
+    if (config) {
+      if (config.name) return config.name;
+      // Fallback to generic name using the known providerId from config
+      const generic = providers?.find((p) => p.id === config.providerId);
+      return generic?.name || config.providerId;
+    }
+
+    const provider = providers?.find((p) => p.id === providerId);
+    return provider?.name || providerId;
+  };
 
   if (loadingConfigVariants) {
     return <div>Loading variants...</div>;
@@ -88,7 +110,7 @@ function RouteComponent() {
                 }
               >
                 <TableCell>{variant.name || 'Unnamed Variant'}</TableCell>
-                <TableCell>{variant.provider || 'Unknown'}</TableCell>
+                <TableCell>{getProviderName(variant.provider)}</TableCell>
                 <TableCell>{variant.modelName || 'Unknown'}</TableCell>
                 <TableCell>
                   {variant.latestVersion?.version

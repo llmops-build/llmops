@@ -13,6 +13,7 @@ const insertLLMRequestSchema = z.object({
   configId: z.string().uuid().nullable().optional(),
   variantId: z.string().uuid().nullable().optional(),
   environmentId: z.string().uuid().nullable().optional(),
+  providerConfigId: z.string().uuid().nullable().optional(), // Added providerConfigId
   provider: z.string(),
   model: z.string(),
   promptTokens: z.number().int().default(0),
@@ -41,6 +42,7 @@ const listRequestsSchema = z.object({
   configId: z.string().uuid().optional(),
   variantId: z.string().uuid().optional(),
   environmentId: z.string().uuid().optional(),
+  providerConfigId: z.string().uuid().optional(),
   provider: z.string().optional(),
   model: z.string().optional(),
   startDate: z.date().optional(),
@@ -109,6 +111,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         configId: req.configId ?? null,
         variantId: req.variantId ?? null,
         environmentId: req.environmentId ?? null,
+        providerConfigId: req.providerConfigId ?? null,
         provider: req.provider,
         model: req.model,
         promptTokens: req.promptTokens,
@@ -153,6 +156,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           configId: req.configId ?? null,
           variantId: req.variantId ?? null,
           environmentId: req.environmentId ?? null,
+          providerConfigId: req.providerConfigId ?? null,
           provider: req.provider,
           model: req.model,
           promptTokens: req.promptTokens,
@@ -191,6 +195,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         configId,
         variantId,
         environmentId,
+        providerConfigId,
         provider,
         model,
         startDate,
@@ -209,6 +214,9 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       }
       if (environmentId) {
         baseQuery = baseQuery.where('environmentId', '=', environmentId);
+      }
+      if (providerConfigId) {
+        baseQuery = baseQuery.where('providerConfigId', '=', providerConfigId);
       }
       if (provider) {
         baseQuery = baseQuery.where('provider', '=', provider);
