@@ -1122,8 +1122,8 @@ export function constructConfigFromRequestHeaders(
 
       if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
         parsedConfigJson = {
-          ...parsedConfigJson,
           ...azureAiInferenceConfig,
+          ...parsedConfigJson,
         };
       }
       if (parsedConfigJson.provider === ANTHROPIC) {
