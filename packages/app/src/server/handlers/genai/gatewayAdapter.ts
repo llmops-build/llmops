@@ -14,8 +14,9 @@ import { renderTemplate } from '@server/lib/template-utils';
 const MODELS_DEV_TO_PORTKEY_PROVIDER_MAP: Record<string, string> = {
   // models.dev uses 'reka', Portkey uses 'reka-ai'
   reka: 'reka-ai',
-  // models.dev uses 'azure-cognitive-services' or 'azure', Portkey uses 'azure-openai'
-  'azure-cognitive-services': 'azure-openai',
+  // models.dev uses 'azure-cognitive-services', Portkey uses 'azure-ai'
+  'azure-cognitive-services': 'azure-ai',
+  // models.dev uses 'azure', Portkey uses 'azure-openai'
   azure: 'azure-openai',
 };
 
@@ -51,6 +52,7 @@ interface PortkeyConfig {
   azure_entra_client_id?: string;
   azure_entra_client_secret?: string;
   azure_entra_tenant_id?: string;
+  azure_foundry_url?: string;
   // Google Vertex AI
   vertex_project_id?: string;
   vertex_region?: string;
@@ -349,6 +351,15 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       }
       if (configData?.azureEntraTenantId) {
         portkeyConfig.azure_entra_tenant_id = configData.azureEntraTenantId;
+      }
+      if (configData?.azureFoundryUrl) {
+        portkeyConfig.azure_foundry_url = configData.azureFoundryUrl;
+      }
+      if (configData?.azureDeploymentName) {
+        portkeyConfig.azure_deployment_id = configData.azureDeploymentName;
+      }
+      if (configData?.azureApiVersion) {
+        portkeyConfig.azure_api_version = configData.azureApiVersion;
       }
 
       // Google Vertex AI

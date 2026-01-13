@@ -46,6 +46,7 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       apiKey,
       azureExtraParameters,
       azureDeploymentName,
+      deploymentId,
       azureAdToken,
       azureAuthMode,
       azureFoundryUrl,
@@ -64,8 +65,8 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
         'anthropic-version': providerOptions.anthropicVersion,
       }),
       'extra-parameters': azureExtraParameters ?? 'drop',
-      ...(azureDeploymentName && {
-        'azureml-model-deployment': azureDeploymentName,
+      ...((deploymentId || azureDeploymentName) && {
+        'azureml-model-deployment': deploymentId || azureDeploymentName,
       }),
       ...([
         'createTranscription',
@@ -167,7 +168,13 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
     return headers;
   },
   getEndpoint: ({ providerOptions, fn, gatewayRequestURL }) => {
-    const { azureApiVersion, urlToFetch, azureFoundryUrl } = providerOptions;
+    const {
+      azureApiVersion,
+      urlToFetch,
+      azureFoundryUrl,
+      deploymentId,
+      azureDeploymentName,
+    } = providerOptions;
     const isAnthropicModel =
       azureFoundryUrl?.includes('anthropic') ||
       urlToFetch?.includes('anthropic');
@@ -181,11 +188,20 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       searchParams.set('api-version', azureApiVersion);
     }
 
+    // For Azure Cognitive Services, we need to include the deployment in the path
+    // Use deploymentId (normalized) or fall back to azureDeploymentName
+    const deploymentName = deploymentId || azureDeploymentName;
+    const deploymentPrefix = deploymentName
+      ? `/deployments/${deploymentName}`
+      : '';
+
     const ENDPOINT_MAPPING: Record<string, string> = {
-      complete: '/completions',
-      chatComplete: isAnthropicModel ? '/v1/messages' : '/chat/completions',
+      complete: deploymentPrefix + '/completions',
+      chatComplete: isAnthropicModel
+        ? '/v1/messages'
+        : deploymentPrefix + '/chat/completions',
       messages: '/v1/messages',
-      embed: '/embeddings',
+      embed: deploymentPrefix + '/embeddings',
       realtime: '/realtime',
       imageGenerate: '/images/generations',
       imageEdit: '/images/edits',
