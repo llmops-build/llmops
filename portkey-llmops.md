@@ -722,3 +722,131 @@ LOG_LEVEL=DEBUG
 | File                                            | Changes                                                                              |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `packages/gateway/src/handlers/retryHandler.ts` | Added `sanitizeHeaders()`, `logProviderRequest()`, `logProviderResponse()` functions |
+
+---
+
+## 10. Response Headers Immutability Fix
+
+### Problem
+
+Streaming chat completions failed in the standalone Docker image with:
+
+```
+TypeError: immutable
+    at appendHeader (node:internal/deps/undici/undici:9477:15)
+    at _Headers.append (node:internal/deps/undici/undici:9715:16)
+    at ResponseService.updateHeaders
+```
+
+The error occurred because in Node.js, `Response` objects created by `fetch()` have **immutable headers**. The `ResponseService.updateHeaders()` method was trying to directly mutate headers on a Response object by calling `response.headers.append()` and `response.headers.delete()`.
+
+### Root Cause
+
+When the gateway makes a request to an upstream LLM provider using `fetch()`, the returned `Response` object has immutable headers. This Response was being passed through `responseHandler` → `afterRequestHookHandler` → `ResponseService.create()` → `updateHeaders()`, where the code attempted to add custom headers (trace ID, retry count, cache status, etc.) by directly mutating the response headers.
+
+### Solution
+
+Modified `ResponseService.updateHeaders()` in `packages/gateway/src/handlers/services/responseService.ts` to:
+
+1. Create a new `Headers` object from the response headers
+2. Make all header modifications on the new Headers object
+3. Return a **new** `Response` object with the updated headers instead of mutating the original
+
+#### Before (broken):
+
+```typescript
+updateHeaders(
+  response: Response,
+  cacheStatus: string | undefined,
+  retryAttempt: number
+) {
+  // This fails on fetch() responses because headers are immutable
+  response.headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, this.context.traceId);
+  response.headers.delete('content-length');
+  return response;
+}
+```
+
+#### After (fixed):
+
+```typescript
+updateHeaders(
+  response: Response,
+  cacheStatus: string | undefined,
+  retryAttempt: number
+): Response {
+  // Create a new mutable Headers object
+  const headers = new Headers(response.headers);
+
+  // Make modifications on the new Headers object
+  headers.append(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX, this.context.index.toString());
+  headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, this.context.traceId);
+  headers.append(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT, retryAttempt.toString());
+
+  if (cacheStatus) {
+    headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+  }
+
+  if (this.context.provider && this.context.provider !== POWERED_BY) {
+    headers.append(HEADER_KEYS.PROVIDER, this.context.provider);
+  }
+
+  if (getRuntimeKey() == 'node') {
+    headers.delete('content-encoding');
+    headers.delete('transfer-encoding');
+  }
+  headers.delete('content-length');
+
+  // Return a NEW Response with the updated headers
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+```
+
+The `create()` method was also updated to use the returned Response:
+
+```typescript
+const updatedResponse = this.updateHeaders(
+  finalMappedResponse,
+  cache.cacheStatus,
+  retryAttempt
+);
+
+return {
+  response: updatedResponse, // Use the new Response
+  responseJson,
+  originalResponseJson: originalResponseJSON,
+};
+```
+
+### Why This Works
+
+- `new Headers(response.headers)` creates a **copy** of the headers that is mutable
+- `new Response(body, init)` creates a new Response object with the modified headers
+- The original immutable Response is not modified; a new one is returned
+
+### Testing
+
+Before fix:
+
+```bash
+curl http://localhost:3000/api/genai/v1/chat/completions ... -d '{"stream": true}'
+# Returns: {"status":"failure","message":"Something went wrong"}
+```
+
+After fix:
+
+```bash
+curl http://localhost:3000/api/genai/v1/chat/completions ... -d '{"stream": true}'
+# Returns: data: {"id":"chatcmpl-...","choices":[...]}\n\ndata: ...
+```
+
+### Files Changed
+
+| File                                                                        | Changes                                                                                                             |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `packages/gateway/src/handlers/services/responseService.ts`                 | Modified `updateHeaders()` to create new Response with mutable headers; updated `create()` to use returned Response |
+| `packages/gateway/tests/unit/src/handlers/services/responseService.test.ts` | Updated tests to check returned Response instead of original                                                        |

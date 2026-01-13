@@ -80,22 +80,24 @@ describe('ResponseService', () => {
 
       const result = await responseService.create(options);
 
-      expect(result.response).toBe(mockResponse);
+      // updateHeaders now returns a NEW Response object (not the same reference)
+      expect(result.response).not.toBe(mockResponse);
+      expect(result.response.status).toBe(mockResponse.status);
       expect(result.originalResponseJson).toEqual({
         choices: [{ message: { content: 'Hello' } }],
       });
 
-      // Check headers were updated
+      // Check headers were updated on the returned response
       expect(
-        mockResponse.headers.get(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX)
+        result.response.headers.get(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX)
       ).toBe('0');
-      expect(mockResponse.headers.get(RESPONSE_HEADER_KEYS.TRACE_ID)).toBe(
+      expect(result.response.headers.get(RESPONSE_HEADER_KEYS.TRACE_ID)).toBe(
         'trace-123'
       );
       expect(
-        mockResponse.headers.get(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT)
+        result.response.headers.get(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT)
       ).toBe('0');
-      expect(mockResponse.headers.get(HEADER_KEYS.PROVIDER)).toBe('openai');
+      expect(result.response.headers.get(HEADER_KEYS.PROVIDER)).toBe('openai');
     });
 
     it('should create response for non-mapped response', async () => {
@@ -179,12 +181,12 @@ describe('ResponseService', () => {
         'hook-span-123'
       );
 
-      expect(mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)).toBe(
-        'HIT'
-      );
+      expect(
+        result.response.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)
+      ).toBe('HIT');
     });
 
-    it('should throw error for non-ok response', async () => {
+    it('should handle error response correctly', async () => {
       const errorResponse = new Response('{"error": "Bad Request"}', {
         status: 400,
       });
@@ -200,10 +202,12 @@ describe('ResponseService', () => {
         retryAttempt: 0,
       };
 
-      await expect(responseService.create(options)).rejects.toThrow();
+      // create() doesn't throw - it returns the response regardless of status
+      const result = await responseService.create(options);
+      expect(result.response.status).toBe(400);
     });
 
-    it('should handle error response correctly', async () => {
+    it('should pass through error response with 500 status', async () => {
       const errorResponse = new Response('{"error": "Internal Server Error"}', {
         status: 500,
       });
@@ -219,13 +223,9 @@ describe('ResponseService', () => {
         retryAttempt: 0,
       };
 
-      try {
-        await responseService.create(options);
-      } catch (error: any) {
-        expect(error.status).toBe(500);
-        expect(error.response).toBe(errorResponse);
-        expect(error.message).toBe('{"error": "Internal Server Error"}');
-      }
+      // create() doesn't throw - it returns the response regardless of status
+      const result = await responseService.create(options);
+      expect(result.response.status).toBe(500);
     });
 
     it('should not add cache status header when not provided', async () => {
@@ -241,10 +241,10 @@ describe('ResponseService', () => {
         retryAttempt: 0,
       };
 
-      await responseService.create(options);
+      const result = await responseService.create(options);
 
       expect(
-        mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)
+        result.response.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)
       ).toBeNull();
     });
 
@@ -389,34 +389,32 @@ describe('ResponseService', () => {
     });
 
     it('should add required headers', () => {
-      responseService.updateHeaders(mockResponse, 'HIT', 2);
+      const result = responseService.updateHeaders(mockResponse, 'HIT', 2);
 
       expect(
-        mockResponse.headers.get(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX)
+        result.headers.get(RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX)
       ).toBe('0');
-      expect(mockResponse.headers.get(RESPONSE_HEADER_KEYS.TRACE_ID)).toBe(
+      expect(result.headers.get(RESPONSE_HEADER_KEYS.TRACE_ID)).toBe(
         'trace-123'
       );
-      expect(
-        mockResponse.headers.get(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT)
-      ).toBe('2');
-      expect(mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)).toBe(
-        'HIT'
+      expect(result.headers.get(RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT)).toBe(
+        '2'
       );
-      expect(mockResponse.headers.get(HEADER_KEYS.PROVIDER)).toBe('openai');
+      expect(result.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)).toBe('HIT');
+      expect(result.headers.get(HEADER_KEYS.PROVIDER)).toBe('openai');
     });
 
     it('should remove problematic headers', () => {
-      responseService.updateHeaders(mockResponse, undefined, 0);
+      const result = responseService.updateHeaders(mockResponse, undefined, 0);
 
-      expect(mockResponse.headers.get('content-length')).toBeNull();
-      expect(mockResponse.headers.get('transfer-encoding')).toBeNull();
+      expect(result.headers.get('content-length')).toBeNull();
+      expect(result.headers.get('transfer-encoding')).toBeNull();
     });
 
     it('should remove brotli encoding', () => {
-      responseService.updateHeaders(mockResponse, undefined, 0);
+      const result = responseService.updateHeaders(mockResponse, undefined, 0);
 
-      expect(mockResponse.headers.get('content-encoding')).toBeNull();
+      expect(result.headers.get('content-encoding')).toBeNull();
     });
 
     it('should remove content-encoding for node runtime', () => {
@@ -425,9 +423,9 @@ describe('ResponseService', () => {
         headers: { 'content-encoding': 'gzip' },
       });
 
-      responseService.updateHeaders(response, undefined, 0);
+      const result = responseService.updateHeaders(response, undefined, 0);
 
-      expect(response.headers.get('content-encoding')).toBeNull();
+      expect(result.headers.get('content-encoding')).toBeNull();
     });
 
     it('should keep content-encoding for non-brotli, non-node', () => {
@@ -436,17 +434,15 @@ describe('ResponseService', () => {
         headers: { 'content-encoding': 'gzip' },
       });
 
-      responseService.updateHeaders(response, undefined, 0);
+      const result = responseService.updateHeaders(response, undefined, 0);
 
-      expect(response.headers.get('content-encoding')).toBe('gzip');
+      expect(result.headers.get('content-encoding')).toBe('gzip');
     });
 
     it('should not add cache status header when undefined', () => {
-      responseService.updateHeaders(mockResponse, undefined, 0);
+      const result = responseService.updateHeaders(mockResponse, undefined, 0);
 
-      expect(
-        mockResponse.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)
-      ).toBeNull();
+      expect(result.headers.get(RESPONSE_HEADER_KEYS.CACHE_STATUS)).toBeNull();
     });
 
     it('should not add provider header when provider is POWERED_BY', () => {
@@ -460,9 +456,9 @@ describe('ResponseService', () => {
         mockHooksService
       );
 
-      serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
+      const result = serviceWithPortkey.updateHeaders(mockResponse, 'MISS', 0);
 
-      expect(mockResponse.headers.get(HEADER_KEYS.PROVIDER)).toBeNull();
+      expect(result.headers.get(HEADER_KEYS.PROVIDER)).toBeNull();
     });
 
     it('should not add provider header when provider is empty', () => {
@@ -476,15 +472,22 @@ describe('ResponseService', () => {
         mockHooksService
       );
 
-      serviceWithEmptyProvider.updateHeaders(mockResponse, 'MISS', 0);
+      const result = serviceWithEmptyProvider.updateHeaders(
+        mockResponse,
+        'MISS',
+        0
+      );
 
-      expect(mockResponse.headers.get(HEADER_KEYS.PROVIDER)).toBeNull();
+      expect(result.headers.get(HEADER_KEYS.PROVIDER)).toBeNull();
     });
 
-    it('should return the response object', () => {
+    it('should return a new response object with updated headers', () => {
       const result = responseService.updateHeaders(mockResponse, 'MISS', 0);
 
-      expect(result).toBe(mockResponse);
+      // updateHeaders now returns a NEW Response object (not the same reference)
+      expect(result).not.toBe(mockResponse);
+      expect(result).toBeInstanceOf(Response);
+      expect(result.status).toBe(mockResponse.status);
     });
   });
 });

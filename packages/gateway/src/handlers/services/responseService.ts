@@ -61,10 +61,14 @@ export class ResponseService {
       ));
     }
 
-    this.updateHeaders(finalMappedResponse, cache.cacheStatus, retryAttempt);
+    const updatedResponse = this.updateHeaders(
+      finalMappedResponse,
+      cache.cacheStatus,
+      retryAttempt
+    );
 
     return {
-      response: finalMappedResponse,
+      response: updatedResponse,
       responseJson,
       originalResponseJson: originalResponseJSON,
     };
@@ -100,36 +104,42 @@ export class ResponseService {
     response: Response,
     cacheStatus: string | undefined,
     retryAttempt: number
-  ) {
-    // Append headers directly
-    response.headers.append(
+  ): Response {
+    // In Node.js, Response headers from fetch() are immutable.
+    // We need to create a new Response with mutable headers to add our custom headers.
+    const headers = new Headers(response.headers);
+
+    // Append headers
+    headers.append(
       RESPONSE_HEADER_KEYS.LAST_USED_OPTION_INDEX,
       this.context.index.toString()
     );
-    response.headers.append(
-      RESPONSE_HEADER_KEYS.TRACE_ID,
-      this.context.traceId
-    );
-    response.headers.append(
+    headers.append(RESPONSE_HEADER_KEYS.TRACE_ID, this.context.traceId);
+    headers.append(
       RESPONSE_HEADER_KEYS.RETRY_ATTEMPT_COUNT,
       retryAttempt.toString()
     );
 
     if (cacheStatus) {
-      response.headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
+      headers.append(RESPONSE_HEADER_KEYS.CACHE_STATUS, cacheStatus);
     }
 
     if (this.context.provider && this.context.provider !== POWERED_BY) {
-      response.headers.append(HEADER_KEYS.PROVIDER, this.context.provider);
+      headers.append(HEADER_KEYS.PROVIDER, this.context.provider);
     }
 
-    // Remove headers directly
+    // Remove headers
     if (getRuntimeKey() == 'node') {
-      response.headers.delete('content-encoding');
-      response.headers.delete('transfer-encoding');
+      headers.delete('content-encoding');
+      headers.delete('transfer-encoding');
     }
-    response.headers.delete('content-length');
+    headers.delete('content-length');
 
-    return response;
+    // Create a new Response with the updated headers
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   }
 }
