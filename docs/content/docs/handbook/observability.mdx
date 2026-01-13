@@ -1,0 +1,209 @@
+---
+title: Observability
+description: Monitor, analyze, and debug your LLM requests with built-in observability.
+icon: Activity
+---
+
+LLMOps includes comprehensive observability features for monitoring LLM requests, tracking costs, and analyzing usage patterns across your applications.
+
+## Overview
+
+The observability system provides:
+
+- **Request Logging**: Automatic capture of all LLM requests with metadata
+- **Cost Tracking**: Real-time cost calculation with provider-specific pricing
+- **Usage Analytics**: Token usage, latency metrics, and success rates
+- **Custom Tagging**: Add your own metadata for filtering and analysis
+
+## Automatic Request Logging
+
+Every request through LLMOps is automatically logged with the following data:
+
+| Field              | Description                                 |
+| ------------------ | ------------------------------------------- |
+| **Request ID**     | Unique identifier for tracing (UUID)        |
+| **Config/Variant** | Which config and variant served the request |
+| **Environment**    | The environment the request was made in     |
+| **Provider/Model** | The LLM provider and model used             |
+| **Token Usage**    | Prompt, completion, and total tokens        |
+| **Cost**           | Calculated cost in micro-dollars            |
+| **Latency**        | Request duration in milliseconds            |
+| **Status Code**    | HTTP response status                        |
+| **Streaming**      | Whether the request used streaming          |
+| **Custom Tags**    | User-defined metadata for filtering         |
+
+## Request Tracing
+
+Each request is assigned a unique `requestId` that is returned in the response headers:
+
+```
+x-llmops-request-id: 550e8400-e29b-41d4-a716-446655440000
+```
+
+Use this ID to:
+
+- Correlate requests across your application logs
+- Look up specific requests in the dashboard
+- Debug issues with individual requests
+
+## Custom Tags
+
+Add custom metadata to requests for filtering, grouping, and cost attribution. Tags are passed in the `metadata` field using the OpenAI SDK and can be used to filter requests in the dashboard.
+
+### Common Use Cases
+
+| Tag           | Example Value       | Purpose                              |
+| ------------- | ------------------- | ------------------------------------ |
+| `tenantSlug`  | `acme-corp`         | Multi-tenant cost attribution        |
+| `userId`      | `user_123`          | Track per-user usage and spending    |
+| `feature`     | `chat`, `summarize` | Analyze usage by product feature     |
+| `sessionId`   | `sess_abc123`       | Group requests within a user session |
+| `environment` | `staging`           | Additional environment context       |
+
+### Using Tags with OpenAI SDK
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+  apiKey: 'your-environment-secret',
+  defaultHeaders: {
+    'x-llmops-config': 'your-config-id',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: 'Hello!' }],
+  // @ts-ignore - LLMOps extension
+  metadata: {
+    tenantSlug: 'acme-corp',
+    userId: 'user_123',
+    feature: 'customer-support',
+  },
+});
+```
+
+### Multi-Tenant Example
+
+For SaaS applications serving multiple tenants, use `tenantSlug` to track costs and usage per customer:
+
+```typescript
+async function chat(tenantSlug: string, userId: string, message: string) {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [{ role: 'user', content: message }],
+    // @ts-ignore - LLMOps extension
+    metadata: {
+      tenantSlug,
+      userId,
+    },
+  });
+  return response;
+}
+
+// Usage
+await chat('acme-corp', 'user_456', 'How do I reset my password?');
+await chat('globex-inc', 'user_789', 'What are your business hours?');
+```
+
+Then in the dashboard, filter by `tenantSlug` to:
+
+- View total costs per tenant for billing
+- Compare usage patterns across tenants
+- Identify high-usage customers
+- Debug tenant-specific issues
+
+### Filtering by Tags
+
+In the Observability dashboard, use the tag filters to narrow down requests:
+
+1. Navigate to **Observability > Requests**
+2. Use the tag filter dropdown to select a tag key (e.g., `tenantSlug`)
+3. Select or search for a tag value (e.g., `acme-corp`)
+4. View filtered requests and aggregated metrics
+
+Tags are stored as JSONB, allowing flexible key-value pairs without schema changes.
+
+## Cost Tracking
+
+LLMOps automatically calculates costs for each request using up-to-date pricing data from providers.
+
+### Cost Breakdown
+
+Costs are tracked at multiple levels:
+
+| Metric            | Description                              |
+| ----------------- | ---------------------------------------- |
+| **Input Cost**    | Cost of prompt/input tokens              |
+| **Output Cost**   | Cost of completion/output tokens         |
+| **Total Cost**    | Combined input + output cost             |
+| **Cached Tokens** | Tokens served from cache (if applicable) |
+
+### Cost Analysis
+
+The dashboard provides cost breakdowns by:
+
+- **Time Period**: Daily, hourly, or custom date ranges
+- **Model**: Compare costs across different models
+- **Provider**: Analyze spending by provider
+- **Config**: Track costs per use case
+
+## Dashboard
+
+Navigate to the **Observability** section in the LLMOps dashboard to access:
+
+### Overview
+
+The overview dashboard displays:
+
+- **Total Cost**: Aggregate spending with input/output breakdown
+- **Total Requests**: Request count with success rate
+- **Total Tokens**: Token usage with prompt/completion split
+- **Average Latency**: Response times with min/max values
+- **Charts**: Cost, requests, and tokens over time
+
+### Requests
+
+The requests page provides:
+
+- **Paginated Table**: Browse all logged requests
+- **Column Visibility**: Customize which columns to display
+- **Filtering**: Filter by environment, config, variant, model, or tags
+- **Date Range**: Select custom time periods
+
+### Costs
+
+Detailed cost analysis with:
+
+- **Aggregations**: By model, provider, or config
+- **Time Series**: Cost trends over time
+- **Comparisons**: Side-by-side cost analysis
+
+## Performance
+
+LLMOps uses a batch writer for efficient log ingestion:
+
+- **Buffered Writes**: Logs are buffered in memory and flushed periodically
+- **Batch Inserts**: Multiple logs are inserted in a single database operation
+- **Non-Blocking**: Logging does not block request processing
+- **Retry Logic**: Failed batches are re-queued for retry
+
+Default configuration:
+
+| Setting           | Default | Description                  |
+| ----------------- | ------- | ---------------------------- |
+| `flushIntervalMs` | 2000    | Time between batch flushes   |
+| `maxBatchSize`    | 100     | Max logs before forced flush |
+
+## Example Use Cases
+
+| Use Case                  | How to Implement                                |
+| ------------------------- | ----------------------------------------------- |
+| Track user spending       | Add `userId` tag, query costs grouped by tag    |
+| Monitor feature usage     | Add `feature` tag, analyze requests by feature  |
+| Debug slow requests       | Filter by latency in dashboard, inspect details |
+| Compare model costs       | Use cost-by-model endpoint or dashboard view    |
+| Audit production requests | Filter by environment, export request logs      |
+| A/B test analysis         | Tag requests with variant, compare metrics      |

@@ -2,5 +2,5 @@
   "title": "Product Handbook",
   "icon": "Book",
   "defaultOpen": false,
-  "pages": ["environments", "configs", "variants"]
+  "pages": ["environments", "configs", "variants", "observability"]
 }
