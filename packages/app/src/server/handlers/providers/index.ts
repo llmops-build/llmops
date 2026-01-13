@@ -297,13 +297,14 @@ const app = new Hono()
       }
     }
   )
-  // Create or update provider config (upsert)
+  // Create new provider config
   .post(
     '/configs',
     zv(
       'json',
       z.object({
         providerId: z.string().min(1),
+        name: z.string().nullable().optional(),
         config: z.record(z.string(), z.unknown()),
         enabled: z.boolean().optional(),
       })
@@ -313,15 +314,16 @@ const app = new Hono()
       const body = c.req.valid('json');
 
       try {
-        const config = await db.upsertProviderConfig({
+        const config = await db.createProviderConfig({
           providerId: body.providerId,
+          name: body.name,
           config: body.config,
           enabled: body.enabled ?? true,
         });
 
         if (!config) {
           return c.json(
-            internalServerError('Failed to create/update provider config', 500),
+            internalServerError('Failed to create provider config', 500),
             500
           );
         }
@@ -333,9 +335,9 @@ const app = new Hono()
 
         return c.json(successResponse(config, 200));
       } catch (error) {
-        console.error('Error creating/updating provider config:', error);
+        console.error('Error creating provider config:', error);
         return c.json(
-          internalServerError('Failed to create/update provider config', 500),
+          internalServerError('Failed to create provider config', 500),
           500
         );
       }
@@ -353,6 +355,7 @@ const app = new Hono()
     zv(
       'json',
       z.object({
+        name: z.string().nullable().optional(),
         config: z.record(z.string(), z.unknown()).optional(),
         enabled: z.boolean().optional(),
       })

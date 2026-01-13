@@ -9,7 +9,8 @@ import {
   useProvidersList,
   type ProviderInfo,
 } from '@client/hooks/queries/useProvidersList';
-import { useUpsertProviderConfig } from '@client/hooks/mutations/useUpsertProviderConfig';
+import { useUpsertProviderConfig as useCreateProviderConfig } from '@client/hooks/mutations/useUpsertProviderConfig';
+import { useUpdateProviderConfig } from '@client/hooks/mutations/useUpdateProviderConfig';
 import { useDeleteProviderConfig } from '@client/hooks/mutations/useDeleteProviderConfig';
 import { ProviderConfigFields } from './-components/ProviderConfigFields';
 import { getRequiredFields } from './-components/provider-field-definitions';
@@ -30,6 +31,7 @@ export const Route = createFileRoute(
 type ProviderConfig = {
   id: string;
   providerId: string;
+  name: string | null;
   config: Record<string, unknown>;
   enabled: boolean;
   createdAt: string;
@@ -41,7 +43,8 @@ type ViewMode = 'list' | 'add' | 'edit';
 function RouteComponent() {
   const { data: providerConfigs, isLoading } = useProviderConfigs();
   const { data: availableProviders } = useProvidersList();
-  const upsertProvider = useUpsertProviderConfig();
+  const createProvider = useCreateProviderConfig();
+  const updateProvider = useUpdateProviderConfig();
   const deleteProvider = useDeleteProviderConfig();
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -49,6 +52,7 @@ function RouteComponent() {
   const [selectedProvider, setSelectedProvider] = useState<ProviderInfo | null>(
     null
   );
+  const [configName, setConfigName] = useState<string>('');
   const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [editingConfig, setEditingConfig] = useState<ProviderConfig | null>(
     null
@@ -62,18 +66,9 @@ function RouteComponent() {
     [availableProviders]
   );
 
-  // Filter out providers that are already configured
-  const availableProvidersForAdd = useCallback(() => {
-    if (!availableProviders) return availableProviders;
-    const configuredProviderIds =
-      providerConfigs?.map((c) => c.providerId) || [];
-    return availableProviders.filter(
-      (p) => !configuredProviderIds.includes(p.id)
-    );
-  }, [availableProviders, providerConfigs]);
-
   const handleOpenAdd = () => {
     setSelectedProvider(null);
+    setConfigName('');
     setConfigValues({});
     setEditingConfig(null);
     setViewMode('add');
@@ -83,6 +78,8 @@ function RouteComponent() {
     setEditingConfig(config);
     const providerInfo = getProviderInfo(config.providerId);
     setSelectedProvider(providerInfo || null);
+    // Populate name from existing config
+    setConfigName(config.name || '');
     // Populate all config values from existing config
     const existingConfig = config.config as Record<string, string>;
     setConfigValues(existingConfig || {});
@@ -92,6 +89,7 @@ function RouteComponent() {
   const handleBack = () => {
     setViewMode('list');
     setSelectedProvider(null);
+    setConfigName('');
     setConfigValues({});
     setEditingConfig(null);
   };
@@ -123,11 +121,23 @@ function RouteComponent() {
       Object.entries(configValues).filter(([, v]) => v?.trim())
     );
 
-    await upsertProvider.mutateAsync({
-      providerId: selectedProvider.id,
-      config: cleanedConfig,
-      enabled: true,
-    });
+    if (viewMode === 'edit' && editingConfig) {
+      // Update existing config
+      await updateProvider.mutateAsync({
+        id: editingConfig.id,
+        name: configName.trim() || null,
+        config: cleanedConfig,
+        enabled: true,
+      });
+    } else {
+      // Create new config
+      await createProvider.mutateAsync({
+        providerId: selectedProvider.id,
+        name: configName.trim() || null,
+        config: cleanedConfig,
+        enabled: true,
+      });
+    }
 
     handleBack();
   };
@@ -161,7 +171,7 @@ function RouteComponent() {
             <div className={styles.formField}>
               <label className={styles.formFieldLabel}>Provider</label>
               <Combobox<ProviderInfo>
-                items={availableProvidersForAdd() || []}
+                items={availableProviders || []}
                 value={selectedProvider}
                 onValueChange={setSelectedProvider}
                 itemToString={(item) => item?.name ?? ''}
@@ -170,12 +180,7 @@ function RouteComponent() {
                     <img
                       src={item.logo}
                       alt={item.name}
-                      style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: 2,
-                        objectFit: 'contain',
-                      }}
+                      className={styles.providerLogo}
                     />
                   ) : null
                 }
@@ -199,19 +204,39 @@ function RouteComponent() {
           )}
 
           {selectedProvider && (
-            <ProviderConfigFields
-              providerId={selectedProvider.id}
-              configValues={configValues}
-              onChange={handleConfigFieldChange}
-            />
+            <>
+              <div className={styles.formField}>
+                <label className={styles.formFieldLabel}>
+                  Name <span style={{ color: 'var(--gray9)' }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  className={styles.dialogInput}
+                  value={configName}
+                  onChange={(e) => setConfigName(e.target.value)}
+                  placeholder="e.g., Production OpenAI"
+                />
+              </div>
+              <ProviderConfigFields
+                providerId={selectedProvider.id}
+                configValues={configValues}
+                onChange={handleConfigFieldChange}
+              />
+            </>
           )}
 
           <div className={styles.formActions}>
             <Button
               onClick={handleSaveProvider}
-              disabled={!isFormValid() || upsertProvider.isPending}
+              disabled={
+                !isFormValid() ||
+                createProvider.isPending ||
+                updateProvider.isPending
+              }
             >
-              {upsertProvider.isPending ? 'Saving...' : 'Save'}
+              {createProvider.isPending || updateProvider.isPending
+                ? 'Saving...'
+                : 'Save'}
             </Button>
           </div>
         </div>
@@ -248,7 +273,9 @@ function RouteComponent() {
                     />
                   )}
                   <span className={styles.providerName}>
-                    {providerInfo?.name || config.providerId}
+                    {config.name
+                      ? `${config.name} (${providerInfo?.name || config.providerId})`
+                      : providerInfo?.name || config.providerId}
                   </span>
                 </div>
                 <div className={styles.providerActions}>

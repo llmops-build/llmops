@@ -448,6 +448,72 @@ export async function getMigrations(
 }
 
 /**
+ * Fix legacy constraints that may exist from previous schema versions
+ */
+async function fixLegacyConstraints(
+  db: Kysely<Database>,
+  dbType: DatabaseType,
+  schema: string = 'public'
+) {
+  // Only handling Postgres for now as it's the primary supported DB with this issue
+  if (dbType === 'postgres') {
+    logger.info(
+      `Auto-migration: Checking for legacy constraints in schema '${schema}'...`
+    );
+
+    // 1. Explicitly drop the known problematic constraint from the error log
+    // The error confirmed the name is "provider_configs_providerId_key"
+    try {
+      await sql`ALTER TABLE ${sql.ref(schema)}."provider_configs" DROP CONSTRAINT IF EXISTS "provider_configs_providerId_key"`.execute(
+        db
+      );
+      // Also try the lowercase version just in case
+      await sql`ALTER TABLE ${sql.ref(schema)}."provider_configs" DROP CONSTRAINT IF EXISTS "provider_configs_providerid_key"`.execute(
+        db
+      );
+    } catch (err) {
+      logger.warn(
+        `Auto-migration: Failed to drop specific legacy constraint: ${err}`
+      );
+    }
+
+    // 2. Generic search for other potential unique constraints on providerId
+    try {
+      // Find unique constraints on provider_configs.providerId
+      const result = await sql<{ conname: string }>`
+        SELECT conname
+        FROM pg_constraint c
+        JOIN pg_namespace n ON n.oid = c.connamespace
+        JOIN pg_class t ON t.oid = c.conrelid
+        WHERE n.nspname = ${schema}
+          AND t.relname = 'provider_configs'
+          AND c.contype = 'u'
+          AND EXISTS (
+            SELECT 1 FROM pg_attribute a 
+            WHERE a.attrelid = c.conrelid 
+            AND a.attnum = ANY(c.conkey) 
+            AND lower(a.attname) = 'providerid'
+          )
+      `.execute(db);
+
+      for (const row of result.rows) {
+        logger.info(
+          `Auto-migration: Removing legacy unique constraint '${row.conname}' from provider_configs`
+        );
+        // Safely drop the constraint
+        await sql`ALTER TABLE ${sql.ref(schema)}."provider_configs" DROP CONSTRAINT ${sql.ref(row.conname)}`.execute(
+          db
+        );
+      }
+    } catch (err) {
+      logger.warn(
+        `Auto-migration: Failed to cleanup legacy constraints: ${err}`
+      );
+    }
+  }
+}
+
+/**
  * Run migrations if needed
  * @param db - Kysely database instance
  * @param dbType - Database type
@@ -459,6 +525,23 @@ export async function runAutoMigrations(
   dbType: DatabaseType,
   options?: MigrationOptions
 ): Promise<{ ran: boolean; tables: string[]; fields: string[] }> {
+  // Resolve schema for fixups
+  let currentSchema = options?.schema || 'public';
+  if (dbType === 'postgres' && !options?.schema) {
+    currentSchema = await getPostgresSchema(db);
+  }
+
+  // Run legacy constraint fixups before or after migrations
+  // Running it here ensures the table exists (if it was just created, it won't have the constraint anyway)
+  // If it existed before, we remove the constraint.
+  try {
+    // Only attempt fixup if table likely exists (we can rely on try-catch too)
+    await fixLegacyConstraints(db, dbType, currentSchema);
+  } catch (error) {
+    // Ignore errors in fixup to prevent blocking startup
+    logger.debug(`Constraint fixup skipped or failed: ${error}`);
+  }
+
   const { toBeCreated, toBeAdded, runMigrations, needsMigration } =
     await getMigrations(db, dbType, options);
 

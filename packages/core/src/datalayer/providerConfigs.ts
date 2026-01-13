@@ -6,12 +6,14 @@ import z from 'zod';
 
 const createProviderConfig = z.object({
   providerId: z.string().min(1),
+  name: z.string().nullable().optional(),
   config: z.record(z.string(), z.unknown()),
   enabled: z.boolean().optional().default(true),
 });
 
 const updateProviderConfig = z.object({
   id: z.uuidv4(),
+  name: z.string().nullable().optional(),
   config: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
 });
@@ -42,13 +44,14 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { providerId, config, enabled } = value.data;
+      const { providerId, name, config, enabled } = value.data;
 
       return db
         .insertInto('provider_configs')
         .values({
           id: randomUUID(),
           providerId,
+          name: name ?? null,
           config: JSON.stringify(config),
           enabled,
           createdAt: new Date().toISOString(),
@@ -64,11 +67,12 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { id, config, enabled } = value.data;
+      const { id, name, config, enabled } = value.data;
 
       const updateData: Record<string, unknown> = {
         updatedAt: new Date().toISOString(),
       };
+      if (name !== undefined) updateData.name = name;
       if (config !== undefined) updateData.config = JSON.stringify(config);
       if (enabled !== undefined) updateData.enabled = enabled;
 
@@ -159,7 +163,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { providerId, config, enabled } = value.data;
+      const { providerId, name, config, enabled } = value.data;
 
       // Check if a config already exists for this provider
       const existing = await db
@@ -173,6 +177,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         return db
           .updateTable('provider_configs')
           .set({
+            name: name ?? existing.name,
             config: JSON.stringify(config),
             enabled,
             updatedAt: new Date().toISOString(),
@@ -188,6 +193,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .values({
           id: randomUUID(),
           providerId,
+          name: name ?? null,
           config: JSON.stringify(config),
           enabled,
           createdAt: new Date().toISOString(),

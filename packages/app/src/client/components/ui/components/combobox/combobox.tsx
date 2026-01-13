@@ -202,11 +202,15 @@ export function Combobox<T = string>({
             <BaseCombobox.List className={styles.comboboxList}>
               {(item: T) => {
                 const hasIcon = Boolean(itemToIcon);
+                const displayText = itemToString
+                  ? itemToString(item)
+                  : String(item);
                 return (
                   <BaseCombobox.Item
-                    key={itemToString ? itemToString(item) : String(item)}
+                    key={displayText}
                     value={item}
                     className={styles.comboboxItem({ withIcon: hasIcon })}
+                    title={displayText}
                   >
                     <BaseCombobox.ItemIndicator
                       className={styles.comboboxItemIndicator({
@@ -227,7 +231,7 @@ export function Combobox<T = string>({
                     <div
                       className={styles.comboboxItemText({ withIcon: hasIcon })}
                     >
-                      {itemToString ? itemToString(item) : String(item)}
+                      {displayText}
                     </div>
                   </BaseCombobox.Item>
                 );
@@ -334,6 +338,7 @@ export function ComboboxMultiple<T = string>({
                     key={key}
                     value={item}
                     className={styles.comboboxItem({ withIcon: hasIcon })}
+                    title={displayValue}
                   >
                     <BaseCombobox.ItemIndicator
                       className={styles.comboboxItemIndicator({

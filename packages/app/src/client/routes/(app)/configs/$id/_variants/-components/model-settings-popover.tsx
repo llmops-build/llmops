@@ -190,7 +190,9 @@ export function ModelSettingsPopover({
   // Convert configured providers to ProviderItem format for Combobox
   const providers: ProviderItem[] =
     configuredProviders?.map((provider) => ({
-      label: provider.name,
+      label: provider.customName
+        ? `${provider.customName} (${provider.name})`
+        : provider.name,
       icon: provider.logo,
       value: provider.id,
     })) || [];

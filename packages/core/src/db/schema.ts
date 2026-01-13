@@ -84,6 +84,7 @@ export const workspaceSettingsSchema = z.object({
 export const providerConfigsSchema = z.object({
   ...baseSchema,
   providerId: z.string(), // e.g., "openai", "anthropic", "openrouter"
+  name: z.string().nullable().optional(), // Optional display name for the provider config
   config: z.record(z.string(), z.unknown()), // JSON config matching provider-configs.ts interfaces
   enabled: z.boolean().default(true), // Toggle without deleting
 });
@@ -212,6 +213,7 @@ export interface WorkspaceSettingsTable extends BaseTable {
 // Provider configs table - stores provider configurations
 export interface ProviderConfigsTable extends BaseTable {
   providerId: string;
+  name: string | null;
   config: ColumnType<Record<string, unknown>, string, string>;
   enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
 }
@@ -435,7 +437,8 @@ export const SCHEMA_METADATA = {
       schema: providerConfigsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
-        providerId: { type: 'text', unique: true },
+        providerId: { type: 'text' },
+        name: { type: 'text', nullable: true },
         config: { type: 'jsonb', default: '{}' },
         enabled: { type: 'boolean', default: true },
         createdAt: { type: 'timestamp', default: 'now()' },
