@@ -1,6 +1,7 @@
 import { GatewayError } from '../errors/GatewayError';
 import { AZURE_OPEN_AI, FIREWORKS_AI } from '../globals';
 import ProviderConfigs from '../providers';
+import { getPortkeyProviderId } from '../providers/providerIdMapping';
 import { endpointStrings, ProviderConfig } from '../providers/types';
 import { Options, Params } from '../types/requestBody';
 
@@ -270,7 +271,7 @@ export const transformToProviderRequest = (
     return params;
   }
 
-  const providerAPIConfig = ProviderConfigs[provider].api;
+  const providerAPIConfig = ProviderConfigs[getPortkeyProviderId(provider)].api;
   if (
     providerAPIConfig.transformToFormData &&
     providerAPIConfig.transformToFormData({ gatewayRequestBody: params })

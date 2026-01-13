@@ -88,6 +88,16 @@ jobs:
           sed -i 's/"@llmops\/sdk": "workspace:\^"/"@llmops\/sdk": "'$TAG'"/' standalone/package.json
           cat standalone/package.json
 
+      - name: Determine if beta release
+        id: check_beta
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" == *"beta"* ]]; then
+            echo "is_beta=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_beta=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -95,7 +105,8 @@ jobs:
           images: ghcr.io/llmops-build/llmops-standalone
           tags: |
             type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=beta,enable=${{ steps.check_beta.outputs.is_beta == 'true' }}
+            type=raw,value=latest,enable=${{ steps.check_beta.outputs.is_beta == 'false' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

@@ -21,6 +21,41 @@ import { endpointStrings } from '../providers/types';
 import { Options, Params, StrategyModes, Targets } from '../types/requestBody';
 import { convertKeysToCamelCase } from '../utils';
 import { retryRequest } from './retryHandler';
+
+/**
+ * Normalizes Azure OpenAI config fields from JSON config format to provider format.
+ * JSON config uses `azure_*` prefix (e.g., `azure_resource_name`) which converts to `azureResourceName`,
+ * but the provider expects `resourceName`, `deploymentId`, etc.
+ * This function recursively normalizes nested targets as well.
+ */
+function normalizeAzureConfig(
+  config: Record<string, any>
+): Record<string, any> {
+  const normalized = { ...config };
+
+  // Map azureResourceName -> resourceName
+  if (normalized.azureResourceName && !normalized.resourceName) {
+    normalized.resourceName = normalized.azureResourceName;
+  }
+  // Map azureDeploymentId -> deploymentId
+  if (normalized.azureDeploymentId && !normalized.deploymentId) {
+    normalized.deploymentId = normalized.azureDeploymentId;
+  }
+  // Map azureApiVersion -> apiVersion
+  if (normalized.azureApiVersion && !normalized.apiVersion) {
+    normalized.apiVersion = normalized.azureApiVersion;
+  }
+
+  // Recursively normalize nested targets
+  if (Array.isArray(normalized.targets)) {
+    normalized.targets = normalized.targets.map((target: Record<string, any>) =>
+      normalizeAzureConfig(target)
+    );
+  }
+
+  return normalized;
+}
+
 import { env } from 'hono/adapter';
 import { afterRequestHookHandler, responseHandler } from './responseHandlers';
 import { HookSpan } from '../middlewares/hooks';
@@ -1087,8 +1122,8 @@ export function constructConfigFromRequestHeaders(
 
       if (parsedConfigJson.provider === AZURE_AI_INFERENCE) {
         parsedConfigJson = {
-          ...parsedConfigJson,
           ...azureAiInferenceConfig,
+          ...parsedConfigJson,
         };
       }
       if (parsedConfigJson.provider === ANTHROPIC) {
@@ -1117,7 +1152,7 @@ export function constructConfigFromRequestHeaders(
         };
       }
     }
-    return convertKeysToCamelCase(parsedConfigJson, [
+    const camelCaseConfig = convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
       'checks',
@@ -1133,6 +1168,8 @@ export function constructConfigFromRequestHeaders(
       'virtualKeyDetails',
       'cb_config',
     ]) as any;
+    // Normalize Azure fields for providers that expect non-prefixed names
+    return normalizeAzureConfig(camelCaseConfig);
   }
 
   return {

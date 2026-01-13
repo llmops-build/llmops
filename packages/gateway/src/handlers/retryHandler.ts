@@ -1,5 +1,102 @@
 import retry from 'async-retry';
 import { MAX_RETRY_LIMIT_MS, POSSIBLE_RETRY_STATUS_HEADERS } from '../globals';
+import { createLogger } from '../shared/utils/logger';
+
+const logger = createLogger('ProviderRequest');
+
+/**
+ * Sanitizes headers by masking sensitive values like API keys and tokens
+ */
+function sanitizeHeaders(
+  headers: HeadersInit | undefined
+): Record<string, string> {
+  if (!headers) return {};
+
+  const sanitized: Record<string, string> = {};
+  const sensitivePatterns =
+    /^(authorization|x-api-key|api-key|x-.*-key|x-.*-token|x-.*-secret|bearer)$/i;
+
+  const headersObj =
+    headers instanceof Headers
+      ? Object.fromEntries([...headers])
+      : Array.isArray(headers)
+        ? Object.fromEntries(headers)
+        : (headers as Record<string, string>);
+
+  for (const [key, value] of Object.entries(headersObj)) {
+    if (sensitivePatterns.test(key)) {
+      // Show first 8 chars and mask the rest
+      sanitized[key] =
+        value.length > 12 ? `${value.substring(0, 8)}...****` : '****';
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Logs the outgoing request to the provider
+ */
+function logProviderRequest(
+  url: string,
+  options: RequestInit,
+  attempt: number
+): void {
+  const sanitizedHeaders = sanitizeHeaders(options.headers);
+
+  let bodyPreview: string | undefined;
+  if (options.body) {
+    if (typeof options.body === 'string') {
+      try {
+        const parsed = JSON.parse(options.body);
+        // Truncate large bodies
+        const bodyStr = JSON.stringify(parsed, null, 2);
+        bodyPreview =
+          bodyStr.length > 2000 ? `${bodyStr.substring(0, 2000)}...` : bodyStr;
+      } catch {
+        bodyPreview =
+          options.body.length > 500
+            ? `${options.body.substring(0, 500)}...`
+            : options.body;
+      }
+    } else if (options.body instanceof FormData) {
+      bodyPreview = '[FormData]';
+    } else if (options.body instanceof ArrayBuffer) {
+      bodyPreview = `[ArrayBuffer: ${options.body.byteLength} bytes]`;
+    } else if (options.body instanceof ReadableStream) {
+      bodyPreview = '[ReadableStream]';
+    } else {
+      bodyPreview = '[Unknown body type]';
+    }
+  }
+
+  logger.debug(`Provider Request (attempt ${attempt})`, {
+    url,
+    method: options.method || 'GET',
+    headers: sanitizedHeaders,
+    body: bodyPreview,
+  });
+}
+
+/**
+ * Logs the provider response
+ */
+function logProviderResponse(
+  url: string,
+  response: Response,
+  attempt: number,
+  durationMs: number
+): void {
+  logger.debug(`Provider Response (attempt ${attempt})`, {
+    url,
+    status: response.status,
+    statusText: response.statusText,
+    durationMs,
+    headers: Object.fromEntries([...response.headers]),
+  });
+}
 
 async function fetchWithTimeout(
   url: string,
@@ -87,6 +184,10 @@ export const retryRequest = async (
     await retry(
       async (bail: any, attempt: number, rateLimiter: any) => {
         try {
+          // Log the outgoing request
+          logProviderRequest(url, options, attempt);
+          const fetchStartTime = Date.now();
+
           let response: Response;
           if (timeout) {
             response = await fetchWithTimeout(
@@ -100,6 +201,11 @@ export const retryRequest = async (
           } else {
             response = await fetch(url, options);
           }
+
+          // Log the response
+          const fetchDuration = Date.now() - fetchStartTime;
+          logProviderResponse(url, response, attempt, fetchDuration);
+
           if (statusCodesToRetry.includes(response.status)) {
             const errorObj: any = new Error(await response.text());
             errorObj.status = response.status;

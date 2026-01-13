@@ -6,6 +6,7 @@ import Providers from '../providers';
 import { Options } from '../types/requestBody';
 import { RealtimeLlmEventParser } from '../services/realtimeLlmEventParser';
 import { WSContext, WSEvents } from 'hono/ws';
+import { getPortkeyProviderId } from '../providers/providerIdMapping';
 
 export async function realTimeHandlerNode(
   c: Context
@@ -15,7 +16,7 @@ export async function realTimeHandlerNode(
     const requestHeaders = Object.fromEntries(c.req.raw.headers);
     const camelCaseConfig = constructConfigFromRequestHeaders(requestHeaders);
 
-    const provider = camelCaseConfig?.provider ?? '';
+    const provider = getPortkeyProviderId(camelCaseConfig?.provider ?? '');
     const apiConfig: ProviderAPIConfig = Providers[provider].api;
     const providerOptions = camelCaseConfig as Options;
     const baseUrl = apiConfig.getBaseURL({
