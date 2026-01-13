@@ -14,6 +14,7 @@ Each variant:
 - Contains model configuration (provider, model, parameters)
 - Automatically creates versions when edited
 - Can be attached to multiple configs
+- Supports Nunjucks/Jinja2 template syntax in system prompts
 
 ## Creating a Variant
 
@@ -36,6 +37,69 @@ When creating or editing a variant, you configure:
 | **Top P**             | Nucleus sampling. Alternative to temperature                      | 0 - 1           |
 | **Frequency Penalty** | Reduces repetition of tokens                                      | -2 - 2          |
 | **Presence Penalty**  | Encourages new topics                                             | -2 - 2          |
+
+## Template Variables
+
+System prompts support **Nunjucks/Jinja2** template syntax, allowing you to create dynamic prompts with variables that are filled at runtime.
+
+### Supported Syntax
+
+| Syntax                    | Description             | Example                                      |
+| ------------------------- | ----------------------- | -------------------------------------------- |
+| `{{ variable }}`          | Variable interpolation  | `{{ user_name }}`                            |
+| `{% for item in items %}` | Loop through arrays     | `{% for tag in tags %}{{ tag }}{% endfor %}` |
+| `{% if condition %}`      | Conditional blocks      | `{% if premium %}Premium user{% endif %}`    |
+| `{# comment #}`           | Comments (not rendered) | `{# TODO: improve this #}`                   |
+
+### Example System Prompt with Templates
+
+```
+You are a {{ role }} assistant for {{ company_name }}.
+
+User Profile:
+- Name: {{ user.name }}
+- Plan: {{ user.plan }}
+
+{% if user.preferences %}
+User Preferences:
+{% for pref in user.preferences %}
+- {{ pref }}
+{% endfor %}
+{% endif %}
+
+Please respond in a {{ tone }} tone.
+```
+
+### Passing Input Variables
+
+When calling the API, pass template variables in the `input` field of your request body:
+
+```bash
+curl -X POST https://your-api.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "x-llmops-config-id: your-config-id" \
+  -H "x-llmops-env-sec: your-env-secret" \
+  -d '{
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "input": {
+      "role": "customer support",
+      "company_name": "Acme Inc",
+      "user": {
+        "name": "John Doe",
+        "plan": "premium",
+        "preferences": ["concise responses", "technical details"]
+      },
+      "tone": "friendly"
+    }
+  }'
+```
+
+### Behavior Notes
+
+- **Missing variables**: If a variable is not provided in `input`, it will be rendered as empty (no error is thrown)
+- **Nested objects**: Access nested properties with dot notation: `{{ user.name }}`
+- **Arrays**: Use `{% for %}` loops to iterate over arrays
+- **Filters**: Nunjucks filters are supported: `{{ name | upper }}`, `{{ items | join(", ") }}`
 
 ## Versioning
 
