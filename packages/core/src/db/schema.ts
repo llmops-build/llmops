@@ -126,6 +126,14 @@ export const llmRequestsSchema = z.object({
   tags: z.record(z.string(), z.string()).default({}), // Custom tags/metadata
 });
 
+// Playgrounds table schema
+export const playgroundsSchema = z.object({
+  ...baseSchema,
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  state: z.record(z.string(), z.unknown()).default({}), // JSON state of the playground
+});
+
 /**
  * Zod inferred types (for runtime validation)
  */
@@ -139,6 +147,7 @@ export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
 export type ProviderConfig = z.infer<typeof providerConfigsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
+export type Playground = z.infer<typeof playgroundsSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -243,6 +252,13 @@ export interface LLMRequestsTable extends BaseTable {
   tags: ColumnType<Record<string, string>, string, string>;
 }
 
+// Playgrounds table
+export interface PlaygroundsTable extends BaseTable {
+  name: string;
+  description: string | null;
+  state: ColumnType<Record<string, unknown>, string, string>;
+}
+
 /**
  * Main Kysely Database interface
  */
@@ -257,6 +273,7 @@ export interface Database {
   workspace_settings: WorkspaceSettingsTable;
   provider_configs: ProviderConfigsTable;
   llm_requests: LLMRequestsTable;
+  playgrounds: PlaygroundsTable;
 }
 
 /**
@@ -492,6 +509,18 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
+    playgrounds: {
+      order: 11,
+      schema: playgroundsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
+        description: { type: 'text', nullable: true },
+        state: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
   },
 } as const;
 
@@ -509,4 +538,5 @@ export const schemas = {
   workspace_settings: workspaceSettingsSchema,
   provider_configs: providerConfigsSchema,
   llm_requests: llmRequestsSchema,
+  playgrounds: playgroundsSchema,
 } as const;

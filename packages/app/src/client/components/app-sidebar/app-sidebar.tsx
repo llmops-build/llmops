@@ -17,6 +17,7 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Play,
   Settings,
   SlidersVertical,
   Sun,
@@ -161,6 +162,12 @@ export function AppSidebar() {
           <Link to="/observability">
             <Icon icon={Telescope} />
             Observability
+          </Link>
+        </SidebarItem>
+        <SidebarItem asChild>
+          <Link to="/playgrounds">
+            <Icon icon={Play} />
+            Playgrounds
           </Link>
         </SidebarItem>
       </SidebarContent>

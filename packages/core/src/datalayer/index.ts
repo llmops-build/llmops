@@ -10,6 +10,7 @@ import { createTargetingRulesDataLayer } from './targetingRules';
 import { createVariantDataLayer } from './variants';
 import { createVariantVersionsDataLayer } from './variantVersions';
 import { createWorkspaceSettingsDataLayer } from './workspaceSettings';
+import { createPlaygroundDataLayer } from './playgrounds';
 
 export { createLLMRequestsDataLayer } from './llmRequests';
 export type { LLMRequestInsert } from './llmRequests';
@@ -28,5 +29,6 @@ export const createDataLayer = async (db: Kysely<Database>) => {
     ...createVariantDataLayer(db),
     ...createVariantVersionsDataLayer(db),
     ...createWorkspaceSettingsDataLayer(db),
+    ...createPlaygroundDataLayer(db),
   };
 };

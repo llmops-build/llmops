@@ -112,9 +112,31 @@ function mergeChatCompletionBody(
   inputVariables?: Record<string, unknown>
 ): Record<string, unknown> {
   // Build messages array: prepend system prompt from variant if present
-  const messages: Array<{ role: string; content: string }> = [];
+  const messages: Array<any> = [];
 
-  if (variantConfig.system_prompt) {
+  if (variantConfig.messages && variantConfig.messages.length > 0) {
+    variantConfig.messages.forEach((msg) => {
+      let content = msg.content;
+      if (
+        typeof content === 'string' &&
+        inputVariables &&
+        Object.keys(inputVariables).length > 0
+      ) {
+        try {
+          content = renderTemplate(content, inputVariables);
+        } catch (error) {
+          console.warn(
+            'Template rendering failed, using original prompt:',
+            error
+          );
+        }
+      }
+      messages.push({
+        ...msg,
+        content,
+      });
+    });
+  } else if (variantConfig.system_prompt) {
     // Render nunjucks template with input variables if provided
     let systemPromptContent = variantConfig.system_prompt;
     if (inputVariables && Object.keys(inputVariables).length > 0) {

@@ -338,6 +338,7 @@ export type ChatCompletionCreateParamsBase = z.infer<
 export const variantJsonDataSchema = z.object({
   // LLMOps-specific fields
   system_prompt: z.string().optional(),
+  messages: z.array(chatCompletionMessageParamSchema).optional(),
 
   // OpenAI-compatible fields
   model: z.string().optional(),

@@ -13,6 +13,7 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as authSetupRouteImport } from './routes/(auth)/setup'
+import { Route as appPlaygroundsRouteImport } from './routes/(app)/playgrounds'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
@@ -60,6 +61,11 @@ const authSetupRoute = authSetupRouteImport.update({
   id: '/(auth)/setup',
   path: '/setup',
   getParentRoute: () => rootRouteImport,
+} as any)
+const appPlaygroundsRoute = appPlaygroundsRouteImport.update({
+  id: '/playgrounds',
+  path: '/playgrounds',
+  getParentRoute: () => appRouteRoute,
 } as any)
 const appEnvironmentsRoute = appEnvironmentsRouteImport.update({
   id: '/environments',
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/playgrounds': typeof appPlaygroundsRoute
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/playgrounds': typeof appPlaygroundsRoute
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
+  '/(app)/playgrounds': typeof appPlaygroundsRoute
   '/(auth)/setup': typeof authSetupRoute
   '/(auth)/signin': typeof authSigninRoute
   '/(app)/': typeof appIndexRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/configs'
     | '/environments'
+    | '/playgrounds'
     | '/setup'
     | '/signin'
     | '/'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
   to:
     | '/configs'
     | '/environments'
+    | '/playgrounds'
     | '/setup'
     | '/signin'
     | '/'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/(app)/settings'
     | '/(app)/configs'
     | '/(app)/environments'
+    | '/(app)/playgrounds'
     | '/(auth)/setup'
     | '/(auth)/signin'
     | '/(app)/'
@@ -425,6 +437,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/setup'
       preLoaderRoute: typeof authSetupRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/(app)/playgrounds': {
+      id: '/(app)/playgrounds'
+      path: '/playgrounds'
+      fullPath: '/playgrounds'
+      preLoaderRoute: typeof appPlaygroundsRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/(app)/environments': {
       id: '/(app)/environments'
@@ -802,6 +821,7 @@ interface appRouteRouteChildren {
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appConfigsRoute: typeof appConfigsRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
+  appPlaygroundsRoute: typeof appPlaygroundsRoute
   appIndexRoute: typeof appIndexRoute
 }
 
@@ -810,6 +830,7 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appConfigsRoute: appConfigsRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
+  appPlaygroundsRoute: appPlaygroundsRoute,
   appIndexRoute: appIndexRoute,
 }
 

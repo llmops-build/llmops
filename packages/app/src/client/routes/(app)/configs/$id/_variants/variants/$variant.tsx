@@ -165,6 +165,14 @@ function RouteComponent() {
           ? (JSON.parse(selectedVersion.jsonData) as Record<string, unknown>)
           : (selectedVersion.jsonData as Record<string, unknown> | null);
 
+      const systemMessage = (jsonData?.messages as any[])?.find(
+        (m: any) => m.role === 'system'
+      );
+      const systemPrompt =
+        (systemMessage?.content as string) ||
+        (jsonData?.system_prompt as string) ||
+        '';
+
       form.reset(
         {
           variant_name: variantData.name || '',
@@ -172,7 +180,7 @@ function RouteComponent() {
           // Prefer model from jsonData, fallback to modelName column for backwards compatibility
           modelName:
             (jsonData?.model as string) || selectedVersion.modelName || '',
-          system_prompt: (jsonData?.system_prompt as string) || '',
+          system_prompt: systemPrompt,
           temperature: jsonData?.temperature as number | undefined,
           maxTokens: jsonData?.max_tokens as number | undefined,
           topP: jsonData?.top_p as number | undefined,
@@ -190,7 +198,12 @@ function RouteComponent() {
 
   const buildJsonData = (data: VariantFormData): Record<string, unknown> => {
     const jsonData: Record<string, unknown> = {
-      system_prompt: data.system_prompt,
+      messages: [
+        {
+          role: 'system',
+          content: data.system_prompt,
+        },
+      ],
       // Store model in jsonData for future use (modelName column will be deprecated)
       model: data.modelName,
     };
