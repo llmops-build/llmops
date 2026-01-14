@@ -292,7 +292,8 @@ export function createCostTrackingMiddleware(
 
     // Try to determine provider from llmops config header
     let provider = 'unknown';
-    const llmopsConfigHeader = c.req.header('x-llmops-config');
+    const llmopsConfigHeader =
+      c.req.header('x-llmops-config') || c.req.header('x-llmops-prompt');
     if (llmopsConfigHeader) {
       try {
         const llmopsConfig = JSON.parse(llmopsConfigHeader);

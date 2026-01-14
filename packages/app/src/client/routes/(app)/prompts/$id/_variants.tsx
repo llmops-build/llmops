@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/(app)/configs/$id/_variants')({
+export const Route = createFileRoute('/(app)/prompts/$id/_variants')({
   component: RouteComponent,
   staticData: {
     customData: {

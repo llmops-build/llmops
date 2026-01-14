@@ -18,7 +18,7 @@ const UpdateOrCreateConfigName = ({
     <UpdateOrCreateName
       id={id}
       entity={config}
-      placeholder="Config Name"
+      placeholder="Prompt Name"
       onCreate={createConfig}
       onUpdate={updateConfigName}
       disabled={disabled}

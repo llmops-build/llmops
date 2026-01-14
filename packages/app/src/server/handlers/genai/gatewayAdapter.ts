@@ -420,6 +420,8 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         // Clone headers from the original request
         const newHeaders = new Headers(c.req.raw.headers);
         newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
+        // Add x-llmops-prompt for backward compatibility
+        newHeaders.set('x-llmops-prompt', JSON.stringify(portkeyConfig));
 
         // Create a completely new Request object with the merged body
         // This is the proper way to replace request body in Hono
@@ -444,6 +446,8 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       } else {
         // For non-chat requests, just set the header
         c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
+        // Add x-llmops-prompt for backward compatibility
+        c.req.raw.headers.set('x-llmops-prompt', JSON.stringify(portkeyConfig));
       }
 
       // Store variant config in context for reference

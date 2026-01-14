@@ -15,8 +15,8 @@ import {
 } from './-components/twin-split.css';
 import { gridElement, workingArea } from './-components/area.css';
 import { Icon } from '@client/components/icons';
-import { ChevronRight, Columns2, Plus, SlidersVertical } from 'lucide-react';
-import { ConfigsDataTable } from './configs/-components/configs-data-table';
+import { ChevronRight, Columns2, MessageSquare, Plus } from 'lucide-react';
+import { ConfigsDataTable } from './prompts/-components/configs-data-table';
 import { useEffect } from 'react';
 import { Breadcrumbs, Button, Header } from '@ui';
 import {
@@ -26,15 +26,15 @@ import {
   headerStyle,
 } from './-components/_layout.css';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
-import { headerStyles } from './configs/-components/configs.css';
-import ConfigsHeader from './configs/-components/configs-header';
+import { headerStyles } from './prompts/-components/configs.css';
+import ConfigsHeader from './prompts/-components/configs-header';
 
-export const Route = createFileRoute('/(app)/configs')({
+export const Route = createFileRoute('/(app)/prompts')({
   component: RouteComponent,
   staticData: {
     customData: {
-      title: 'Configs',
-      icon: <Icon icon={SlidersVertical} />,
+      title: 'Prompts',
+      icon: <Icon icon={MessageSquare} />,
     },
   },
 });
@@ -72,7 +72,7 @@ function RouteComponent() {
     });
 
   const handleNavigateToNew = () => {
-    navigate({ to: '/configs/$id', params: { id: 'new' } });
+    navigate({ to: '/prompts/$id', params: { id: 'new' } });
   };
 
   useEffect(() => {
@@ -103,7 +103,7 @@ function RouteComponent() {
         <div className={headerGroup}>
           <Button variant="outline" scheme="gray" onClick={handleNavigateToNew}>
             <Icon icon={Plus} className={chevronStyle} />
-            New Config
+            New Prompt
           </Button>
         </div>
       </Header>

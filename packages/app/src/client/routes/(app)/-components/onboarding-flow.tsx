@@ -119,7 +119,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
   });
 
   const handleSkipConfig = () => {
-    navigate({ to: '/configs/$id', params: { id: 'new' } });
+    navigate({ to: '/prompts/$id', params: { id: 'new' } });
   };
 
   const isProviderFormValid = () => {
@@ -293,10 +293,10 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
           <div className={styles.onboardingStepContent}>
             <div className={styles.onboardingStepHeader}>
               <h2 className={styles.onboardingStepTitle}>
-                Create your first config
+                Create your first prompt
               </h2>
               <p className={styles.onboardingStepSubtitle}>
-                Configs let you manage prompts and model configurations for
+                Prompts let you manage prompts and model configurations for
                 different environments.
               </p>
             </div>
@@ -309,7 +309,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                 <div className={styles.onboardingForm}>
                   <div className={styles.onboardingField}>
                     <label className={styles.onboardingFieldLabel}>
-                      Config Name{' '}
+                      Prompt Name{' '}
                       <span style={{ color: 'var(--error9)' }}>*</span>
                     </label>
                     <input
@@ -319,7 +319,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                       placeholder="Coding Agent, Audit Agent, etc."
                     />
                     <span className={styles.onboardingFieldDescription}>
-                      A unique name to identify this configuration.
+                      A unique name to identify this prompt.
                     </span>
                   </div>
                 </div>
@@ -345,7 +345,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                         Creating...
                       </>
                     ) : (
-                      'Create Config'
+                      'Create Prompt'
                     )}
                   </button>
                 </div>
@@ -360,7 +360,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                   </div>
                   <div className={styles.onboardingSuccessContent}>
                     <p className={styles.onboardingSuccessTitle}>
-                      Config "{configName}" created successfully
+                      Prompt "{configName}" created successfully
                     </p>
                     <p className={styles.onboardingSuccessSubtitle}>
                       You can now start configuring model variants and routing

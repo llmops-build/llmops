@@ -13,34 +13,34 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as authSetupRouteImport } from './routes/(auth)/setup'
+import { Route as appPromptsRouteImport } from './routes/(app)/prompts'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
-import { Route as appConfigsRouteImport } from './routes/(app)/configs'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
 import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
 import { Route as appSettingsIndexRouteImport } from './routes/(app)/settings/index'
 import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index'
 import { Route as appSettingsSettingsRouteImport } from './routes/(app)/settings/_settings'
 import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
+import { Route as appPromptsIdRouteRouteImport } from './routes/(app)/prompts/$id/route'
 import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(app)/environments/$environment/route'
-import { Route as appConfigsIdRouteRouteImport } from './routes/(app)/configs/$id/route'
+import { Route as appPromptsIdIndexRouteImport } from './routes/(app)/prompts/$id/index'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
-import { Route as appConfigsIdIndexRouteImport } from './routes/(app)/configs/$id/index'
 import { Route as appSettingsSettingsWorkspaceProvidersRouteImport } from './routes/(app)/settings/_settings/workspace-providers'
 import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
 import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
+import { Route as appPromptsIdVariantsRouteImport } from './routes/(app)/prompts/$id/_variants'
+import { Route as appPromptsIdTabsRouteImport } from './routes/(app)/prompts/$id/_tabs'
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
 import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
 import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
 import { Route as appEnvironmentsEnvironmentTabsRouteImport } from './routes/(app)/environments/$environment/_tabs'
-import { Route as appConfigsIdVariantsRouteImport } from './routes/(app)/configs/$id/_variants'
-import { Route as appConfigsIdTabsRouteImport } from './routes/(app)/configs/$id/_tabs'
+import { Route as appPromptsIdTabsVariantsRouteImport } from './routes/(app)/prompts/$id/_tabs/variants'
+import { Route as appPromptsIdTabsTargetingRouteImport } from './routes/(app)/prompts/$id/_tabs/targeting'
+import { Route as appPromptsIdTabsSettingsRouteImport } from './routes/(app)/prompts/$id/_tabs/settings'
 import { Route as appEnvironmentsEnvironmentTabsSettingsRouteImport } from './routes/(app)/environments/$environment/_tabs/settings'
 import { Route as appEnvironmentsEnvironmentTabsSecretsRouteImport } from './routes/(app)/environments/$environment/_tabs/secrets'
-import { Route as appConfigsIdTabsVariantsRouteImport } from './routes/(app)/configs/$id/_tabs/variants'
-import { Route as appConfigsIdTabsTargetingRouteImport } from './routes/(app)/configs/$id/_tabs/targeting'
-import { Route as appConfigsIdTabsSettingsRouteImport } from './routes/(app)/configs/$id/_tabs/settings'
-import { Route as appConfigsIdVariantsVariantsVariantRouteImport } from './routes/(app)/configs/$id/_variants/variants/$variant'
-import { Route as appConfigsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/configs/$id/_targeting/targeting/$environment'
+import { Route as appPromptsIdVariantsVariantsVariantRouteImport } from './routes/(app)/prompts/$id/_variants/variants/$variant'
+import { Route as appPromptsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/prompts/$id/_targeting/targeting/$environment'
 
 const appRouteRoute = appRouteRouteImport.update({
   id: '/(app)',
@@ -61,14 +61,14 @@ const authSetupRoute = authSetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appPromptsRoute = appPromptsRouteImport.update({
+  id: '/prompts',
+  path: '/prompts',
+  getParentRoute: () => appRouteRoute,
+} as any)
 const appEnvironmentsRoute = appEnvironmentsRouteImport.update({
   id: '/environments',
   path: '/environments',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const appConfigsRoute = appConfigsRouteImport.update({
-  id: '/configs',
-  path: '/configs',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appSettingsRouteRoute = appSettingsRouteRouteImport.update({
@@ -100,16 +100,21 @@ const appObservabilityObservabilityRoute =
     id: '/_observability',
     getParentRoute: () => appObservabilityRouteRoute,
   } as any)
+const appPromptsIdRouteRoute = appPromptsIdRouteRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => appPromptsRoute,
+} as any)
 const appEnvironmentsEnvironmentRouteRoute =
   appEnvironmentsEnvironmentRouteRouteImport.update({
     id: '/$environment',
     path: '/$environment',
     getParentRoute: () => appEnvironmentsRoute,
   } as any)
-const appConfigsIdRouteRoute = appConfigsIdRouteRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => appConfigsRoute,
+const appPromptsIdIndexRoute = appPromptsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appPromptsIdRouteRoute,
 } as any)
 const appEnvironmentsEnvironmentIndexRoute =
   appEnvironmentsEnvironmentIndexRouteImport.update({
@@ -117,11 +122,6 @@ const appEnvironmentsEnvironmentIndexRoute =
     path: '/',
     getParentRoute: () => appEnvironmentsEnvironmentRouteRoute,
   } as any)
-const appConfigsIdIndexRoute = appConfigsIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => appConfigsIdRouteRoute,
-} as any)
 const appSettingsSettingsWorkspaceProvidersRoute =
   appSettingsSettingsWorkspaceProvidersRouteImport.update({
     id: '/workspace-providers',
@@ -140,6 +140,14 @@ const appSettingsSettingsUserProfileRoute =
     path: '/user-profile',
     getParentRoute: () => appSettingsSettingsRoute,
   } as any)
+const appPromptsIdVariantsRoute = appPromptsIdVariantsRouteImport.update({
+  id: '/_variants',
+  getParentRoute: () => appPromptsIdRouteRoute,
+} as any)
+const appPromptsIdTabsRoute = appPromptsIdTabsRouteImport.update({
+  id: '/_tabs',
+  getParentRoute: () => appPromptsIdRouteRoute,
+} as any)
 const appObservabilityObservabilityRequestsRoute =
   appObservabilityObservabilityRequestsRouteImport.update({
     id: '/requests',
@@ -163,14 +171,24 @@ const appEnvironmentsEnvironmentTabsRoute =
     id: '/_tabs',
     getParentRoute: () => appEnvironmentsEnvironmentRouteRoute,
   } as any)
-const appConfigsIdVariantsRoute = appConfigsIdVariantsRouteImport.update({
-  id: '/_variants',
-  getParentRoute: () => appConfigsIdRouteRoute,
-} as any)
-const appConfigsIdTabsRoute = appConfigsIdTabsRouteImport.update({
-  id: '/_tabs',
-  getParentRoute: () => appConfigsIdRouteRoute,
-} as any)
+const appPromptsIdTabsVariantsRoute =
+  appPromptsIdTabsVariantsRouteImport.update({
+    id: '/variants',
+    path: '/variants',
+    getParentRoute: () => appPromptsIdTabsRoute,
+  } as any)
+const appPromptsIdTabsTargetingRoute =
+  appPromptsIdTabsTargetingRouteImport.update({
+    id: '/targeting',
+    path: '/targeting',
+    getParentRoute: () => appPromptsIdTabsRoute,
+  } as any)
+const appPromptsIdTabsSettingsRoute =
+  appPromptsIdTabsSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => appPromptsIdTabsRoute,
+  } as any)
 const appEnvironmentsEnvironmentTabsSettingsRoute =
   appEnvironmentsEnvironmentTabsSettingsRouteImport.update({
     id: '/settings',
@@ -183,47 +201,29 @@ const appEnvironmentsEnvironmentTabsSecretsRoute =
     path: '/secrets',
     getParentRoute: () => appEnvironmentsEnvironmentTabsRoute,
   } as any)
-const appConfigsIdTabsVariantsRoute =
-  appConfigsIdTabsVariantsRouteImport.update({
-    id: '/variants',
-    path: '/variants',
-    getParentRoute: () => appConfigsIdTabsRoute,
-  } as any)
-const appConfigsIdTabsTargetingRoute =
-  appConfigsIdTabsTargetingRouteImport.update({
-    id: '/targeting',
-    path: '/targeting',
-    getParentRoute: () => appConfigsIdTabsRoute,
-  } as any)
-const appConfigsIdTabsSettingsRoute =
-  appConfigsIdTabsSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => appConfigsIdTabsRoute,
-  } as any)
-const appConfigsIdVariantsVariantsVariantRoute =
-  appConfigsIdVariantsVariantsVariantRouteImport.update({
+const appPromptsIdVariantsVariantsVariantRoute =
+  appPromptsIdVariantsVariantsVariantRouteImport.update({
     id: '/variants/$variant',
     path: '/variants/$variant',
-    getParentRoute: () => appConfigsIdVariantsRoute,
+    getParentRoute: () => appPromptsIdVariantsRoute,
   } as any)
-const appConfigsIdTargetingTargetingEnvironmentRoute =
-  appConfigsIdTargetingTargetingEnvironmentRouteImport.update({
+const appPromptsIdTargetingTargetingEnvironmentRoute =
+  appPromptsIdTargetingTargetingEnvironmentRouteImport.update({
     id: '/_targeting/targeting/$environment',
     path: '/targeting/$environment',
-    getParentRoute: () => appConfigsIdRouteRoute,
+    getParentRoute: () => appPromptsIdRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/observability': typeof appObservabilityObservabilityRouteWithChildren
   '/settings': typeof appSettingsSettingsRouteWithChildren
-  '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/prompts': typeof appPromptsRouteWithChildren
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
-  '/configs/$id': typeof appConfigsIdVariantsRouteWithChildren
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/prompts/$id': typeof appPromptsIdVariantsRouteWithChildren
   '/observability/': typeof appObservabilityIndexRoute
   '/settings/': typeof appSettingsIndexRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
@@ -232,87 +232,87 @@ export interface FileRoutesByFullPath {
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
-  '/configs/$id/': typeof appConfigsIdIndexRoute
   '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
-  '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
-  '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
-  '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
+  '/prompts/$id/': typeof appPromptsIdIndexRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
-  '/configs/$id/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
-  '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
+  '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
+  '/prompts/$id/targeting': typeof appPromptsIdTabsTargetingRoute
+  '/prompts/$id/variants': typeof appPromptsIdTabsVariantsRoute
+  '/prompts/$id/targeting/$environment': typeof appPromptsIdTargetingTargetingEnvironmentRoute
+  '/prompts/$id/variants/$variant': typeof appPromptsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesByTo {
-  '/configs': typeof appConfigsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/prompts': typeof appPromptsRouteWithChildren
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
   '/observability': typeof appObservabilityIndexRoute
   '/settings': typeof appSettingsIndexRoute
-  '/configs/$id': typeof appConfigsIdIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/prompts/$id': typeof appPromptsIdIndexRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
-  '/configs/$id/settings': typeof appConfigsIdTabsSettingsRoute
-  '/configs/$id/targeting': typeof appConfigsIdTabsTargetingRoute
-  '/configs/$id/variants': typeof appConfigsIdTabsVariantsRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
-  '/configs/$id/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
-  '/configs/$id/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
+  '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
+  '/prompts/$id/targeting': typeof appPromptsIdTabsTargetingRoute
+  '/prompts/$id/variants': typeof appPromptsIdTabsVariantsRoute
+  '/prompts/$id/targeting/$environment': typeof appPromptsIdTargetingTargetingEnvironmentRoute
+  '/prompts/$id/variants/$variant': typeof appPromptsIdVariantsVariantsVariantRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)': typeof appRouteRouteWithChildren
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
-  '/(app)/configs': typeof appConfigsRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
+  '/(app)/prompts': typeof appPromptsRouteWithChildren
   '/(auth)/setup': typeof authSetupRoute
   '/(auth)/signin': typeof authSigninRoute
   '/(app)/': typeof appIndexRoute
-  '/(app)/configs/$id': typeof appConfigsIdRouteRouteWithChildren
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
+  '/(app)/prompts/$id': typeof appPromptsIdRouteRouteWithChildren
   '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
   '/(app)/settings/_settings': typeof appSettingsSettingsRouteWithChildren
   '/(app)/observability/': typeof appObservabilityIndexRoute
   '/(app)/settings/': typeof appSettingsIndexRoute
-  '/(app)/configs/$id/_tabs': typeof appConfigsIdTabsRouteWithChildren
-  '/(app)/configs/$id/_variants': typeof appConfigsIdVariantsRouteWithChildren
   '/(app)/environments/$environment/_tabs': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
   '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/(app)/prompts/$id/_tabs': typeof appPromptsIdTabsRouteWithChildren
+  '/(app)/prompts/$id/_variants': typeof appPromptsIdVariantsRouteWithChildren
   '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/(app)/settings/_settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
-  '/(app)/configs/$id/': typeof appConfigsIdIndexRoute
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
-  '/(app)/configs/$id/_tabs/settings': typeof appConfigsIdTabsSettingsRoute
-  '/(app)/configs/$id/_tabs/targeting': typeof appConfigsIdTabsTargetingRoute
-  '/(app)/configs/$id/_tabs/variants': typeof appConfigsIdTabsVariantsRoute
+  '/(app)/prompts/$id/': typeof appPromptsIdIndexRoute
   '/(app)/environments/$environment/_tabs/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/(app)/environments/$environment/_tabs/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
-  '/(app)/configs/$id/_targeting/targeting/$environment': typeof appConfigsIdTargetingTargetingEnvironmentRoute
-  '/(app)/configs/$id/_variants/variants/$variant': typeof appConfigsIdVariantsVariantsVariantRoute
+  '/(app)/prompts/$id/_tabs/settings': typeof appPromptsIdTabsSettingsRoute
+  '/(app)/prompts/$id/_tabs/targeting': typeof appPromptsIdTabsTargetingRoute
+  '/(app)/prompts/$id/_tabs/variants': typeof appPromptsIdTabsVariantsRoute
+  '/(app)/prompts/$id/_targeting/targeting/$environment': typeof appPromptsIdTargetingTargetingEnvironmentRoute
+  '/(app)/prompts/$id/_variants/variants/$variant': typeof appPromptsIdVariantsVariantsVariantRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/observability'
     | '/settings'
-    | '/configs'
     | '/environments'
+    | '/prompts'
     | '/setup'
     | '/signin'
     | '/'
-    | '/configs/$id'
     | '/environments/$environment'
+    | '/prompts/$id'
     | '/observability/'
     | '/settings/'
     | '/observability/costs'
@@ -321,73 +321,73 @@ export interface FileRouteTypes {
     | '/settings/user-profile'
     | '/settings/workspace-general'
     | '/settings/workspace-providers'
-    | '/configs/$id/'
     | '/environments/$environment/'
-    | '/configs/$id/settings'
-    | '/configs/$id/targeting'
-    | '/configs/$id/variants'
+    | '/prompts/$id/'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
-    | '/configs/$id/targeting/$environment'
-    | '/configs/$id/variants/$variant'
+    | '/prompts/$id/settings'
+    | '/prompts/$id/targeting'
+    | '/prompts/$id/variants'
+    | '/prompts/$id/targeting/$environment'
+    | '/prompts/$id/variants/$variant'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/configs'
     | '/environments'
+    | '/prompts'
     | '/setup'
     | '/signin'
     | '/'
     | '/observability'
     | '/settings'
-    | '/configs/$id'
     | '/environments/$environment'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
+    | '/prompts/$id'
     | '/settings/user-profile'
     | '/settings/workspace-general'
     | '/settings/workspace-providers'
-    | '/configs/$id/settings'
-    | '/configs/$id/targeting'
-    | '/configs/$id/variants'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
-    | '/configs/$id/targeting/$environment'
-    | '/configs/$id/variants/$variant'
+    | '/prompts/$id/settings'
+    | '/prompts/$id/targeting'
+    | '/prompts/$id/variants'
+    | '/prompts/$id/targeting/$environment'
+    | '/prompts/$id/variants/$variant'
   id:
     | '__root__'
     | '/(app)'
     | '/(app)/observability'
     | '/(app)/settings'
-    | '/(app)/configs'
     | '/(app)/environments'
+    | '/(app)/prompts'
     | '/(auth)/setup'
     | '/(auth)/signin'
     | '/(app)/'
-    | '/(app)/configs/$id'
     | '/(app)/environments/$environment'
+    | '/(app)/prompts/$id'
     | '/(app)/observability/_observability'
     | '/(app)/settings/_settings'
     | '/(app)/observability/'
     | '/(app)/settings/'
-    | '/(app)/configs/$id/_tabs'
-    | '/(app)/configs/$id/_variants'
     | '/(app)/environments/$environment/_tabs'
     | '/(app)/observability/_observability/costs'
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
+    | '/(app)/prompts/$id/_tabs'
+    | '/(app)/prompts/$id/_variants'
     | '/(app)/settings/_settings/user-profile'
     | '/(app)/settings/_settings/workspace-general'
     | '/(app)/settings/_settings/workspace-providers'
-    | '/(app)/configs/$id/'
     | '/(app)/environments/$environment/'
-    | '/(app)/configs/$id/_tabs/settings'
-    | '/(app)/configs/$id/_tabs/targeting'
-    | '/(app)/configs/$id/_tabs/variants'
+    | '/(app)/prompts/$id/'
     | '/(app)/environments/$environment/_tabs/secrets'
     | '/(app)/environments/$environment/_tabs/settings'
-    | '/(app)/configs/$id/_targeting/targeting/$environment'
-    | '/(app)/configs/$id/_variants/variants/$variant'
+    | '/(app)/prompts/$id/_tabs/settings'
+    | '/(app)/prompts/$id/_tabs/targeting'
+    | '/(app)/prompts/$id/_tabs/variants'
+    | '/(app)/prompts/$id/_targeting/targeting/$environment'
+    | '/(app)/prompts/$id/_variants/variants/$variant'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -426,18 +426,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/prompts': {
+      id: '/(app)/prompts'
+      path: '/prompts'
+      fullPath: '/prompts'
+      preLoaderRoute: typeof appPromptsRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/environments': {
       id: '/(app)/environments'
       path: '/environments'
       fullPath: '/environments'
       preLoaderRoute: typeof appEnvironmentsRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/(app)/configs': {
-      id: '/(app)/configs'
-      path: '/configs'
-      fullPath: '/configs'
-      preLoaderRoute: typeof appConfigsRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/(app)/settings': {
@@ -482,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appObservabilityObservabilityRouteImport
       parentRoute: typeof appObservabilityRouteRoute
     }
+    '/(app)/prompts/$id': {
+      id: '/(app)/prompts/$id'
+      path: '/$id'
+      fullPath: '/prompts/$id'
+      preLoaderRoute: typeof appPromptsIdRouteRouteImport
+      parentRoute: typeof appPromptsRoute
+    }
     '/(app)/environments/$environment': {
       id: '/(app)/environments/$environment'
       path: '/$environment'
@@ -489,12 +496,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appEnvironmentsEnvironmentRouteRouteImport
       parentRoute: typeof appEnvironmentsRoute
     }
-    '/(app)/configs/$id': {
-      id: '/(app)/configs/$id'
-      path: '/$id'
-      fullPath: '/configs/$id'
-      preLoaderRoute: typeof appConfigsIdRouteRouteImport
-      parentRoute: typeof appConfigsRoute
+    '/(app)/prompts/$id/': {
+      id: '/(app)/prompts/$id/'
+      path: '/'
+      fullPath: '/prompts/$id/'
+      preLoaderRoute: typeof appPromptsIdIndexRouteImport
+      parentRoute: typeof appPromptsIdRouteRoute
     }
     '/(app)/environments/$environment/': {
       id: '/(app)/environments/$environment/'
@@ -502,13 +509,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/environments/$environment/'
       preLoaderRoute: typeof appEnvironmentsEnvironmentIndexRouteImport
       parentRoute: typeof appEnvironmentsEnvironmentRouteRoute
-    }
-    '/(app)/configs/$id/': {
-      id: '/(app)/configs/$id/'
-      path: '/'
-      fullPath: '/configs/$id/'
-      preLoaderRoute: typeof appConfigsIdIndexRouteImport
-      parentRoute: typeof appConfigsIdRouteRoute
     }
     '/(app)/settings/_settings/workspace-providers': {
       id: '/(app)/settings/_settings/workspace-providers'
@@ -530,6 +530,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/user-profile'
       preLoaderRoute: typeof appSettingsSettingsUserProfileRouteImport
       parentRoute: typeof appSettingsSettingsRoute
+    }
+    '/(app)/prompts/$id/_variants': {
+      id: '/(app)/prompts/$id/_variants'
+      path: ''
+      fullPath: '/prompts/$id'
+      preLoaderRoute: typeof appPromptsIdVariantsRouteImport
+      parentRoute: typeof appPromptsIdRouteRoute
+    }
+    '/(app)/prompts/$id/_tabs': {
+      id: '/(app)/prompts/$id/_tabs'
+      path: ''
+      fullPath: '/prompts/$id'
+      preLoaderRoute: typeof appPromptsIdTabsRouteImport
+      parentRoute: typeof appPromptsIdRouteRoute
     }
     '/(app)/observability/_observability/requests': {
       id: '/(app)/observability/_observability/requests'
@@ -559,19 +573,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appEnvironmentsEnvironmentTabsRouteImport
       parentRoute: typeof appEnvironmentsEnvironmentRouteRoute
     }
-    '/(app)/configs/$id/_variants': {
-      id: '/(app)/configs/$id/_variants'
-      path: ''
-      fullPath: '/configs/$id'
-      preLoaderRoute: typeof appConfigsIdVariantsRouteImport
-      parentRoute: typeof appConfigsIdRouteRoute
+    '/(app)/prompts/$id/_tabs/variants': {
+      id: '/(app)/prompts/$id/_tabs/variants'
+      path: '/variants'
+      fullPath: '/prompts/$id/variants'
+      preLoaderRoute: typeof appPromptsIdTabsVariantsRouteImport
+      parentRoute: typeof appPromptsIdTabsRoute
     }
-    '/(app)/configs/$id/_tabs': {
-      id: '/(app)/configs/$id/_tabs'
-      path: ''
-      fullPath: '/configs/$id'
-      preLoaderRoute: typeof appConfigsIdTabsRouteImport
-      parentRoute: typeof appConfigsIdRouteRoute
+    '/(app)/prompts/$id/_tabs/targeting': {
+      id: '/(app)/prompts/$id/_tabs/targeting'
+      path: '/targeting'
+      fullPath: '/prompts/$id/targeting'
+      preLoaderRoute: typeof appPromptsIdTabsTargetingRouteImport
+      parentRoute: typeof appPromptsIdTabsRoute
+    }
+    '/(app)/prompts/$id/_tabs/settings': {
+      id: '/(app)/prompts/$id/_tabs/settings'
+      path: '/settings'
+      fullPath: '/prompts/$id/settings'
+      preLoaderRoute: typeof appPromptsIdTabsSettingsRouteImport
+      parentRoute: typeof appPromptsIdTabsRoute
     }
     '/(app)/environments/$environment/_tabs/settings': {
       id: '/(app)/environments/$environment/_tabs/settings'
@@ -587,40 +608,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appEnvironmentsEnvironmentTabsSecretsRouteImport
       parentRoute: typeof appEnvironmentsEnvironmentTabsRoute
     }
-    '/(app)/configs/$id/_tabs/variants': {
-      id: '/(app)/configs/$id/_tabs/variants'
-      path: '/variants'
-      fullPath: '/configs/$id/variants'
-      preLoaderRoute: typeof appConfigsIdTabsVariantsRouteImport
-      parentRoute: typeof appConfigsIdTabsRoute
-    }
-    '/(app)/configs/$id/_tabs/targeting': {
-      id: '/(app)/configs/$id/_tabs/targeting'
-      path: '/targeting'
-      fullPath: '/configs/$id/targeting'
-      preLoaderRoute: typeof appConfigsIdTabsTargetingRouteImport
-      parentRoute: typeof appConfigsIdTabsRoute
-    }
-    '/(app)/configs/$id/_tabs/settings': {
-      id: '/(app)/configs/$id/_tabs/settings'
-      path: '/settings'
-      fullPath: '/configs/$id/settings'
-      preLoaderRoute: typeof appConfigsIdTabsSettingsRouteImport
-      parentRoute: typeof appConfigsIdTabsRoute
-    }
-    '/(app)/configs/$id/_variants/variants/$variant': {
-      id: '/(app)/configs/$id/_variants/variants/$variant'
+    '/(app)/prompts/$id/_variants/variants/$variant': {
+      id: '/(app)/prompts/$id/_variants/variants/$variant'
       path: '/variants/$variant'
-      fullPath: '/configs/$id/variants/$variant'
-      preLoaderRoute: typeof appConfigsIdVariantsVariantsVariantRouteImport
-      parentRoute: typeof appConfigsIdVariantsRoute
+      fullPath: '/prompts/$id/variants/$variant'
+      preLoaderRoute: typeof appPromptsIdVariantsVariantsVariantRouteImport
+      parentRoute: typeof appPromptsIdVariantsRoute
     }
-    '/(app)/configs/$id/_targeting/targeting/$environment': {
-      id: '/(app)/configs/$id/_targeting/targeting/$environment'
+    '/(app)/prompts/$id/_targeting/targeting/$environment': {
+      id: '/(app)/prompts/$id/_targeting/targeting/$environment'
       path: '/targeting/$environment'
-      fullPath: '/configs/$id/targeting/$environment'
-      preLoaderRoute: typeof appConfigsIdTargetingTargetingEnvironmentRouteImport
-      parentRoute: typeof appConfigsIdRouteRoute
+      fullPath: '/prompts/$id/targeting/$environment'
+      preLoaderRoute: typeof appPromptsIdTargetingTargetingEnvironmentRouteImport
+      parentRoute: typeof appPromptsIdRouteRoute
     }
   }
 }
@@ -692,63 +692,6 @@ const appSettingsRouteRouteChildren: appSettingsRouteRouteChildren = {
 const appSettingsRouteRouteWithChildren =
   appSettingsRouteRoute._addFileChildren(appSettingsRouteRouteChildren)
 
-interface appConfigsIdTabsRouteChildren {
-  appConfigsIdTabsSettingsRoute: typeof appConfigsIdTabsSettingsRoute
-  appConfigsIdTabsTargetingRoute: typeof appConfigsIdTabsTargetingRoute
-  appConfigsIdTabsVariantsRoute: typeof appConfigsIdTabsVariantsRoute
-}
-
-const appConfigsIdTabsRouteChildren: appConfigsIdTabsRouteChildren = {
-  appConfigsIdTabsSettingsRoute: appConfigsIdTabsSettingsRoute,
-  appConfigsIdTabsTargetingRoute: appConfigsIdTabsTargetingRoute,
-  appConfigsIdTabsVariantsRoute: appConfigsIdTabsVariantsRoute,
-}
-
-const appConfigsIdTabsRouteWithChildren =
-  appConfigsIdTabsRoute._addFileChildren(appConfigsIdTabsRouteChildren)
-
-interface appConfigsIdVariantsRouteChildren {
-  appConfigsIdVariantsVariantsVariantRoute: typeof appConfigsIdVariantsVariantsVariantRoute
-}
-
-const appConfigsIdVariantsRouteChildren: appConfigsIdVariantsRouteChildren = {
-  appConfigsIdVariantsVariantsVariantRoute:
-    appConfigsIdVariantsVariantsVariantRoute,
-}
-
-const appConfigsIdVariantsRouteWithChildren =
-  appConfigsIdVariantsRoute._addFileChildren(appConfigsIdVariantsRouteChildren)
-
-interface appConfigsIdRouteRouteChildren {
-  appConfigsIdTabsRoute: typeof appConfigsIdTabsRouteWithChildren
-  appConfigsIdVariantsRoute: typeof appConfigsIdVariantsRouteWithChildren
-  appConfigsIdIndexRoute: typeof appConfigsIdIndexRoute
-  appConfigsIdTargetingTargetingEnvironmentRoute: typeof appConfigsIdTargetingTargetingEnvironmentRoute
-}
-
-const appConfigsIdRouteRouteChildren: appConfigsIdRouteRouteChildren = {
-  appConfigsIdTabsRoute: appConfigsIdTabsRouteWithChildren,
-  appConfigsIdVariantsRoute: appConfigsIdVariantsRouteWithChildren,
-  appConfigsIdIndexRoute: appConfigsIdIndexRoute,
-  appConfigsIdTargetingTargetingEnvironmentRoute:
-    appConfigsIdTargetingTargetingEnvironmentRoute,
-}
-
-const appConfigsIdRouteRouteWithChildren =
-  appConfigsIdRouteRoute._addFileChildren(appConfigsIdRouteRouteChildren)
-
-interface appConfigsRouteChildren {
-  appConfigsIdRouteRoute: typeof appConfigsIdRouteRouteWithChildren
-}
-
-const appConfigsRouteChildren: appConfigsRouteChildren = {
-  appConfigsIdRouteRoute: appConfigsIdRouteRouteWithChildren,
-}
-
-const appConfigsRouteWithChildren = appConfigsRoute._addFileChildren(
-  appConfigsRouteChildren,
-)
-
 interface appEnvironmentsEnvironmentTabsRouteChildren {
   appEnvironmentsEnvironmentTabsSecretsRoute: typeof appEnvironmentsEnvironmentTabsSecretsRoute
   appEnvironmentsEnvironmentTabsSettingsRoute: typeof appEnvironmentsEnvironmentTabsSettingsRoute
@@ -797,19 +740,76 @@ const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(
   appEnvironmentsRouteChildren,
 )
 
+interface appPromptsIdTabsRouteChildren {
+  appPromptsIdTabsSettingsRoute: typeof appPromptsIdTabsSettingsRoute
+  appPromptsIdTabsTargetingRoute: typeof appPromptsIdTabsTargetingRoute
+  appPromptsIdTabsVariantsRoute: typeof appPromptsIdTabsVariantsRoute
+}
+
+const appPromptsIdTabsRouteChildren: appPromptsIdTabsRouteChildren = {
+  appPromptsIdTabsSettingsRoute: appPromptsIdTabsSettingsRoute,
+  appPromptsIdTabsTargetingRoute: appPromptsIdTabsTargetingRoute,
+  appPromptsIdTabsVariantsRoute: appPromptsIdTabsVariantsRoute,
+}
+
+const appPromptsIdTabsRouteWithChildren =
+  appPromptsIdTabsRoute._addFileChildren(appPromptsIdTabsRouteChildren)
+
+interface appPromptsIdVariantsRouteChildren {
+  appPromptsIdVariantsVariantsVariantRoute: typeof appPromptsIdVariantsVariantsVariantRoute
+}
+
+const appPromptsIdVariantsRouteChildren: appPromptsIdVariantsRouteChildren = {
+  appPromptsIdVariantsVariantsVariantRoute:
+    appPromptsIdVariantsVariantsVariantRoute,
+}
+
+const appPromptsIdVariantsRouteWithChildren =
+  appPromptsIdVariantsRoute._addFileChildren(appPromptsIdVariantsRouteChildren)
+
+interface appPromptsIdRouteRouteChildren {
+  appPromptsIdTabsRoute: typeof appPromptsIdTabsRouteWithChildren
+  appPromptsIdVariantsRoute: typeof appPromptsIdVariantsRouteWithChildren
+  appPromptsIdIndexRoute: typeof appPromptsIdIndexRoute
+  appPromptsIdTargetingTargetingEnvironmentRoute: typeof appPromptsIdTargetingTargetingEnvironmentRoute
+}
+
+const appPromptsIdRouteRouteChildren: appPromptsIdRouteRouteChildren = {
+  appPromptsIdTabsRoute: appPromptsIdTabsRouteWithChildren,
+  appPromptsIdVariantsRoute: appPromptsIdVariantsRouteWithChildren,
+  appPromptsIdIndexRoute: appPromptsIdIndexRoute,
+  appPromptsIdTargetingTargetingEnvironmentRoute:
+    appPromptsIdTargetingTargetingEnvironmentRoute,
+}
+
+const appPromptsIdRouteRouteWithChildren =
+  appPromptsIdRouteRoute._addFileChildren(appPromptsIdRouteRouteChildren)
+
+interface appPromptsRouteChildren {
+  appPromptsIdRouteRoute: typeof appPromptsIdRouteRouteWithChildren
+}
+
+const appPromptsRouteChildren: appPromptsRouteChildren = {
+  appPromptsIdRouteRoute: appPromptsIdRouteRouteWithChildren,
+}
+
+const appPromptsRouteWithChildren = appPromptsRoute._addFileChildren(
+  appPromptsRouteChildren,
+)
+
 interface appRouteRouteChildren {
   appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
-  appConfigsRoute: typeof appConfigsRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
+  appPromptsRoute: typeof appPromptsRouteWithChildren
   appIndexRoute: typeof appIndexRoute
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
-  appConfigsRoute: appConfigsRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
+  appPromptsRoute: appPromptsRouteWithChildren,
   appIndexRoute: appIndexRoute,
 }
 

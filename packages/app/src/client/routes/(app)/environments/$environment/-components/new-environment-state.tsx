@@ -3,7 +3,7 @@ import {
   newConfigStateContainer,
   newConfigStateContent,
   newConfigStateTitle,
-} from '../../../configs/$id/-components/new-config-state.css';
+} from '../../../prompts/$id/-components/new-config-state.css';
 import Logo from '@client/components/icons/llmops.svg?react';
 
 const NewEnvironmentState = () => {

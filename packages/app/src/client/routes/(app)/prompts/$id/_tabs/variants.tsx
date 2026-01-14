@@ -20,7 +20,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { variantByIdQueryOptions } from '@client/hooks/queries/useVariantById';
 
-export const Route = createFileRoute('/(app)/configs/$id/_tabs/variants')({
+export const Route = createFileRoute('/(app)/prompts/$id/_tabs/variants')({
   component: RouteComponent,
   staticData: {
     customData: {
@@ -67,7 +67,7 @@ function RouteComponent() {
           variant="ghost"
           onClick={() => {
             navigate({
-              to: '/configs/$id/variants/$variant',
+              to: '/prompts/$id/variants/$variant',
               params: {
                 id: configId,
                 variant: 'new',
@@ -101,7 +101,7 @@ function RouteComponent() {
                 }}
                 onClick={() =>
                   navigate({
-                    to: '/configs/$id/variants/$variant',
+                    to: '/prompts/$id/variants/$variant',
                     params: {
                       id: configId,
                       variant: variant.variantId,

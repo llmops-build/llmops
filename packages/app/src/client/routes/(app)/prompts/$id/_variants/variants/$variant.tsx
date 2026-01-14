@@ -36,7 +36,7 @@ import { DeploymentSuccessDialog } from '@client/components/deployment-success-d
 import type { RouterContext } from '@client/routes/__root';
 
 export const Route = createFileRoute(
-  '/(app)/configs/$id/_variants/variants/$variant'
+  '/(app)/prompts/$id/_variants/variants/$variant'
 )({
   component: RouteComponent,
   loader: async ({ params, context }) => {
@@ -326,7 +326,7 @@ function RouteComponent() {
       } else {
         // Navigate away immediately if no deployment
         navigate({
-          to: '/configs/$id/variants',
+          to: '/prompts/$id/variants',
           params: { id: configId },
         });
       }
@@ -339,7 +339,7 @@ function RouteComponent() {
     setDeploymentSuccess((prev) => ({ ...prev, open }));
     if (!open) {
       navigate({
-        to: '/configs/$id/variants',
+        to: '/prompts/$id/variants',
         params: { id: configId },
       });
     }

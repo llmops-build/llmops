@@ -16,7 +16,7 @@ const NewConfigState = () => {
         />
         <div>
           <h2 className={newConfigStateTitle}>
-            Create a new config by naming the config above.
+            Create a new prompt by naming the prompt above.
           </h2>
         </div>
       </div>

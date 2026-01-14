@@ -9,7 +9,7 @@ const EmptyConfigsState = () => {
     <div className={emptyConfigsStateContainer}>
       <div className={emptyConfigsStateContent}>
         <h2 className={emptyConfigsStateTitle}>
-          No configs yet. Create your first config to get started.
+          No prompts yet. Create your first prompt to get started.
         </h2>
       </div>
     </div>

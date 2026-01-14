@@ -1,14 +1,13 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { configByIdQueryOptions } from '@client/hooks/queries/useConfigById';
 import type { RouterContext } from '@client/routes/__root';
-import NewConfigState from './-components/new-config-state';
 
-export const Route = createFileRoute('/(app)/configs/$id/')({
+export const Route = createFileRoute('/(app)/prompts/$id')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
     const ctx = context as RouterContext;
     if (params.id === 'new') {
-      return { title: 'New Config' };
+      return { title: 'New Prompt' };
     }
 
     const config = await ctx.queryClient.ensureQueryData(
@@ -22,16 +21,5 @@ export const Route = createFileRoute('/(app)/configs/$id/')({
 });
 
 function RouteComponent() {
-  const { id } = Route.useParams();
-  if (id === 'new') return <NewConfigState />;
-
-  return (
-    <Navigate
-      to="/configs/$id/variants"
-      params={{
-        id,
-      }}
-      replace
-    />
-  );
+  return <Outlet />;
 }

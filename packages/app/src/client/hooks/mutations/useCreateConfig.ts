@@ -21,7 +21,7 @@ export const useCreateConfig = () => {
       await queryClient.invalidateQueries({ queryKey: queryKey });
       if (!data?.id) return;
       navigate({
-        to: '/configs/$id',
+        to: '/prompts/$id',
         params: { id: data?.id },
       });
     },

@@ -25,11 +25,11 @@ const ConfigsHeader = ({ id }: { id: string }) => {
 
   const handleClose = () => {
     if (isVariantRoute) {
-      navigate({ to: '/configs/$id/variants', params: { id } });
+      navigate({ to: '/prompts/$id/variants', params: { id } });
     } else if (isTargetingRoute) {
-      navigate({ to: '/configs/$id/targeting', params: { id } });
+      navigate({ to: '/prompts/$id/targeting', params: { id } });
     } else {
-      navigate({ to: '/configs' });
+      navigate({ to: '/prompts' });
     }
   };
 
@@ -54,13 +54,13 @@ const ConfigsHeader = ({ id }: { id: string }) => {
       />
       {currentData?.slug && (
         <div className={configSlugStyles}>
-          <span className={configSlugLabel}>Config Id</span>
+          <span className={configSlugLabel}>Prompt Id</span>
           <span className={configSlugText}>{currentData.slug}</span>
           <button
             type="button"
             className={copyButton}
             onClick={handleCopySlug}
-            aria-label="Copy config ID"
+            aria-label="Copy prompt ID"
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
           </button>

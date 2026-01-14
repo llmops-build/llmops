@@ -20,7 +20,7 @@ import { Save } from 'lucide-react';
 import { DeploymentSuccessDialog } from '@client/components/deployment-success-dialog';
 
 export const Route = createFileRoute(
-  '/(app)/configs/$id/_targeting/targeting/$environment'
+  '/(app)/prompts/$id/_targeting/targeting/$environment'
 )({
   component: RouteComponent,
 });
@@ -151,7 +151,7 @@ function TargetingForm({
     setShowSuccessDialog(open);
     if (!open) {
       navigate({
-        to: '/configs/$id/targeting',
+        to: '/prompts/$id/targeting',
         params: { id: configId },
       });
     }

@@ -9,16 +9,15 @@ import {
 import { Menu } from '@base-ui/react/menu';
 import { Icon } from '@client/components/icons';
 import {
-  ArrowUpRight,
   Blocks,
   BookOpen,
   ChevronDown,
   Globe,
   LogOut,
+  MessageSquare,
   Monitor,
   Moon,
   Settings,
-  SlidersVertical,
   Sun,
   Telescope,
 } from 'lucide-react';
@@ -146,9 +145,9 @@ export function AppSidebar() {
           Workspace
         </span>
         <SidebarItem asChild>
-          <Link to="/configs">
-            <Icon icon={SlidersVertical} />
-            Configs
+          <Link to="/prompts">
+            <Icon icon={MessageSquare} />
+            Prompts
           </Link>
         </SidebarItem>
         <SidebarItem asChild>

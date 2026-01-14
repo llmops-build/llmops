@@ -190,12 +190,12 @@ function RouteComponent() {
             <h2 className={sectionTitle}>Get Started</h2>
             <div className={gettingStartedCards}>
               <Link
-                to="/configs/$id"
+                to="/prompts/$id"
                 params={{ id: 'new' }}
                 className={gettingStartedCard({ variant: 'primary' })}
               >
                 <Icon icon={SlidersVertical} size="lg" />
-                <span className={cardTitle}>Create New Config</span>
+                <span className={cardTitle}>Create New Prompt</span>
               </Link>
             </div>
           </div>
@@ -217,7 +217,7 @@ function RouteComponent() {
                         interactive
                         onClick={() =>
                           navigate({
-                            to: '/configs/$id',
+                            to: '/prompts/$id',
                             params: { id: config.id },
                           })
                         }

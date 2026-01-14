@@ -3,7 +3,7 @@ import {
   configsContainer,
   configTitleInput,
   updateNameStatus,
-} from '../configs/-components/configs.css';
+} from '../prompts/-components/configs.css';
 import { Tooltip } from '@ui';
 
 type UpdateOrCreateNameProps = {

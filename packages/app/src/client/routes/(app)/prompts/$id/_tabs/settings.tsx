@@ -5,7 +5,7 @@ import { AlertDialog } from '@base-ui/react/alert-dialog';
 import { useDeleteConfig } from '@client/hooks/mutations/useDeleteConfig';
 import * as styles from './-components/settings.css';
 
-export const Route = createFileRoute('/(app)/configs/$id/_tabs/settings')({
+export const Route = createFileRoute('/(app)/prompts/$id/_tabs/settings')({
   component: RouteComponent,
   staticData: {
     customData: {
@@ -24,7 +24,7 @@ function RouteComponent() {
     setIsDeleting(true);
     try {
       await deleteConfigMutation.mutateAsync(configId);
-      navigate({ to: '/configs' });
+      navigate({ to: '/prompts' });
     } catch (error) {
       console.error('Failed to delete config:', error);
       setIsDeleting(false);

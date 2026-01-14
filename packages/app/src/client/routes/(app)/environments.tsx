@@ -26,7 +26,7 @@ import {
 import { EnvironmentsDataTable } from './environments/-components/environments-data-table';
 import { useTileWidth } from '@client/hooks/ui/useTileWidth';
 import { useEffect } from 'react';
-import { headerStyles } from './configs/-components/configs.css';
+import { headerStyles } from './prompts/-components/configs.css';
 import EnvironmentsHeader from './environments/$environment/-components/environments-header';
 
 export const Route = createFileRoute('/(app)/environments')({

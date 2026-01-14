@@ -9,31 +9,40 @@ const CONTENT_TYPES = {
 } as const;
 
 // Request headers validation schema
-export const requestHeadersSchema = z.object({
-  'content-type': z.string().refine(
-    (contentType) => {
-      if (!contentType) return true; // Allow missing content-type
+export const requestHeadersSchema = z
+  .object({
+    'content-type': z.string().refine(
+      (contentType) => {
+        if (!contentType) return true; // Allow missing content-type
 
-      const baseContentType = contentType.split(';')[0];
+        const baseContentType = contentType.split(';')[0];
 
-      return (
-        baseContentType === CONTENT_TYPES.APPLICATION_JSON ||
-        baseContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
-        baseContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
-      );
+        return (
+          baseContentType === CONTENT_TYPES.APPLICATION_JSON ||
+          baseContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
+          baseContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+        );
+      },
+      {
+        message:
+          'Invalid content type. Must be application/json, multipart/form-data, or audio/*',
+      }
+    ),
+    'x-llmops-config': z.string().optional(),
+    'x-llmops-prompt': z.string().optional(),
+    authorization: z.string({
+      error: 'Authorization header with environment secret is required.',
+    }),
+  })
+  .refine(
+    (data) => {
+      return !!(data['x-llmops-config'] || data['x-llmops-prompt']);
     },
     {
-      message:
-        'Invalid content type. Must be application/json, multipart/form-data, or audio/*',
+      message: 'Either x-llmops-config or x-llmops-prompt header is required.',
+      path: ['x-llmops-config'], // Attach error to x-llmops-config for consistency
     }
-  ),
-  'x-llmops-config': z.string({
-    error: 'LLMOps Config ID was not provided.',
-  }), // This is required always
-  authorization: z.string({
-    error: 'Authorization header with environment secret is required.',
-  }),
-});
+  );
 
 /**
  * Extracts environment secret from Authorization header.

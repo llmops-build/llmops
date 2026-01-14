@@ -11,7 +11,7 @@ import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useTargetingRules } from '@client/hooks/queries/useTargetingRules';
 import { variantsContainer } from '../../-components/variants.css';
 
-export const Route = createFileRoute('/(app)/configs/$id/_tabs/targeting')({
+export const Route = createFileRoute('/(app)/prompts/$id/_tabs/targeting')({
   component: RouteComponent,
   staticData: {
     customData: {
@@ -58,7 +58,7 @@ function RouteComponent() {
                   interactive={true}
                   onClick={() =>
                     navigate({
-                      to: '/configs/$id/targeting/$environment',
+                      to: '/prompts/$id/targeting/$environment',
                       params: {
                         id: configId,
                         environment: env.id,

@@ -137,7 +137,7 @@ export function ConfigsDataTable() {
               onMouseEnter={() => handleRowHover(row.original.id)}
               onClick={() =>
                 navigate({
-                  to: '/configs/$id',
+                  to: '/prompts/$id',
                   params: { id: row.original.id },
                 })
               }
