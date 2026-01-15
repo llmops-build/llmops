@@ -236,6 +236,9 @@ export default defineConfig([
     dts: true,
     treeshake: true,
     clean: false,
+    banner: {
+      js: '"use node";',
+    },
     plugins: [embedAssetsPlugin(), urlImportPlugin()],
   },
 ]);

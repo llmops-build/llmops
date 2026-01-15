@@ -10,6 +10,9 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   clean: false,
+  banner: {
+    js: '"use node";',
+  },
   // Force bundling of workspace dependencies
   // noExternal: ['@llmops/app', '@llmops/core', '@llmops/ui'],
   // // Keep these external
