@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     express: 'src/lib/express/index.ts',
     hono: 'src/lib/hono/index.ts',
+    convex: 'src/lib/convex/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

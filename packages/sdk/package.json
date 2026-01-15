@@ -58,6 +58,16 @@
         "default": "./dist/hono.cjs"
       }
     },
+    "./convex": {
+      "import": {
+        "types": "./dist/convex.d.mts",
+        "default": "./dist/convex.mjs"
+      },
+      "require": {
+        "types": "./dist/convex.d.cts",
+        "default": "./dist/convex.cjs"
+      }
+    },
     "./*": "./*"
   },
   "publishConfig": {
@@ -76,6 +86,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "convex": "^1.31.4",
     "hono": "^4.7.0"
   }
 }
