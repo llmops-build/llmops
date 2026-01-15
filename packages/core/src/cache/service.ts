@@ -25,7 +25,10 @@ export class CacheService {
   private createBackend(config: CacheConfig): CacheBackend {
     switch (config.backend) {
       case 'memory':
-        return new MemoryCacheBackend(config.maxSize, config.cleanupInterval);
+        return new MemoryCacheBackend({
+          maxSize: config.maxSize,
+          cleanupIntervalMs: config.cleanupInterval,
+        });
 
       case 'file':
         return new FileCacheBackend(

@@ -8,6 +8,7 @@ import {
   CompiledQuery,
 } from 'kysely';
 import type { Database } from './schema';
+export { NeonDialect } from './neon-dialect';
 
 export * from './schema';
 export * from './validation';
@@ -16,7 +17,7 @@ export * from './migrations';
 /**
  * Supported database types
  */
-export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
+export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql' | 'neon';
 
 /**
  * Options for creating a database connection
@@ -37,6 +38,7 @@ export type DatabaseConnection =
   | { type: 'mysql'; dialect: MysqlDialect }
   | { type: 'sqlite'; dialect: SqliteDialect }
   | { type: 'mssql'; dialect: MssqlDialect }
+  | { type: 'neon'; dialect: import('./neon-dialect').NeonDialect }
   | { type: DatabaseType; kysely: Kysely<Database> };
 
 /**
@@ -76,6 +78,9 @@ export function detectDatabaseType(db: unknown): DatabaseType | null {
   if ('connect' in db) return 'postgres';
   if ('fileControl' in db) return 'sqlite';
   if ('open' in db && 'close' in db && 'prepare' in db) return 'sqlite';
+
+  // Check for Neon connection (has neon property)
+  if ('neon' in db) return 'neon';
 
   return null;
 }
@@ -142,6 +147,11 @@ export async function createDatabaseFromConnection(
       if ('createDriver' in rawConnection) {
         dialect = rawConnection;
       }
+      break;
+
+    case 'neon':
+      const { NeonDialect } = await import('./neon-dialect');
+      dialect = new NeonDialect(rawConnection);
       break;
   }
 
