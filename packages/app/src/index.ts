@@ -3,8 +3,12 @@ import mainApp from './server';
 import type { LLMOpsConfig } from '@llmops/core';
 import {
   createDataLayer,
+  createAdapterDataLayer,
   validateLLMOpsConfig,
+  isDatabaseAdapter,
+  createKyselyAdapter,
   type ValidatedLLMOpsConfig,
+  type DatabaseAdapter,
 } from '@llmops/core';
 import {
   createDatabaseFromConnection,
@@ -29,6 +33,28 @@ const createDatabaseMiddleware = (
   validatedConfig: ValidatedLLMOpsConfig
 ): MiddlewareHandler => {
   return async (c, next) => {
+    // Check if database config is already a DatabaseAdapter
+    if (isDatabaseAdapter(validatedConfig.database)) {
+      const adapter = validatedConfig.database as DatabaseAdapter;
+
+      // Use adapter-based datalayer
+      // Cast to 'any' since adapter datalayer has a subset of methods
+      // This is safe because all handlers should check for method existence
+      const dataLayer = createAdapterDataLayer(adapter) as any;
+      c.set('db', dataLayer);
+      c.set('adapter', adapter);
+      // Cast adapter.id to DatabaseType - adapters use string IDs like 'convex', 'kysely'
+      c.set('dbType', adapter.id as any);
+
+      // Check if setup is complete and set it in context
+      const setupComplete = await dataLayer.isSetupComplete();
+      c.set('setupComplete', setupComplete);
+
+      await next();
+      return;
+    }
+
+    // Legacy path: raw database connection (pg Pool, sqlite, etc.)
     const kyselyDb = await createDatabaseFromConnection(
       validatedConfig.database,
       {
@@ -45,10 +71,15 @@ const createDatabaseMiddleware = (
       throw new Error('Failed to detect database type');
     }
 
+    // Use Kysely-based datalayer for SQL databases (better performance)
     const dataLayer = await createDataLayer(kyselyDb);
     c.set('db', dataLayer);
     c.set('kyselyDb', kyselyDb);
     c.set('dbType', dbType);
+
+    // Also create and set the adapter for consistent access
+    const adapter = createKyselyAdapter(kyselyDb);
+    c.set('adapter', adapter);
 
     // Check if setup is complete and set it in context
     const setupComplete = await dataLayer.isSetupComplete();

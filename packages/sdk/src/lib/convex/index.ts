@@ -1,6 +1,11 @@
 import type { GenericActionCtx } from 'convex/server';
 import type { LLMOpsClient } from '../../client';
 
+/**
+ * Create a handler for Convex HTTP actions
+ *
+ * This handler wraps the LLMOps app to work within Convex HTTP actions.
+ */
 export function createLLMOpsHandler(client: LLMOpsClient) {
   const basePath = client.config.basePath;
 
@@ -26,3 +31,20 @@ export function createLLMOpsHandler(client: LLMOpsClient) {
     return client.handler(newRequest);
   };
 }
+
+// Re-export Convex adapter and schema generator
+export {
+  ConvexAdapter,
+  createConvexAdapter,
+  ConvexMigrationAdapter,
+  createConvexMigrationAdapter,
+  type ConvexAdapterOptions,
+  type ConvexClientInterface,
+} from '../../convex/adapter';
+
+export {
+  generateConvexSchema,
+  generateConvexFunctionsTemplate,
+  printConvexSchema,
+  printConvexFunctionsTemplate,
+} from '../../convex/schema-generator';

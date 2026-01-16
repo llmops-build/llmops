@@ -16,6 +16,16 @@ export type { LLMRequestInsert } from './llmRequests';
 export { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 export { createProviderConfigsDataLayer } from './providerConfigs';
 
+// Export adapter-based datalayer
+export { createAdapterDataLayer } from './adapter-impl';
+export type { AdapterDataLayer, LLMRequestInsert as AdapterLLMRequestInsert } from './adapter-impl';
+
+/**
+ * Create a Kysely-based datalayer (default for SQL databases)
+ *
+ * This is the recommended datalayer for SQL databases (PostgreSQL, MySQL, SQLite).
+ * For non-SQL databases or custom adapters, use `createAdapterDataLayer` instead.
+ */
 export const createDataLayer = async (db: Kysely<Database>) => {
   return {
     ...createConfigDataLayer(db),

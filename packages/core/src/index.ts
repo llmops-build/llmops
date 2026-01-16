@@ -8,3 +8,4 @@ export * from './utils/id';
 export * from './datalayer';
 export * from './pricing';
 export * from './auth';
+export * from './adapter';

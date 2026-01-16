@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 import type { LLMOpsConfig } from '@llmops/core';
+import { isDatabaseAdapter } from '@llmops/core';
 
 /**
  * Extended config type with schema option
@@ -13,6 +14,10 @@ type LLMOpsConfigWithSchema = LLMOpsConfig & {
  *
  * This middleware runs once on application startup and automatically
  * runs database migrations if needed.
+ *
+ * For DatabaseAdapter instances, migrations are handled differently:
+ * - SQL adapters (Kysely) use the standard migration system
+ * - NoSQL adapters (Convex, MongoDB) typically handle schema differently
  *
  * IMPORTANT: This middleware should run BEFORE the seed middleware
  * but AFTER the database middleware creates the connection.
@@ -34,6 +39,17 @@ export const createMigrationMiddleware = (
     if (!migrationPromise) {
       migrationPromise = (async () => {
         try {
+          // Check if database is an adapter
+          if (isDatabaseAdapter(config.database)) {
+            // For adapters, migrations are typically handled differently
+            // NoSQL adapters like Convex manage schema automatically
+            // Users can implement custom migration logic via MigrationAdapter
+            console.log(
+              `[Migration] Using ${config.database.id} adapter - schema managed by adapter`
+            );
+            return;
+          }
+
           // Dynamically import to avoid build-time dependency issues
           const {
             detectDatabaseType,
@@ -64,7 +80,7 @@ export const createMigrationMiddleware = (
             return;
           }
 
-          const result = await runAutoMigrations(db, dbType, {
+          const result = await runAutoMigrations(db, dbType as any, {
             rawConnection,
             schema,
           });
