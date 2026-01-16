@@ -5,8 +5,7 @@ import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
 import { getAuthClientOptions } from '@/auth';
-
-export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
+import type { DatabaseType } from './index';
 
 /**
  * Options for migration operations
@@ -51,6 +50,7 @@ const mssqlMap = {
 
 const typeMap = {
   postgres: postgresMap,
+  neon: postgresMap,
   mysql: mysqlMap,
   sqlite: sqliteMap,
   mssql: mssqlMap,
@@ -123,13 +123,7 @@ async function ensurePostgresSchemaExists(
       await sql`CREATE SCHEMA IF NOT EXISTS ${sql.ref(schema)}`.execute(db);
     }
   } catch (error) {
-    logger.warn(`Could not ensure schema exists: ${error}`);
-    // Try to create anyway - the IF NOT EXISTS clause should handle races
-    try {
-      await sql`CREATE SCHEMA IF NOT EXISTS ${sql.ref(schema)}`.execute(db);
-    } catch {
-      // Ignore - schema might already exist
-    }
+    logger.warn({ error }, 'Failed to ensure PostgreSQL schema exists');
   }
 }
 
@@ -279,36 +273,42 @@ export async function getMigrations(
     > = {
       uuid: {
         postgres: 'uuid',
+        neon: 'uuid',
         mysql: 'varchar(36)',
         sqlite: 'text',
         mssql: 'varchar(36)',
       },
       text: {
         postgres: 'text',
+        neon: 'text',
         mysql: fieldConfig.unique ? 'varchar(255)' : 'text',
         sqlite: 'text',
         mssql: fieldConfig.unique ? 'varchar(255)' : 'varchar(8000)',
       },
       timestamp: {
         postgres: 'timestamptz',
+        neon: 'timestamptz',
         mysql: 'timestamp(3)',
         sqlite: 'date',
         mssql: sql`datetime2(3)`,
       },
       jsonb: {
         postgres: 'jsonb',
+        neon: 'jsonb',
         mysql: 'json',
         sqlite: 'text',
         mssql: 'varchar(8000)',
       },
       boolean: {
         postgres: 'boolean',
+        neon: 'boolean',
         mysql: 'boolean',
         sqlite: 'integer',
         mssql: sql`bit`,
       },
       integer: {
         postgres: 'integer',
+        neon: 'integer',
         mysql: 'integer',
         sqlite: 'integer',
         mssql: 'integer',
@@ -412,8 +412,26 @@ export async function getMigrations(
     }
   }
 
+  // For Neon, schema is set via currentSchema in connection string
+  // For regular PostgreSQL, ensure schema is set
+  if (dbType === 'postgres') {
+    try {
+      await sql`SET search_path TO "${options?.schema ?? 'llmops'}"`.execute(
+        db
+      );
+    } catch (error) {
+      logger.warn(
+        { error },
+        'Failed to set search_path for Better Auth migrations'
+      );
+    }
+  }
+
   const authOptions = getAuthClientOptions({
-    database: options?.rawConnection,
+    database: {
+      db: db,
+      type: dbType === 'neon' ? 'postgres' : dbType,
+    },
   });
   const {
     toBeAdded: authChangesToBeAdded,

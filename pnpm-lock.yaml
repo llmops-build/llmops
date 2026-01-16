@@ -194,6 +194,9 @@ importers:
       '@llmops/sdk':
         specifier: workspace:^
         version: link:../../packages/sdk
+      '@neondatabase/serverless':
+        specifier: ^1.0.2
+        version: 1.0.2
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -410,6 +413,9 @@ importers:
       '@llmops/gateway':
         specifier: workspace:^
         version: link:../gateway
+      '@neondatabase/serverless':
+        specifier: ^1.0.2
+        version: 1.0.2
       better-auth:
         specifier: ^1.4.10
         version: 1.4.10(@tanstack/react-start@1.136.18(crossws@0.4.1(srvx@0.9.8))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(webpack@5.104.1))(pg@8.16.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.10)(vitest@4.0.16(@types/node@24.10.4)(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -419,9 +425,16 @@ importers:
       kysely:
         specifier: ^0.28.8
         version: 0.28.8
+      kysely-neon:
+        specifier: ^2.0.2
+        version: 2.0.2(@neondatabase/serverless@1.0.2)(kysely@0.28.8)
       pino:
         specifier: ^10.1.0
         version: 10.1.0
+    devDependencies:
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
 
   packages/gateway:
     dependencies:
@@ -1955,6 +1968,10 @@ packages:
 
   '@napi-rs/wasm-runtime@1.1.0':
     resolution: {integrity: sha512-Fq6DJW+Bb5jaWE69/qOE0D1TUN9+6uWhCeZpdnSBk14pjLcCWR7Q8n49PTSPHazM37JqrsdpEthXy2xn6jWWiA==}
+
+  '@neondatabase/serverless@1.0.2':
+    resolution: {integrity: sha512-I5sbpSIAHiB+b6UttofhrN/UJXII+4tZPAq1qugzwCwLIL8EZLV7F/JyHUrEIiGgQpEXzpnjlJ+zwcEhheGvCw==}
+    engines: {node: '>=19.0.0'}
 
   '@noble/ciphers@2.1.1':
     resolution: {integrity: sha512-bysYuiVfhxNJuldNXlFEitTVdNnYUc+XNJZd7Qm2a5j1vZHgY+fazadNFWFaMK/2vye0JVlxV3gHmC0WDfAOQw==}
@@ -5610,6 +5627,13 @@ packages:
     resolution: {integrity: sha512-Rczb6FMM6JT0lvrOlP5WUOCB7s9XKxzwgErzhKlKde1bEV90FXplV1o87fpt4PU/asJFiqjYJxAJyzJhcrxOsQ==}
     engines: {node: '>=18'}
 
+  kysely-neon@2.0.2:
+    resolution: {integrity: sha512-LY7tm9wZKsc8ilFe4Yc5Nf/z3R58wFkxbt8xq6f7U27+5VzZr9vy/S8bVPG8RT3yd+0qhQBDRkCl8gJdRuXWzw==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@neondatabase/serverless': ^1
+      kysely: ^0.28
+
   kysely@0.28.8:
     resolution: {integrity: sha512-QUOgl5ZrS9IRuhq5FvOKFSsD/3+IA6MLE81/bOOTRA/YQpKDza2sFdN5g6JCB9BOpqMJDGefLCQ9F12hRS13TA==}
     engines: {node: '>=20.0.0'}
@@ -8856,6 +8880,11 @@ snapshots:
       '@emnapi/runtime': 1.7.1
       '@tybys/wasm-util': 0.10.1
     optional: true
+
+  '@neondatabase/serverless@1.0.2':
+    dependencies:
+      '@types/node': 22.19.1
+      '@types/pg': 8.15.6
 
   '@noble/ciphers@2.1.1': {}
 
@@ -13503,6 +13532,11 @@ snapshots:
   kleur@4.1.5: {}
 
   ky@1.14.0: {}
+
+  kysely-neon@2.0.2(@neondatabase/serverless@1.0.2)(kysely@0.28.8):
+    dependencies:
+      '@neondatabase/serverless': 1.0.2
+      kysely: 0.28.8
 
   kysely@0.28.8: {}
 

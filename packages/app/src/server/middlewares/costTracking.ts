@@ -500,13 +500,32 @@ async function processUsageAndLog(params: {
     }
   }
 
+  // Validate UUID fields before logging
+  const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89abAB][0-9a-f]{3}-[0-9a-fA-F]{12}$/i;
+
+  const validateUUID = (
+    value: string | null,
+    fieldName: string
+  ): string | null => {
+    if (!value) return null;
+    if (!UUID_REGEX.test(value)) {
+      log(`Invalid ${fieldName} format: ${value}. Expected UUID or null.`);
+      return null;
+    }
+    return value;
+  };
+
   // Build request data for logging
   const requestData: LLMRequestData = {
     requestId,
-    configId: configId || null,
-    variantId: variantId || null,
-    environmentId: environmentId || null,
-    providerConfigId: providerConfigId || null,
+    configId: validateUUID(configId || null, 'configId'),
+    variantId: validateUUID(variantId || null, 'variantId'),
+    environmentId: validateUUID(environmentId || null, 'environmentId'),
+    providerConfigId: validateUUID(
+      providerConfigId || null,
+      'providerConfigId'
+    ),
     provider,
     model,
     promptTokens: usage?.promptTokens || 0,

@@ -118,13 +118,6 @@ function RouteComponent() {
     search.tags,
   ]);
 
-  console.log('[Requests] Search params:', {
-    configId: search.configId,
-    variantId: search.variantId,
-    environmentId: search.environmentId,
-    tags: search.tags,
-  });
-
   const { data: requestsResponse, isLoading } = useRequestList({
     limit: PAGE_SIZE,
     offset,

@@ -30,5 +30,20 @@ services:
       postgres:
         condition: service_healthy
 
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: postgrest_llmops
+    restart: unless-stopped
+    ports:
+      - '3005:3005'
+    environment:
+      PGRST_DB_URI: postgres://postgres:password@postgres:5432/pg_llmops
+      PGRST_DB_SCHEMA: llmops
+      PGRST_DB_EXTRA_SEARCH_PATH: public
+      PGRST_DB_ANON_ROLE: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:

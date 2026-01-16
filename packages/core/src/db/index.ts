@@ -12,11 +12,12 @@ import type { Database } from './schema';
 export * from './schema';
 export * from './validation';
 export * from './migrations';
+export * from './neon-dialect';
 
 /**
  * Supported database types
  */
-export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';
+export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql' | 'neon';
 
 /**
  * Options for creating a database connection
@@ -37,6 +38,7 @@ export type DatabaseConnection =
   | { type: 'mysql'; dialect: MysqlDialect }
   | { type: 'sqlite'; dialect: SqliteDialect }
   | { type: 'mssql'; dialect: MssqlDialect }
+  | { type: 'neon'; dialect: Dialect }
   | { type: DatabaseType; kysely: Kysely<Database> };
 
 /**
@@ -58,7 +60,7 @@ export function createDatabase(
  * Auto-detect database type from connection object
  */
 export function detectDatabaseType(db: unknown): DatabaseType | null {
-  if (!db || typeof db !== 'object') {
+  if (!db || (typeof db !== 'object' && typeof db !== 'function')) {
     return null;
   }
 
@@ -68,6 +70,12 @@ export function detectDatabaseType(db: unknown): DatabaseType | null {
     if (db instanceof MysqlDialect) return 'mysql';
     if (db instanceof PostgresDialect) return 'postgres';
     if (db instanceof MssqlDialect) return 'mssql';
+  }
+
+  // Check for Neon serverless instance
+  if (typeof db === 'function' && db.name === 'templateFn') {
+    // Neon instances are functions that return connection pools
+    return 'neon';
   }
 
   // Check for raw connection objects
@@ -91,7 +99,6 @@ export async function createDatabaseFromConnection(
   options?: DatabaseOptions
 ): Promise<Kysely<Database> | null> {
   const dbType = detectDatabaseType(rawConnection);
-
   if (!dbType) {
     return null;
   }
@@ -136,6 +143,45 @@ export async function createDatabaseFromConnection(
           );
         },
       });
+      break;
+
+    case 'neon':
+      // For Neon with schema requirements, use WebSocket connection instead of HTTP
+      // to maintain search_path state
+      if (schema && schema !== 'public') {
+        const { Pool, neonConfig } = await import('@neondatabase/serverless');
+        const { default: ws } = await import('ws');
+        neonConfig.webSocketConstructor = ws;
+
+        // Create WebSocket connection for stateful schema support
+        const connectionString =
+          typeof rawConnection === 'string'
+            ? rawConnection
+            : process.env.NEON_PG_URL || '';
+
+        const pool = new Pool({
+          connectionString: connectionString.includes('currentSchema')
+            ? connectionString.split('currentSchema=')[1].split('&')[0] ===
+              'public'
+              ? connectionString.replace(/currentSchema=[^&]*&?/, '')
+              : connectionString
+            : connectionString,
+        });
+
+        dialect = new PostgresDialect({
+          pool,
+          onCreateConnection: async (connection) => {
+            // Set search_path on every new connection
+            await connection.executeQuery(
+              CompiledQuery.raw(`SET search_path TO "${schema}"`)
+            );
+          },
+        });
+      } else {
+        // Use standard HTTP Neon connection for public schema
+        const { createNeonDialect } = await import('./neon-dialect');
+        dialect = createNeonDialect(rawConnection);
+      }
       break;
 
     case 'mssql':

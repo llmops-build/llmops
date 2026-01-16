@@ -1,12 +1,12 @@
 import type { BetterAuthOptions } from 'better-auth';
 import type { Kysely } from 'kysely';
-import type { Database, DatabaseType } from '../db';
+import type { Database } from '../db';
 
 export interface AuthClientDatabaseConfig {
   /** Pre-configured Kysely instance with correct schema */
   db: Kysely<Database>;
-  /** Database type */
-  type: DatabaseType;
+  /** Database type (mapped to Better Auth compatible types) */
+  type: 'postgres' | 'mysql' | 'sqlite' | 'mssql';
 }
 
 export interface AuthClientOptions {
