@@ -14,6 +14,7 @@ import {
   type ProviderFieldDefinition,
 } from '../settings/_settings/-components/provider-field-definitions';
 import * as styles from './overview.css';
+import { providerLogo } from '../settings/_settings/-components/workspace-providers.css';
 
 type OnboardingStep = 'provider' | 'config' | 'complete';
 
@@ -204,12 +205,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                         <img
                           src={item.logo}
                           alt={item.name}
-                          style={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: 2,
-                            objectFit: 'contain',
-                          }}
+                          className={providerLogo}
                         />
                       ) : null
                     }

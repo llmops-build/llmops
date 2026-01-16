@@ -11,5 +11,5 @@ export default llmops({
       '',
   }),
   // PostgreSQL schema name (defaults to 'llmops')
-  schema: 'llmops',
+  schema: 'llmops-3',
 });
