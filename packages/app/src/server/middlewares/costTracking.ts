@@ -1,5 +1,4 @@
 import type { MiddlewareHandler } from 'hono';
-import { randomUUID } from 'node:crypto';
 import { logger } from '@llmops/core';
 import {
   wrapStreamingResponse,
@@ -226,7 +225,7 @@ export function createCostTrackingMiddleware(
     }
 
     // Generate request ID for tracing
-    const requestId = randomUUID();
+    const requestId = crypto.randomUUID();
     const startTime = Date.now();
 
     // Set request ID header early

@@ -31,6 +31,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./edge": {
+      "import": {
+        "types": "./dist/edge.d.mts",
+        "default": "./dist/edge.mjs"
+      },
+      "require": {
+        "types": "./dist/edge.d.cts",
+        "default": "./dist/edge.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

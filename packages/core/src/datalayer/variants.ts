@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createVariant = z.object({
@@ -41,7 +40,7 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('variants')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           name,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

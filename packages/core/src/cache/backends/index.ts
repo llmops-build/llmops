@@ -1,2 +1,5 @@
+// Edge-compatible exports (default)
 export { MemoryCacheBackend } from './memory';
-export { FileCacheBackend } from './file';
+
+// Re-export types
+export type { MemoryCacheOptions } from './memory';

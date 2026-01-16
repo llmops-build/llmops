@@ -41,6 +41,16 @@
         "default": "./dist/db/index.cjs"
       }
     },
+    "./node": {
+      "import": {
+        "types": "./dist/node.d.mts",
+        "default": "./dist/node.mjs"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "default": "./dist/node.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

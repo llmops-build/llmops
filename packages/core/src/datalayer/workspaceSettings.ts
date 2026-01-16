@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const updateWorkspaceSettings = z.object({
@@ -26,7 +25,7 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
         settings = await db
           .insertInto('workspace_settings')
           .values({
-            id: randomUUID(),
+            id: crypto.randomUUID(),
             name: null,
             setupComplete: false,
             createdAt: new Date().toISOString(),
@@ -61,7 +60,7 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
         return db
           .insertInto('workspace_settings')
           .values({
-            id: randomUUID(),
+            id: crypto.randomUUID(),
             name: value.data.name ?? null,
             setupComplete: value.data.setupComplete ?? false,
             createdAt: new Date().toISOString(),
@@ -123,7 +122,7 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
         await db
           .insertInto('workspace_settings')
           .values({
-            id: randomUUID(),
+            id: crypto.randomUUID(),
             name: null,
             setupComplete: false,
             superAdminId: userId,
@@ -172,7 +171,7 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
         return db
           .insertInto('workspace_settings')
           .values({
-            id: randomUUID(),
+            id: crypto.randomUUID(),
             name: null,
             setupComplete: true,
             createdAt: new Date().toISOString(),

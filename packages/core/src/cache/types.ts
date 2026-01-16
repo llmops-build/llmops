@@ -49,7 +49,7 @@ export interface CacheBackend {
   close(): Promise<void>;
 }
 
-export type CacheBackendType = 'memory' | 'file';
+export type CacheBackendType = 'memory' | 'custom';
 
 export interface BaseCacheConfig {
   backend: CacheBackendType;
@@ -65,17 +65,13 @@ export interface MemoryCacheConfig extends BaseCacheConfig {
   maxSize?: number;
 }
 
-export interface FileCacheConfig extends BaseCacheConfig {
-  backend: 'file';
-  /** Data directory path */
-  dataDir?: string;
-  /** Cache file name */
-  fileName?: string;
-  /** Debounce save interval in milliseconds */
-  saveInterval?: number;
+export interface CustomCacheConfig extends BaseCacheConfig {
+  backend: 'custom';
+  /** Custom cache backend instance */
+  instance: CacheBackend;
 }
 
-export type CacheConfig = MemoryCacheConfig | FileCacheConfig;
+export type CacheConfig = MemoryCacheConfig | CustomCacheConfig;
 
 /** Time constants in milliseconds for convenience */
 export const MS = {

@@ -3,7 +3,7 @@ import { sql } from 'kysely';
 import { getMigrations as getAuthMigrations } from 'better-auth/db';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
-import { logger } from '../utils/logger';
+import { edgeLogger as logger } from '../utils/edge-logger';
 import { getAuthClientOptions } from '@/auth';
 
 export type DatabaseType = 'postgres' | 'mysql' | 'sqlite' | 'mssql';

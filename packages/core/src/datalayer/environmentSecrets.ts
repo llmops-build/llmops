@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createEnvironmentSecret = z.object({
@@ -51,7 +50,7 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('environment_secrets')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           environmentId,
           keyName,
           keyValue,

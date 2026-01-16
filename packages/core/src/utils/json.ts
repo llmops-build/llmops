@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger';
+import { edgeLogger as logger } from '../utils/edge-logger';
 
 export function safeJSONParse<T>(data: unknown): T | null {
   function reviver(_: string, value: any): any {

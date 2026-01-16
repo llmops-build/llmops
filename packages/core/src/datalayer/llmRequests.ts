@@ -2,7 +2,6 @@ import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 /**
@@ -106,7 +105,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
 
       const now = new Date().toISOString();
       const values = validatedRequests.map((req) => ({
-        id: randomUUID(),
+        id: crypto.randomUUID(),
         requestId: req.requestId,
         configId: req.configId ?? null,
         variantId: req.variantId ?? null,
@@ -151,7 +150,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('llm_requests')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           requestId: req.requestId,
           configId: req.configId ?? null,
           variantId: req.variantId ?? null,

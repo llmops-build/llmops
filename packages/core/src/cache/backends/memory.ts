@@ -1,6 +1,6 @@
 /**
  * @file src/cache/backends/memory.ts
- * In-memory cache backend implementation
+ * In-memory cache backend implementation (edge-compatible)
  */
 
 import type {
@@ -9,7 +9,6 @@ import type {
   CacheOptions,
   CacheStats,
 } from '../types';
-import { logger } from '../../utils/logger';
 
 export interface MemoryCacheOptions {
   maxSize?: number;
@@ -71,7 +70,6 @@ export class MemoryCacheBackend implements CacheBackend {
 
     if (!entry) {
       this.stats.misses++;
-      logger.debug({ key: fullKey }, '[MemoryCache] GET miss');
       return null;
     }
 
@@ -79,12 +77,10 @@ export class MemoryCacheBackend implements CacheBackend {
       this.cache.delete(fullKey);
       this.stats.expired++;
       this.stats.misses++;
-      logger.debug({ key: fullKey }, '[MemoryCache] GET expired');
       return null;
     }
 
     this.stats.hits++;
-    logger.debug({ key: fullKey }, '[MemoryCache] GET hit');
     return entry as CacheEntry<T>;
   }
 
@@ -107,10 +103,6 @@ export class MemoryCacheBackend implements CacheBackend {
     this.cache.set(fullKey, entry);
     this.stats.sets++;
     this.stats.size = this.cache.size;
-    logger.debug(
-      { key: fullKey, ttl: options.ttl, namespace: options.namespace },
-      '[MemoryCache] SET'
-    );
   }
 
   async delete(key: string, namespace?: string): Promise<boolean> {
@@ -120,9 +112,6 @@ export class MemoryCacheBackend implements CacheBackend {
     if (deleted) {
       this.stats.deletes++;
       this.stats.size = this.cache.size;
-      logger.debug({ key: fullKey }, '[MemoryCache] DELETE');
-    } else {
-      logger.debug({ key: fullKey }, '[MemoryCache] DELETE not found');
     }
 
     return deleted;
@@ -140,15 +129,10 @@ export class MemoryCacheBackend implements CacheBackend {
       }
 
       this.stats.deletes += keysToDelete.length;
-      logger.debug(
-        { namespace, deletedCount: keysToDelete.length },
-        '[MemoryCache] CLEAR namespace'
-      );
     } else {
       const count = this.cache.size;
       this.stats.deletes += count;
       this.cache.clear();
-      logger.debug({ deletedCount: count }, '[MemoryCache] CLEAR all');
     }
 
     this.stats.size = this.cache.size;

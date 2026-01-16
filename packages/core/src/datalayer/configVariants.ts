@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createConfigVariant = z.object({
@@ -66,7 +65,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('config_variants')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           configId,
           variantId,
           createdAt: new Date().toISOString(),
@@ -285,8 +284,8 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { configId, name, provider, modelName, jsonData } = value.data;
 
-      const variantId = randomUUID();
-      const versionId = randomUUID();
+      const variantId = crypto.randomUUID();
+      const versionId = crypto.randomUUID();
       const now = new Date().toISOString();
 
       // Insert the variant (metadata only)
@@ -329,7 +328,7 @@ export const createConfigVariantDataLayer = (db: Kysely<Database>) => {
       const configVariant = await db
         .insertInto('config_variants')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           configId,
           variantId,
           createdAt: now,

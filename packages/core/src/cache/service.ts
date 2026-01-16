@@ -1,10 +1,9 @@
 /**
  * @file src/cache/service.ts
- * Unified cache service with pluggable backends
+ * Unified cache service with pluggable backends (edge-compatible)
  */
 
 import { MemoryCacheBackend } from './backends/memory';
-import { FileCacheBackend } from './backends/file';
 import type {
   CacheBackend,
   CacheEntry,
@@ -25,15 +24,13 @@ export class CacheService {
   private createBackend(config: CacheConfig): CacheBackend {
     switch (config.backend) {
       case 'memory':
-        return new MemoryCacheBackend(config.maxSize, config.cleanupInterval);
+        return new MemoryCacheBackend({
+          maxSize: config.maxSize,
+          cleanupIntervalMs: config.cleanupInterval,
+        });
 
-      case 'file':
-        return new FileCacheBackend(
-          config.dataDir,
-          config.fileName,
-          config.saveInterval,
-          config.cleanupInterval
-        );
+      case 'custom':
+        return config.instance;
 
       default:
         throw new Error(
@@ -116,7 +113,7 @@ export class CacheService {
   /** Wait for the backend to be ready */
   async waitForReady(): Promise<void> {
     if ('waitForReady' in this.backend) {
-      await (this.backend as FileCacheBackend).waitForReady();
+      await (this.backend as CacheBackend & { waitForReady: () => Promise<void> }).waitForReady();
     }
   }
 

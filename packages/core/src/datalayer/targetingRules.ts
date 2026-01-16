@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createTargetingRule = z.object({
@@ -92,7 +91,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('targeting_rules')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           environmentId,
           configId,
           configVariantId,
@@ -397,7 +396,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('targeting_rules')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           environmentId,
           configId,
           configVariantId,

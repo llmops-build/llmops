@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createNewEnvironment = z.object({
@@ -47,7 +46,7 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('environments')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           name,
           slug,
           isProd,

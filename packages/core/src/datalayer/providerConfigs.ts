@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createProviderConfig = z.object({
@@ -49,7 +48,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('provider_configs')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           providerId,
           name: name ?? null,
           config: JSON.stringify(config),
@@ -191,7 +190,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('provider_configs')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           providerId,
           name: name ?? null,
           config: JSON.stringify(config),

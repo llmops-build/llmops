@@ -58,6 +58,26 @@
         "default": "./dist/hono.cjs"
       }
     },
+    "./convex": {
+      "import": {
+        "types": "./dist/convex.d.mts",
+        "default": "./dist/convex.mjs"
+      },
+      "require": {
+        "types": "./dist/convex.d.cts",
+        "default": "./dist/convex.cjs"
+      }
+    },
+    "./edge": {
+      "import": {
+        "types": "./dist/edge.d.mts",
+        "default": "./dist/edge.mjs"
+      },
+      "require": {
+        "types": "./dist/edge.d.cts",
+        "default": "./dist/edge.cjs"
+      }
+    },
     "./*": "./*"
   },
   "publishConfig": {
@@ -73,6 +93,14 @@
   "dependencies": {
     "@llmops/app": "workspace:^",
     "@llmops/core": "workspace:^"
+  },
+  "peerDependencies": {
+    "convex": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "convex": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

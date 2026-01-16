@@ -1,7 +1,6 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
-import { randomUUID, randomBytes } from 'node:crypto';
 import z from 'zod';
 
 /**
@@ -11,7 +10,7 @@ import z from 'zod';
 function generateShortId(length = 8): string {
   const chars =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const bytes = randomBytes(length);
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
   let result = '';
   for (let i = 0; i < length; i++) {
     result += chars[bytes[i] % chars.length];
@@ -53,7 +52,7 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
       return db
         .insertInto('configs')
         .values({
-          id: randomUUID(),
+          id: crypto.randomUUID(),
           slug: generateShortId(),
           name,
           createdAt: new Date().toISOString(),

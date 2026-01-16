@@ -238,4 +238,12 @@ export default defineConfig([
     clean: false,
     plugins: [embedAssetsPlugin(), urlImportPlugin()],
   },
+  {
+    // Edge-compatible build (no static assets, no SSR)
+    entry: './src/edge.ts',
+    format: ['esm', 'cjs'],
+    dts: true,
+    treeshake: true,
+    clean: false,
+  },
 ]);

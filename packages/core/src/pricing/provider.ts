@@ -1,5 +1,5 @@
 import type { ModelPricing, PricingProvider } from './types';
-import { logger } from '../utils/logger';
+import { edgeLogger as logger } from '../utils/edge-logger';
 
 const MODELS_DEV_API = 'https://models.dev/api.json';
 
