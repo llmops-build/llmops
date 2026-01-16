@@ -8,4 +8,16 @@ export default defineConfig({
   banner: {
     js: '"use node";',
   },
+  // Keep all dependencies external for edge runtime compatibility
+  unbundle: true,
+  external: [
+    // Node.js built-ins
+    'node:stream',
+    'events',
+    'node:fs/promises',
+    'node:crypto',
+    'node:util',
+    // Third-party that should stay external
+    'hono',
+  ],
 });

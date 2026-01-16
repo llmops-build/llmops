@@ -13,8 +13,21 @@ export default defineConfig({
   banner: {
     js: '"use node";',
   },
-  // Force bundling of workspace dependencies
-  // noExternal: ['@llmops/app', '@llmops/core', '@llmops/ui'],
-  // // Keep these external
-  // external: ['express', 'hono'],
+  // Keep all dependencies external for edge runtime compatibility
+  unbundle: true,
+  // Explicitly external common problematic imports
+  external: [
+    // Node.js built-ins
+    'node:stream',
+    'events',
+    'node:fs/promises',
+    'node:crypto',
+    'node:util',
+    // Workspace dependencies
+    '@llmops/core',
+    '@llmops/gateway',
+    // Third-party that should stay external
+    'express',
+    'hono',
+  ],
 });
