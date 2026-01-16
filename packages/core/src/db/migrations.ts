@@ -120,7 +120,10 @@ async function ensurePostgresSchemaExists(
 
     if (!result.rows[0]?.exists) {
       logger.info(`Creating PostgreSQL schema: ${schema}`);
-      await sql`CREATE SCHEMA IF NOT EXISTS ${sql.ref(schema)}`.execute(db);
+      await sql`CREATE SCHEMA IF NOT EXISTS ${sql.id(schema)}`.execute(db);
+      // Grant usage and create permissions
+      await sql`GRANT USAGE ON SCHEMA ${sql.id(schema)} TO PUBLIC`.execute(db);
+      await sql`GRANT CREATE ON SCHEMA ${sql.id(schema)} TO PUBLIC`.execute(db);
     }
   } catch (error) {
     logger.warn({ error }, 'Failed to ensure PostgreSQL schema exists');
@@ -149,9 +152,9 @@ export async function getMigrations(
   dbType: DatabaseType,
   options?: MigrationOptions
 ): Promise<MigrationResult> {
-  // For PostgreSQL, detect and log the current schema being used
+  // For PostgreSQL and Neon, detect and log the current schema being used
   let currentSchema = 'public';
-  if (dbType === 'postgres') {
+  if (dbType === 'postgres' || dbType === 'neon') {
     // If schema is provided in options, ensure it exists first
     if (options?.schema) {
       await ensurePostgresSchemaExists(db, options.schema);
@@ -164,9 +167,9 @@ export async function getMigrations(
 
   const allTableMetadata = await db.introspection.getTables();
 
-  // For PostgreSQL, filter tables to only those in the target schema
+  // For PostgreSQL and Neon, filter tables to only those in the target schema
   let tableMetadata = allTableMetadata;
-  if (dbType === 'postgres') {
+  if (dbType === 'postgres' || dbType === 'neon') {
     try {
       const tablesInSchema = await sql<{ table_name: string }>`
         SELECT table_name
@@ -320,7 +323,12 @@ export async function getMigrations(
 
   // IMPORTANT: Create new tables FIRST (before adding columns that may reference them)
   for (const table of toBeCreated) {
-    let builder = db.schema.createTable(table.table);
+    // Use schema-qualified table name for Neon and PostgreSQL
+    const qualifiedTableName =
+      (dbType === 'postgres' || dbType === 'neon') && options?.schema
+        ? `${options.schema}.${table.table}`
+        : table.table;
+    let builder = db.schema.createTable(qualifiedTableName);
 
     // Add all columns
     for (const [fieldName, fieldConfig] of Object.entries(table.fields)) {
@@ -375,10 +383,16 @@ export async function getMigrations(
   // Add missing columns to existing tables AFTER creating new tables
   // (columns may reference newly created tables)
   for (const table of toBeAdded) {
+    // Use schema-qualified table name for Neon and PostgreSQL
+    const qualifiedTableName =
+      (dbType === 'postgres' || dbType === 'neon') && options?.schema
+        ? `${options.schema}.${table.table}`
+        : table.table;
+
     for (const [fieldName, fieldConfig] of Object.entries(table.fields)) {
       const type = getColumnType(fieldConfig, fieldName);
       const builder = db.schema
-        .alterTable(table.table)
+        .alterTable(qualifiedTableName)
         .addColumn(fieldName, type, (col) => {
           let c = col;
 
