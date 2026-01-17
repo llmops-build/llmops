@@ -7,10 +7,9 @@ import { dirname, join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import type { Manifest } from 'vite';
 import { manifest as embeddedManifest } from '../generated/embedded-assets';
-
 const { renderToString } = reactServer;
-const thisDirecory = dirname(fileURLToPath(import.meta.url));
-const manifestPath = join(thisDirecory, './.vite/manifest.json');
+const thisDirectory = dirname(fileURLToPath(import.meta.url));
+const manifestPath = join(thisDirectory, './.vite/manifest.json');
 
 // Use embedded manifest if available (production single-file mode),
 // otherwise try to read from filesystem
@@ -35,7 +34,9 @@ export const renderer = ({
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
   const faviconPath =
-    basePath === '/' ? '/favicon.ico' : basePath + '/assets/favicon.ico';
+    basePath === '/'
+      ? (!dev ? '/assets' : '') + '/favicon.svg'
+      : basePath + (!dev ? '/assets' : '') + '/favicon.svg';
 
   const entryCSSFiles =
     Object.keys(manifest)
