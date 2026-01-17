@@ -33,7 +33,10 @@ export const renderer = ({
 }) => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
-  const faviconPath =
+  // Fallback to ICO and adaptive SVG favicon
+  const faviconIcoPath =
+    basePath === '/' ? '/favicon.ico' : basePath + '/favicon.ico';
+  const faviconSvgPath =
     basePath === '/'
       ? (!dev ? '/assets' : '') + '/favicon.svg'
       : basePath + (!dev ? '/assets' : '') + '/favicon.svg';
@@ -63,7 +66,8 @@ export const renderer = ({
           href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href={faviconPath} type="image/x-icon" />
+        <link rel="icon" href={faviconIcoPath} sizes="any" />
+        <link rel="icon" href={faviconSvgPath} type="image/svg+xml" />
         <style>{`
           /*! modern-normalize v3.0.1 | MIT License | https://github.com/sindresorhus/modern-normalize */
 

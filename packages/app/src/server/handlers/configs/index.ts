@@ -7,6 +7,7 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import { logger } from '@llmops/core';
 
 const app = new Hono()
   .post(
@@ -126,9 +127,8 @@ const app = new Hono()
           if (jsonData && typeof jsonData.system_prompt === 'string') {
             const systemPrompt = jsonData.system_prompt;
             const templateVariables = extractUniqueVariableNames(systemPrompt);
-            console.log(
-              `[Variant: ${variant.name}] Template variables in system_prompt:`,
-              templateVariables
+            logger.debug(
+              `[Variant: ${variant.name}] Template variables in system_prompt: ${JSON.stringify(templateVariables)}`
             );
           }
         }

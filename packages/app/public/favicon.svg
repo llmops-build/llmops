@@ -6,11 +6,21 @@
     xmlns="http://www.w3.org/2000/svg"
     xml:space="preserve"
 >
-    <path d="M500,2000L500,1050C500.705,750.116 682.618,600.065 1000,600C1332.431,602.05 1499.991,750.677 1500,1050L1500,2000L500,2000Z" fill="var(--ghost-body, #000)"/>
-    <g transform="matrix(1.5,0,0,0.8,-300,180)">
+    <style>
+        @media (prefers-color-scheme: dark) {
+          .ghost-body {
+            --ghost-body: #fff;
+          }
+          .ghost-eyes {
+            --ghost-eyes: #000;
+          }
+        }
+    </style>
+    <path d="M500,2000L500,1050C500.705,750.116 682.618,600.065 1000,600C1332.431,602.05 1499.991,750.677 1500,1050L1500,2000L500,2000Z" fill="var(--ghost-body, #000)" class="ghost-body"/>
+    <g transform="matrix(1.5,0,0,0.8,-300,180)" class="ghost-eyes">
         <ellipse cx="750" cy="1025" rx="50" ry="125" fill="var(--ghost-eyes, #fff)"/>
     </g>
-    <g transform="matrix(1.5,0,0,0.8,50,180)">
+    <g transform="matrix(1.5,0,0,0.8,50,180)" class="ghost-eyes">
         <ellipse cx="750" cy="1025" rx="50" ry="125" fill="var(--ghost-eyes, #fff)"/>
     </g>
 </svg>
