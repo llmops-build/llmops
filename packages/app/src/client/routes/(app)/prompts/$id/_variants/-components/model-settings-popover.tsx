@@ -47,6 +47,7 @@ function getModelProvider(modelId: string, selectedProvider?: string): string {
 
 // Helper to get provider ID from model ID (e.g., "anthropic/claude-3" -> "anthropic")
 function getProviderIdFromModel(modelId: string): string | null {
+  console.log(modelId);
   const parts = modelId.split('/');
   if (parts.length > 1 && parts[0].length > 0) {
     return parts[0];
@@ -196,11 +197,10 @@ export function ModelSettingsPopover({
   const { data: models, isLoading } = useProviderModels(realProviderId);
 
   // Convert configured providers to ProviderItem format for Combobox
+  // Priority: slug > customName > provider name
   const providers: ProviderItem[] =
     configuredProviders?.map((provider) => ({
-      label: provider.customName
-        ? `${provider.customName} (${provider.name})`
-        : provider.name,
+      label: provider.slug || provider.customName || provider.name,
       icon: provider.logo,
       // Use configId (UUID) to uniquely identify this configuration
       value: provider.configId,
@@ -244,11 +244,7 @@ export function ModelSettingsPopover({
 
   // Get provider icon URL - prefer from model ID, fall back to selected provider
   const modelProviderId = getProviderIdFromModel(value.modelName);
-  const providerIconUrl = modelProviderId
-    ? getProviderIconUrl(modelProviderId)
-    : value.provider
-      ? getProviderIconUrl(value.provider)
-      : null;
+  const providerIconUrl = selectedProviderItem?.icon;
 
   return (
     <Popover>
@@ -283,6 +279,7 @@ export function ModelSettingsPopover({
             {providers.length > 0 ? (
               <Combobox<ProviderItem>
                 items={providers}
+                key={selectedProviderItem?.value}
                 value={selectedProviderItem}
                 onValueChange={handleProviderChange}
                 itemToString={(item) => item?.label || ''}

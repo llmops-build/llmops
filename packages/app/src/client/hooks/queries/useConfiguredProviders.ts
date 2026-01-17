@@ -5,6 +5,7 @@ import { useProvidersList } from './useProvidersList';
 export type ConfiguredProvider = {
   id: string;
   name: string;
+  slug: string | null;
   customName: string | null;
   logo: string;
   configId: string;
@@ -46,6 +47,7 @@ export const useConfiguredProviders = () => {
           configured.push({
             id: providerInfo.id,
             name: providerInfo.name,
+            slug: config.slug,
             customName: config.name,
             logo: providerInfo.logo,
             configId: config.id,
@@ -58,6 +60,7 @@ export const useConfiguredProviders = () => {
             name:
               config.providerId.charAt(0).toUpperCase() +
               config.providerId.slice(1),
+            slug: config.slug,
             customName: config.name,
             logo: `https://models.dev/logos/${config.providerId}.svg`,
             configId: config.id,

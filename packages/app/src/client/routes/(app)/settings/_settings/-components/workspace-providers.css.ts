@@ -81,6 +81,13 @@ export const providerName = style({
   color: colors.gray12,
 });
 
+export const providerSlug = style({
+  fontSize: '0.75rem',
+  fontFamily: 'monospace',
+  color: colors.gray9,
+  marginLeft: spacing.xs,
+});
+
 export const providerActions = style({
   display: 'flex',
   alignItems: 'center',

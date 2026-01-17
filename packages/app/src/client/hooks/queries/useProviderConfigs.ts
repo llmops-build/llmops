@@ -4,6 +4,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 export type ProviderConfig = {
   id: string;
   providerId: string;
+  slug: string | null;
   name: string | null;
   config: Record<string, unknown>;
   enabled: boolean;

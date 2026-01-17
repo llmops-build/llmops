@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export type UpdateProviderConfigInput = {
   id: string;
+  slug?: string | null;
   name?: string | null;
   config?: Record<string, unknown>;
   enabled?: boolean;
@@ -16,6 +17,7 @@ export const useUpdateProviderConfig = () => {
       const response = await hc.v1.providers.configs[':id'].$patch({
         param: { id: data.id },
         json: {
+          slug: data.slug,
           name: data.name,
           config: data.config,
           enabled: data.enabled,

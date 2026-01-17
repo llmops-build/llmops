@@ -304,6 +304,7 @@ const app = new Hono()
       'json',
       z.object({
         providerId: z.string().min(1),
+        slug: z.string().nullable().optional(),
         name: z.string().nullable().optional(),
         config: z.record(z.string(), z.unknown()),
         enabled: z.boolean().optional(),
@@ -316,6 +317,7 @@ const app = new Hono()
       try {
         const config = await db.createProviderConfig({
           providerId: body.providerId,
+          slug: body.slug,
           name: body.name,
           config: body.config,
           enabled: body.enabled ?? true,
@@ -355,6 +357,7 @@ const app = new Hono()
     zv(
       'json',
       z.object({
+        slug: z.string().nullable().optional(),
         name: z.string().nullable().optional(),
         config: z.record(z.string(), z.unknown()).optional(),
         enabled: z.boolean().optional(),

@@ -4,8 +4,50 @@ import type { Kysely } from 'kysely';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
+/**
+ * Generate a unique slug for a provider config.
+ * If the base slug already exists, appends -01, -02, etc.
+ */
+async function generateUniqueSlug(
+  db: Kysely<Database>,
+  baseSlug: string
+): Promise<string> {
+  // Check if base slug exists
+  const existing = await db
+    .selectFrom('provider_configs')
+    .select('slug')
+    .where('slug', 'like', `${baseSlug}%`)
+    .execute();
+
+  if (existing.length === 0) {
+    return baseSlug;
+  }
+
+  const existingSlugs = new Set(existing.map((e) => e.slug));
+
+  // If base slug doesn't exist, use it
+  if (!existingSlugs.has(baseSlug)) {
+    return baseSlug;
+  }
+
+  // Find the next available suffix
+  let counter = 1;
+  while (counter < 100) {
+    const suffix = counter.toString().padStart(2, '0');
+    const candidateSlug = `${baseSlug}-${suffix}`;
+    if (!existingSlugs.has(candidateSlug)) {
+      return candidateSlug;
+    }
+    counter++;
+  }
+
+  // Fallback: use UUID suffix
+  return `${baseSlug}-${randomUUID().slice(0, 8)}`;
+}
+
 const createProviderConfig = z.object({
   providerId: z.string().min(1),
+  slug: z.string().nullable().optional(),
   name: z.string().nullable().optional(),
   config: z.record(z.string(), z.unknown()),
   enabled: z.boolean().optional().default(true),
@@ -13,6 +55,7 @@ const createProviderConfig = z.object({
 
 const updateProviderConfig = z.object({
   id: z.uuidv4(),
+  slug: z.string().nullable().optional(),
   name: z.string().nullable().optional(),
   config: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
@@ -44,13 +87,17 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { providerId, name, config, enabled } = value.data;
+      const { providerId, slug, name, config, enabled } = value.data;
+
+      // Auto-generate unique slug if not provided
+      const finalSlug = slug ?? (await generateUniqueSlug(db, providerId));
 
       return db
         .insertInto('provider_configs')
         .values({
           id: randomUUID(),
           providerId,
+          slug: finalSlug,
           name: name ?? null,
           config: JSON.stringify(config),
           enabled,
@@ -67,11 +114,12 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { id, name, config, enabled } = value.data;
+      const { id, slug, name, config, enabled } = value.data;
 
       const updateData: Record<string, unknown> = {
         updatedAt: new Date().toISOString(),
       };
+      if (slug !== undefined) updateData.slug = slug;
       if (name !== undefined) updateData.name = name;
       if (config !== undefined) updateData.config = JSON.stringify(config);
       if (enabled !== undefined) updateData.enabled = enabled;
@@ -163,7 +211,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { providerId, name, config, enabled } = value.data;
+      const { providerId, slug, name, config, enabled } = value.data;
 
       // Check if a config already exists for this provider
       const existing = await db
@@ -174,9 +222,14 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
 
       if (existing) {
         // Update existing config
+        // Generate slug if not provided and existing doesn't have one
+        const finalSlug =
+          slug ?? existing.slug ?? (await generateUniqueSlug(db, providerId));
+
         return db
           .updateTable('provider_configs')
           .set({
+            slug: finalSlug,
             name: name ?? existing.name,
             config: JSON.stringify(config),
             enabled,
@@ -187,12 +240,16 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
           .executeTakeFirst();
       }
 
+      // Auto-generate unique slug if not provided for new configs
+      const finalSlug = slug ?? (await generateUniqueSlug(db, providerId));
+
       // Create new config
       return db
         .insertInto('provider_configs')
         .values({
           id: randomUUID(),
           providerId,
+          slug: finalSlug,
           name: name ?? null,
           config: JSON.stringify(config),
           enabled,

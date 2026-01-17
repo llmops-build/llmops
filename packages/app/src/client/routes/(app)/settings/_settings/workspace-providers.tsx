@@ -1,7 +1,8 @@
 import { Icon } from '@client/components/icons';
 import { createFileRoute } from '@tanstack/react-router';
 import { ArrowLeft, Pencil, Plug, Trash2 } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { AlertDialog } from '@base-ui/react/alert-dialog';
 import { Button, Combobox } from '@ui';
 import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
@@ -31,6 +32,7 @@ export const Route = createFileRoute(
 type ProviderConfig = {
   id: string;
   providerId: string;
+  slug: string | null;
   name: string | null;
   config: Record<string, unknown>;
   enabled: boolean;
@@ -39,6 +41,18 @@ type ProviderConfig = {
 };
 
 type ViewMode = 'list' | 'add' | 'edit';
+
+interface ProviderFormData {
+  slug: string;
+  name: string;
+  config: Record<string, string>;
+}
+
+const defaultFormValues: ProviderFormData = {
+  slug: '',
+  name: '',
+  config: {},
+};
 
 function RouteComponent() {
   const { data: providerConfigs, isLoading } = useProviderConfigs();
@@ -52,11 +66,22 @@ function RouteComponent() {
   const [selectedProvider, setSelectedProvider] = useState<ProviderInfo | null>(
     null
   );
-  const [configName, setConfigName] = useState<string>('');
-  const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [editingConfig, setEditingConfig] = useState<ProviderConfig | null>(
     null
   );
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<ProviderFormData>({
+    defaultValues: defaultFormValues,
+  });
+
+  const configValues = watch('config');
 
   // Get provider info by ID
   const getProviderInfo = useCallback(
@@ -68,9 +93,8 @@ function RouteComponent() {
 
   const handleOpenAdd = () => {
     setSelectedProvider(null);
-    setConfigName('');
-    setConfigValues({});
     setEditingConfig(null);
+    reset(defaultFormValues);
     setViewMode('add');
   };
 
@@ -78,20 +102,20 @@ function RouteComponent() {
     setEditingConfig(config);
     const providerInfo = getProviderInfo(config.providerId);
     setSelectedProvider(providerInfo || null);
-    // Populate name from existing config
-    setConfigName(config.name || '');
-    // Populate all config values from existing config
-    const existingConfig = config.config as Record<string, string>;
-    setConfigValues(existingConfig || {});
+    // Populate form with existing config
+    reset({
+      slug: config.slug || '',
+      name: config.name || '',
+      config: (config.config as Record<string, string>) || {},
+    });
     setViewMode('edit');
   };
 
   const handleBack = () => {
     setViewMode('list');
     setSelectedProvider(null);
-    setConfigName('');
-    setConfigValues({});
     setEditingConfig(null);
+    reset(defaultFormValues);
   };
 
   const handleOpenDeleteDialog = (config: ProviderConfig) => {
@@ -100,11 +124,15 @@ function RouteComponent() {
   };
 
   const handleConfigFieldChange = (fieldName: string, value: string) => {
-    setConfigValues((prev) => ({
-      ...prev,
-      [fieldName]: value,
-    }));
+    setValue(`config.${fieldName}`, value, { shouldDirty: true });
   };
+
+  // Reset config fields when provider changes in add mode
+  useEffect(() => {
+    if (viewMode === 'add' && selectedProvider) {
+      setValue('config', {});
+    }
+  }, [selectedProvider, viewMode, setValue]);
 
   // Check if all required fields are filled
   const isFormValid = () => {
@@ -113,19 +141,20 @@ function RouteComponent() {
     return requiredFields.every((field) => configValues[field]?.trim());
   };
 
-  const handleSaveProvider = async () => {
+  const onSubmit = async (data: ProviderFormData) => {
     if (!selectedProvider) return;
 
     // Filter out empty values
     const cleanedConfig = Object.fromEntries(
-      Object.entries(configValues).filter(([, v]) => v?.trim())
+      Object.entries(data.config).filter(([, v]) => v?.trim())
     );
 
     if (viewMode === 'edit' && editingConfig) {
       // Update existing config
       await updateProvider.mutateAsync({
         id: editingConfig.id,
-        name: configName.trim() || null,
+        slug: data.slug.trim() || null,
+        name: data.name.trim() || null,
         config: cleanedConfig,
         enabled: true,
       });
@@ -133,7 +162,8 @@ function RouteComponent() {
       // Create new config
       await createProvider.mutateAsync({
         providerId: selectedProvider.id,
-        name: configName.trim() || null,
+        slug: data.slug.trim() || null,
+        name: data.name.trim() || null,
         config: cleanedConfig,
         enabled: true,
       });
@@ -166,7 +196,10 @@ function RouteComponent() {
           Back to Providers
         </button>
 
-        <div className={styles.formContainer}>
+        <form
+          className={styles.formContainer}
+          onSubmit={handleSubmit(onSubmit)}
+        >
           {viewMode === 'add' ? (
             <div className={styles.formField}>
               <label className={styles.formFieldLabel}>Provider</label>
@@ -207,14 +240,24 @@ function RouteComponent() {
             <>
               <div className={styles.formField}>
                 <label className={styles.formFieldLabel}>
+                  Slug <span style={{ color: 'var(--gray9)' }}>(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  className={styles.dialogInput}
+                  placeholder="e.g., openai-prod"
+                  {...register('slug')}
+                />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formFieldLabel}>
                   Name <span style={{ color: 'var(--gray9)' }}>(optional)</span>
                 </label>
                 <input
                   type="text"
                   className={styles.dialogInput}
-                  value={configName}
-                  onChange={(e) => setConfigName(e.target.value)}
                   placeholder="e.g., Production OpenAI"
+                  {...register('name')}
                 />
               </div>
               <ProviderConfigFields
@@ -227,9 +270,10 @@ function RouteComponent() {
 
           <div className={styles.formActions}>
             <Button
-              onClick={handleSaveProvider}
+              type="submit"
               disabled={
                 !isFormValid() ||
+                isSubmitting ||
                 createProvider.isPending ||
                 updateProvider.isPending
               }
@@ -239,7 +283,7 @@ function RouteComponent() {
                 : 'Save'}
             </Button>
           </div>
-        </div>
+        </form>
       </div>
     );
   }
@@ -277,6 +321,9 @@ function RouteComponent() {
                       ? `${config.name} (${providerInfo?.name || config.providerId})`
                       : providerInfo?.name || config.providerId}
                   </span>
+                  {config.slug && (
+                    <span className={styles.providerSlug}>({config.slug})</span>
+                  )}
                 </div>
                 <div className={styles.providerActions}>
                   <Button
