@@ -47,7 +47,6 @@ function getModelProvider(modelId: string, selectedProvider?: string): string {
 
 // Helper to get provider ID from model ID (e.g., "anthropic/claude-3" -> "anthropic")
 function getProviderIdFromModel(modelId: string): string | null {
-  console.log(modelId);
   const parts = modelId.split('/');
   if (parts.length > 1 && parts[0].length > 0) {
     return parts[0];
@@ -243,7 +242,6 @@ export function ModelSettingsPopover({
   };
 
   // Get provider icon URL - prefer from model ID, fall back to selected provider
-  const modelProviderId = getProviderIdFromModel(value.modelName);
   const providerIconUrl = selectedProviderItem?.icon;
 
   return (

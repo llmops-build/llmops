@@ -247,6 +247,55 @@ const app = new Hono()
       return c.json(internalServerError('Failed to fetch models', 500), 500);
     }
   })
+  // Get models grouped by provider for configured providers
+  .get('/models/grouped', async (c) => {
+    try {
+      const db = c.get('db');
+      const data = await fetchModelsDevData();
+      const providerConfigs = await db.listProviderConfigs();
+
+      const groupedProviders: Array<{
+        id: string;
+        providerId: string;
+        slug: string | null;
+        label: string;
+        logo: string;
+        models: Array<{
+          label: string;
+          value: string;
+        }>;
+      }> = [];
+
+      for (const config of providerConfigs) {
+        if (!config.enabled) continue;
+
+        const provider = data[config.providerId];
+        if (!provider) continue;
+
+        const models = Object.values(provider.models || {}).map((model) => ({
+          label: model.name,
+          value: model.id,
+        }));
+
+        groupedProviders.push({
+          id: config.id,
+          providerId: provider.id,
+          label: config.name || provider.name,
+          slug: config.slug,
+          logo: `${MODELS_DEV_LOGOS}/${provider.id}.svg`,
+          models,
+        });
+      }
+
+      return c.json(successResponse(groupedProviders, 200));
+    } catch (error) {
+      console.error('Error fetching grouped models:', error);
+      return c.json(
+        internalServerError('Failed to fetch grouped models', 500),
+        500
+      );
+    }
+  })
   // =============================================
   // Provider Configs CRUD (stored configurations)
   // =============================================
