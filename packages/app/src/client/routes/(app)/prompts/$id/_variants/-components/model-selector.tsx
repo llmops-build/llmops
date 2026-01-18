@@ -1,6 +1,17 @@
 import { useMemo, useRef, useState } from 'react';
-import { Combobox as BaseCombobox } from '@base-ui/react';
-import { Check, ChevronDown, Search } from 'lucide-react';
+import {
+  Combobox as BaseCombobox,
+  Menu as BaseMenu,
+  Menubar as BaseMenubar,
+  Popover as BasePopover,
+} from '@base-ui/react';
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react';
 import * as styles from './model-selector.css';
 import {
   useModelsGroupedByProvider,
@@ -22,10 +33,98 @@ type ProviderGroupWithModels = Omit<ProviderGroup, 'models'> & {
   models: ModelWithProvider[];
 };
 
+const ProvidersMenubarContent = ({
+  groupsWithProviderInfo,
+  menubarRef,
+  selectedModel,
+  onSelect,
+}: {
+  groupsWithProviderInfo: ProviderGroupWithModels[];
+  menubarRef: React.RefObject<HTMLDivElement | null>;
+  selectedModel: ModelWithProvider | null;
+  onSelect: (model: ModelWithProvider) => void;
+}) => {
+  return (
+    <>
+      {groupsWithProviderInfo.map((group) => (
+        <BaseMenu.Root key={group.id}>
+          <BaseMenu.Trigger
+            className={styles.menuTrigger}
+            onMouseEnter={() => {
+              if (menubarRef.current?.dataset.hasSubmenuOpen === 'false') {
+                // @ts-expect-error click is on the button inside Trigger
+                menubarRef.current?.firstChild?.firstChild?.click();
+                // @ts-expect-error click is on the button inside Trigger
+                menubarRef.current?.firstChild?.firstChild?.click();
+              }
+            }}
+            openOnHover
+          >
+            <div className={styles.providerListItemWrapper}>
+              <BaseCombobox.Icon className={styles.triggerIcon}>
+                {group.logo && (
+                  <img className={styles.triggerIconImg} src={group.logo} />
+                )}
+              </BaseCombobox.Icon>
+              {group.label}{' '}
+              <span className={styles.providerMenuItemSlug}>
+                ({group.slug})
+              </span>
+            </div>
+            <BaseCombobox.Icon className={styles.chevronRight}>
+              <ChevronRight size={14} />
+            </BaseCombobox.Icon>
+          </BaseMenu.Trigger>
+          <BaseMenu.Portal>
+            <BaseMenu.Positioner
+              align="end"
+              side="right"
+              sideOffset={6}
+              alignOffset={-2}
+            >
+              <BaseMenu.Popup className={styles.menuPopup}>
+                <BaseCombobox.List>
+                  <BaseCombobox.Group key={group.id} items={group.models}>
+                    <BaseCombobox.Collection>
+                      {(model: ModelWithProvider) => (
+                        <BaseCombobox.Item
+                          key={`${model.provider.id}_${model.value}`}
+                          value={model}
+                          className={styles.item}
+                        >
+                          <BaseCombobox.ItemIndicator
+                            className={styles.itemIndicator}
+                          >
+                            <Check size={16} />
+                          </BaseCombobox.ItemIndicator>
+                          <BaseCombobox.Icon>
+                            {model.provider.logo && (
+                              <img
+                                className={styles.triggerIconImg}
+                                src={model.provider.logo}
+                              />
+                            )}
+                          </BaseCombobox.Icon>
+                          {model.label}
+                        </BaseCombobox.Item>
+                      )}
+                    </BaseCombobox.Collection>
+                  </BaseCombobox.Group>
+                </BaseCombobox.List>
+              </BaseMenu.Popup>
+            </BaseMenu.Positioner>
+          </BaseMenu.Portal>
+        </BaseMenu.Root>
+      ))}
+    </>
+  );
+};
+
 const ModelSelector = () => {
   const { data: providerGroups } = useModelsGroupedByProvider();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
+  const menubarRef = useRef<HTMLDivElement>(null);
 
   // Create a flat map for quick lookup and items with provider info
   const { groupsWithProviderInfo, modelMap } = useMemo(() => {
@@ -105,86 +204,120 @@ const ModelSelector = () => {
   };
 
   return (
-    <BaseCombobox.Root
-      value={selectedModel}
-      onValueChange={handleValueChange}
-      inputValue={inputValue}
-      onInputValueChange={setInputValue}
-      filter={() => true}
-      autoHighlight
-    >
-      <BaseCombobox.Trigger className={styles.trigger}>
-        <div className={styles.triggerSelectedModelWrapper}>
-          {selectedModel && selectedModel.provider.logo && (
-            <img
-              className={styles.triggerIconImg}
-              src={selectedModel.provider.logo}
-            />
-          )}
-          <span>{selectedModel ? selectedModel.label : 'Select Model'}</span>
-        </div>
-        <BaseCombobox.Icon className={styles.triggerIcon}>
-          <ChevronDown size={14} />
-        </BaseCombobox.Icon>
-      </BaseCombobox.Trigger>
-      <BaseCombobox.Portal>
-        <BaseCombobox.Positioner align="start" sideOffset={4}>
-          <BaseCombobox.Popup className={styles.popup}>
-            <div className={styles.searchWrapper}>
-              <Search className={styles.searchIcon} size={16} />
-              <BaseCombobox.Input
-                placeholder="Search Model..."
-                className={styles.searchInputWithIcon}
+    <div className={styles.modelSelectorWrapper}>
+      <BaseCombobox.Root
+        value={selectedModel}
+        onValueChange={handleValueChange}
+        inputValue={inputValue}
+        onInputValueChange={setInputValue}
+        filter={() => true}
+        autoHighlight
+      >
+        <BaseCombobox.Trigger className={styles.trigger}>
+          <div className={styles.triggerSelectedModelWrapper}>
+            {selectedModel && selectedModel.provider.logo && (
+              <img
+                className={styles.triggerIconImg}
+                src={selectedModel.provider.logo}
               />
-            </div>
+            )}
+            <span>{selectedModel ? selectedModel.label : 'Select Model'}</span>
+          </div>
+          <BaseCombobox.Icon className={styles.triggerIcon}>
+            <ChevronDown size={14} />
+          </BaseCombobox.Icon>
+        </BaseCombobox.Trigger>
+        <BaseCombobox.Portal>
+          <BaseCombobox.Positioner align="start" sideOffset={4}>
+            <BaseCombobox.Popup className={styles.popup}>
+              <div className={styles.searchWrapper}>
+                <Search className={styles.searchIcon} size={16} />
+                <BaseCombobox.Input
+                  placeholder="Search Model..."
+                  className={styles.searchInputWithIcon}
+                  onKeyDown={(event) => {
+                    console.log(event.code);
+                    if (event.code === 'ArrowDown') {
+                      // @ts-expect-error click is on the button inside Trigger
+                      menubarRef.current?.firstChild?.firstChild?.click();
+                      // @ts-expect-error click is on the button inside Trigger
+                      menubarRef.current?.firstChild?.firstChild?.click();
+                    }
+                  }}
+                />
+              </div>
 
-            <div className={styles.listWrapper}>
-              {!inputValue?.trim() ? (
-                <div className={styles.item} style={{ cursor: 'default' }}>
-                  Start typing to search...
-                </div>
-              ) : (
-                <>
-                  <BaseCombobox.List>
-                    {filteredGroups.map((group) => (
-                      <BaseCombobox.Group key={group.id} items={group.models}>
-                        <BaseCombobox.GroupLabel className={styles.groupLabel}>
-                          {group.slug ?? group.label}
-                        </BaseCombobox.GroupLabel>
-                        <BaseCombobox.Collection>
-                          {(model: ModelWithProvider) => (
-                            <BaseCombobox.Item
-                              key={`${model.provider.id}_${model.value}`}
-                              value={model}
-                              className={styles.item}
-                            >
-                              <BaseCombobox.ItemIndicator
-                                className={styles.itemIndicator}
+              <div className={styles.listWrapper}>
+                {!inputValue?.trim() ? (
+                  <BaseMenubar
+                    ref={menubarRef}
+                    className={styles.menu}
+                    orientation="vertical"
+                  >
+                    <ProvidersMenubarContent
+                      groupsWithProviderInfo={groupsWithProviderInfo}
+                      menubarRef={menubarRef}
+                      selectedModel={selectedModel}
+                      onSelect={handleValueChange}
+                    />
+                  </BaseMenubar>
+                ) : (
+                  <>
+                    <BaseCombobox.List>
+                      {filteredGroups.map((group) => (
+                        <BaseCombobox.Group key={group.id} items={group.models}>
+                          <BaseCombobox.GroupLabel
+                            className={styles.groupLabel}
+                          >
+                            {group.slug ?? group.label}
+                          </BaseCombobox.GroupLabel>
+                          <BaseCombobox.Collection>
+                            {(model: ModelWithProvider) => (
+                              <BaseCombobox.Item
+                                key={`${model.provider.id}_${model.value}`}
+                                value={model}
+                                className={styles.item}
                               >
-                                <Check size={16} />
-                              </BaseCombobox.ItemIndicator>
-                              <BaseCombobox.Icon>
-                                {model.provider.logo && (
-                                  <img
-                                    className={styles.triggerIconImg}
-                                    src={model.provider.logo}
-                                  />
-                                )}
-                              </BaseCombobox.Icon>
-                              {model.label}
-                            </BaseCombobox.Item>
-                          )}
-                        </BaseCombobox.Collection>
-                      </BaseCombobox.Group>
-                    ))}
-                  </BaseCombobox.List>
-                </>
-              )}
-            </div>
-          </BaseCombobox.Popup>
-        </BaseCombobox.Positioner>
-      </BaseCombobox.Portal>
-    </BaseCombobox.Root>
+                                <BaseCombobox.ItemIndicator
+                                  className={styles.itemIndicator}
+                                >
+                                  <Check size={16} />
+                                </BaseCombobox.ItemIndicator>
+                                <BaseCombobox.Icon>
+                                  {model.provider.logo && (
+                                    <img
+                                      className={styles.triggerIconImg}
+                                      src={model.provider.logo}
+                                    />
+                                  )}
+                                </BaseCombobox.Icon>
+                                {model.label}
+                              </BaseCombobox.Item>
+                            )}
+                          </BaseCombobox.Collection>
+                        </BaseCombobox.Group>
+                      ))}
+                    </BaseCombobox.List>
+                  </>
+                )}
+              </div>
+            </BaseCombobox.Popup>
+          </BaseCombobox.Positioner>
+        </BaseCombobox.Portal>
+      </BaseCombobox.Root>
+      <BasePopover.Root>
+        <BasePopover.Trigger className={styles.paramsTrigger}>
+          <SlidersHorizontal size={14} /> Params <ChevronDown size={14} />
+        </BasePopover.Trigger>
+        <BasePopover.Portal>
+          <BasePopover.Positioner align="start" sideOffset={4}>
+            <BasePopover.Popup className={styles.paramsPopup}>
+              <BasePopover.Description>Model Settings</BasePopover.Description>
+            </BasePopover.Popup>
+          </BasePopover.Positioner>
+        </BasePopover.Portal>
+      </BasePopover.Root>
+    </div>
   );
 };
 
