@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { Slider } from '@ui';
 import {
   Combobox as BaseCombobox,
   Menu as BaseMenu,
@@ -31,6 +32,14 @@ export type ModelWithProvider = Model & {
 
 type ProviderGroupWithModels = Omit<ProviderGroup, 'models'> & {
   models: ModelWithProvider[];
+};
+
+export type ModelSettings = {
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
 };
 
 const ProvidersMenubarContent = ({
@@ -124,7 +133,37 @@ const ModelSelector = () => {
   const { data: providerGroups } = useModelsGroupedByProvider();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
+  const [settings, setSettings] = useState<ModelSettings>({
+    temperature: 1,
+    topP: 1,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+  });
   const menubarRef = useRef<HTMLDivElement>(null);
+
+  const handleSettingChange = (
+    key: keyof ModelSettings,
+    newValue: number | undefined
+  ) => {
+    setSettings((prev) => {
+      const updatedSettings = {
+        ...prev,
+        [key]: newValue,
+      };
+
+      // Ensure maxTokens doesn't exceed model's limit
+      if (
+        key === 'maxTokens' &&
+        newValue &&
+        selectedModel?.limit?.output &&
+        newValue > selectedModel.limit.output
+      ) {
+        updatedSettings.maxTokens = selectedModel.limit.output;
+      }
+
+      return updatedSettings;
+    });
+  };
 
   // Create a flat map for quick lookup and items with provider info
   const { groupsWithProviderInfo, modelMap } = useMemo(() => {
@@ -306,13 +345,104 @@ const ModelSelector = () => {
         </BaseCombobox.Portal>
       </BaseCombobox.Root>
       <BasePopover.Root>
-        <BasePopover.Trigger className={styles.paramsTrigger}>
+        <BasePopover.Trigger
+          className={styles.paramsTrigger}
+          disabled={!selectedModel}
+        >
           <SlidersHorizontal size={14} /> Params <ChevronDown size={14} />
         </BasePopover.Trigger>
         <BasePopover.Portal>
           <BasePopover.Positioner align="start" sideOffset={4}>
             <BasePopover.Popup className={styles.paramsPopup}>
-              <BasePopover.Description>Model Settings</BasePopover.Description>
+              <div className={styles.paramsPopupContent}>
+                <div className={styles.paramsSection}>
+                  <span className={styles.paramsSectionTitle}>Parameters</span>
+                  <div className={styles.paramsSliderGroup}>
+                    <Slider
+                      label="Temperature"
+                      value={settings.temperature ?? 1}
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      onValueChange={(v) =>
+                        handleSettingChange('temperature', v)
+                      }
+                      formatValue={(v) => v.toFixed(1)}
+                    />
+
+                    <div className={styles.paramsField}>
+                      <label className={styles.paramsFieldLabel}>
+                        Max Tokens
+                        {selectedModel?.limit?.output
+                          ? ` (${selectedModel.limit.output})`
+                          : ''}
+                      </label>
+                      <input
+                        type="number"
+                        className={styles.paramsInput}
+                        value={settings.maxTokens ?? ''}
+                        placeholder="Default"
+                        min={1}
+                        max={selectedModel?.limit?.output || undefined}
+                        onChange={(e) => {
+                          const val = e.target.value
+                            ? parseInt(e.target.value, 10)
+                            : undefined;
+                          handleSettingChange('maxTokens', val);
+                        }}
+                      />
+                    </div>
+
+                    {selectedModel?.temperature !== false && (
+                      <Slider
+                        label="Temperature"
+                        value={settings.temperature ?? 1}
+                        min={0}
+                        max={2}
+                        step={0.1}
+                        onValueChange={(v) =>
+                          handleSettingChange('temperature', v)
+                        }
+                        formatValue={(v) => v.toFixed(1)}
+                      />
+                    )}
+
+                    <Slider
+                      label="Top P"
+                      value={settings.topP ?? 1}
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      onValueChange={(v) => handleSettingChange('topP', v)}
+                      formatValue={(v) => v.toFixed(2)}
+                    />
+
+                    <Slider
+                      label="Frequency Penalty"
+                      value={settings.frequencyPenalty ?? 0}
+                      min={-2}
+                      max={2}
+                      step={0.1}
+                      onValueChange={(v) =>
+                        handleSettingChange('frequencyPenalty', v)
+                      }
+                      formatValue={(v) => v.toFixed(1)}
+                    />
+
+                    <Slider
+                      label="Presence Penalty"
+                      value={settings.presencePenalty ?? 0}
+                      min={-2}
+                      max={2}
+                      step={0.1}
+                      onValueChange={(v) =>
+                        handleSettingChange('presencePenalty', v)
+                      }
+                      formatValue={(v) => v.toFixed(1)}
+                    />
+                  </div>
+                </div>
+              </div>
             </BasePopover.Popup>
           </BasePopover.Positioner>
         </BasePopover.Portal>

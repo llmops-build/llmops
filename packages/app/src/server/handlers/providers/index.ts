@@ -275,6 +275,20 @@ const app = new Hono()
         const models = Object.values(provider.models || {}).map((model) => ({
           label: model.name,
           value: model.id,
+          id: model.id,
+          name: model.name,
+          family: model.family,
+          attachment: model.attachment,
+          reasoning: model.reasoning,
+          tool_call: model.tool_call,
+          temperature: model.temperature,
+          knowledge: model.knowledge,
+          release_date: model.release_date,
+          last_updated: model.last_updated,
+          modalities: model.modalities,
+          open_weights: model.open_weights,
+          cost: model.cost,
+          limit: model.limit,
         }));
 
         groupedProviders.push({

@@ -381,14 +381,75 @@ export const paramsTrigger = style([
     ':hover': {
       backgroundColor: colors.gray2,
     },
+    selectors: {
+      '&[disabled]': {
+        cursor: 'not-allowed',
+        opacity: 0.5,
+        backgroundColor: colors.gray1,
+        pointerEvents: 'none',
+      },
+    },
   },
 ]);
 
 export const paramsPopup = style({
-  width: '240px',
+  width: '320px',
   maxHeight: 'calc(var(--available-height))',
   background: colors.background,
   overflow: 'hidden',
   border: `1px solid ${colors.gray4}`,
   borderRadius: spacing['xs'],
+});
+
+export const paramsPopupContent = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.md,
+  padding: spacing.md,
+});
+
+export const paramsSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.sm,
+});
+
+export const paramsSectionTitle = style({
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  color: colors.gray9,
+});
+
+export const paramsSliderGroup = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.md,
+});
+
+export const paramsField = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+});
+
+export const paramsFieldLabel = style({
+  fontSize: '0.75rem',
+  color: colors.gray11,
+});
+
+export const paramsInput = style({
+  width: '100%',
+  padding: `${spacing.xs} ${spacing.sm}`,
+  border: `1px solid ${colors.gray4}`,
+  borderRadius: spacing.xs,
+  fontSize: '0.875rem',
+  backgroundColor: colors.background,
+  color: colors.gray12,
+  outline: 'none',
+  ':focus': {
+    borderColor: colors.gray8,
+  },
+  '::placeholder': {
+    color: colors.gray9,
+  },
 });
