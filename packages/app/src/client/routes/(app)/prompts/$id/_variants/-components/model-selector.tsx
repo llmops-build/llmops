@@ -25,6 +25,7 @@ type ProviderGroupWithModels = Omit<ProviderGroup, 'models'> & {
 const ModelSelector = () => {
   const { data: providerGroups } = useModelsGroupedByProvider();
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState('');
 
   // Create a flat map for quick lookup and items with provider info
   const { groupsWithProviderInfo, modelMap } = useMemo(() => {
@@ -53,11 +54,35 @@ const ModelSelector = () => {
     return { groupsWithProviderInfo: groups, modelMap: map };
   }, [providerGroups]);
 
+  const filteredGroups = useMemo(() => {
+    if (!inputValue?.trim()) return [];
+    const lowerQuery = inputValue.toLowerCase();
+
+    return groupsWithProviderInfo
+      .map((group) => {
+        const groupMatches = group.label.toLowerCase().includes(lowerQuery);
+        // If group matches, return it as is (all models included)
+        if (groupMatches) return group;
+
+        // If group doesn't match, check models
+        const matchingModels = group.models.filter(
+          (model) =>
+            model.label.toLowerCase().includes(lowerQuery) ||
+            model.value.toLowerCase().includes(lowerQuery)
+        );
+
+        if (matchingModels.length > 0) {
+          return { ...group, models: matchingModels };
+        }
+
+        return null;
+      })
+      .filter((g): g is ProviderGroupWithModels => g !== null);
+  }, [groupsWithProviderInfo, inputValue]);
+
   const selectedModel = selectedKey
     ? (modelMap.get(selectedKey) ?? null)
     : null;
-
-  console.log('Selected:', selectedModel);
 
   // Guard against spurious null calls after selection
   const justSelectedRef = useRef(false);
@@ -79,36 +104,14 @@ const ModelSelector = () => {
     }
   };
 
-  const filter = (
-    itemValue: ModelWithProvider | ProviderGroupWithModels,
-    query: string,
-    itemToString:
-      | ((itemValue: ModelWithProvider | ProviderGroupWithModels) => string)
-      | undefined
-  ): boolean => {
-    if (!query) return true;
-    const lowerQuery = query.toLowerCase();
-
-    // For individual models
-    if ('label' in itemValue && 'value' in itemValue) {
-      const model = itemValue as ModelWithProvider;
-      return (
-        model.label.toLowerCase().includes(lowerQuery) ||
-        model.value.toLowerCase().includes(lowerQuery)
-      );
-    }
-
-    // For provider groups (though these aren't directly filterable items)
-    const group = itemValue as ProviderGroupWithModels;
-    return group.label.toLowerCase().includes(lowerQuery);
-  };
-
   return (
     <BaseCombobox.Root
-      items={groupsWithProviderInfo}
       value={selectedModel}
       onValueChange={handleValueChange}
-      filter={filter}
+      inputValue={inputValue}
+      onInputValueChange={setInputValue}
+      filter={() => true}
+      autoHighlight
     >
       <BaseCombobox.Trigger className={styles.trigger}>
         <div className={styles.triggerSelectedModelWrapper}>
@@ -134,41 +137,49 @@ const ModelSelector = () => {
                 className={styles.searchInputWithIcon}
               />
             </div>
-            <BaseCombobox.Empty>No models found.</BaseCombobox.Empty>
+
             <div className={styles.listWrapper}>
-              <BaseCombobox.List>
-                {(group: ProviderGroupWithModels) => (
-                  <BaseCombobox.Group key={group.id} items={group.models}>
-                    <BaseCombobox.GroupLabel className={styles.groupLabel}>
-                      {group.slug ?? group.label}
-                    </BaseCombobox.GroupLabel>
-                    <BaseCombobox.Collection>
-                      {(model: ModelWithProvider) => (
-                        <BaseCombobox.Item
-                          key={`${model.provider.id}_${model.value}`}
-                          value={model}
-                          className={styles.item}
-                        >
-                          <BaseCombobox.ItemIndicator
-                            className={styles.itemIndicator}
-                          >
-                            <Check size={16} />
-                          </BaseCombobox.ItemIndicator>
-                          <BaseCombobox.Icon>
-                            {model.provider.logo && (
-                              <img
-                                className={styles.triggerIconImg}
-                                src={model.provider.logo}
-                              />
-                            )}
-                          </BaseCombobox.Icon>
-                          {model.label}
-                        </BaseCombobox.Item>
-                      )}
-                    </BaseCombobox.Collection>
-                  </BaseCombobox.Group>
-                )}
-              </BaseCombobox.List>
+              {!inputValue?.trim() ? (
+                <div className={styles.item} style={{ cursor: 'default' }}>
+                  Start typing to search...
+                </div>
+              ) : (
+                <>
+                  <BaseCombobox.List>
+                    {filteredGroups.map((group) => (
+                      <BaseCombobox.Group key={group.id} items={group.models}>
+                        <BaseCombobox.GroupLabel className={styles.groupLabel}>
+                          {group.slug ?? group.label}
+                        </BaseCombobox.GroupLabel>
+                        <BaseCombobox.Collection>
+                          {(model: ModelWithProvider) => (
+                            <BaseCombobox.Item
+                              key={`${model.provider.id}_${model.value}`}
+                              value={model}
+                              className={styles.item}
+                            >
+                              <BaseCombobox.ItemIndicator
+                                className={styles.itemIndicator}
+                              >
+                                <Check size={16} />
+                              </BaseCombobox.ItemIndicator>
+                              <BaseCombobox.Icon>
+                                {model.provider.logo && (
+                                  <img
+                                    className={styles.triggerIconImg}
+                                    src={model.provider.logo}
+                                  />
+                                )}
+                              </BaseCombobox.Icon>
+                              {model.label}
+                            </BaseCombobox.Item>
+                          )}
+                        </BaseCombobox.Collection>
+                      </BaseCombobox.Group>
+                    ))}
+                  </BaseCombobox.List>
+                </>
+              )}
             </div>
           </BaseCombobox.Popup>
         </BaseCombobox.Positioner>

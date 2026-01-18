@@ -52,6 +52,8 @@ export const popup = style({
   maxHeight: 'calc(var(--available-height) - 150px)',
   background: colors.background,
   overflow: 'hidden',
+  border: `1px solid ${colors.gray4}`,
+  borderRadius: spacing['xs'],
 });
 
 export const searchInput = style([
@@ -138,19 +140,19 @@ export const searchInputWithIcon = style([
 
 export const groupLabel = style([
   sprinkles({
-    fontSize: 'xs',
+    fontSize: 'sm',
     fontWeight: 'medium',
     color: 'gray9',
     paddingLeft: 'sm',
     paddingRight: 'sm',
     paddingTop: 'sm',
     paddingBottom: 'sm',
+    fontFamily: 'mono',
   }),
   {
     position: 'sticky',
     top: 0,
     zIndex: 1,
-    textTransform: 'uppercase',
     letterSpacing: '0.05em',
     background: colors.background,
   },
@@ -183,6 +185,9 @@ export const item = style([
       '&[data-selected]': {
         backgroundColor: colors.accent2,
         color: colors.accent11,
+      },
+      '&[data-highlighted]': {
+        backgroundColor: colors.gray2,
       },
     },
   },
