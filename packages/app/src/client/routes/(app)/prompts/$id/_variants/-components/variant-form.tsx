@@ -1,21 +1,11 @@
 import { useWatch, type UseFormReturn } from 'react-hook-form';
 import {
   variantFormContainer,
-  variantPropertyRow,
   variantPropertyLabel,
-  variantPropertyValue,
   variantPropertyColumn,
-  markdownLabelInfo,
 } from './variants.css';
-import { Icon } from '@client/components/icons';
-import { BrainCircuit } from 'lucide-react';
 import MarkdownEditor from './editor';
-import Markdown from '@client/components/icons/markdown';
-import {
-  ModelSettingsPopover,
-  type ModelSettings,
-} from './model-settings-popover';
-import ModelSelector from './model-selector';
+import ModelSelector, { type ModelSettings } from './model-selector';
 
 export type VariantFormData = {
   variant_name: string;
@@ -132,9 +122,7 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
         <div className={variantPropertyLabel}>
           <span>Model</span>
         </div>
-        <div className={variantPropertyValue}>
-          <ModelSelector />
-        </div>
+        <ModelSelector value={modelSettings} onChange={handleModelSettingsChange} />
       </div>
 
       <div className={variantPropertyColumn}>

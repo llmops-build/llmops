@@ -35,11 +35,18 @@ type ProviderGroupWithModels = Omit<ProviderGroup, 'models'> & {
 };
 
 export type ModelSettings = {
+  provider: string;
+  modelName: string;
   temperature?: number;
   maxTokens?: number;
   topP?: number;
   frequencyPenalty?: number;
   presencePenalty?: number;
+};
+
+type ModelSelectorProps = {
+  value: ModelSettings;
+  onChange: (settings: ModelSettings) => void;
 };
 
 const ProvidersMenubarContent = ({
@@ -129,40 +136,31 @@ const ProvidersMenubarContent = ({
   );
 };
 
-const ModelSelector = () => {
+const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
   const { data: providerGroups } = useModelsGroupedByProvider();
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [settings, setSettings] = useState<ModelSettings>({
-    temperature: 1,
-    topP: 1,
-    frequencyPenalty: 0,
-    presencePenalty: 0,
-  });
   const menubarRef = useRef<HTMLDivElement>(null);
 
   const handleSettingChange = (
-    key: keyof ModelSettings,
+    key: keyof Omit<ModelSettings, 'provider' | 'modelName'>,
     newValue: number | undefined
   ) => {
-    setSettings((prev) => {
-      const updatedSettings = {
-        ...prev,
-        [key]: newValue,
-      };
+    const updatedSettings = {
+      ...value,
+      [key]: newValue,
+    };
 
-      // Ensure maxTokens doesn't exceed model's limit
-      if (
-        key === 'maxTokens' &&
-        newValue &&
-        selectedModel?.limit?.output &&
-        newValue > selectedModel.limit.output
-      ) {
-        updatedSettings.maxTokens = selectedModel.limit.output;
-      }
+    // Ensure maxTokens doesn't exceed model's limit
+    if (
+      key === 'maxTokens' &&
+      newValue &&
+      selectedModel?.limit?.output &&
+      newValue > selectedModel.limit.output
+    ) {
+      updatedSettings.maxTokens = selectedModel.limit.output;
+    }
 
-      return updatedSettings;
-    });
+    onChange(updatedSettings);
   };
 
   // Create a flat map for quick lookup and items with provider info
@@ -218,6 +216,12 @@ const ModelSelector = () => {
       .filter((g): g is ProviderGroupWithModels => g !== null);
   }, [groupsWithProviderInfo, inputValue]);
 
+  // Derive selectedKey from value.provider and value.modelName
+  const selectedKey =
+    value.provider && value.modelName
+      ? `${value.provider}_${value.modelName}`
+      : null;
+
   const selectedModel = selectedKey
     ? (modelMap.get(selectedKey) ?? null)
     : null;
@@ -231,14 +235,22 @@ const ModelSelector = () => {
     // Only handle ModelWithProvider, ignore ProviderGroupWithModels
     if (item && 'value' in item) {
       justSelectedRef.current = true;
-      setSelectedKey(`${item.provider.id}_${item.value}`);
+      onChange({
+        ...value,
+        provider: item.provider.id,
+        modelName: item.value,
+      });
       // Reset the guard after a tick
       setTimeout(() => {
         justSelectedRef.current = false;
       }, 0);
     } else if (!item && !justSelectedRef.current) {
       // Only clear if this isn't a spurious null after selection
-      setSelectedKey(null);
+      onChange({
+        ...value,
+        provider: '',
+        modelName: '',
+      });
     }
   };
 
@@ -358,18 +370,6 @@ const ModelSelector = () => {
                 <div className={styles.paramsSection}>
                   <span className={styles.paramsSectionTitle}>Parameters</span>
                   <div className={styles.paramsSliderGroup}>
-                    <Slider
-                      label="Temperature"
-                      value={settings.temperature ?? 1}
-                      min={0}
-                      max={2}
-                      step={0.1}
-                      onValueChange={(v) =>
-                        handleSettingChange('temperature', v)
-                      }
-                      formatValue={(v) => v.toFixed(1)}
-                    />
-
                     <div className={styles.paramsField}>
                       <label className={styles.paramsFieldLabel}>
                         Max Tokens
@@ -380,7 +380,7 @@ const ModelSelector = () => {
                       <input
                         type="number"
                         className={styles.paramsInput}
-                        value={settings.maxTokens ?? ''}
+                        value={value.maxTokens ?? ''}
                         placeholder="Default"
                         min={1}
                         max={selectedModel?.limit?.output || undefined}
@@ -396,7 +396,7 @@ const ModelSelector = () => {
                     {selectedModel?.temperature !== false && (
                       <Slider
                         label="Temperature"
-                        value={settings.temperature ?? 1}
+                        value={value.temperature ?? 1}
                         min={0}
                         max={2}
                         step={0.1}
@@ -409,7 +409,7 @@ const ModelSelector = () => {
 
                     <Slider
                       label="Top P"
-                      value={settings.topP ?? 1}
+                      value={value.topP ?? 1}
                       min={0}
                       max={1}
                       step={0.05}
@@ -419,7 +419,7 @@ const ModelSelector = () => {
 
                     <Slider
                       label="Frequency Penalty"
-                      value={settings.frequencyPenalty ?? 0}
+                      value={value.frequencyPenalty ?? 0}
                       min={-2}
                       max={2}
                       step={0.1}
@@ -431,7 +431,7 @@ const ModelSelector = () => {
 
                     <Slider
                       label="Presence Penalty"
-                      value={settings.presencePenalty ?? 0}
+                      value={value.presencePenalty ?? 0}
                       min={-2}
                       max={2}
                       step={0.1}
