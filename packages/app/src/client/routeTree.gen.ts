@@ -17,15 +17,17 @@ import { Route as appPromptsRouteImport } from './routes/(app)/prompts'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
 import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
+import { Route as appGatewayRouteRouteImport } from './routes/(app)/gateway/route'
 import { Route as appSettingsIndexRouteImport } from './routes/(app)/settings/index'
 import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index'
+import { Route as appGatewayIndexRouteImport } from './routes/(app)/gateway/index'
 import { Route as appSettingsSettingsRouteImport } from './routes/(app)/settings/_settings'
 import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
+import { Route as appGatewayGatewayRouteImport } from './routes/(app)/gateway/_gateway'
 import { Route as appPromptsIdRouteRouteImport } from './routes/(app)/prompts/$id/route'
 import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(app)/environments/$environment/route'
 import { Route as appPromptsIdIndexRouteImport } from './routes/(app)/prompts/$id/index'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
-import { Route as appSettingsSettingsWorkspaceProvidersRouteImport } from './routes/(app)/settings/_settings/workspace-providers'
 import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
 import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
 import { Route as appPromptsIdVariantsRouteImport } from './routes/(app)/prompts/$id/_variants'
@@ -33,6 +35,7 @@ import { Route as appPromptsIdTabsRouteImport } from './routes/(app)/prompts/$id
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
 import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
 import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
+import { Route as appGatewayGatewayProvidersRouteImport } from './routes/(app)/gateway/_gateway/providers'
 import { Route as appEnvironmentsEnvironmentTabsRouteImport } from './routes/(app)/environments/$environment/_tabs'
 import { Route as appPromptsIdTabsVariantsRouteImport } from './routes/(app)/prompts/$id/_tabs/variants'
 import { Route as appPromptsIdTabsTargetingRouteImport } from './routes/(app)/prompts/$id/_tabs/targeting'
@@ -81,6 +84,11 @@ const appObservabilityRouteRoute = appObservabilityRouteRouteImport.update({
   path: '/observability',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appGatewayRouteRoute = appGatewayRouteRouteImport.update({
+  id: '/gateway',
+  path: '/gateway',
+  getParentRoute: () => appRouteRoute,
+} as any)
 const appSettingsIndexRoute = appSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -91,6 +99,11 @@ const appObservabilityIndexRoute = appObservabilityIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appObservabilityRouteRoute,
 } as any)
+const appGatewayIndexRoute = appGatewayIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appGatewayRouteRoute,
+} as any)
 const appSettingsSettingsRoute = appSettingsSettingsRouteImport.update({
   id: '/_settings',
   getParentRoute: () => appSettingsRouteRoute,
@@ -100,6 +113,10 @@ const appObservabilityObservabilityRoute =
     id: '/_observability',
     getParentRoute: () => appObservabilityRouteRoute,
   } as any)
+const appGatewayGatewayRoute = appGatewayGatewayRouteImport.update({
+  id: '/_gateway',
+  getParentRoute: () => appGatewayRouteRoute,
+} as any)
 const appPromptsIdRouteRoute = appPromptsIdRouteRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -121,12 +138,6 @@ const appEnvironmentsEnvironmentIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => appEnvironmentsEnvironmentRouteRoute,
-  } as any)
-const appSettingsSettingsWorkspaceProvidersRoute =
-  appSettingsSettingsWorkspaceProvidersRouteImport.update({
-    id: '/workspace-providers',
-    path: '/workspace-providers',
-    getParentRoute: () => appSettingsSettingsRoute,
   } as any)
 const appSettingsSettingsWorkspaceGeneralRoute =
   appSettingsSettingsWorkspaceGeneralRouteImport.update({
@@ -165,6 +176,12 @@ const appObservabilityObservabilityCostsRoute =
     id: '/costs',
     path: '/costs',
     getParentRoute: () => appObservabilityObservabilityRoute,
+  } as any)
+const appGatewayGatewayProvidersRoute =
+  appGatewayGatewayProvidersRouteImport.update({
+    id: '/providers',
+    path: '/providers',
+    getParentRoute: () => appGatewayGatewayRoute,
   } as any)
 const appEnvironmentsEnvironmentTabsRoute =
   appEnvironmentsEnvironmentTabsRouteImport.update({
@@ -215,6 +232,7 @@ const appPromptsIdTargetingTargetingEnvironmentRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/gateway': typeof appGatewayGatewayRouteWithChildren
   '/observability': typeof appObservabilityObservabilityRouteWithChildren
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
@@ -224,14 +242,15 @@ export interface FileRoutesByFullPath {
   '/': typeof appIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
   '/prompts/$id': typeof appPromptsIdVariantsRouteWithChildren
+  '/gateway/': typeof appGatewayIndexRoute
   '/observability/': typeof appObservabilityIndexRoute
   '/settings/': typeof appSettingsIndexRoute
+  '/gateway/providers': typeof appGatewayGatewayProvidersRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
-  '/settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
   '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/prompts/$id/': typeof appPromptsIdIndexRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
@@ -248,16 +267,17 @@ export interface FileRoutesByTo {
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
+  '/gateway': typeof appGatewayIndexRoute
   '/observability': typeof appObservabilityIndexRoute
   '/settings': typeof appSettingsIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
+  '/gateway/providers': typeof appGatewayGatewayProvidersRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/prompts/$id': typeof appPromptsIdIndexRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
-  '/settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
@@ -269,6 +289,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)': typeof appRouteRouteWithChildren
+  '/(app)/gateway': typeof appGatewayRouteRouteWithChildren
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
@@ -278,11 +299,14 @@ export interface FileRoutesById {
   '/(app)/': typeof appIndexRoute
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
   '/(app)/prompts/$id': typeof appPromptsIdRouteRouteWithChildren
+  '/(app)/gateway/_gateway': typeof appGatewayGatewayRouteWithChildren
   '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
   '/(app)/settings/_settings': typeof appSettingsSettingsRouteWithChildren
+  '/(app)/gateway/': typeof appGatewayIndexRoute
   '/(app)/observability/': typeof appObservabilityIndexRoute
   '/(app)/settings/': typeof appSettingsIndexRoute
   '/(app)/environments/$environment/_tabs': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/(app)/gateway/_gateway/providers': typeof appGatewayGatewayProvidersRoute
   '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
@@ -290,7 +314,6 @@ export interface FileRoutesById {
   '/(app)/prompts/$id/_variants': typeof appPromptsIdVariantsRouteWithChildren
   '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
-  '/(app)/settings/_settings/workspace-providers': typeof appSettingsSettingsWorkspaceProvidersRoute
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/(app)/prompts/$id/': typeof appPromptsIdIndexRoute
   '/(app)/environments/$environment/_tabs/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
@@ -304,6 +327,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/gateway'
     | '/observability'
     | '/settings'
     | '/environments'
@@ -313,14 +337,15 @@ export interface FileRouteTypes {
     | '/'
     | '/environments/$environment'
     | '/prompts/$id'
+    | '/gateway/'
     | '/observability/'
     | '/settings/'
+    | '/gateway/providers'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
     | '/settings/user-profile'
     | '/settings/workspace-general'
-    | '/settings/workspace-providers'
     | '/environments/$environment/'
     | '/prompts/$id/'
     | '/environments/$environment/secrets'
@@ -337,16 +362,17 @@ export interface FileRouteTypes {
     | '/setup'
     | '/signin'
     | '/'
+    | '/gateway'
     | '/observability'
     | '/settings'
     | '/environments/$environment'
+    | '/gateway/providers'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
     | '/prompts/$id'
     | '/settings/user-profile'
     | '/settings/workspace-general'
-    | '/settings/workspace-providers'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
     | '/prompts/$id/settings'
@@ -357,6 +383,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/(app)'
+    | '/(app)/gateway'
     | '/(app)/observability'
     | '/(app)/settings'
     | '/(app)/environments'
@@ -366,11 +393,14 @@ export interface FileRouteTypes {
     | '/(app)/'
     | '/(app)/environments/$environment'
     | '/(app)/prompts/$id'
+    | '/(app)/gateway/_gateway'
     | '/(app)/observability/_observability'
     | '/(app)/settings/_settings'
+    | '/(app)/gateway/'
     | '/(app)/observability/'
     | '/(app)/settings/'
     | '/(app)/environments/$environment/_tabs'
+    | '/(app)/gateway/_gateway/providers'
     | '/(app)/observability/_observability/costs'
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
@@ -378,7 +408,6 @@ export interface FileRouteTypes {
     | '/(app)/prompts/$id/_variants'
     | '/(app)/settings/_settings/user-profile'
     | '/(app)/settings/_settings/workspace-general'
-    | '/(app)/settings/_settings/workspace-providers'
     | '/(app)/environments/$environment/'
     | '/(app)/prompts/$id/'
     | '/(app)/environments/$environment/_tabs/secrets'
@@ -454,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appObservabilityRouteRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/gateway': {
+      id: '/(app)/gateway'
+      path: '/gateway'
+      fullPath: '/gateway'
+      preLoaderRoute: typeof appGatewayRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/settings/': {
       id: '/(app)/settings/'
       path: '/'
@@ -468,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appObservabilityIndexRouteImport
       parentRoute: typeof appObservabilityRouteRoute
     }
+    '/(app)/gateway/': {
+      id: '/(app)/gateway/'
+      path: '/'
+      fullPath: '/gateway/'
+      preLoaderRoute: typeof appGatewayIndexRouteImport
+      parentRoute: typeof appGatewayRouteRoute
+    }
     '/(app)/settings/_settings': {
       id: '/(app)/settings/_settings'
       path: ''
@@ -481,6 +524,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/observability'
       preLoaderRoute: typeof appObservabilityObservabilityRouteImport
       parentRoute: typeof appObservabilityRouteRoute
+    }
+    '/(app)/gateway/_gateway': {
+      id: '/(app)/gateway/_gateway'
+      path: ''
+      fullPath: '/gateway'
+      preLoaderRoute: typeof appGatewayGatewayRouteImport
+      parentRoute: typeof appGatewayRouteRoute
     }
     '/(app)/prompts/$id': {
       id: '/(app)/prompts/$id'
@@ -509,13 +559,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/environments/$environment/'
       preLoaderRoute: typeof appEnvironmentsEnvironmentIndexRouteImport
       parentRoute: typeof appEnvironmentsEnvironmentRouteRoute
-    }
-    '/(app)/settings/_settings/workspace-providers': {
-      id: '/(app)/settings/_settings/workspace-providers'
-      path: '/workspace-providers'
-      fullPath: '/settings/workspace-providers'
-      preLoaderRoute: typeof appSettingsSettingsWorkspaceProvidersRouteImport
-      parentRoute: typeof appSettingsSettingsRoute
     }
     '/(app)/settings/_settings/workspace-general': {
       id: '/(app)/settings/_settings/workspace-general'
@@ -565,6 +608,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/observability/costs'
       preLoaderRoute: typeof appObservabilityObservabilityCostsRouteImport
       parentRoute: typeof appObservabilityObservabilityRoute
+    }
+    '/(app)/gateway/_gateway/providers': {
+      id: '/(app)/gateway/_gateway/providers'
+      path: '/providers'
+      fullPath: '/gateway/providers'
+      preLoaderRoute: typeof appGatewayGatewayProvidersRouteImport
+      parentRoute: typeof appGatewayGatewayRoute
     }
     '/(app)/environments/$environment/_tabs': {
       id: '/(app)/environments/$environment/_tabs'
@@ -625,6 +675,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface appGatewayGatewayRouteChildren {
+  appGatewayGatewayProvidersRoute: typeof appGatewayGatewayProvidersRoute
+}
+
+const appGatewayGatewayRouteChildren: appGatewayGatewayRouteChildren = {
+  appGatewayGatewayProvidersRoute: appGatewayGatewayProvidersRoute,
+}
+
+const appGatewayGatewayRouteWithChildren =
+  appGatewayGatewayRoute._addFileChildren(appGatewayGatewayRouteChildren)
+
+interface appGatewayRouteRouteChildren {
+  appGatewayGatewayRoute: typeof appGatewayGatewayRouteWithChildren
+  appGatewayIndexRoute: typeof appGatewayIndexRoute
+}
+
+const appGatewayRouteRouteChildren: appGatewayRouteRouteChildren = {
+  appGatewayGatewayRoute: appGatewayGatewayRouteWithChildren,
+  appGatewayIndexRoute: appGatewayIndexRoute,
+}
+
+const appGatewayRouteRouteWithChildren = appGatewayRouteRoute._addFileChildren(
+  appGatewayRouteRouteChildren,
+)
+
 interface appObservabilityObservabilityRouteChildren {
   appObservabilityObservabilityCostsRoute: typeof appObservabilityObservabilityCostsRoute
   appObservabilityObservabilityOverviewRoute: typeof appObservabilityObservabilityOverviewRoute
@@ -665,15 +740,12 @@ const appObservabilityRouteRouteWithChildren =
 interface appSettingsSettingsRouteChildren {
   appSettingsSettingsUserProfileRoute: typeof appSettingsSettingsUserProfileRoute
   appSettingsSettingsWorkspaceGeneralRoute: typeof appSettingsSettingsWorkspaceGeneralRoute
-  appSettingsSettingsWorkspaceProvidersRoute: typeof appSettingsSettingsWorkspaceProvidersRoute
 }
 
 const appSettingsSettingsRouteChildren: appSettingsSettingsRouteChildren = {
   appSettingsSettingsUserProfileRoute: appSettingsSettingsUserProfileRoute,
   appSettingsSettingsWorkspaceGeneralRoute:
     appSettingsSettingsWorkspaceGeneralRoute,
-  appSettingsSettingsWorkspaceProvidersRoute:
-    appSettingsSettingsWorkspaceProvidersRoute,
 }
 
 const appSettingsSettingsRouteWithChildren =
@@ -798,6 +870,7 @@ const appPromptsRouteWithChildren = appPromptsRoute._addFileChildren(
 )
 
 interface appRouteRouteChildren {
+  appGatewayRouteRoute: typeof appGatewayRouteRouteWithChildren
   appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
@@ -806,6 +879,7 @@ interface appRouteRouteChildren {
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
+  appGatewayRouteRoute: appGatewayRouteRouteWithChildren,
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,

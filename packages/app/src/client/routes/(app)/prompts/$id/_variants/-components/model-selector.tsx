@@ -335,7 +335,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                       onSelect={handleValueChange}
                     />
                     <Link
-                      to="/settings/workspace-providers"
+                      to="/gateway/providers"
                       className={styles.connectProviderLink}
                       onMouseEnter={(e) => {
                         const target = e.currentTarget;
@@ -393,7 +393,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                       ))}
                     </BaseCombobox.List>
                     <Link
-                      to="/settings/workspace-providers"
+                      to="/gateway/providers"
                       className={styles.connectProviderLink}
                       onMouseEnter={(e) => e.currentTarget.focus()}
                     >

@@ -13,13 +13,11 @@ import {
 import { useUpsertProviderConfig as useCreateProviderConfig } from '@client/hooks/mutations/useUpsertProviderConfig';
 import { useUpdateProviderConfig } from '@client/hooks/mutations/useUpdateProviderConfig';
 import { useDeleteProviderConfig } from '@client/hooks/mutations/useDeleteProviderConfig';
-import { ProviderConfigFields } from './-components/ProviderConfigFields';
-import { getRequiredFields } from './-components/provider-field-definitions';
-import * as styles from './-components/workspace-providers.css';
+import { ProviderConfigFields } from '../-components/ProviderConfigFields';
+import { getRequiredFields } from '../-components/provider-field-definitions';
+import * as styles from '../-components/workspace-providers.css';
 
-export const Route = createFileRoute(
-  '/(app)/settings/_settings/workspace-providers'
-)({
+export const Route = createFileRoute('/(app)/gateway/_gateway/providers')({
   component: RouteComponent,
   staticData: {
     customData: {

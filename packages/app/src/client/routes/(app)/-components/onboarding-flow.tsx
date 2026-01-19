@@ -12,9 +12,9 @@ import { useCreateConfig } from '@client/hooks/mutations/useCreateConfig';
 import {
   getProviderFields,
   type ProviderFieldDefinition,
-} from '../settings/_settings/-components/provider-field-definitions';
+} from '../gateway/-components/provider-field-definitions';
 import * as styles from './overview.css';
-import { providerLogo } from '../settings/_settings/-components/workspace-providers.css';
+import { providerLogo } from '../gateway/-components/workspace-providers.css';
 
 type OnboardingStep = 'provider' | 'config' | 'complete';
 
@@ -262,7 +262,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
                   </div>
                   <Link
                     className={styles.onboardingEditButton}
-                    to="/settings/workspace-providers"
+                    to="/gateway/providers"
                   >
                     Edit
                   </Link>
