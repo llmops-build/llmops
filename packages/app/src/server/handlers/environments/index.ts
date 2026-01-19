@@ -7,6 +7,7 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import { invalidateManifest } from '@server/services/manifest';
 
 /**
  * Generate a secret key with environment-specific prefix
@@ -56,6 +57,7 @@ const app = new Hono()
           keyValue: secretKey,
         });
 
+        await invalidateManifest();
         return c.json(successResponse(environment, 200));
       } catch (error) {
         console.error('Error creating environment:', error);
@@ -138,6 +140,7 @@ const app = new Hono()
         if (!environment) {
           return c.json(clientErrorResponse('Environment not found', 404), 404);
         }
+        await invalidateManifest();
         return c.json(successResponse(environment, 200));
       } catch (error) {
         console.error('Error updating environment:', error);
@@ -166,6 +169,7 @@ const app = new Hono()
         if (!environment) {
           return c.json(clientErrorResponse('Environment not found', 404), 404);
         }
+        await invalidateManifest();
         return c.json(successResponse(environment, 200));
       } catch (error) {
         console.error('Error deleting environment:', error);

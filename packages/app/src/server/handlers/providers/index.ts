@@ -6,7 +6,11 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
-import { cacheService } from '@server/services/cache';
+import {
+  invalidateProviderCredentials,
+  invalidateProviderCredentialsByProviderId,
+} from '@server/services/credentialsCache';
+import { invalidateManifest } from '@server/services/manifest';
 
 const MODELS_DEV_API = 'https://models.dev/api.json';
 const MODELS_DEV_LOGOS = 'https://models.dev/logos';
@@ -393,10 +397,9 @@ const app = new Hono()
           );
         }
 
-        await cacheService.delete(
-          `provider:${config.providerId}`,
-          'provider-configs'
-        );
+        await invalidateProviderCredentials(config.id);
+        await invalidateProviderCredentialsByProviderId(config.providerId);
+        await invalidateManifest();
 
         return c.json(successResponse(config, 200));
       } catch (error) {
@@ -442,10 +445,9 @@ const app = new Hono()
             404
           );
         }
-        await cacheService.delete(
-          `provider:${config.providerId}`,
-          'provider-configs'
-        );
+        await invalidateProviderCredentials(config.id);
+        await invalidateProviderCredentialsByProviderId(config.providerId);
+        await invalidateManifest();
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error updating provider config:', error);
@@ -477,10 +479,9 @@ const app = new Hono()
             404
           );
         }
-        await cacheService.delete(
-          `provider:${config.providerId}`,
-          'provider-configs'
-        );
+        await invalidateProviderCredentials(config.id);
+        await invalidateProviderCredentialsByProviderId(config.providerId);
+        await invalidateManifest();
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error deleting provider config:', error);

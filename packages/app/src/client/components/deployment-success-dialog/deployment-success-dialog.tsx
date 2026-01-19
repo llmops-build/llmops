@@ -39,7 +39,7 @@ export function DeploymentSuccessDialog({
   ) => `curl ${baseUrl}/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${includeRealKey && apiKey ? apiKey : '•••••••'}" \\
-  -H "X-LLMOps-Config: ${configSlug || '<CONFIG_SLUG>'}" \\
+  -H "X-LLMOps-Prompt: ${configSlug || '<CONFIG_SLUG>'}" \\
   -d '{
     "model": "gpt-4o",
     "messages": [
