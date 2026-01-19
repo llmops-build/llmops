@@ -140,6 +140,20 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
   const { data: providerGroups } = useModelsGroupedByProvider();
   const [inputValue, setInputValue] = useState('');
   const menubarRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputValueChange = (newValue: string) => {
+    const wasEmpty = !inputValue?.trim();
+    const willBeEmpty = !newValue?.trim();
+    setInputValue(newValue);
+
+    // Refocus input when switching between empty and non-empty states
+    if (wasEmpty !== willBeEmpty) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
+  };
 
   const handleSettingChange = (
     key: keyof Omit<ModelSettings, 'provider' | 'modelName'>,
@@ -260,7 +274,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
         value={selectedModel}
         onValueChange={handleValueChange}
         inputValue={inputValue}
-        onInputValueChange={setInputValue}
+        onInputValueChange={handleInputValueChange}
         filter={() => true}
         autoHighlight
       >
@@ -284,10 +298,10 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
               <div className={styles.searchWrapper}>
                 <Search className={styles.searchIcon} size={16} />
                 <BaseCombobox.Input
+                  ref={inputRef}
                   placeholder="Search Model..."
                   className={styles.searchInputWithIcon}
                   onKeyDown={(event) => {
-                    console.log(event.code);
                     if (event.code === 'ArrowDown') {
                       // @ts-expect-error click is on the button inside Trigger
                       menubarRef.current?.firstChild?.firstChild?.click();
