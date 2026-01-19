@@ -419,9 +419,15 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
 
         // Clone headers from the original request
         const newHeaders = new Headers(c.req.raw.headers);
-        newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
-        // Add x-llmops-prompt for backward compatibility
-        newHeaders.set('x-llmops-prompt', JSON.stringify(portkeyConfig));
+
+        // Only set headers if both are not already present
+        const hasConfigHeader = c.req.header('x-llmops-config');
+        const hasPromptHeader = c.req.header('x-llmops-prompt');
+
+        if (!hasConfigHeader && !hasPromptHeader) {
+          newHeaders.set('x-llmops-config', JSON.stringify({}));
+          newHeaders.set('x-llmops-prompt', JSON.stringify({}));
+        }
 
         // Create a completely new Request object with the merged body
         // This is the proper way to replace request body in Hono
@@ -444,10 +450,14 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         (c.req as unknown as { bodyCache: Record<string, unknown> }).bodyCache =
           {};
       } else {
-        // For non-chat requests, just set the header
-        c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
-        // Add x-llmops-prompt for backward compatibility
-        c.req.raw.headers.set('x-llmops-prompt', JSON.stringify(portkeyConfig));
+        // For non-chat requests, only set headers if both are not already present
+        const hasConfigHeader = c.req.header('x-llmops-config');
+        const hasPromptHeader = c.req.header('x-llmops-prompt');
+
+        if (!hasConfigHeader && !hasPromptHeader) {
+          c.req.raw.headers.set('x-llmops-config', JSON.stringify({}));
+          c.req.raw.headers.set('x-llmops-prompt', JSON.stringify({}));
+        }
       }
 
       // Store variant config in context for reference
