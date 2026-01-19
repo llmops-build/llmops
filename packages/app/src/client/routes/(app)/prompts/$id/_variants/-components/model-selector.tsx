@@ -99,34 +99,29 @@ const ProvidersMenubarContent = ({
               alignOffset={-2}
             >
               <BaseMenu.Popup className={styles.menuPopup}>
-                <BaseCombobox.List>
-                  <BaseCombobox.Group key={group.id} items={group.models}>
-                    <BaseCombobox.Collection>
-                      {(model: ModelWithProvider) => (
-                        <BaseCombobox.Item
-                          key={`${model.provider.id}_${model.value}`}
-                          value={model}
-                          className={styles.item}
-                        >
-                          <BaseCombobox.ItemIndicator
-                            className={styles.itemIndicator}
-                          >
-                            <Check size={16} />
-                          </BaseCombobox.ItemIndicator>
-                          <BaseCombobox.Icon>
-                            {model.provider.logo && (
-                              <img
-                                className={styles.triggerIconImg}
-                                src={model.provider.logo}
-                              />
-                            )}
-                          </BaseCombobox.Icon>
-                          {model.label}
-                        </BaseCombobox.Item>
+                {group.models.map((model) => {
+                  const isSelected =
+                    selectedModel?.provider.id === model.provider.id &&
+                    selectedModel?.value === model.value;
+                  return (
+                    <BaseMenu.Item
+                      key={`${model.provider.id}_${model.value}`}
+                      className={styles.item}
+                      onClick={() => onSelect(model)}
+                    >
+                      <span className={styles.itemIndicator}>
+                        {isSelected && <Check size={16} />}
+                      </span>
+                      {model.provider.logo && (
+                        <img
+                          className={styles.triggerIconImg}
+                          src={model.provider.logo}
+                        />
                       )}
-                    </BaseCombobox.Collection>
-                  </BaseCombobox.Group>
-                </BaseCombobox.List>
+                      {model.label}
+                    </BaseMenu.Item>
+                  );
+                })}
               </BaseMenu.Popup>
             </BaseMenu.Positioner>
           </BaseMenu.Portal>
@@ -301,12 +296,13 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                   ref={inputRef}
                   placeholder="Search Model..."
                   className={styles.searchInputWithIcon}
-                  onKeyDown={(event) => {
-                    if (event.code === 'ArrowDown') {
-                      // @ts-expect-error click is on the button inside Trigger
-                      menubarRef.current?.firstChild?.firstChild?.click();
-                      // @ts-expect-error click is on the button inside Trigger
-                      menubarRef.current?.firstChild?.firstChild?.click();
+                  onKeyDownCapture={(event) => {
+                    if (event.code === 'ArrowDown' && !inputValue?.trim()) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      // Focus first menubar trigger, ArrowRight will open submenu
+                      const firstTrigger = menubarRef.current?.querySelector('button');
+                      firstTrigger?.focus();
                     }
                   }}
                 />
