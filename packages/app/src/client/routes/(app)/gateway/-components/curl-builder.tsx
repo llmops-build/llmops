@@ -200,25 +200,27 @@ export function CurlBuilder() {
           -H{' '}
           <span className={styles.codeString}>
             "Authorization: Bearer{' '}
-            {!selected.environmentId ? (
-              <InlineSelect
-                value={selected.environmentId}
-                options={environmentOptions}
-                onChange={handleEnvironmentChange}
-                placeholder="select env"
-                emptyMessage="No environments configured"
-                isLoading={envLoading}
-              />
-            ) : (
-              <InlineSelect
-                value={selected.secretId}
-                options={secretOptions}
-                onChange={handleSecretChange}
-                placeholder="select key"
-                emptyMessage="No API keys in this environment"
-                isLoading={secretsLoading}
-              />
-            )}
+            <InlineSelect
+              value={selected.environmentId}
+              options={environmentOptions}
+              onChange={handleEnvironmentChange}
+              placeholder="env"
+              emptyMessage="No environments configured"
+              isLoading={envLoading}
+            />
+            :
+            <InlineSelect
+              value={selected.secretId}
+              options={secretOptions}
+              onChange={handleSecretChange}
+              placeholder="key"
+              emptyMessage={
+                selected.environmentId
+                  ? 'No API keys in this environment'
+                  : 'Select an environment first'
+              }
+              isLoading={secretsLoading}
+            />
             "
           </span>{' '}
           \

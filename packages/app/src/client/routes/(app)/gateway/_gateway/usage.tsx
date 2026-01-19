@@ -1,19 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
-import CurlIcon from '@client/components/icons/curl.svg?react';
 import { CurlBuilder } from '../-components/curl-builder';
 import * as styles from '../-components/curl-builder.css';
-import { curlIcon } from '../-components/gateway-sidebar.css';
+import { Cable } from 'lucide-react';
+import { Icon } from '@client/components/icons';
 
 export const Route = createFileRoute('/(app)/gateway/_gateway/usage')({
   component: RouteComponent,
   staticData: {
     customData: {
       title: 'Curl',
-      icon: (
-        <span className={curlIcon}>
-          <CurlIcon />
-        </span>
-      ),
+      icon: <Icon icon={Cable} />,
     },
   },
 });
