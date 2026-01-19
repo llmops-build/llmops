@@ -13,6 +13,7 @@ import {
   Search,
   SlidersHorizontal,
 } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import * as styles from './model-selector.css';
 import {
   useModelsGroupedByProvider,
@@ -104,10 +105,21 @@ const ProvidersMenubarContent = ({
                     selectedModel?.provider.id === model.provider.id &&
                     selectedModel?.value === model.value;
                   return (
-                    <BaseMenu.Item
+                    <div
                       key={`${model.provider.id}_${model.value}`}
                       className={styles.item}
-                      onClick={() => onSelect(model)}
+                      role="menuitem"
+                      tabIndex={-1}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        onSelect(model);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelect(model);
+                        }
+                      }}
                     >
                       <span className={styles.itemIndicator}>
                         {isSelected && <Check size={16} />}
@@ -119,7 +131,7 @@ const ProvidersMenubarContent = ({
                         />
                       )}
                       {model.label}
-                    </BaseMenu.Item>
+                    </div>
                   );
                 })}
               </BaseMenu.Popup>
@@ -301,7 +313,8 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                       event.preventDefault();
                       event.stopPropagation();
                       // Focus first menubar trigger, ArrowRight will open submenu
-                      const firstTrigger = menubarRef.current?.querySelector('button');
+                      const firstTrigger =
+                        menubarRef.current?.querySelector('button');
                       firstTrigger?.focus();
                     }
                   }}
@@ -321,6 +334,26 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                       selectedModel={selectedModel}
                       onSelect={handleValueChange}
                     />
+                    <Link
+                      to="/settings/workspace-providers"
+                      className={styles.connectProviderLink}
+                      onMouseEnter={(e) => {
+                        const target = e.currentTarget;
+                        // Click the active/open menu trigger to close it
+                        const activeButton = menubarRef.current?.querySelector(
+                          'button[data-popup-open="true"], button[aria-expanded="true"]'
+                        ) as HTMLElement | null;
+                        activeButton?.click();
+                        target.focus();
+                      }}
+                    >
+                      <div className={styles.providerLogoStack}>
+                        <img src="https://models.dev/logos/openai.svg" alt="" className={styles.stackedLogo} />
+                        <img src="https://models.dev/logos/anthropic.svg" alt="" className={styles.stackedLogo} />
+                        <img src="https://models.dev/logos/google.svg" alt="" className={styles.stackedLogo} />
+                      </div>
+                      Connect Provider
+                    </Link>
                   </BaseMenubar>
                 ) : (
                   <>
@@ -359,6 +392,18 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                         </BaseCombobox.Group>
                       ))}
                     </BaseCombobox.List>
+                    <Link
+                      to="/settings/workspace-providers"
+                      className={styles.connectProviderLink}
+                      onMouseEnter={(e) => e.currentTarget.focus()}
+                    >
+                      <div className={styles.providerLogoStack}>
+                        <img src="https://models.dev/logos/openai.svg" alt="" className={styles.stackedLogo} />
+                        <img src="https://models.dev/logos/anthropic.svg" alt="" className={styles.stackedLogo} />
+                        <img src="https://models.dev/logos/google.svg" alt="" className={styles.stackedLogo} />
+                      </div>
+                      Connect Provider
+                    </Link>
                   </>
                 )}
               </div>

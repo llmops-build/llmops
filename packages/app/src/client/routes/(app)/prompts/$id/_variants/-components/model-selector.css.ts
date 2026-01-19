@@ -279,6 +279,58 @@ export const browseContainer = style({
   overflow: 'hidden',
 });
 
+export const connectProviderLink = style([
+  sprinkles({
+    fontSize: 'sm',
+    color: 'gray9',
+    paddingLeft: 'sm',
+    paddingRight: 'sm',
+  }),
+  {
+    position: 'sticky',
+    bottom: 0,
+    height: '2rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing['sm'],
+    borderTop: `1px solid ${colors.gray4}`,
+    backgroundColor: colors.background,
+    cursor: 'pointer',
+    textDecoration: 'none',
+    outline: 'none',
+    ':hover': {
+      backgroundColor: colors.gray2,
+      color: colors.gray11,
+    },
+    ':focus': {
+      backgroundColor: colors.gray2,
+      color: colors.gray11,
+    },
+  },
+]);
+
+export const providerLogoStack = style({
+  display: 'flex',
+  alignItems: 'center',
+});
+
+export const stackedLogo = style({
+  width: '16px',
+  height: '16px',
+  borderRadius: '50%',
+  backgroundColor: colors.background,
+  border: `1px solid ${colors.gray4}`,
+  marginRight: '-6px',
+  selectors: {
+    '&:last-child': {
+      marginRight: 0,
+    },
+    '.dark &': {
+      filter: 'invert(1)',
+    },
+  },
+});
+
 export const providerColumn = style({
   width: '40%',
   borderRight: `1px solid ${colors.gray4}`,
