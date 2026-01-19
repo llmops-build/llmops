@@ -85,3 +85,12 @@ export const gatewayContent = style([
     overflowY: 'auto',
   },
 ]);
+
+export const curlIcon = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  height: '0.875rem',
+  aspectRatio: '343 / 103',
+});

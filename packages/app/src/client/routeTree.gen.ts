@@ -35,6 +35,7 @@ import { Route as appPromptsIdTabsRouteImport } from './routes/(app)/prompts/$id
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
 import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
 import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
+import { Route as appGatewayGatewayUsageRouteImport } from './routes/(app)/gateway/_gateway/usage'
 import { Route as appGatewayGatewayProvidersRouteImport } from './routes/(app)/gateway/_gateway/providers'
 import { Route as appEnvironmentsEnvironmentTabsRouteImport } from './routes/(app)/environments/$environment/_tabs'
 import { Route as appPromptsIdTabsVariantsRouteImport } from './routes/(app)/prompts/$id/_tabs/variants'
@@ -177,6 +178,11 @@ const appObservabilityObservabilityCostsRoute =
     path: '/costs',
     getParentRoute: () => appObservabilityObservabilityRoute,
   } as any)
+const appGatewayGatewayUsageRoute = appGatewayGatewayUsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => appGatewayGatewayRoute,
+} as any)
 const appGatewayGatewayProvidersRoute =
   appGatewayGatewayProvidersRouteImport.update({
     id: '/providers',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/observability/': typeof appObservabilityIndexRoute
   '/settings/': typeof appSettingsIndexRoute
   '/gateway/providers': typeof appGatewayGatewayProvidersRoute
+  '/gateway/usage': typeof appGatewayGatewayUsageRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
@@ -272,6 +279,7 @@ export interface FileRoutesByTo {
   '/settings': typeof appSettingsIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentIndexRoute
   '/gateway/providers': typeof appGatewayGatewayProvidersRoute
+  '/gateway/usage': typeof appGatewayGatewayUsageRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
@@ -307,6 +315,7 @@ export interface FileRoutesById {
   '/(app)/settings/': typeof appSettingsIndexRoute
   '/(app)/environments/$environment/_tabs': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
   '/(app)/gateway/_gateway/providers': typeof appGatewayGatewayProvidersRoute
+  '/(app)/gateway/_gateway/usage': typeof appGatewayGatewayUsageRoute
   '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/observability/'
     | '/settings/'
     | '/gateway/providers'
+    | '/gateway/usage'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/environments/$environment'
     | '/gateway/providers'
+    | '/gateway/usage'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/(app)/settings/'
     | '/(app)/environments/$environment/_tabs'
     | '/(app)/gateway/_gateway/providers'
+    | '/(app)/gateway/_gateway/usage'
     | '/(app)/observability/_observability/costs'
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
@@ -609,6 +621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appObservabilityObservabilityCostsRouteImport
       parentRoute: typeof appObservabilityObservabilityRoute
     }
+    '/(app)/gateway/_gateway/usage': {
+      id: '/(app)/gateway/_gateway/usage'
+      path: '/usage'
+      fullPath: '/gateway/usage'
+      preLoaderRoute: typeof appGatewayGatewayUsageRouteImport
+      parentRoute: typeof appGatewayGatewayRoute
+    }
     '/(app)/gateway/_gateway/providers': {
       id: '/(app)/gateway/_gateway/providers'
       path: '/providers'
@@ -677,10 +696,12 @@ declare module '@tanstack/react-router' {
 
 interface appGatewayGatewayRouteChildren {
   appGatewayGatewayProvidersRoute: typeof appGatewayGatewayProvidersRoute
+  appGatewayGatewayUsageRoute: typeof appGatewayGatewayUsageRoute
 }
 
 const appGatewayGatewayRouteChildren: appGatewayGatewayRouteChildren = {
   appGatewayGatewayProvidersRoute: appGatewayGatewayProvidersRoute,
+  appGatewayGatewayUsageRoute: appGatewayGatewayUsageRoute,
 }
 
 const appGatewayGatewayRouteWithChildren =
