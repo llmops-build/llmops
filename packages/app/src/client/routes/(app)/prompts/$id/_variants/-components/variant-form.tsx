@@ -1,20 +1,11 @@
 import { useWatch, type UseFormReturn } from 'react-hook-form';
 import {
   variantFormContainer,
-  variantPropertyRow,
   variantPropertyLabel,
-  variantPropertyValue,
   variantPropertyColumn,
-  markdownLabelInfo,
 } from './variants.css';
-import { Icon } from '@client/components/icons';
-import { BrainCircuit } from 'lucide-react';
 import MarkdownEditor from './editor';
-import Markdown from '@client/components/icons/markdown';
-import {
-  ModelSettingsPopover,
-  type ModelSettings,
-} from './model-settings-popover';
+import ModelSelector, { type ModelSettings } from './model-selector';
 
 export type VariantFormData = {
   variant_name: string;
@@ -127,26 +118,20 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
 
   return (
     <div className={variantFormContainer}>
-      <div className={variantPropertyRow}>
+      <div className={variantPropertyColumn}>
         <div className={variantPropertyLabel}>
-          <Icon icon={BrainCircuit} size="xs" />
           <span>Model</span>
         </div>
-        <div className={variantPropertyValue}>
-          <ModelSettingsPopover
-            value={modelSettings}
-            onChange={handleModelSettingsChange}
-          />
-        </div>
+        <ModelSelector value={modelSettings} onChange={handleModelSettingsChange} />
       </div>
 
       <div className={variantPropertyColumn}>
         <div className={variantPropertyLabel}>
           <span>System</span>
-          <div className={markdownLabelInfo}>
+          {/*<div className={markdownLabelInfo}>
             <Markdown width={14} height={14} />
             <span>Markdown Supported</span>
-          </div>
+          </div>*/}
         </div>
         <MarkdownEditor
           key={editorKey}

@@ -69,7 +69,7 @@ export const variantPropertyLabel = style({
   fontWeight: 400,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
+  justifyContent: 'flex-start',
   gap: spacing.sm,
 });
 
