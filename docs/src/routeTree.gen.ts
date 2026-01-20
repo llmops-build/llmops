@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as GithubRouteImport } from './routes/github'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
@@ -17,6 +18,11 @@ import { Route as ApiLlmsTxtRouteImport } from './routes/api/llms-txt'
 import { Route as ApiMdxSplatRouteImport } from './routes/api/mdx.$'
 import { Route as ApiLlmsTxtSplatRouteImport } from './routes/api/llms-txt.$'
 
+const GithubRoute = GithubRouteImport.update({
+  id: '/github',
+  path: '/github',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiscordRoute = DiscordRouteImport.update({
   id: '/discord',
   path: '/discord',
@@ -56,6 +62,7 @@ const ApiLlmsTxtSplatRoute = ApiLlmsTxtSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discord': typeof DiscordRoute
+  '/github': typeof GithubRoute
   '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discord': typeof DiscordRoute
+  '/github': typeof GithubRoute
   '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/discord': typeof DiscordRoute
+  '/github': typeof GithubRoute
   '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/discord'
+    | '/github'
     | '/api/llms-txt'
     | '/api/search'
     | '/docs/$'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/discord'
+    | '/github'
     | '/api/llms-txt'
     | '/api/search'
     | '/docs/$'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/discord'
+    | '/github'
     | '/api/llms-txt'
     | '/api/search'
     | '/docs/$'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiscordRoute: typeof DiscordRoute
+  GithubRoute: typeof GithubRoute
   ApiLlmsTxtRoute: typeof ApiLlmsTxtRouteWithChildren
   ApiSearchRoute: typeof ApiSearchRoute
   DocsSplatRoute: typeof DocsSplatRoute
@@ -122,6 +135,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/github': {
+      id: '/github'
+      path: '/github'
+      fullPath: '/github'
+      preLoaderRoute: typeof GithubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/discord': {
       id: '/discord'
       path: '/discord'
@@ -189,6 +209,7 @@ const ApiLlmsTxtRouteWithChildren = ApiLlmsTxtRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiscordRoute: DiscordRoute,
+  GithubRoute: GithubRoute,
   ApiLlmsTxtRoute: ApiLlmsTxtRouteWithChildren,
   ApiSearchRoute: ApiSearchRoute,
   DocsSplatRoute: DocsSplatRoute,

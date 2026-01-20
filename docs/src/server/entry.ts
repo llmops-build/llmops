@@ -1,7 +1,7 @@
 import {
   createStartHandler,
   defaultStreamHandler,
-} from '@tanstack/react-start/server';
+} from "@tanstack/react-start/server";
 
 const baseHandler = createStartHandler(defaultStreamHandler);
 
@@ -10,8 +10,8 @@ const fetch = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
 
   // Rewrite /llms.txt paths to /api/llms-txt internally
-  if (url.pathname.startsWith('/llms.txt')) {
-    const newPath = url.pathname.replace('/llms.txt', '/api/llms-txt');
+  if (url.pathname.startsWith("/llms.txt")) {
+    const newPath = url.pathname.replace("/llms.txt", "/api/llms-txt");
     const newUrl = new URL(newPath + url.search, url.origin);
     // Create a new request with the rewritten URL
     const newRequest = new Request(newUrl.toString(), {

@@ -1,7 +1,7 @@
-'use client';
-import { clsx } from 'clsx';
-import { useEffect, useState } from 'react';
-import { codeToHtml } from 'shiki';
+"use client";
+import { clsx } from "clsx";
+import { useEffect, useState } from "react";
+import { codeToHtml } from "shiki";
 
 interface Tab {
   name: string;
@@ -16,16 +16,16 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ tabs, className }: CodeEditorProps) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [highlightedCode, setHighlightedCode] = useState<string>('');
+  const [highlightedCode, setHighlightedCode] = useState<string>("");
 
   useEffect(() => {
     const highlight = async () => {
       const tab = tabs[activeTab];
       const html = await codeToHtml(tab.code, {
-        lang: tab.language || 'typescript',
+        lang: tab.language || "typescript",
         themes: {
-          light: 'github-light-high-contrast',
-          dark: 'github-dark-high-contrast',
+          light: "github-light-high-contrast",
+          dark: "github-dark-high-contrast",
         },
         defaultColor: false,
       });
@@ -37,8 +37,8 @@ const CodeEditor = ({ tabs, className }: CodeEditorProps) => {
   return (
     <div
       className={clsx(
-        'rounded-lg border border-gray-6 overflow-hidden flex flex-col',
-        className
+        "rounded-lg border border-gray-6 overflow-hidden flex flex-col",
+        className,
       )}
     >
       <div className="flex border-b border-gray-6">
@@ -48,10 +48,10 @@ const CodeEditor = ({ tabs, className }: CodeEditorProps) => {
             type="button"
             onClick={() => setActiveTab(index)}
             className={clsx(
-              'px-4 py-2 text-sm font-mono transition-colors',
+              "px-4 py-2 text-sm font-mono transition-colors",
               activeTab === index
-                ? 'text-gray-12 border-b-2 border-accent-9'
-                : 'text-gray-11 hover:text-gray-12'
+                ? "text-gray-12 border-b-2 border-accent-9"
+                : "text-gray-11 hover:text-gray-12",
             )}
           >
             {tab.name}

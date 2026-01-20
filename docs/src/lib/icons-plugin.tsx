@@ -1,7 +1,7 @@
-import type { LoaderPlugin } from 'fumadocs-core/source';
-import * as simpleIcons from 'simple-icons';
-import { icons as lucideIcons } from 'lucide-react';
-import { createElement } from 'react';
+import type { LoaderPlugin } from "fumadocs-core/source";
+import * as simpleIcons from "simple-icons";
+import { icons as lucideIcons } from "lucide-react";
+import { createElement } from "react";
 
 type SimpleIcon = {
   title: string;
@@ -15,8 +15,8 @@ type SimpleIcon = {
 // Map of icon names to simple-icons keys
 // Use the slug from https://simpleicons.org/
 const simpleIconsMap: Record<string, string> = {
-  Express: 'siExpress',
-  Hono: 'siHono',
+  Express: "siExpress",
+  Hono: "siHono",
 };
 
 function SimpleIconComponent({ icon }: { icon: SimpleIcon }) {
@@ -42,7 +42,7 @@ function SimpleIconComponent({ icon }: { icon: SimpleIcon }) {
  */
 export function customIconsPlugin(): LoaderPlugin {
   return {
-    name: 'custom-icons',
+    name: "custom-icons",
     transformPageTree: {
       file: replaceIcon,
       folder: replaceIcon,
@@ -51,7 +51,7 @@ export function customIconsPlugin(): LoaderPlugin {
   };
 
   function replaceIcon<T extends { icon?: unknown }>(node: T): T {
-    if (node.icon === undefined || typeof node.icon !== 'string') return node;
+    if (node.icon === undefined || typeof node.icon !== "string") return node;
 
     const iconName = node.icon;
 

@@ -10,6 +10,6 @@ interface ImportMeta {
 }
 
 // Virtual module for raw MDX content
-declare module 'virtual:raw-mdx-content' {
+declare module "virtual:raw-mdx-content" {
   export const mdxContent: Record<string, string>;
 }

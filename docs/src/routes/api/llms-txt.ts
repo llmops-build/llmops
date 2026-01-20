@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { source } from '@/lib/source';
+import { createFileRoute } from "@tanstack/react-router";
+import { source } from "@/lib/source";
 
 interface PageInfo {
   title: string;
@@ -9,15 +9,15 @@ interface PageInfo {
 }
 
 function groupPagesByCategory(
-  pages: ReturnType<typeof source.getPages>
+  pages: ReturnType<typeof source.getPages>,
 ): Map<string, PageInfo[]> {
   const grouped = new Map<string, PageInfo[]>();
 
   for (const page of pages) {
-    const category = page.slugs[0] || 'general';
+    const category = page.slugs[0] || "general";
     const pageInfo: PageInfo = {
       title: page.data.title,
-      description: page.data.description || '',
+      description: page.data.description || "",
       url: `/llms.txt${page.url}.md`,
       category: category,
     };
@@ -33,9 +33,9 @@ function groupPagesByCategory(
 
 function formatCategoryName(category: string): string {
   return category
-    .split('-')
+    .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 function generateLLMsText(): string {
@@ -70,24 +70,24 @@ LLMOps is a comprehensive LLMOps toolkit that provides prompt versioning, multi-
     content += `### ${formattedCategory}\n\n`;
 
     for (const page of categoryPages) {
-      const description = page.description ? `: ${page.description}` : '';
+      const description = page.description ? `: ${page.description}` : "";
       content += `- [${page.title}](${page.url})${description}\n`;
     }
 
-    content += '\n';
+    content += "\n";
   }
 
   return content;
 }
 
-export const Route = createFileRoute('/api/llms-txt')({
+export const Route = createFileRoute("/api/llms-txt")({
   server: {
     handlers: {
       GET: async () => {
         const content = generateLLMsText();
         return new Response(content, {
           headers: {
-            'Content-Type': 'text/markdown; charset=utf-8',
+            "Content-Type": "text/markdown; charset=utf-8",
           },
         });
       },

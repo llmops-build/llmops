@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { mdxContent } from 'virtual:raw-mdx-content';
+import { createFileRoute } from "@tanstack/react-router";
+import { mdxContent } from "virtual:raw-mdx-content";
 
 const mdxFiles = mdxContent as Record<string, string>;
 
@@ -11,7 +11,7 @@ function stripFrontmatter(content: string): {
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
 
   if (!frontmatterMatch) {
-    return { title: '', description: '', body: content };
+    return { title: "", description: "", body: content };
   }
 
   const frontmatter = frontmatterMatch[1];
@@ -21,22 +21,22 @@ function stripFrontmatter(content: string): {
   const descriptionMatch = frontmatter.match(/description:\s*(.+)/);
 
   return {
-    title: titleMatch ? titleMatch[1].trim() : '',
-    description: descriptionMatch ? descriptionMatch[1].trim() : '',
+    title: titleMatch ? titleMatch[1].trim() : "",
+    description: descriptionMatch ? descriptionMatch[1].trim() : "",
     body: body.trim(),
   };
 }
 
 function getLLMTextContent(slugs: string[]): Response {
-  let slug = slugs.join('/');
+  let slug = slugs.join("/");
 
   // Remove .md extension if present
-  if (slug.endsWith('.md')) {
+  if (slug.endsWith(".md")) {
     slug = slug.slice(0, -3);
   }
 
   // Remove 'docs' prefix if present
-  if (slug.startsWith('docs/')) {
+  if (slug.startsWith("docs/")) {
     slug = slug.slice(5);
   }
 
@@ -49,8 +49,8 @@ function getLLMTextContent(slugs: string[]): Response {
   }
 
   // Handle root docs index
-  if (!content && slug === '') {
-    content = mdxFiles['index'];
+  if (!content && slug === "") {
+    content = mdxFiles["index"];
   }
 
   if (!content) {
@@ -66,8 +66,8 @@ This page is temporarily unavailable. To help the user:
 3. Offer to help with related LLMOps topics from available documentation`,
       {
         status: 404,
-        headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
-      }
+        headers: { "Content-Type": "text/markdown; charset=utf-8" },
+      },
     );
   }
 
@@ -75,21 +75,21 @@ This page is temporarily unavailable. To help the user:
 
   const formattedContent = `# ${title}
 
-${description ? `${description}\n\n` : ''}${body}`;
+${description ? `${description}\n\n` : ""}${body}`;
 
   return new Response(formattedContent, {
     headers: {
-      'Content-Type': 'text/markdown; charset=utf-8',
+      "Content-Type": "text/markdown; charset=utf-8",
     },
   });
 }
 
-export const Route = createFileRoute('/api/llms-txt/$')({
+export const Route = createFileRoute("/api/llms-txt/$")({
   server: {
     handlers: {
       GET: async ({ params }) => {
         const slugs =
-          (params as { _splat?: string })._splat?.split('/').filter(Boolean) ??
+          (params as { _splat?: string })._splat?.split("/").filter(Boolean) ??
           [];
         return getLLMTextContent(slugs);
       },

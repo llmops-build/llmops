@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const DISCORD_INVITE_URL = "https://discord.gg/8teSTfmEKU";
+const GITHUB_URL = "https://github.com/llmops-build/llmops";
 
-export const Route = createFileRoute("/discord")({
+export const Route = createFileRoute("/github")({
   server: {
     handlers: {
       GET: async () => {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: DISCORD_INVITE_URL,
+            Location: GITHUB_URL,
           },
         });
       },

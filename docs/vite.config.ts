@@ -1,15 +1,15 @@
-import { cloudflare } from '@cloudflare/vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
-import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import react from '@vitejs/plugin-react';
-import mdx from 'fumadocs-mdx/vite';
-import { defineConfig, type Plugin, type Connect } from 'vite';
-import svgr from 'vite-plugin-svgr';
-import tsConfigPaths from 'vite-tsconfig-paths';
-import fs from 'node:fs';
-import path from 'node:path';
+import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import react from "@vitejs/plugin-react";
+import mdx from "fumadocs-mdx/vite";
+import { defineConfig, type Plugin, type Connect } from "vite";
+import svgr from "vite-plugin-svgr";
+import tsConfigPaths from "vite-tsconfig-paths";
+import fs from "node:fs";
+import path from "node:path";
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === "production";
 
 /**
  * Plugin to handle /llms.txt routes by serving content directly
@@ -19,25 +19,25 @@ function llmsTxtPlugin(): Plugin {
   let root: string;
 
   return {
-    name: 'llms-txt-serve',
+    name: "llms-txt-serve",
     configResolved(config) {
       root = config.root;
     },
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url?.startsWith('/llms.txt')) {
+        if (!req.url?.startsWith("/llms.txt")) {
           return next();
         }
 
-        const contentDir = path.join(root, 'content/docs');
+        const contentDir = path.join(root, "content/docs");
 
         // Parse the request path
-        let requestPath = req.url.replace('/llms.txt', '');
+        let requestPath = req.url.replace("/llms.txt", "");
 
         // Handle index route
-        if (requestPath === '' || requestPath === '/') {
+        if (requestPath === "" || requestPath === "/") {
           const content = generateLLMsIndex(contentDir);
-          res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+          res.setHeader("Content-Type", "text/markdown; charset=utf-8");
           res.end(content);
           return;
         }
@@ -45,21 +45,21 @@ function llmsTxtPlugin(): Plugin {
         // Handle individual doc pages
         // Remove leading slash and .md extension
         let slug = requestPath.slice(1);
-        if (slug.endsWith('.md')) {
+        if (slug.endsWith(".md")) {
           slug = slug.slice(0, -3);
         }
         // Remove 'docs/' prefix if present
-        if (slug.startsWith('docs/')) {
+        if (slug.startsWith("docs/")) {
           slug = slug.slice(5);
         }
 
         const content = getDocContent(contentDir, slug);
         if (content) {
-          res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+          res.setHeader("Content-Type", "text/markdown; charset=utf-8");
           res.end(content);
         } else {
           res.statusCode = 404;
-          res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+          res.setHeader("Content-Type", "text/markdown; charset=utf-8");
           res.end(`# Documentation Not Available
 
 The requested LLMOps documentation page could not be loaded at this time.
@@ -86,18 +86,18 @@ interface DocFile {
 function readMdxFiles(contentDir: string): DocFile[] {
   const files: DocFile[] = [];
 
-  function walkDir(dir: string, prefix = '') {
+  function walkDir(dir: string, prefix = "") {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
         walkDir(fullPath, relativePath);
-      } else if (entry.name.endsWith('.mdx')) {
-        const slug = relativePath.replace(/\.mdx$/, '');
-        const content = fs.readFileSync(fullPath, 'utf-8');
+      } else if (entry.name.endsWith(".mdx")) {
+        const slug = relativePath.replace(/\.mdx$/, "");
+        const content = fs.readFileSync(fullPath, "utf-8");
         const { title, description } = parseFrontmatter(content);
-        const category = slug.split('/')[0] || 'general';
+        const category = slug.split("/")[0] || "general";
         files.push({ slug, title, description, category, content });
       }
     }
@@ -114,7 +114,7 @@ function parseFrontmatter(content: string): {
 } {
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) {
-    return { title: '', description: '', body: content };
+    return { title: "", description: "", body: content };
   }
 
   const frontmatter = match[1];
@@ -123,8 +123,8 @@ function parseFrontmatter(content: string): {
   const descMatch = frontmatter.match(/description:\s*(.+)/);
 
   return {
-    title: titleMatch ? titleMatch[1].trim() : '',
-    description: descMatch ? descMatch[1].trim() : '',
+    title: titleMatch ? titleMatch[1].trim() : "",
+    description: descMatch ? descMatch[1].trim() : "",
     body: body.trim(),
   };
 }
@@ -135,7 +135,7 @@ function generateLLMsIndex(contentDir: string): string {
   // Group by category
   const grouped = new Map<string, DocFile[]>();
   for (const file of files) {
-    const cat = file.category === 'index' ? 'general' : file.category;
+    const cat = file.category === "index" ? "general" : file.category;
     if (!grouped.has(cat)) {
       grouped.set(cat, []);
     }
@@ -165,17 +165,17 @@ LLMOps is a comprehensive LLMOps toolkit that provides prompt versioning, multi-
   for (const category of sortedCategories) {
     const categoryFiles = grouped.get(category)!;
     const formattedCategory = category
-      .split('-')
+      .split("-")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
+      .join(" ");
 
     content += `### ${formattedCategory}\n\n`;
     for (const file of categoryFiles) {
       const url = `/llms.txt/docs/${file.slug}.md`;
-      const desc = file.description ? `: ${file.description}` : '';
+      const desc = file.description ? `: ${file.description}` : "";
       content += `- [${file.title}](${url})${desc}\n`;
     }
-    content += '\n';
+    content += "\n";
   }
 
   return content;
@@ -186,12 +186,12 @@ function getDocContent(contentDir: string, slug: string): string | null {
   let filePath = path.join(contentDir, `${slug}.mdx`);
   if (!fs.existsSync(filePath)) {
     // Try index for directory
-    filePath = path.join(contentDir, slug, 'index.mdx');
+    filePath = path.join(contentDir, slug, "index.mdx");
   }
   if (!fs.existsSync(filePath)) {
     // Try root index
-    if (slug === '' || slug === 'index') {
-      filePath = path.join(contentDir, 'index.mdx');
+    if (slug === "" || slug === "index") {
+      filePath = path.join(contentDir, "index.mdx");
     }
   }
 
@@ -199,12 +199,12 @@ function getDocContent(contentDir: string, slug: string): string | null {
     return null;
   }
 
-  const raw = fs.readFileSync(filePath, 'utf-8');
+  const raw = fs.readFileSync(filePath, "utf-8");
   const { title, description, body } = parseFrontmatter(raw);
 
   return `# ${title}
 
-${description ? `${description}\n\n` : ''}${body}`;
+${description ? `${description}\n\n` : ""}${body}`;
 }
 
 /**
@@ -212,12 +212,12 @@ ${description ? `${description}\n\n` : ''}${body}`;
  * Creates a virtual module with all MDX content bundled.
  */
 function rawMdxPlugin(): Plugin {
-  const virtualModuleId = 'virtual:raw-mdx-content';
-  const resolvedVirtualModuleId = '\0' + virtualModuleId;
+  const virtualModuleId = "virtual:raw-mdx-content";
+  const resolvedVirtualModuleId = "\0" + virtualModuleId;
   let root: string;
 
   return {
-    name: 'raw-mdx',
+    name: "raw-mdx",
     configResolved(config) {
       root = config.root;
     },
@@ -229,10 +229,10 @@ function rawMdxPlugin(): Plugin {
     },
     load(id) {
       if (id === resolvedVirtualModuleId) {
-        const contentDir = path.join(root, 'content/docs');
+        const contentDir = path.join(root, "content/docs");
         const mdxFiles: Record<string, string> = {};
 
-        function walkDir(dir: string, prefix = '') {
+        function walkDir(dir: string, prefix = "") {
           const entries = fs.readdirSync(dir, { withFileTypes: true });
           for (const entry of entries) {
             const fullPath = path.join(dir, entry.name);
@@ -241,9 +241,9 @@ function rawMdxPlugin(): Plugin {
               : entry.name;
             if (entry.isDirectory()) {
               walkDir(fullPath, relativePath);
-            } else if (entry.name.endsWith('.mdx')) {
-              const slug = relativePath.replace(/\.mdx$/, '');
-              mdxFiles[slug] = fs.readFileSync(fullPath, 'utf-8');
+            } else if (entry.name.endsWith(".mdx")) {
+              const slug = relativePath.replace(/\.mdx$/, "");
+              mdxFiles[slug] = fs.readFileSync(fullPath, "utf-8");
             }
           }
         }
@@ -264,15 +264,15 @@ export default defineConfig({
   plugins: [
     llmsTxtPlugin(),
     rawMdxPlugin(),
-    isProduction && cloudflare({ viteEnvironment: { name: 'ssr' } }),
-    mdx(await import('./source.config')),
+    isProduction && cloudflare({ viteEnvironment: { name: "ssr" } }),
+    mdx(await import("./source.config")),
     tailwindcss(),
     tsConfigPaths({
-      projects: ['./tsconfig.json'],
+      projects: ["./tsconfig.json"],
     }),
     tanstackStart({
       server: {
-        entry: './src/server/entry.ts',
+        entry: "./src/server/entry.ts",
       },
     }),
     react(),

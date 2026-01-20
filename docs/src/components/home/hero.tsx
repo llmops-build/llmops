@@ -1,15 +1,15 @@
-import { Link } from '@tanstack/react-router';
-import { clsx } from 'clsx';
-import { useEffect, useState } from 'react';
+import { Link } from "@tanstack/react-router";
+import { clsx } from "clsx";
+import { useEffect, useState } from "react";
 // @ts-expect-error // svgr import
-import GitHubLogo from '@/assets/github.svg?react';
-import styles from './home.module.css';
-import LogoAnimation from './logo-animation';
+import GitHubLogo from "@/assets/github.svg?react";
+import styles from "./home.module.css";
+import LogoAnimation from "./logo-animation";
 
 const formatStars = (count: number): string => {
   if (count >= 1000) {
     const formatted = (count / 1000).toFixed(1);
-    return formatted.endsWith('.0')
+    return formatted.endsWith(".0")
       ? `${Math.floor(count / 1000)}k`
       : `${formatted}k`;
   }
@@ -21,7 +21,7 @@ const useGitHubStars = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('https://api.github.com/repos/llmops-build/llmops')
+    fetch("https://api.github.com/repos/llmops-build/llmops")
       .then((res) => res.json())
       .then((data) => {
         setStars(data.stargazers_count);
@@ -90,8 +90,8 @@ const Hero = () => {
   return (
     <div
       className={clsx(
-        'max-w-4xl mx-auto flex w-full items-center justify-stretch h-full px-4 lg:px-8',
-        styles.hero
+        "max-w-4xl mx-auto flex w-full items-center justify-stretch h-full px-4 lg:px-8",
+        styles.hero,
       )}
     >
       <div className="grid grid-cols-1 w-full h-full place-items-center gap-8">
@@ -133,7 +133,7 @@ const Hero = () => {
               to="/docs/$"
               params={{
                 // @ts-expect-error Expected
-                '*': 'getting-started/installation',
+                "*": "getting-started/installation",
               }}
               className="bg-accent-9 text-accent-12 dark:text-accent-12 hover:bg-accent-10 h-8 px-3 text-sm font-medium rounded flex items-center justify-center gap-1 transition-colors"
             >

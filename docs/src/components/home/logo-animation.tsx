@@ -1,7 +1,7 @@
 // @ts-expect-error // svgr import
-import Logo from '@/assets/llmops.svg?react';
+import Logo from "@/assets/llmops.svg?react";
 
-const circleKeys = ['circ-1', 'circ-2', 'circ-3', 'circ-4'];
+const circleKeys = ["circ-1", "circ-2", "circ-3", "circ-4"];
 
 const LogoAnimation = () => {
   return (

@@ -1,6 +1,6 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 // @ts-expect-error // svgr import
-import Logo from '@/assets/llmops.svg?react';
+import Logo from "@/assets/llmops.svg?react";
 
 export function baseOptions(opts?: { noTitle?: boolean }): BaseLayoutProps {
   return {
@@ -14,6 +14,6 @@ export function baseOptions(opts?: { noTitle?: boolean }): BaseLayoutProps {
         </div>
       ),
     },
-    githubUrl: 'https://github.com/llmops-build/llmops',
+    githubUrl: "https://github.com/llmops-build/llmops",
   };
 }

@@ -3,30 +3,30 @@ import {
   HeadContent,
   Outlet,
   Scripts,
-} from '@tanstack/react-router';
-import { RootProvider } from 'fumadocs-ui/provider/tanstack';
-import type * as React from 'react';
-import appCss from '@/styles/app.css?url';
-import { PostHogPageView } from '@/lib/posthog';
+} from "@tanstack/react-router";
+import { RootProvider } from "fumadocs-ui/provider/tanstack";
+import type * as React from "react";
+import appCss from "@/styles/app.css?url";
+import { PostHogPageView } from "@/lib/posthog";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
         title:
-          'LLMOps: A pluggable LLMOps toolkit for TypeScript applications.',
+          "LLMOps: A pluggable LLMOps toolkit for TypeScript applications.",
       },
     ],
     links: [
-      { rel: 'stylesheet', href: appCss },
-      { rel: 'icon', href: '/favicon.ico', type: 'image/x-icon' },
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   component: RootComponent,
