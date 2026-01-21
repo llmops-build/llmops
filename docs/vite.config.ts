@@ -6,8 +6,10 @@ import mdx from "fumadocs-mdx/vite";
 import { defineConfig, type Plugin, type Connect } from "vite";
 import svgr from "vite-plugin-svgr";
 import tsConfigPaths from "vite-tsconfig-paths";
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import type { ChangelogRelease, ChangelogCommit } from "./src/lib/changelog";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -257,6 +259,148 @@ function rawMdxPlugin(): Plugin {
   };
 }
 
+/**
+ * Plugin to generate changelog data from git tags and commits.
+ * Creates a virtual module with release information.
+ */
+function changelogPlugin(): Plugin {
+  const virtualModuleId = "virtual:changelog-data";
+  const resolvedVirtualModuleId = `\0${virtualModuleId}`;
+  let root: string;
+
+  function getGitTags(): string[] {
+    try {
+      const output = execSync('git tag --list "v*" --sort=-version:refname', {
+        encoding: "utf-8",
+        cwd: root,
+      });
+      return output
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .filter(
+          (tag) =>
+            !tag.includes("-beta") &&
+            !tag.includes("-rc") &&
+            !tag.includes("-alpha"),
+        );
+    } catch {
+      console.warn("Failed to get git tags for changelog");
+      return [];
+    }
+  }
+
+  function getTagDate(tag: string): string {
+    try {
+      const output = execSync(`git log -1 --format=%cI ${tag}`, {
+        encoding: "utf-8",
+        cwd: root,
+      });
+      return output.trim();
+    } catch {
+      return new Date().toISOString();
+    }
+  }
+
+  function getCommitsBetweenTags(
+    fromTag: string,
+    toTag: string,
+  ): ChangelogCommit[] {
+    try {
+      const range = fromTag ? `${fromTag}..${toTag}` : toTag;
+      const output = execSync(
+        `git log ${range} --oneline --no-merges --format="%H|%s"`,
+        { encoding: "utf-8", cwd: root },
+      );
+      return output
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .filter(
+          (line) =>
+            !line.includes("chore: release") &&
+            !line.includes("chore(release)"),
+        )
+        .map((line) => {
+          const [hash, ...messageParts] = line.split("|");
+          const message = messageParts.join("|");
+          return {
+            hash: hash.trim(),
+            message: message.trim(),
+            type: parseCommitType(message),
+          };
+        });
+    } catch {
+      return [];
+    }
+  }
+
+  function parseCommitType(message: string): ChangelogCommit["type"] {
+    if (message.startsWith("feat:") || message.startsWith("feat("))
+      return "feat";
+    if (message.startsWith("fix:") || message.startsWith("fix(")) return "fix";
+    if (message.startsWith("docs:") || message.startsWith("docs("))
+      return "docs";
+    if (message.startsWith("chore:") || message.startsWith("chore("))
+      return "chore";
+    if (message.startsWith("refactor:") || message.startsWith("refactor("))
+      return "refactor";
+    return "other";
+  }
+
+  function getManualContent(
+    version: string,
+  ): { title?: string; description?: string } | null {
+    const changelogDir = path.join(root, "content/docs/changelog");
+    const mdxPath = path.join(changelogDir, `${version}.mdx`);
+
+    if (!fs.existsSync(mdxPath)) {
+      return null;
+    }
+
+    const content = fs.readFileSync(mdxPath, "utf-8");
+    const { title, description } = parseFrontmatter(content);
+    return { title: title || undefined, description: description || undefined };
+  }
+
+  return {
+    name: "changelog-data",
+    configResolved(config) {
+      root = config.root;
+    },
+    resolveId(id) {
+      if (id === virtualModuleId) {
+        return resolvedVirtualModuleId;
+      }
+      return null;
+    },
+    load(id) {
+      if (id === resolvedVirtualModuleId) {
+        const tags = getGitTags();
+        const releases: ChangelogRelease[] = [];
+
+        for (let i = 0; i < tags.length; i++) {
+          const tag = tags[i];
+          const prevTag = tags[i + 1] || "";
+          const manualContent = getManualContent(tag);
+
+          releases.push({
+            version: tag,
+            date: getTagDate(tag),
+            title: manualContent?.title,
+            description: manualContent?.description,
+            commits: getCommitsBetweenTags(prevTag, tag),
+            hasManualContent: manualContent !== null,
+          });
+        }
+
+        return `export const releases = ${JSON.stringify(releases)};`;
+      }
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
   server: {
     port: 3002,
@@ -264,6 +408,7 @@ export default defineConfig({
   plugins: [
     llmsTxtPlugin(),
     rawMdxPlugin(),
+    changelogPlugin(),
     isProduction && cloudflare({ viteEnvironment: { name: "ssr" } }),
     mdx(await import("./source.config")),
     tailwindcss(),

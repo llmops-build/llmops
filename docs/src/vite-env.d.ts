@@ -13,3 +13,9 @@ interface ImportMeta {
 declare module "virtual:raw-mdx-content" {
   export const mdxContent: Record<string, string>;
 }
+
+// Virtual module for changelog data
+declare module "virtual:changelog-data" {
+  import type { ChangelogRelease } from "@/lib/changelog";
+  export const releases: ChangelogRelease[];
+}
