@@ -1,6 +1,5 @@
 import { colors, spacing, sprinkles } from '@ui';
 import { style, keyframes } from '@vanilla-extract/css';
-import { color } from 'motion';
 
 // Keyframes for dropdown animation
 const fadeIn = keyframes({
@@ -176,23 +175,35 @@ export const inlineSelectDropdown = style({
 
 export const inlineSelectOption = style([
   sprinkles({
-    fontFamily: 'mono',
+    fontSize: 'sm',
+    color: 'gray11',
+    paddingLeft: 'xl',
+    paddingRight: 'sm',
+    paddingTop: 'xs',
+    paddingBottom: 'xs',
   }),
   {
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     gap: spacing.sm,
-    padding: `${spacing.sm} ${spacing.md}`,
     width: '100%',
     textAlign: 'left',
     backgroundColor: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '0.8125rem',
-    color: colors.gray11,
     transition: 'background-color 150ms',
     ':hover': {
-      backgroundColor: colors.gray3,
+      backgroundColor: colors.gray2,
+    },
+    ':focus': {
+      backgroundColor: colors.gray2,
+      outline: 'none',
+    },
+    selectors: {
+      '&[data-highlighted]': {
+        backgroundColor: colors.gray2,
+      },
     },
   },
 ]);
@@ -206,21 +217,36 @@ export const inlineSelectOptionSelected = style({
 });
 
 export const inlineSelectItemIndicator = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '16px',
-  color: colors.accent11,
+  position: 'absolute',
+  left: spacing.sm,
+  color: colors.accent9,
+});
+
+export const inlineSelectOptionIcon = style({
+  width: spacing.md,
+  height: spacing.md,
+  flexShrink: 0,
+  selectors: {
+    '.dark &': {
+      filter: 'invert(1)',
+    },
+  },
 });
 
 export const inlineSelectOptionLabel = style({
   flex: 1,
 });
 
-export const inlineSelectOptionSecondary = style({
-  fontSize: '0.75rem',
-  color: colors.gray9,
-});
+export const inlineSelectOptionSecondary = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    fontSize: '0.75rem',
+    color: colors.gray8,
+    letterSpacing: '0.02em',
+  },
+]);
 
 export const inlineSelectEmptyState = style({
   padding: `${spacing.md}`,

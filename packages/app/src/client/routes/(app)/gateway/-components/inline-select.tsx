@@ -8,6 +8,7 @@ export interface InlineSelectOption {
   label: string;
   secondary?: string;
   selectedLabel?: string; // What to show when selected (defaults to label)
+  icon?: string; // URL for icon/logo
 }
 
 interface InlineSelectProps {
@@ -74,8 +75,15 @@ export function InlineSelect({
                   )}
                 >
                   <Select.ItemIndicator className={styles.inlineSelectItemIndicator}>
-                    <Check size={12} />
+                    <Check size={14} />
                   </Select.ItemIndicator>
+                  {option.icon && (
+                    <img
+                      src={option.icon}
+                      alt=""
+                      className={styles.inlineSelectOptionIcon}
+                    />
+                  )}
                   <Select.ItemText className={styles.inlineSelectOptionLabel}>
                     {option.label}
                   </Select.ItemText>

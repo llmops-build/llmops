@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import clsx from 'clsx';
 import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
@@ -48,47 +48,54 @@ export function CurlBuilder() {
   };
 
   // Build environment options
-  const environmentOptions: InlineSelectOption[] = useMemo(() => {
-    if (!environments) return [];
-    return environments.map((env) => ({
-      id: env.id,
-      label: env.name,
-      secondary: env.isProd ? 'prod' : undefined,
-    }));
-  }, [environments]);
+  const environmentOptions: InlineSelectOption[] = environments
+    ? environments.map((env) => ({
+        id: env.id,
+        label: env.name,
+        secondary: env.isProd ? 'prod' : undefined,
+      }))
+    : [];
 
   // Build secret options for selected environment
-  const secretOptions: InlineSelectOption[] = useMemo(() => {
-    if (!secrets) return [];
-    return secrets.map((secret) => ({
-      id: secret.id,
-      label: secret.keyName,
-      secondary: secret.keyValue.substring(0, 12) + '...',
-    }));
-  }, [secrets]);
+  const secretOptions: InlineSelectOption[] = secrets
+    ? secrets.map((secret) => ({
+        id: secret.id,
+        label: secret.keyName,
+        secondary: secret.keyValue.substring(0, 12) + '...',
+      }))
+    : [];
 
   // Build provider options from configured providers
-  const providerOptions: InlineSelectOption[] = useMemo(() => {
-    if (!providerConfigs) return [];
-    return providerConfigs.map((config) => {
-      const info = getProviderInfo(config.providerId);
-      return {
-        id: config.id,
-        label: config.slug || info?.name || config.providerId,
-        secondary: config.name || undefined,
-      };
-    });
-  }, [providerConfigs, availableProviders]);
+  const providerOptions: InlineSelectOption[] = providerConfigs
+    ? providerConfigs.map((config) => {
+        const info = getProviderInfo(config.providerId);
+        const displayName = config.name || info?.name || config.providerId;
+        const slug = config.slug ? `@${config.slug}` : undefined;
+        return {
+          id: config.id,
+          label: displayName,
+          secondary: slug,
+          selectedLabel: slug || displayName,
+          icon: info?.logo,
+        };
+      })
+    : [];
 
   // Build model options
-  const modelOptions: InlineSelectOption[] = useMemo(() => {
-    if (!models) return [];
-    return models.map((model) => ({
-      id: model.id,
-      label: model.name || model.id,
-      selectedLabel: model.id, // Show model ID when selected
-    }));
-  }, [models]);
+  const selectedConfig = providerConfigs?.find(
+    (c) => c.id === selected.providerConfigId
+  );
+  const selectedProviderInfo = selectedConfig
+    ? getProviderInfo(selectedConfig.providerId)
+    : undefined;
+  const modelOptions: InlineSelectOption[] = models
+    ? models.map((model) => ({
+        id: model.id,
+        label: model.name || model.id,
+        selectedLabel: model.id, // Show model ID when selected
+        icon: selectedProviderInfo?.logo,
+      }))
+    : [];
 
   // Get the selected values for display
   const selectedSecret = secrets?.find((s) => s.id === selected.secretId);

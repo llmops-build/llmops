@@ -146,7 +146,7 @@ export function AppSidebar() {
           Workspace
         </span>
         <SidebarItem asChild>
-          <Link to="/gateway">
+          <Link to="/gateway/usage">
             <Icon icon={Network} />
             Gateway
           </Link>
