@@ -40,16 +40,16 @@ export const insightItem = recipe({
   variants: {
     type: {
       warning: {
-        backgroundColor: '#fef3cd',
-        borderColor: '#ffc107',
+        backgroundColor: colors.error2,
+        borderColor: colors.error6,
       },
       info: {
         backgroundColor: colors.accent2,
         borderColor: colors.accent5,
       },
       success: {
-        backgroundColor: '#d4edda',
-        borderColor: '#28a745',
+        backgroundColor: colors.accent2,
+        borderColor: colors.accent6,
       },
     },
   },
@@ -62,13 +62,13 @@ export const insightIcon = recipe({
   variants: {
     type: {
       warning: {
-        color: '#856404',
+        color: colors.error11,
       },
       info: {
         color: colors.accent11,
       },
       success: {
-        color: '#155724',
+        color: colors.accent11,
       },
     },
   },
