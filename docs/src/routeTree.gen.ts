@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as GithubRouteImport } from './routes/github'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChangelogIndexRouteImport } from './routes/changelog/index'
 import { Route as DocsSplatRouteImport } from './routes/docs/$'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiLlmsTxtRouteImport } from './routes/api/llms-txt'
@@ -31,6 +32,11 @@ const DiscordRoute = DiscordRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChangelogIndexRoute = ChangelogIndexRouteImport.update({
+  id: '/changelog/',
+  path: '/changelog/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsSplatRoute = DocsSplatRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/changelog': typeof ChangelogIndexRoute
   '/api/llms-txt/$': typeof ApiLlmsTxtSplatRoute
   '/api/mdx/$': typeof ApiMdxSplatRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/changelog': typeof ChangelogIndexRoute
   '/api/llms-txt/$': typeof ApiLlmsTxtSplatRoute
   '/api/mdx/$': typeof ApiMdxSplatRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/api/llms-txt': typeof ApiLlmsTxtRouteWithChildren
   '/api/search': typeof ApiSearchRoute
   '/docs/$': typeof DocsSplatRoute
+  '/changelog/': typeof ChangelogIndexRoute
   '/api/llms-txt/$': typeof ApiLlmsTxtSplatRoute
   '/api/mdx/$': typeof ApiMdxSplatRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/api/llms-txt'
     | '/api/search'
     | '/docs/$'
+    | '/changelog'
     | '/api/llms-txt/$'
     | '/api/mdx/$'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/api/llms-txt'
     | '/api/search'
     | '/docs/$'
+    | '/changelog'
     | '/api/llms-txt/$'
     | '/api/mdx/$'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/api/llms-txt'
     | '/api/search'
     | '/docs/$'
+    | '/changelog/'
     | '/api/llms-txt/$'
     | '/api/mdx/$'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   ApiLlmsTxtRoute: typeof ApiLlmsTxtRouteWithChildren
   ApiSearchRoute: typeof ApiSearchRoute
   DocsSplatRoute: typeof DocsSplatRoute
+  ChangelogIndexRoute: typeof ChangelogIndexRoute
   ApiMdxSplatRoute: typeof ApiMdxSplatRoute
 }
 
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/changelog/': {
+      id: '/changelog/'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof ChangelogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/$': {
@@ -213,6 +233,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLlmsTxtRoute: ApiLlmsTxtRouteWithChildren,
   ApiSearchRoute: ApiSearchRoute,
   DocsSplatRoute: DocsSplatRoute,
+  ChangelogIndexRoute: ChangelogIndexRoute,
   ApiMdxSplatRoute: ApiMdxSplatRoute,
 }
 export const routeTree = rootRouteImport

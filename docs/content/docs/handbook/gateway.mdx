@@ -1,0 +1,181 @@
+---
+title: Gateway
+description: Unified API gateway for routing requests to 250+ LLM providers.
+icon: Network
+---
+
+The Gateway is a unified API endpoint that routes requests to LLM providers. It provides an OpenAI-compatible interface, allowing you to switch providers without changing your application code.
+
+## Overview
+
+The Gateway provides:
+
+- **Unified API**: OpenAI-compatible endpoints for all providers
+- **Provider Routing**: Route requests via [configs](/docs/handbook/configs) or direct provider access
+- **Resilience**: Built-in retries and fallback support
+- **Observability**: Automatic request logging and [cost tracking](/docs/handbook/observability)
+
+## Supported Endpoints
+
+The Gateway exposes OpenAI-compatible endpoints:
+
+| Endpoint                  | Description              |
+| ------------------------- | ------------------------ |
+| `/v1/chat/completions`    | Chat completions API     |
+| `/v1/completions`         | Text completions API     |
+| `/v1/embeddings`          | Text embeddings API      |
+| `/v1/images/generations`  | Image generation API     |
+| `/v1/audio/speech`        | Text-to-speech API       |
+| `/v1/audio/transcriptions`| Audio transcription API  |
+| `/v1/models`              | List available models    |
+
+## Using the Gateway
+
+There are two ways to route requests through the Gateway:
+
+### 1. Config-Based Routing
+
+Use [configs](/docs/handbook/configs) for managed routing with environment-specific variants:
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+  apiKey: 'your-environment-secret',
+  defaultHeaders: {
+    'x-llmops-config': 'your-config-id',
+  },
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o-mini', // Can be overridden by variant
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+```
+
+This approach:
+- Routes based on your config's targeting rules
+- Applies variant settings (model, parameters, system prompt)
+- Enables A/B testing and gradual rollouts
+
+### 2. Direct Provider Access
+
+Access providers directly using the `@slug/model` format:
+
+```typescript
+const response = await openai.chat.completions.create({
+  model: '@openai-prod/gpt-4-turbo',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+```
+
+This bypasses config routing and sends requests directly to the specified provider configuration.
+
+## Provider Configuration
+
+Configure providers in the **Gateway > Providers** section of the dashboard.
+
+### Adding a Provider
+
+Each provider configuration includes:
+
+| Field           | Description                                          |
+| --------------- | ---------------------------------------------------- |
+| **Provider**    | The LLM provider (OpenAI, Anthropic, Azure, etc.)    |
+| **Name**        | Human-readable name for this configuration           |
+| **Slug**        | Optional short ID for direct access (e.g., `openai-prod`) |
+| **Credentials** | Provider-specific authentication credentials         |
+
+### Provider Credentials
+
+Different providers require different credentials:
+
+| Provider       | Required Credentials                                    |
+| -------------- | ------------------------------------------------------- |
+| **OpenAI**     | API Key, Organization (optional), Project (optional)    |
+| **Anthropic**  | API Key                                                 |
+| **Azure**      | Resource Name, Deployment ID, API Version, Auth Method  |
+| **AWS Bedrock**| Access Key ID, Secret Access Key, Region                |
+| **Google Vertex** | Project ID, Region, Service Account JSON             |
+| **Groq**       | API Key                                                 |
+| **Mistral**    | API Key                                                 |
+
+### Example: Multiple OpenAI Configurations
+
+You might configure multiple instances of the same provider:
+
+| Name                | Slug          | Use Case                    |
+| ------------------- | ------------- | --------------------------- |
+| OpenAI Production   | `openai-prod` | Production workloads        |
+| OpenAI Development  | `openai-dev`  | Development and testing     |
+| OpenAI High-Limit   | `openai-hl`   | High-throughput operations  |
+
+Access them directly:
+
+```typescript
+// Production
+model: '@openai-prod/gpt-4-turbo'
+
+// Development
+model: '@openai-dev/gpt-4o-mini'
+
+// High-limit account
+model: '@openai-hl/gpt-4-turbo'
+```
+
+## Streaming
+
+The Gateway supports streaming responses:
+
+```typescript
+const stream = await openai.chat.completions.create({
+  model: '@openai-prod/gpt-4-turbo',
+  messages: [{ role: 'user', content: 'Write a story' }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content || '');
+}
+```
+
+## Error Handling
+
+The Gateway returns standard OpenAI-compatible error responses:
+
+```typescript
+try {
+  const response = await openai.chat.completions.create({
+    model: '@openai-prod/gpt-4-turbo',
+    messages: [{ role: 'user', content: 'Hello!' }],
+  });
+} catch (error) {
+  if (error instanceof OpenAI.APIError) {
+    console.error('Status:', error.status);
+    console.error('Message:', error.message);
+  }
+}
+```
+
+## Request Headers
+
+The Gateway accepts the following headers:
+
+| Header              | Description                              | Required |
+| ------------------- | ---------------------------------------- | -------- |
+| `Authorization`     | Bearer token with environment secret     | Yes      |
+| `x-llmops-config`   | Config ID for routing                    | Optional |
+| `Content-Type`      | Must be `application/json`               | Yes      |
+
+## cURL Example
+
+```bash
+curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-environment-secret" \
+  -d '{
+    "model": "@openai-prod/gpt-4-turbo",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
