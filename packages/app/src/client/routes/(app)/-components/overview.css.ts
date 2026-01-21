@@ -29,7 +29,7 @@ export const heroTitle = style([
   }),
   {
     fontSize: '1.75rem',
-    fontWeight: 600,
+    fontWeight: 500,
     color: colors.gray12,
     margin: 0,
     letterSpacing: '-0.02em',
@@ -116,24 +116,30 @@ export const quickLinksSection = style({
   borderBottom: `1px solid ${colors.gray4}`,
 });
 
-export const quickLink = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: spacing.sm,
-  padding: `${spacing.md} 0`,
-  color: colors.gray12,
-  textDecoration: 'none',
-  borderBottom: `1px solid ${colors.gray3}`,
-  transition: 'all 150ms',
-  ':hover': {
-    color: colors.accent9,
-  },
-  selectors: {
-    '&:last-child': {
-      borderBottom: 'none',
+export const quickLink = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: `${spacing.md} 0`,
+    color: colors.gray12,
+    textDecoration: 'none',
+    borderBottom: `1px solid ${colors.gray3}`,
+    transition: 'all 150ms',
+    fontWeight: 400,
+    ':hover': {
+      color: colors.accent9,
+    },
+    selectors: {
+      '&:last-child': {
+        borderBottom: 'none',
+      },
     },
   },
-});
+]);
 
 export const quickLinkText = style({
   fontSize: '0.9375rem',

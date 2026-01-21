@@ -169,11 +169,9 @@ function RouteComponent() {
           <div className={styles.overviewContent}>
             {/* Hero Section */}
             <div className={styles.heroSection}>
-              <h1 className={styles.heroTitle}>
-                Your LLM Gateway is ready
-              </h1>
+              <h1 className={styles.heroTitle}>Mission Control</h1>
               <p className={styles.heroSubtitle}>
-                Route requests to any provider, manage prompts, and track usage.
+                Route requests to any provider. Manage prompts. Track everything.
               </p>
               <div className={styles.baseUrlSection}>
                 <span className={styles.baseUrlLabel}>Base URL</span>
