@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useForm, useWatch } from 'react-hook-form';
 import { Check, Loader2 } from 'lucide-react';
 import { Combobox } from '@ui';
@@ -8,18 +8,19 @@ import {
   type ProviderInfo,
 } from '@client/hooks/queries/useProvidersList';
 import { useUpsertProviderConfig } from '@client/hooks/mutations/useUpsertProviderConfig';
-import { useCreateConfig } from '@client/hooks/mutations/useCreateConfig';
 import {
   getProviderFields,
   type ProviderFieldDefinition,
 } from '../gateway/-components/provider-field-definitions';
+import { CurlBuilder } from '../gateway/-components/curl-builder';
 import * as styles from './overview.css';
 import { providerLogo } from '../gateway/-components/workspace-providers.css';
 
-type OnboardingStep = 'provider' | 'config' | 'complete';
+type OnboardingStep = 'provider' | 'gateway' | 'complete';
 
 interface OnboardingFlowProps {
   hasProviders?: boolean;
+  onComplete?: () => void;
 }
 
 interface ProviderFormData {
@@ -27,34 +28,24 @@ interface ProviderFormData {
   config: Record<string, string>;
 }
 
-interface ConfigFormData {
-  name: string;
-}
-
-export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
-  const navigate = useNavigate();
+export function OnboardingFlow({
+  hasProviders = false,
+  onComplete,
+}: OnboardingFlowProps) {
   const [step, setStep] = useState<OnboardingStep>(
-    hasProviders ? 'config' : 'provider'
+    hasProviders ? 'gateway' : 'provider'
   );
   const [savedProvider, setSavedProvider] = useState<ProviderInfo | null>(null);
 
   const { data: availableProviders, isLoading: providersLoading } =
     useProvidersList();
   const upsertProvider = useUpsertProviderConfig();
-  const createConfig = useCreateConfig();
 
   // Provider form
   const providerForm = useForm<ProviderFormData>({
     defaultValues: {
       provider: null,
       config: {},
-    },
-  });
-
-  // Config form
-  const configForm = useForm<ConfigFormData>({
-    defaultValues: {
-      name: '',
     },
   });
 
@@ -68,11 +59,6 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
     name: 'config',
   });
 
-  const configName = useWatch({
-    control: configForm.control,
-    name: 'name',
-  });
-
   // Reset config values when provider changes
   useEffect(() => {
     providerForm.setValue('config', {});
@@ -80,7 +66,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
 
   useEffect(() => {
     if (hasProviders && step === 'provider') {
-      setStep('config');
+      setStep('gateway');
     }
   }, [hasProviders, step]);
 
@@ -102,25 +88,16 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
       });
 
       setSavedProvider(data.provider);
-      setStep('config');
+      setStep('gateway');
     } catch (error) {
       console.error('Failed to save provider:', error);
     }
   });
 
-  const handleConfigSubmit = configForm.handleSubmit(async (data) => {
-    if (!data.name.trim()) return;
-
-    try {
-      await createConfig.mutateAsync({ name: data.name.trim() });
-      setStep('complete');
-    } catch (error) {
-      console.error('Failed to create config:', error);
+  const handleFinishOnboarding = () => {
+    if (onComplete) {
+      onComplete();
     }
-  });
-
-  const handleSkipConfig = () => {
-    navigate({ to: '/prompts/$id', params: { id: 'new' } });
   };
 
   const isProviderFormValid = () => {
@@ -134,8 +111,8 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
     targetStep: OnboardingStep
   ): 'completed' | 'active' | 'pending' => {
     const steps: OnboardingStep[] = hasProviders
-      ? ['config', 'complete']
-      : ['provider', 'config', 'complete'];
+      ? ['gateway', 'complete']
+      : ['provider', 'gateway', 'complete'];
     const currentIndex = steps.indexOf(step);
     const targetIndex = steps.indexOf(targetStep);
 
@@ -155,7 +132,7 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
   }
 
   const providerStatus = getStepStatus('provider');
-  const configStatus = getStepStatus('config');
+  const gatewayStatus = getStepStatus('gateway');
 
   return (
     <div className={styles.onboardingContainer}>
@@ -272,103 +249,35 @@ export function OnboardingFlow({ hasProviders = false }: OnboardingFlowProps) {
           </div>
         </div>
 
-        {/* Step 2: Create Config */}
+        {/* Step 2: Make your first API call */}
         <div className={styles.onboardingStepWrapper}>
           <div className={styles.onboardingStepIndicator}>
             <div
-              className={styles.onboardingStepCircle({ status: configStatus })}
+              className={styles.onboardingStepCircle({ status: gatewayStatus })}
             >
-              {configStatus === 'completed' ? <Check size={14} /> : '2'}
+              {gatewayStatus === 'completed' ? <Check size={14} /> : '2'}
             </div>
-            {configStatus !== 'completed' && (
-              <div
-                className={styles.onboardingStepLine({ status: configStatus })}
-              />
-            )}
           </div>
           <div className={styles.onboardingStepContent}>
             <div className={styles.onboardingStepHeader}>
               <h2 className={styles.onboardingStepTitle}>
-                Create your first prompt
+                Make your first API call
               </h2>
               <p className={styles.onboardingStepSubtitle}>
-                Prompts let you manage prompts and model configurations for
-                different environments.
+                Use the Gateway to call any model with the{' '}
+                <code className={styles.onboardingCode}>@provider/model</code>{' '}
+                format. Copy the command below and run it in your terminal.
               </p>
             </div>
 
-            {step === 'config' && (
-              <form
-                onSubmit={handleConfigSubmit}
-                className={styles.onboardingCard}
-              >
-                <div className={styles.onboardingForm}>
-                  <div className={styles.onboardingField}>
-                    <label className={styles.onboardingFieldLabel}>
-                      Prompt Name{' '}
-                      <span style={{ color: 'var(--error9)' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={styles.onboardingInput}
-                      {...configForm.register('name', { required: true })}
-                      placeholder="Coding Agent, Audit Agent, etc."
-                    />
-                    <span className={styles.onboardingFieldDescription}>
-                      A unique name to identify this prompt.
-                    </span>
-                  </div>
-                </div>
-
-                <div className={styles.onboardingActions}>
-                  <button
-                    type="button"
-                    className={styles.onboardingButton({
-                      variant: 'secondary',
-                    })}
-                    onClick={handleSkipConfig}
-                  >
-                    Skip for now
-                  </button>
-                  <button
-                    type="submit"
-                    className={styles.onboardingButton({ variant: 'primary' })}
-                    disabled={!configName?.trim() || createConfig.isPending}
-                  >
-                    {createConfig.isPending ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      'Create Prompt'
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {configStatus === 'completed' && (
+            {step === 'gateway' && (
               <div className={styles.onboardingCard}>
-                <div className={styles.onboardingSuccessRow}>
-                  <div className={styles.onboardingSuccessIcon}>
-                    <Check size={12} />
-                  </div>
-                  <div className={styles.onboardingSuccessContent}>
-                    <p className={styles.onboardingSuccessTitle}>
-                      Prompt "{configName}" created successfully
-                    </p>
-                    <p className={styles.onboardingSuccessSubtitle}>
-                      You can now start configuring model variants and routing
-                      rules.
-                    </p>
-                  </div>
-                </div>
+                <CurlBuilder />
                 <div className={styles.onboardingActions}>
                   <button
                     type="button"
                     className={styles.onboardingButton({ variant: 'primary' })}
-                    onClick={() => navigate({ to: '/' })}
+                    onClick={handleFinishOnboarding}
                   >
                     Go to Dashboard
                   </button>

@@ -31,6 +31,22 @@ export const usageDescription = style({
   lineHeight: 1.5,
 });
 
+// Code block container
+export const codeBlockContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  maxWidth: '675px',
+  margin: '0 auto',
+});
+
+// Code block header
+export const codeBlockHeader = style({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  marginBottom: spacing.sm,
+});
+
 // Code block styles
 export const codeBlock = style([
   sprinkles({
@@ -42,8 +58,6 @@ export const codeBlock = style([
     lineHeight: 1.7,
     color: colors.gray11,
     width: '100%',
-    maxWidth: '675px',
-    margin: `0 auto`,
     scrollbarWidth: 'none',
     selectors: {
       '&::-webkit-scrollbar': {
@@ -94,10 +108,7 @@ export const codeComment = style({
 
 // Copy button
 export const copyButton = style({
-  position: 'absolute',
-  top: spacing.sm,
-  right: spacing.sm,
-  padding: spacing.xs,
+  padding: `${spacing.xs} ${spacing.sm}`,
   backgroundColor: colors.gray3,
   border: `1px solid ${colors.gray5}`,
   borderRadius: spacing.xs,
@@ -105,7 +116,9 @@ export const copyButton = style({
   color: colors.gray11,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
+  gap: spacing.xs,
+  fontSize: '0.8125rem',
+  fontWeight: 500,
   transition: 'all 150ms',
   ':hover': {
     backgroundColor: colors.gray4,
@@ -115,6 +128,7 @@ export const copyButton = style({
 
 export const copyButtonSuccess = style({
   color: '#7ee787',
+  borderColor: '#7ee787',
 });
 
 // Inline select styles

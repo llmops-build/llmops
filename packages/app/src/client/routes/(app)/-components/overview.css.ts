@@ -4,8 +4,185 @@ import { calc } from '@vanilla-extract/css-utils';
 import { recipe } from '@vanilla-extract/recipes';
 
 export const overviewContainer = style({
-  padding: spacing.md,
+  padding: spacing.lg,
+  paddingTop: spacing.xl,
   overflow: 'auto',
+});
+
+export const overviewContent = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xl,
+  maxWidth: '600px',
+});
+
+// Hero Section
+export const heroSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.md,
+});
+
+export const heroTitle = style([
+  sprinkles({
+    fontFamily: 'sans',
+  }),
+  {
+    fontSize: '1.75rem',
+    fontWeight: 500,
+    color: colors.gray12,
+    margin: 0,
+    letterSpacing: '-0.02em',
+    lineHeight: 1.2,
+  },
+]);
+
+export const heroSubtitle = style({
+  fontSize: '1rem',
+  color: colors.gray9,
+  margin: 0,
+  lineHeight: 1.5,
+});
+
+export const baseUrlSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+  marginTop: spacing.sm,
+});
+
+export const baseUrlLabel = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    fontSize: '0.6875rem',
+    fontWeight: 500,
+    color: colors.gray9,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+]);
+
+export const baseUrlContainer = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  backgroundColor: colors.gray2,
+  border: `1px solid ${colors.gray4}`,
+  borderRadius: spacing.xs,
+  padding: spacing.sm,
+});
+
+export const baseUrlCode = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    fontSize: '0.875rem',
+    color: colors.gray12,
+    flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+]);
+
+export const baseUrlCopyButton = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.xs,
+  padding: `${spacing.xs} ${spacing.sm}`,
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  color: colors.gray11,
+  backgroundColor: colors.gray1,
+  border: `1px solid ${colors.gray5}`,
+  borderRadius: spacing.xs,
+  cursor: 'pointer',
+  flexShrink: 0,
+  transition: 'all 150ms',
+  ':hover': {
+    backgroundColor: colors.gray3,
+    borderColor: colors.gray6,
+  },
+});
+
+// Quick Links Section
+export const quickLinksSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  borderTop: `1px solid ${colors.gray4}`,
+  borderBottom: `1px solid ${colors.gray4}`,
+});
+
+export const quickLink = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: `${spacing.md} 0`,
+    color: colors.gray12,
+    textDecoration: 'none',
+    borderBottom: `1px solid ${colors.gray3}`,
+    transition: 'all 150ms',
+    fontWeight: 400,
+    ':hover': {
+      color: colors.accent9,
+    },
+    selectors: {
+      '&:last-child': {
+        borderBottom: 'none',
+      },
+    },
+  },
+]);
+
+export const quickLinkText = style({
+  fontSize: '0.9375rem',
+  fontWeight: 500,
+  flex: 1,
+});
+
+export const quickLinkBadge = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    fontSize: '0.75rem',
+    color: colors.gray9,
+    backgroundColor: colors.gray3,
+    padding: `2px ${spacing.xs}`,
+    borderRadius: spacing.xs,
+  },
+]);
+
+export const quickLinkArrow = style({
+  color: colors.gray7,
+  transition: 'all 150ms',
+  selectors: {
+    [`${quickLink}:hover &`]: {
+      color: colors.accent9,
+      transform: 'translateX(2px)',
+    },
+  },
+});
+
+// Legacy styles kept for compatibility
+export const overviewSections = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.lg,
+  maxWidth: '1000px',
+});
+
+export const featureCardsContainer = style({
+  display: 'flex',
+  gap: spacing.md,
+  flexWrap: 'wrap',
 });
 
 export const sectionContainer = style({
@@ -86,46 +263,6 @@ export const sectionTitle = style([
   },
 ]);
 
-export const baseUrlBox = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: spacing.xs,
-  marginRight: spacing.sm,
-});
-
-export const baseUrlLabel = style([
-  sprinkles({
-    fontSize: 'xs',
-    color: 'gray9',
-    fontFamily: 'mono',
-  }),
-]);
-
-export const baseUrlText = style({
-  fontFamily: 'monospace',
-  fontSize: '0.75rem',
-  color: colors.gray11,
-  backgroundColor: colors.gray3,
-  padding: `${spacing.xs} ${spacing.sm}`,
-  borderRadius: spacing.xs,
-});
-
-export const baseUrlCopyButton = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: spacing.xs,
-  border: 'none',
-  backgroundColor: 'transparent',
-  color: colors.gray9,
-  cursor: 'pointer',
-  borderRadius: spacing.xs,
-  ':hover': {
-    backgroundColor: colors.gray4,
-    color: colors.gray12,
-  },
-});
-
 // Onboarding Flow Styles - Vertical Timeline Design
 export const onboardingContainer = style({
   display: 'flex',
@@ -134,7 +271,7 @@ export const onboardingContainer = style({
   paddingTop: spacing.md,
   paddingBottom: spacing.xl,
   width: '100%',
-  maxWidth: '600px',
+  maxWidth: '675px',
   margin: '0 auto',
   boxSizing: 'border-box',
 });
@@ -260,6 +397,12 @@ export const onboardingCard = style({
   display: 'flex',
   flexDirection: 'column',
   gap: spacing.md,
+});
+
+export const onboardingCardCurlWrapper = style({
+  width: '100%',
+  overflowX: 'auto',
+  overflowY: 'visible',
 });
 
 export const onboardingSuccessRow = style({
@@ -599,3 +742,16 @@ export const completeContent = style({
   flexDirection: 'column',
   alignItems: 'center',
 });
+
+export const onboardingCode = style([
+  sprinkles({
+    fontFamily: 'mono',
+  }),
+  {
+    backgroundColor: colors.gray3,
+    padding: `2px ${spacing.xs}`,
+    borderRadius: '3px',
+    fontSize: '0.8125rem',
+    color: colors.accent11,
+  },
+]);
