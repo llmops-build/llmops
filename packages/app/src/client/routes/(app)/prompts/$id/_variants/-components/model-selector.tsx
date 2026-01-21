@@ -337,7 +337,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                     <Link
                       to="/gateway/providers"
                       className={styles.connectProviderLink}
-                      onMouseEnter={(e) => {
+                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
                         const target = e.currentTarget;
                         // Click the active/open menu trigger to close it
                         const activeButton = menubarRef.current?.querySelector(
@@ -395,7 +395,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                     <Link
                       to="/gateway/providers"
                       className={styles.connectProviderLink}
-                      onMouseEnter={(e) => e.currentTarget.focus()}
+                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.focus()}
                     >
                       <div className={styles.providerLogoStack}>
                         <img src="https://models.dev/logos/openai.svg" alt="" className={styles.stackedLogo} />
