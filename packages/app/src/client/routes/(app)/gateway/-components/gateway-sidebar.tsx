@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { Icon } from '@client/components/icons';
-import { Cable, Plug } from 'lucide-react';
+import { Plug, SquareTerminal } from 'lucide-react';
 import {
   gatewaySidebar,
   gatewaySidebarItem,
@@ -14,7 +14,7 @@ export function GatewaySidebar() {
       <div className={gatewaySidebarSection}>
         <span className={gatewaySidebarSectionTitle}>Documentation</span>
         <Link to="/gateway/usage" className={gatewaySidebarItem}>
-          <Icon icon={Cable} />
+          <Icon icon={SquareTerminal} />
           API Usage
         </Link>
       </div>

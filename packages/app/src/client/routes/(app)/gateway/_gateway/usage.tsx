@@ -1,15 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { CurlBuilder } from '../-components/curl-builder';
 import * as styles from '../-components/curl-builder.css';
-import { Cable } from 'lucide-react';
+import { SquareTerminal } from 'lucide-react';
 import { Icon } from '@client/components/icons';
 
 export const Route = createFileRoute('/(app)/gateway/_gateway/usage')({
   component: RouteComponent,
   staticData: {
     customData: {
-      title: 'Curl',
-      icon: <Icon icon={Cable} />,
+      title: 'API Usage',
+      icon: <Icon icon={SquareTerminal} />,
     },
   },
 });
