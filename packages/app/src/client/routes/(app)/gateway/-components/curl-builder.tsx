@@ -111,7 +111,10 @@ export function CurlBuilder() {
 
   // Build the full curl command for copying
   const buildCurlCommand = (): string => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const baseUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}${window.bootstrapData?.basePath === '/' ? '' : window.bootstrapData?.basePath || ''}`
+        : '';
     const secretValue = selectedSecret?.keyValue || '<your-api-key>';
     const modelValue = selectedModel
       ? `${providerSlug}${selectedModel.id}`
@@ -180,7 +183,9 @@ export function CurlBuilder() {
   };
 
   const baseUrl =
-    typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${window.bootstrapData?.basePath === '/' ? '' : window.bootstrapData?.basePath || ''}`
+      : '';
 
   if (envLoading || configsLoading) {
     return <div className={styles.loading}>Loading configuration...</div>;
