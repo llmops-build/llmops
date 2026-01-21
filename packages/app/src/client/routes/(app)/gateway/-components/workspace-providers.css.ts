@@ -26,7 +26,7 @@ export const providersDescription = style({
 
 export const providersTableContainer = style({
   border: `1px solid ${colors.gray4}`,
-  borderRadius: spacing.sm,
+  borderRadius: spacing.xs,
   overflow: 'hidden',
   marginBottom: spacing.md,
 });

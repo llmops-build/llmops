@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Monitor,
   Moon,
+  Network,
   Settings,
   Sun,
   Telescope,
@@ -144,6 +145,12 @@ export function AppSidebar() {
         >
           Workspace
         </span>
+        <SidebarItem asChild>
+          <Link to="/gateway/usage">
+            <Icon icon={Network} />
+            Gateway
+          </Link>
+        </SidebarItem>
         <SidebarItem asChild>
           <Link to="/prompts">
             <Icon icon={MessageSquare} />

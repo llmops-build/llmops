@@ -36,20 +36,14 @@ export const createRequestGuardMiddleware = (): MiddlewareHandler => {
       );
     }
 
+    // Config ID is optional - if not provided, the gatewayAdapter will check
+    // for @provider-slug/model format in the request body
     const configId =
       headers.data['x-llmops-config'] || headers.data['x-llmops-prompt'];
 
-    if (!configId) {
-      return c.json(
-        {
-          message: 'Config ID is required',
-          error: 'Either x-llmops-config or x-llmops-prompt must be provided',
-        },
-        400
-      );
+    if (configId) {
+      c.set('configId', configId);
     }
-
-    c.set('configId', configId);
     c.set('envSec', envSec);
 
     // Allow cross-origin requests via CORS

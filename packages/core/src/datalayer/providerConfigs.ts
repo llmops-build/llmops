@@ -69,6 +69,10 @@ const getProviderConfigByProviderId = z.object({
   providerId: z.string().min(1),
 });
 
+const getProviderConfigBySlug = z.object({
+  slug: z.string().min(1),
+});
+
 const deleteProviderConfig = z.object({
   id: z.uuidv4(),
 });
@@ -159,6 +163,21 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .selectFrom('provider_configs')
         .selectAll()
         .where('providerId', '=', providerId)
+        .executeTakeFirst();
+    },
+    getProviderConfigBySlug: async (
+      params: z.infer<typeof getProviderConfigBySlug>
+    ) => {
+      const value = await getProviderConfigBySlug.safeParseAsync(params);
+      if (!value.success) {
+        throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
+      }
+      const { slug } = value.data;
+
+      return db
+        .selectFrom('provider_configs')
+        .selectAll()
+        .where('slug', '=', slug)
         .executeTakeFirst();
     },
     deleteProviderConfig: async (

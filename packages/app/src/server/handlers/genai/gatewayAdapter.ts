@@ -2,10 +2,47 @@ import type { MiddlewareHandler } from 'hono';
 import {
   variantJsonDataSchema,
   SupportedProviders,
+  ManifestRouter,
   type VariantJsonData,
+  type RoutingContext,
 } from '@llmops/core';
-import { cacheService } from '@server/services/cache';
+import { getManifestService } from '@server/services/manifest';
+import {
+  getProviderCredentials,
+  getProviderCredentialsByProviderId,
+  getProviderCredentialsBySlug,
+  type ProviderCredentials,
+} from '@server/services/credentialsCache';
 import { renderTemplate } from '@server/lib/template-utils';
+
+/**
+ * Parse a model string in the format @provider-slug/model-name
+ * Returns null if the model doesn't match the expected format
+ */
+function parseProviderSlugModel(
+  model: string
+): { providerSlug: string; modelName: string } | null {
+  if (!model || !model.startsWith('@')) {
+    return null;
+  }
+
+  // Remove the @ prefix and split by /
+  const withoutAt = model.slice(1);
+  const slashIndex = withoutAt.indexOf('/');
+
+  if (slashIndex === -1) {
+    return null;
+  }
+
+  const providerSlug = withoutAt.slice(0, slashIndex);
+  const modelName = withoutAt.slice(slashIndex + 1);
+
+  if (!providerSlug || !modelName) {
+    return null;
+  }
+
+  return { providerSlug, modelName };
+}
 
 /**
  * Provider ID mapping from models.dev to Portkey gateway.
@@ -180,14 +217,212 @@ function mergeChatCompletionBody(
 }
 
 /**
+ * Build Portkey config from provider credentials
+ */
+function buildPortkeyConfig(
+  portkeyProvider: string,
+  credentials: ProviderCredentials | null
+): PortkeyConfig {
+  const portkeyConfig: PortkeyConfig = {
+    provider: portkeyProvider,
+  };
+
+  if (!credentials) return portkeyConfig;
+
+  // Add API key if present
+  if (credentials.apiKey) {
+    portkeyConfig.api_key = credentials.apiKey;
+  }
+
+  // Add custom host if configured
+  if (credentials.customHost) {
+    portkeyConfig.custom_host = credentials.customHost;
+  }
+
+  // OpenAI specific
+  if (credentials.openaiOrganization) {
+    portkeyConfig.openai_organization = credentials.openaiOrganization;
+  }
+  if (credentials.openaiProject) {
+    portkeyConfig.openai_project = credentials.openaiProject;
+  }
+
+  // AWS Bedrock/SageMaker
+  if (credentials.awsAccessKeyId) {
+    portkeyConfig.aws_access_key_id = credentials.awsAccessKeyId;
+  }
+  if (credentials.awsSecretAccessKey) {
+    portkeyConfig.aws_secret_access_key = credentials.awsSecretAccessKey;
+  }
+  if (credentials.awsSessionToken) {
+    portkeyConfig.aws_session_token = credentials.awsSessionToken;
+  }
+  if (credentials.awsRegion) {
+    portkeyConfig.aws_region = credentials.awsRegion;
+  }
+
+  // Azure OpenAI
+  if (credentials.resourceName) {
+    portkeyConfig.azure_resource_name = credentials.resourceName;
+  }
+  if (credentials.deploymentId) {
+    portkeyConfig.azure_deployment_id = credentials.deploymentId;
+    portkeyConfig.azure_model_name = credentials.deploymentId;
+  }
+  if (credentials.apiVersion) {
+    portkeyConfig.azure_api_version = credentials.apiVersion;
+  }
+  if (credentials.azureAuthMode) {
+    portkeyConfig.azure_auth_mode = credentials.azureAuthMode;
+  }
+  if (credentials.azureAdToken) {
+    portkeyConfig.azure_ad_token = credentials.azureAdToken;
+  }
+  if (credentials.azureManagedClientId) {
+    portkeyConfig.azure_managed_client_id = credentials.azureManagedClientId;
+  }
+  if (credentials.azureWorkloadClientId) {
+    portkeyConfig.azure_workload_client_id = credentials.azureWorkloadClientId;
+  }
+  if (credentials.azureEntraClientId) {
+    portkeyConfig.azure_entra_client_id = credentials.azureEntraClientId;
+  }
+  if (credentials.azureEntraClientSecret) {
+    portkeyConfig.azure_entra_client_secret = credentials.azureEntraClientSecret;
+  }
+  if (credentials.azureEntraTenantId) {
+    portkeyConfig.azure_entra_tenant_id = credentials.azureEntraTenantId;
+  }
+  if (credentials.azureFoundryUrl) {
+    portkeyConfig.azure_foundry_url = credentials.azureFoundryUrl;
+  }
+  if (credentials.azureDeploymentName) {
+    portkeyConfig.azure_deployment_id = credentials.azureDeploymentName;
+  }
+  if (credentials.azureApiVersion) {
+    portkeyConfig.azure_api_version = credentials.azureApiVersion;
+  }
+
+  // Google Vertex AI
+  if (credentials.vertexProjectId) {
+    portkeyConfig.vertex_project_id = credentials.vertexProjectId;
+  }
+  if (credentials.vertexRegion) {
+    portkeyConfig.vertex_region = credentials.vertexRegion;
+  }
+  if (credentials.vertexServiceAccountJson) {
+    portkeyConfig.vertex_service_account_json =
+      credentials.vertexServiceAccountJson;
+  }
+
+  return portkeyConfig;
+}
+
+/**
+ * Handle direct provider requests with @provider-slug/model format.
+ * This is used when no config header is provided and the model field
+ * specifies a provider slug directly (e.g., @openai-prod/gpt-4.1-nano).
+ */
+async function handleDirectProviderRequest(
+  c: Parameters<MiddlewareHandler>[0],
+  next: Parameters<MiddlewareHandler>[1],
+  originalBody: Record<string, unknown>,
+  providerSlug: string,
+  modelName: string
+) {
+  const db = c.var.db;
+
+  // Look up provider credentials by slug
+  const result = await getProviderCredentialsBySlug(providerSlug, db);
+
+  if (!result) {
+    return c.json(
+      {
+        error: {
+          message: `Provider config not found for slug: ${providerSlug}`,
+          type: 'invalid_request_error',
+        },
+      },
+      404
+    );
+  }
+
+  const { credentials, providerId } = result;
+
+  // Map provider name to Portkey provider
+  const portkeyProvider = getPortkeyProviderId(
+    PROVIDER_MAP[providerId] || providerId
+  );
+
+  // Check if API key is required
+  const requiresApiKey = !['bedrock', 'sagemaker', 'vertex-ai'].includes(
+    providerId
+  );
+
+  if (requiresApiKey && !credentials?.apiKey) {
+    return c.json(
+      {
+        error: {
+          message: `No API key configured for provider: ${providerId}`,
+          type: 'invalid_request_error',
+        },
+      },
+      400
+    );
+  }
+
+  // Build Portkey config for the gateway
+  const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
+
+  // Update the body with the extracted model name (without the @slug/ prefix)
+  const updatedBody: Record<string, unknown> = {
+    ...originalBody,
+    model: modelName,
+  };
+
+  // Remove 'input' from the final body as it's not part of OpenAI API spec
+  delete updatedBody.input;
+
+  // Clone headers from the original request
+  const newHeaders = new Headers(c.req.raw.headers);
+
+  // Set the gateway config header with provider credentials
+  newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
+
+  // Create a completely new Request object with the updated body
+  const newRequest = new Request(c.req.raw.url, {
+    method: c.req.raw.method,
+    headers: newHeaders,
+    body: JSON.stringify(updatedBody),
+    duplex: 'half',
+  } as RequestInit);
+
+  // Replace the raw request
+  Object.defineProperty(c.req, 'raw', {
+    value: newRequest,
+    writable: true,
+    configurable: true,
+  });
+
+  // Clear Hono's internal body cache
+  (c.req as unknown as { bodyCache: Record<string, unknown> }).bodyCache = {};
+
+  // Store resolved data in context
+  c.set('variantModel', modelName);
+  c.set('providerId', providerId);
+
+  await next();
+}
+
+/**
  * Middleware that adapts LLMOps config to Portkey Gateway format.
  *
  * Flow:
- * 1. Reads configId and envSec from context (set by requestGuard)
- * 2. Fetches variant config from database
- * 3. Fetches provider API key from database (provider_configs table)
+ * 1. If no configId, check for @provider-slug/model format in request body
+ * 2. If configId provided, uses manifest to resolve targeting rules and variant
+ * 3. Fetches provider credentials from cache
  * 4. Translates to Portkey config format
- * 5. Sets x-portkey-config header for gateway consumption
+ * 5. Sets x-llmops-config header for gateway consumption
  * 6. Modifies request body to merge variant config settings
  */
 export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
@@ -195,6 +430,52 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
     const configId = c.get('configId');
     const envSec = c.get('envSec');
     const db = c.var.db;
+    const kyselyDb = c.var.kyselyDb;
+
+    // Check if this is a chat completions request
+    const path = c.req.path;
+    const method = c.req.method;
+    const contentType = c.req.header('content-type')?.split(';')[0];
+    const isChatRequest =
+      method === 'POST' &&
+      contentType === 'application/json' &&
+      (path.endsWith('/chat/completions') || path.endsWith('/completions'));
+
+    // If no configId, check for @provider-slug/model format
+    if (!configId && isChatRequest) {
+      try {
+        const body = await c.req.json();
+        const model = body.model as string | undefined;
+
+        if (model) {
+          const parsed = parseProviderSlugModel(model);
+          if (parsed) {
+            // Direct provider request with @provider-slug/model format
+            return handleDirectProviderRequest(
+              c,
+              next,
+              body,
+              parsed.providerSlug,
+              parsed.modelName
+            );
+          }
+        }
+      } catch {
+        // If body parsing fails, continue with normal flow
+      }
+
+      // No config and no @provider-slug/model format
+      return c.json(
+        {
+          error: {
+            message:
+              'Config ID is required. Either provide x-llmops-config header or use @provider-slug/model format in the model field.',
+            type: 'invalid_request_error',
+          },
+        },
+        400
+      );
+    }
 
     if (!configId) {
       return c.json(
@@ -209,76 +490,68 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
     }
 
     try {
-      // Fetch variant data from database (cached)
-      const data = (await cacheService.getOrSet(
-        `secret:${envSec}`,
-        () =>
-          db.getVariantJsonDataForConfig({
-            configId,
-            envSecret: envSec,
-          }),
-        {
-          namespace: `config:${configId}`,
+      // Get manifest service and route the request
+      const manifestService = getManifestService(kyselyDb);
+      const manifest = await manifestService.getManifest();
+      const router = new ManifestRouter(manifest);
+
+      // Resolve environment from secret or use production
+      let environmentId: string | null = null;
+      if (envSec) {
+        environmentId = router.resolveEnvironmentFromSecret(envSec);
+        if (!environmentId) {
+          return c.json(
+            {
+              error: {
+                message: 'Invalid environment secret',
+                type: 'invalid_request_error',
+              },
+            },
+            400
+          );
         }
-      )) as {
-        configId: string;
-        variantId: string;
-        environmentId: string;
-        version: number;
-        provider: string;
-        providerConfigId?: string; // Add optional specific config ID
-        modelName: string;
-        jsonData: Record<string, unknown>;
+      } else {
+        environmentId = router.getProductionEnvironmentId();
+        if (!environmentId) {
+          return c.json(
+            {
+              error: {
+                message: 'No production environment configured',
+                type: 'invalid_request_error',
+              },
+            },
+            400
+          );
+        }
+      }
+
+      // Build routing context from request for JSONLogic evaluation
+      const headersObj: Record<string, string> = {};
+      c.req.raw.headers.forEach((value, key) => {
+        headersObj[key.toLowerCase()] = value;
+      });
+      const routingContext: RoutingContext = {
+        headers: headersObj,
+        request: {
+          path: c.req.path,
+          method: c.req.method,
+          ip: c.req.header('x-forwarded-for') || c.req.header('x-real-ip'),
+        },
+        timestamp: Date.now(),
       };
 
-      // Parse variant config
-      const variantConfig = variantJsonDataSchema.parse(
-        typeof data.jsonData === 'string'
-          ? JSON.parse(data.jsonData)
-          : data.jsonData
+      // Route to variant using weighted selection
+      const routeResult = router.routeWithWeights(
+        configId,
+        environmentId,
+        routingContext
       );
 
-      // Map provider name - first check PROVIDER_MAP, then apply models.dev to Portkey mapping
-      const portkeyProvider = getPortkeyProviderId(
-        PROVIDER_MAP[data.provider] || data.provider
-      );
-
-      // Get API key from database (provider_configs table)
-      // If we have a specific providerConfigId (UUID) from the variant, use that
-      // Otherwise fallback to looking up by provider ID string (legacy behavior)
-      const providerConfig = await cacheService.getOrSet(
-        data.providerConfigId
-          ? `provider-config:${data.providerConfigId}`
-          : `provider:${data.provider}`,
-        () =>
-          data.providerConfigId
-            ? db.getProviderConfigById({ id: data.providerConfigId })
-            : db.getProviderConfigByProviderId({
-                providerId: data.provider,
-              }),
-        {
-          namespace: 'provider-configs',
-        }
-      );
-
-      // Parse the config JSON to extract credentials
-      const configData =
-        typeof providerConfig?.config === 'string'
-          ? JSON.parse(providerConfig.config)
-          : providerConfig?.config;
-      const apiKey = configData?.apiKey;
-
-      // For most providers, apiKey is required. But some providers (like bedrock, vertex-ai)
-      // use different auth mechanisms
-      const requiresApiKey = !['bedrock', 'sagemaker', 'vertex-ai'].includes(
-        data.provider
-      );
-
-      if (requiresApiKey && !apiKey) {
+      if (!routeResult) {
         return c.json(
           {
             error: {
-              message: `No API key configured for provider: ${data.provider}`,
+              message: `No targeting rule found for config ${configId} in environment ${environmentId}`,
               type: 'invalid_request_error',
             },
           },
@@ -286,122 +559,56 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         );
       }
 
-      // Build Portkey config with provider-specific fields
-      const portkeyConfig: PortkeyConfig = {
-        provider: portkeyProvider,
-      };
+      const { version } = routeResult;
 
-      // Add API key if present
-      if (apiKey) {
-        portkeyConfig.api_key = apiKey;
-      }
+      // Parse variant config from manifest
+      const variantConfig = variantJsonDataSchema.parse(version.jsonData);
 
-      // Add custom host if configured
-      if (configData?.customHost) {
-        portkeyConfig.custom_host = configData.customHost;
-      }
+      // Map provider name
+      const portkeyProvider = getPortkeyProviderId(
+        PROVIDER_MAP[version.provider] || version.provider
+      );
 
-      // Map provider-specific fields to Portkey config format
-      // OpenAI specific
-      if (configData?.openaiOrganization) {
-        portkeyConfig.openai_organization = configData.openaiOrganization;
-      }
-      if (configData?.openaiProject) {
-        portkeyConfig.openai_project = configData.openaiProject;
-      }
-
-      // AWS Bedrock/SageMaker
-      if (configData?.awsAccessKeyId) {
-        portkeyConfig.aws_access_key_id = configData.awsAccessKeyId;
-      }
-      if (configData?.awsSecretAccessKey) {
-        portkeyConfig.aws_secret_access_key = configData.awsSecretAccessKey;
-      }
-      if (configData?.awsSessionToken) {
-        portkeyConfig.aws_session_token = configData.awsSessionToken;
-      }
-      if (configData?.awsRegion) {
-        portkeyConfig.aws_region = configData.awsRegion;
+      // Get provider credentials from cache
+      let credentials: ProviderCredentials | null = null;
+      if (version.providerConfigId) {
+        credentials = await getProviderCredentials(
+          version.providerConfigId,
+          db
+        );
+      } else {
+        // Fallback: lookup by providerId string (legacy behavior)
+        credentials = await getProviderCredentialsByProviderId(
+          version.provider,
+          db
+        );
       }
 
-      // Azure OpenAI
-      if (configData?.resourceName) {
-        portkeyConfig.azure_resource_name = configData.resourceName;
-      }
-      if (configData?.deploymentId) {
-        portkeyConfig.azure_deployment_id = configData.deploymentId;
-        // Also set azure_model_name for compatibility
-        portkeyConfig.azure_model_name = configData.deploymentId;
-      }
-      if (configData?.apiVersion) {
-        portkeyConfig.azure_api_version = configData.apiVersion;
-      }
-      if (configData?.azureAuthMode) {
-        portkeyConfig.azure_auth_mode = configData.azureAuthMode;
-      }
-      if (configData?.azureAdToken) {
-        portkeyConfig.azure_ad_token = configData.azureAdToken;
-      }
-      if (configData?.azureManagedClientId) {
-        portkeyConfig.azure_managed_client_id = configData.azureManagedClientId;
-      }
-      if (configData?.azureWorkloadClientId) {
-        portkeyConfig.azure_workload_client_id =
-          configData.azureWorkloadClientId;
-      }
-      if (configData?.azureEntraClientId) {
-        portkeyConfig.azure_entra_client_id = configData.azureEntraClientId;
-      }
-      if (configData?.azureEntraClientSecret) {
-        portkeyConfig.azure_entra_client_secret =
-          configData.azureEntraClientSecret;
-      }
-      if (configData?.azureEntraTenantId) {
-        portkeyConfig.azure_entra_tenant_id = configData.azureEntraTenantId;
-      }
-      if (configData?.azureFoundryUrl) {
-        portkeyConfig.azure_foundry_url = configData.azureFoundryUrl;
-      }
-      if (configData?.azureDeploymentName) {
-        portkeyConfig.azure_deployment_id = configData.azureDeploymentName;
-      }
-      if (configData?.azureApiVersion) {
-        portkeyConfig.azure_api_version = configData.azureApiVersion;
+      // Check if API key is required
+      const requiresApiKey = !['bedrock', 'sagemaker', 'vertex-ai'].includes(
+        version.provider
+      );
+
+      if (requiresApiKey && !credentials?.apiKey) {
+        return c.json(
+          {
+            error: {
+              message: `No API key configured for provider: ${version.provider}`,
+              type: 'invalid_request_error',
+            },
+          },
+          400
+        );
       }
 
-      // Google Vertex AI
-      if (configData?.vertexProjectId) {
-        portkeyConfig.vertex_project_id = configData.vertexProjectId;
-      }
-      if (configData?.vertexRegion) {
-        portkeyConfig.vertex_region = configData.vertexRegion;
-      }
-      if (configData?.vertexServiceAccountJson) {
-        try {
-          portkeyConfig.vertex_service_account_json =
-            typeof configData.vertexServiceAccountJson === 'string'
-              ? JSON.parse(configData.vertexServiceAccountJson)
-              : configData.vertexServiceAccountJson;
-        } catch {
-          // If parsing fails, leave it as-is
-        }
-      }
+      // Build Portkey config for the gateway
+      const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
 
-      // Check if this is a chat completions request that needs body transformation
-      const path = c.req.path;
-      const method = c.req.method;
-      const contentType = c.req.header('content-type')?.split(';')[0];
-
-      if (
-        method === 'POST' &&
-        contentType === 'application/json' &&
-        (path.endsWith('/chat/completions') || path.endsWith('/completions'))
-      ) {
+      if (isChatRequest) {
         // Get original body and merge with variant config
         const originalBody = await c.req.json();
 
         // Extract input variables for nunjucks template rendering
-        // input can be provided in the request body to fill template variables
         const inputVariables =
           originalBody.input && typeof originalBody.input === 'object'
             ? (originalBody.input as Record<string, unknown>)
@@ -410,7 +617,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         const mergedBody = mergeChatCompletionBody(
           originalBody,
           variantConfig,
-          data.modelName,
+          version.modelName,
           inputVariables
         );
 
@@ -419,54 +626,47 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
 
         // Clone headers from the original request
         const newHeaders = new Headers(c.req.raw.headers);
+
+        // Set the gateway config header with provider credentials
+        // This is required by the gateway's requestValidator
         newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
-        // Add x-llmops-prompt for backward compatibility
-        newHeaders.set('x-llmops-prompt', JSON.stringify(portkeyConfig));
 
         // Create a completely new Request object with the merged body
-        // This is the proper way to replace request body in Hono
         const newRequest = new Request(c.req.raw.url, {
           method: c.req.raw.method,
           headers: newHeaders,
           body: JSON.stringify(mergedBody),
-          duplex: 'half', // Required for request body streams in Node.js
+          duplex: 'half',
         } as RequestInit);
 
-        // Use Object.defineProperty to replace the raw request
-        // This ensures Hono will re-parse the body from the new request
+        // Replace the raw request
         Object.defineProperty(c.req, 'raw', {
           value: newRequest,
           writable: true,
           configurable: true,
         });
 
-        // Clear Hono's internal body cache by resetting the parsed body
+        // Clear Hono's internal body cache
         (c.req as unknown as { bodyCache: Record<string, unknown> }).bodyCache =
           {};
       } else {
-        // For non-chat requests, just set the header
+        // For non-chat requests, set the gateway config header
         c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
-        // Add x-llmops-prompt for backward compatibility
-        c.req.raw.headers.set('x-llmops-prompt', JSON.stringify(portkeyConfig));
       }
 
-      // Store variant config in context for reference
+      // Store resolved data in context
       c.set('variantConfig', variantConfig);
-      c.set('variantModel', variantConfig.model || data.modelName);
-      // Store resolved IDs for cost tracking (configId from header may be a slug)
-      c.set('configId', data.configId);
-      c.set('variantId', data.variantId);
-      c.set('environmentId', data.environmentId);
-      // environmentId is returned from getVariantJsonDataForConfig
-      c.set(
-        'environmentId',
-        (data as { environmentId?: string }).environmentId
-      );
-      c.set('environmentId', data.environmentId);
+      c.set('variantModel', variantConfig.model || version.modelName);
+      c.set('configId', routeResult.configId);
+      c.set('variantId', routeResult.variantId);
+      c.set('environmentId', routeResult.environmentId);
 
       await next();
     } catch (error) {
       console.error('Gateway adapter error:', error);
+
+      // If manifest is unavailable, could add fallback to direct DB lookup here
+      // For now, return error
       return c.json(
         {
           error: {

@@ -9,40 +9,32 @@ const CONTENT_TYPES = {
 } as const;
 
 // Request headers validation schema
-export const requestHeadersSchema = z
-  .object({
-    'content-type': z.string().refine(
-      (contentType) => {
-        if (!contentType) return true; // Allow missing content-type
+// Note: x-llmops-config/x-llmops-prompt are optional because requests can also
+// use the @provider-slug/model format in the request body
+export const requestHeadersSchema = z.object({
+  'content-type': z.string().refine(
+    (contentType) => {
+      if (!contentType) return true; // Allow missing content-type
 
-        const baseContentType = contentType.split(';')[0];
+      const baseContentType = contentType.split(';')[0];
 
-        return (
-          baseContentType === CONTENT_TYPES.APPLICATION_JSON ||
-          baseContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
-          baseContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
-        );
-      },
-      {
-        message:
-          'Invalid content type. Must be application/json, multipart/form-data, or audio/*',
-      }
-    ),
-    'x-llmops-config': z.string().optional(),
-    'x-llmops-prompt': z.string().optional(),
-    authorization: z.string({
-      error: 'Authorization header with environment secret is required.',
-    }),
-  })
-  .refine(
-    (data) => {
-      return !!(data['x-llmops-config'] || data['x-llmops-prompt']);
+      return (
+        baseContentType === CONTENT_TYPES.APPLICATION_JSON ||
+        baseContentType === CONTENT_TYPES.MULTIPART_FORM_DATA ||
+        baseContentType.startsWith(CONTENT_TYPES.GENERIC_AUDIO_PATTERN)
+      );
     },
     {
-      message: 'Either x-llmops-config or x-llmops-prompt header is required.',
-      path: ['x-llmops-config'], // Attach error to x-llmops-config for consistency
+      message:
+        'Invalid content type. Must be application/json, multipart/form-data, or audio/*',
     }
-  );
+  ),
+  'x-llmops-config': z.string().optional(),
+  'x-llmops-prompt': z.string().optional(),
+  authorization: z.string({
+    error: 'Authorization header with environment secret is required.',
+  }),
+});
 
 /**
  * Extracts environment secret from Authorization header.

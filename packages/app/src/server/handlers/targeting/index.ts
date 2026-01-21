@@ -6,7 +6,7 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
-import { cacheService } from '@server/services/cache';
+import { invalidateManifest } from '@server/services/manifest';
 
 const app = new Hono()
   // Create a new targeting rule
@@ -41,7 +41,7 @@ const app = new Hono()
           conditions: body.conditions,
         });
         if (rule) {
-          await cacheService.clear(`config:${rule.configId}`);
+          await invalidateManifest();
         }
         return c.json(successResponse(rule, 200));
       } catch (error) {
@@ -131,7 +131,7 @@ const app = new Hono()
             404
           );
         }
-        await cacheService.clear(`config:${rule.configId}`);
+        await invalidateManifest();
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error updating targeting rule:', error);
@@ -163,7 +163,7 @@ const app = new Hono()
             404
           );
         }
-        await cacheService.clear(`config:${rule.configId}`);
+        await invalidateManifest();
         return c.json(successResponse(rule, 200));
       } catch (error) {
         console.error('Error deleting targeting rule:', error);
@@ -298,7 +298,7 @@ const app = new Hono()
           variantVersionId: body.variantVersionId,
         });
         if (rule) {
-          await cacheService.clear(`config:${rule.configId}`);
+          await invalidateManifest();
         }
         return c.json(successResponse(rule, 200));
       } catch (error) {

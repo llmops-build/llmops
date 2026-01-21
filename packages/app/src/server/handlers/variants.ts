@@ -6,6 +6,7 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import { invalidateManifest } from '@server/services/manifest';
 
 const app = new Hono()
   .get(
@@ -101,6 +102,7 @@ const app = new Hono()
         if (!variant) {
           return c.json(clientErrorResponse('Variant not found', 404), 404);
         }
+        await invalidateManifest();
         return c.json(successResponse(variant, 200));
       } catch (error) {
         console.error('Error updating variant:', error);
@@ -128,6 +130,7 @@ const app = new Hono()
         if (!variant) {
           return c.json(clientErrorResponse('Variant not found', 404), 404);
         }
+        await invalidateManifest();
         return c.json(successResponse(variant, 200));
       } catch (error) {
         console.error('Error deleting variant:', error);
@@ -184,6 +187,7 @@ const app = new Hono()
 
       try {
         const variant = await db.createVariant({ name });
+        await invalidateManifest();
         return c.json(successResponse(variant, 200));
       } catch (error) {
         console.error('Error creating variant:', error);
@@ -260,6 +264,7 @@ const app = new Hono()
           modelName,
           jsonData: jsonData || {},
         });
+        await invalidateManifest();
         return c.json(successResponse(version, 200));
       } catch (error) {
         console.error('Error creating variant version:', error);

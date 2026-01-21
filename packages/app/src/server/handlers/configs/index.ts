@@ -8,6 +8,7 @@ import {
 import { Hono } from 'hono';
 import z from 'zod';
 import { logger } from '@llmops/core';
+import { invalidateManifest } from '@server/services/manifest';
 
 const app = new Hono()
   .post(
@@ -24,6 +25,7 @@ const app = new Hono()
         const value = await db.createNewConfig({
           name: c.req.valid('json').name,
         });
+        await invalidateManifest();
         return c.json(successResponse(value, 200));
       } catch (error) {
         console.error('Error creating new config:', error);
@@ -94,6 +96,7 @@ const app = new Hono()
         if (!value) {
           return c.json(clientErrorResponse('Config not found', 404), 404);
         }
+        await invalidateManifest();
         return c.json(successResponse(value, 200));
       } catch (error) {
         console.error('Error updating config name:', error);
@@ -173,6 +176,7 @@ const app = new Hono()
           modelName,
           jsonData: jsonData ?? {},
         });
+        await invalidateManifest();
         return c.json(successResponse(value, 200));
       } catch (error) {
         console.error('Error creating variant and linking to config:', error);
@@ -210,6 +214,7 @@ const app = new Hono()
             404
           );
         }
+        await invalidateManifest();
         return c.json(successResponse(value, 200));
       } catch (error) {
         console.error('Error removing variant from config:', error);
@@ -237,6 +242,7 @@ const app = new Hono()
         if (!config) {
           return c.json(clientErrorResponse('Config not found', 404), 404);
         }
+        await invalidateManifest();
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error deleting config:', error);
