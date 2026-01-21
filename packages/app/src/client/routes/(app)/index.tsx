@@ -1,25 +1,11 @@
-import {
-  createFileRoute,
-  useMatches,
-  useNavigate,
-} from '@tanstack/react-router';
+import { createFileRoute, useMatches } from '@tanstack/react-router';
 import {
   breadcrumbLink,
   chevronStyle,
   headerGroup,
   headerStyle,
 } from './-components/_layout.css';
-import {
-  Breadcrumbs,
-  Button,
-  Header,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHeaderCell,
-  TableCell,
-} from '@ui';
+import { Breadcrumbs, Button, Header } from '@ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import {
   Blocks,
@@ -27,32 +13,20 @@ import {
   ChevronRight,
   Columns2,
   Copy,
-  SlidersVertical,
+  ArrowRight,
 } from 'lucide-react';
 import { Icon } from '@client/components/icons';
 import { Link } from '@tanstack/react-router';
 import { gridElement, workingArea } from './-components/area.css';
 import clsx from 'clsx';
-import {
-  cardTitle,
-  gettingStartedCard,
-  gettingStartedCards,
-  overviewContainer,
-  recentSectionContainer,
-  recentSectionTableContainer,
-  sectionContainer,
-  sectionTitle,
-  baseUrlBox,
-  baseUrlLabel,
-  baseUrlText,
-  baseUrlCopyButton,
-} from './-components/overview.css';
+import * as styles from './-components/overview.css';
 import { useConfigList } from '@client/hooks/queries/useConfigList';
 import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
-import { formatDistance } from 'date-fns';
 import { OnboardingFlow } from './-components/onboarding-flow';
+import { QuickStats } from './-components/quick-stats';
+import { InsightsSection } from './-components/insights-section';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export const Route = createFileRoute('/(app)/')({
   component: RouteComponent,
@@ -67,17 +41,37 @@ export const Route = createFileRoute('/(app)/')({
 function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
-  const navigate = useNavigate();
   const { data: configs, isLoading: configsLoading } = useConfigList();
   const { data: providerConfigs, isLoading: providersLoading } =
     useProviderConfigs();
   const [copied, setCopied] = useState(false);
+  // Track if we're in onboarding mode - null means we haven't determined yet
+  const [isInOnboarding, setIsInOnboarding] = useState<boolean | null>(null);
+  const initialCheckDone = useRef(false);
 
   const hasProviders = providerConfigs && providerConfigs.length > 0;
-  const hasNoConfigs = !configs || configs.length === 0;
+  const hasNoProviders = !providerConfigs || providerConfigs.length === 0;
   const isLoading = configsLoading || providersLoading;
-  // Show onboarding when no configs exist (skip provider step if providers already exist)
-  const showOnboarding = !isLoading && hasNoConfigs;
+
+  // Determine onboarding state only once when data first loads
+  useEffect(() => {
+    if (!isLoading && !initialCheckDone.current) {
+      initialCheckDone.current = true;
+      // Start onboarding if no providers exist
+      if (hasNoProviders) {
+        setIsInOnboarding(true);
+      } else {
+        setIsInOnboarding(false);
+      }
+    }
+  }, [isLoading, hasNoProviders]);
+
+  const handleOnboardingComplete = () => {
+    setIsInOnboarding(false);
+  };
+
+  // Show onboarding when explicitly in onboarding mode
+  const showOnboarding = isInOnboarding === true;
 
   const baseUrl =
     typeof window !== 'undefined'
@@ -89,14 +83,6 @@ function RouteComponent() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  const recentConfigs = configs
-    ?.slice()
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
-    .slice(0, 3);
 
   const breadcrumbItems = matches
     .filter(
@@ -123,7 +109,12 @@ function RouteComponent() {
       };
     });
 
-  // Show onboarding flow when no providers and no configs exist
+  // Still determining onboarding state - show nothing
+  if (isInOnboarding === null) {
+    return null;
+  }
+
+  // Show onboarding flow when no providers exist
   if (showOnboarding) {
     return (
       <>
@@ -144,8 +135,11 @@ function RouteComponent() {
           </div>
         </Header>
         <div className={gridElement}>
-          <div className={clsx(workingArea, overviewContainer)}>
-            <OnboardingFlow hasProviders={hasProviders} />
+          <div className={clsx(workingArea, styles.overviewContainer)}>
+            <OnboardingFlow
+              hasProviders={hasProviders}
+              onComplete={handleOnboardingComplete}
+            />
           </div>
         </div>
       </>
@@ -169,76 +163,58 @@ function RouteComponent() {
           <Icon icon={ChevronRight} className={chevronStyle} />
           <Breadcrumbs items={breadcrumbItems} />
         </div>
-        <div className={headerGroup}>
-          <div className={baseUrlBox}>
-            <span className={baseUrlLabel}>Base URL</span>
-            <span className={baseUrlText}>{baseUrl}</span>
-            <button
-              type="button"
-              className={baseUrlCopyButton}
-              onClick={copyToClipboard}
-              aria-label="Copy base URL"
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-            </button>
-          </div>
-        </div>
       </Header>
       <div className={gridElement}>
-        <div className={clsx(workingArea, overviewContainer)}>
-          <div className={sectionContainer}>
-            <h2 className={sectionTitle}>Get Started</h2>
-            <div className={gettingStartedCards}>
-              <Link
-                to="/prompts/$id"
-                params={{ id: 'new' }}
-                className={gettingStartedCard({ variant: 'primary' })}
-              >
-                <Icon icon={SlidersVertical} size="lg" />
-                <span className={cardTitle}>Create New Prompt</span>
-              </Link>
-            </div>
-          </div>
-          {recentConfigs && recentConfigs.length > 0 && (
-            <div className={recentSectionContainer}>
-              <h2 className={sectionTitle}>Recent</h2>
-              <div className={recentSectionTableContainer}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHeaderCell>Name</TableHeaderCell>
-                      <TableHeaderCell>Updated</TableHeaderCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentConfigs.map((config) => (
-                      <TableRow
-                        key={config.id}
-                        interactive
-                        onClick={() =>
-                          navigate({
-                            to: '/prompts/$id',
-                            params: { id: config.id },
-                          })
-                        }
-                      >
-                        <TableCell>{config.name}</TableCell>
-                        <TableCell>
-                          {formatDistance(
-                            new Date(config.updatedAt),
-                            new Date(),
-                            {
-                              addSuffix: true,
-                            }
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+        <div className={clsx(workingArea, styles.overviewContainer)}>
+          <div className={styles.overviewContent}>
+            {/* Hero Section */}
+            <div className={styles.heroSection}>
+              <h1 className={styles.heroTitle}>
+                Your LLM Gateway is ready
+              </h1>
+              <p className={styles.heroSubtitle}>
+                Route requests to any provider, manage prompts, and track usage.
+              </p>
+              <div className={styles.baseUrlSection}>
+                <span className={styles.baseUrlLabel}>Base URL</span>
+                <div className={styles.baseUrlContainer}>
+                  <code className={styles.baseUrlCode}>{baseUrl}</code>
+                  <button
+                    type="button"
+                    className={styles.baseUrlCopyButton}
+                    onClick={copyToClipboard}
+                    aria-label="Copy base URL"
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
               </div>
             </div>
-          )}
+
+            {/* Quick Links */}
+            <div className={styles.quickLinksSection}>
+              <Link to="/gateway/usage" className={styles.quickLink}>
+                <span className={styles.quickLinkText}>API Usage Guide</span>
+                <ArrowRight size={16} className={styles.quickLinkArrow} />
+              </Link>
+              <Link to="/prompts" className={styles.quickLink}>
+                <span className={styles.quickLinkText}>Manage Prompts</span>
+                <span className={styles.quickLinkBadge}>
+                  {configs?.length ?? 0}
+                </span>
+                <ArrowRight size={16} className={styles.quickLinkArrow} />
+              </Link>
+              <Link to="/observability/overview" className={styles.quickLink}>
+                <span className={styles.quickLinkText}>View Analytics</span>
+                <ArrowRight size={16} className={styles.quickLinkArrow} />
+              </Link>
+            </div>
+
+            {/* Stats & Insights */}
+            <QuickStats />
+            <InsightsSection />
+          </div>
         </div>
       </div>
     </>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
-import clsx from 'clsx';
+import { Button } from '@ui';
 import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
 import {
   useProvidersList,
@@ -187,17 +187,20 @@ export function CurlBuilder() {
   }
 
   return (
-    <div className={styles.codeBlock}>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className={clsx(styles.copyButton, copied && styles.copyButtonSuccess)}
-        title="Copy to clipboard"
-      >
-        {copied ? <Check size={16} /> : <Copy size={16} />}
-      </button>
-
-      <code className={styles.codeElement}>
+    <div className={styles.codeBlockContainer}>
+      <div className={styles.codeBlockHeader}>
+        <Button
+          variant="outline"
+          scheme="gray"
+          size="sm"
+          onClick={handleCopy}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          {copied ? 'Copied!' : 'Copy Curl'}
+        </Button>
+      </div>
+      <div className={styles.codeBlock}>
+        <code className={styles.codeElement}>
         <span className={styles.codeLine}>
           <span className={styles.codeKeyword}>curl</span> -X POST{' '}
           {baseUrl}/api/genai/v1/chat/completions \
@@ -280,7 +283,8 @@ export function CurlBuilder() {
         <span className={styles.codeLineIndent}>
           <span className={styles.codeString}>{"  }'"}</span>
         </span>
-      </code>
+        </code>
+      </div>
     </div>
   );
 }
