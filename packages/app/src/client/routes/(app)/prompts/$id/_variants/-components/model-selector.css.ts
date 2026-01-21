@@ -1,5 +1,16 @@
-import { colors, spacing, sprinkles } from '@ui';
-import { style } from '@vanilla-extract/css';
+import { colors, easings, spacing, sprinkles } from '@ui';
+import { keyframes, style } from '@vanilla-extract/css';
+
+const fadeIn = keyframes({
+  from: {
+    opacity: 0,
+    transform: 'translateY(-4px)',
+  },
+  to: {
+    opacity: 1,
+    transform: 'translateY(0)',
+  },
+});
 
 export const modelSelectorWrapper = style({
   width: '100%',
@@ -69,6 +80,7 @@ export const popup = style({
   overflow: 'hidden',
   border: `1px solid ${colors.gray4}`,
   borderRadius: spacing['xs'],
+  animation: `${fadeIn} 150ms ${easings.easeInOutCubic}`,
 });
 
 export const menuPopup = style({
@@ -326,6 +338,8 @@ export const stackedLogo = style({
       marginRight: 0,
     },
     '.dark &': {
+      backgroundColor: colors.grayContrast,
+      borderColor: colors.gray8,
       filter: 'invert(1)',
     },
   },
@@ -451,6 +465,7 @@ export const paramsPopup = style({
   overflow: 'hidden',
   border: `1px solid ${colors.gray4}`,
   borderRadius: spacing['xs'],
+  animation: `${fadeIn} 150ms ${easings.easeInOutCubic}`,
 });
 
 export const paramsPopupContent = style({
