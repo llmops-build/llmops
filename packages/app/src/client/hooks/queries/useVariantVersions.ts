@@ -28,7 +28,7 @@ export const variantVersionsQueryOptions = (variantId: string) =>
       return ('data' in result ? result.data : []) as VariantVersion[];
     },
     enabled: !!variantId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Always refetch to ensure latest data
   });
 
 export const useVariantVersions = (variantId: string) => {

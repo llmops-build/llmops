@@ -12,6 +12,7 @@ import {
 } from '../-components/variants.css';
 import { configTitleInput } from '../../../-components/configs.css';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
+import type { Message } from '../-components/message-block';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
 import { useSetTargeting } from '@client/hooks/mutations/useSetTargeting';
@@ -89,7 +90,9 @@ function RouteComponent() {
       variant_name: '',
       provider: '',
       modelName: '',
-      system_prompt: '',
+      messages: [
+        { id: 'default-system', role: 'system', content: '' },
+      ],
       temperature: undefined,
       maxTokens: undefined,
       topP: undefined,
@@ -109,34 +112,15 @@ function RouteComponent() {
     ? [...versions].sort((a, b) => b.version - a.version)
     : [];
 
-  // Set initial selected version to the targeted version if available, otherwise latest
+  // Set initial selected version to the latest version
   useEffect(() => {
     if (versions && versions.length > 0 && !selectedVersionId) {
-      // Find the config variant for this variant
-      const configVariant = configVariants?.find(
-        (cv) => cv.variantId === variant
+      const latestVersion = versions.reduce((latest, current) =>
+        current.version > latest.version ? current : latest
       );
-
-      // Check if there's a targeting rule with a pinned version for this variant
-      const targetingRule = targetingRules?.find(
-        (rule) =>
-          configVariant &&
-          rule.configVariantId === configVariant.id &&
-          rule.variantVersionId
-      );
-
-      if (targetingRule?.variantVersionId) {
-        // Use the targeted (pinned) version
-        setSelectedVersionId(targetingRule.variantVersionId);
-      } else {
-        // Fall back to latest version
-        const latestVersion = versions.reduce((latest, current) =>
-          current.version > latest.version ? current : latest
-        );
-        setSelectedVersionId(latestVersion.id);
-      }
+      setSelectedVersionId(latestVersion.id);
     }
-  }, [versions, selectedVersionId, configVariants, targetingRules, variant]);
+  }, [versions, selectedVersionId]);
 
   useBlocker({
     shouldBlockFn: () => {
@@ -165,6 +149,25 @@ function RouteComponent() {
           ? (JSON.parse(selectedVersion.jsonData) as Record<string, unknown>)
           : (selectedVersion.jsonData as Record<string, unknown> | null);
 
+      // Convert old format (system_prompt) to new format (messages) for backwards compatibility
+      let messages: Message[];
+      if (jsonData?.messages && Array.isArray(jsonData.messages)) {
+        // New format: ensure each message has an id (we strip ids when saving)
+        messages = (
+          jsonData.messages as Array<{ role: Message['role']; content: string }>
+        ).map((msg, index) => ({
+          id: `msg-${selectedVersionId}-${index}`,
+          role: msg.role,
+          content: msg.content,
+        }));
+      } else {
+        // Old format: convert system_prompt to messages array
+        const systemPrompt = (jsonData?.system_prompt as string) || '';
+        messages = [
+          { id: `system-${selectedVersionId}`, role: 'system', content: systemPrompt },
+        ];
+      }
+
       form.reset(
         {
           variant_name: variantData.name || '',
@@ -172,7 +175,7 @@ function RouteComponent() {
           // Prefer model from jsonData, fallback to modelName column for backwards compatibility
           modelName:
             (jsonData?.model as string) || selectedVersion.modelName || '',
-          system_prompt: (jsonData?.system_prompt as string) || '',
+          messages,
           temperature: jsonData?.temperature as number | undefined,
           maxTokens: jsonData?.max_tokens as number | undefined,
           topP: jsonData?.top_p as number | undefined,
@@ -190,7 +193,8 @@ function RouteComponent() {
 
   const buildJsonData = (data: VariantFormData): Record<string, unknown> => {
     const jsonData: Record<string, unknown> = {
-      system_prompt: data.system_prompt,
+      // Store messages array in new format
+      messages: data.messages.map(({ role, content }) => ({ role, content })),
       // Store model in jsonData for future use (modelName column will be deprecated)
       model: data.modelName,
     };
@@ -290,6 +294,12 @@ function RouteComponent() {
           jsonData,
         });
 
+        // Update selected version to the newly created version
+        // This prevents the useEffect from resetting to old version data
+        if (versionResult) {
+          setSelectedVersionId(versionResult.id);
+        }
+
         // Deploy to environment if requested
         if (options.deployToEnvironment && options.environmentId) {
           // Find the config variant for this variant
@@ -308,9 +318,6 @@ function RouteComponent() {
           }
         }
       }
-
-      // Reset form
-      form.reset();
 
       // If deployed to environment, show success dialog
       if (deployedToEnvironment && options.environmentId) {

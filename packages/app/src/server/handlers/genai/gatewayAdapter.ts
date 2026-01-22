@@ -140,7 +140,7 @@ const PROVIDER_MAP: Record<string, string> = {
 /**
  * Merges variant config with the request body for chat completions.
  * Variant config takes precedence over request body values.
- * If input variables are provided, they are used to render nunjucks templates in system_prompt.
+ * If input variables are provided, they are used to render nunjucks templates in messages.
  */
 function mergeChatCompletionBody(
   body: Record<string, unknown>,
@@ -148,11 +148,33 @@ function mergeChatCompletionBody(
   modelName: string,
   inputVariables?: Record<string, unknown>
 ): Record<string, unknown> {
-  // Build messages array: prepend system prompt from variant if present
+  // Build messages array: prepend variant messages if present
   const messages: Array<{ role: string; content: string }> = [];
 
-  if (variantConfig.system_prompt) {
-    // Render nunjucks template with input variables if provided
+  // Check for new messages array format first, fall back to old system_prompt format
+  if (variantConfig.messages && Array.isArray(variantConfig.messages)) {
+    // New format: use messages array from variant config
+    for (const msg of variantConfig.messages) {
+      let content = msg.content;
+      // Render nunjucks template with input variables if provided
+      if (inputVariables && Object.keys(inputVariables).length > 0) {
+        try {
+          content = renderTemplate(msg.content, inputVariables);
+        } catch (error) {
+          // If template rendering fails, use original content
+          console.warn(
+            'Template rendering failed, using original content:',
+            error
+          );
+        }
+      }
+      messages.push({
+        role: msg.role,
+        content,
+      });
+    }
+  } else if (variantConfig.system_prompt) {
+    // Old format: use system_prompt (backwards compatibility)
     let systemPromptContent = variantConfig.system_prompt;
     if (inputVariables && Object.keys(inputVariables).length > 0) {
       try {
@@ -175,7 +197,7 @@ function mergeChatCompletionBody(
     });
   }
 
-  // Append user's messages
+  // Append user's messages from request body
   if (Array.isArray(body.messages)) {
     messages.push(
       ...(body.messages as Array<{ role: string; content: string }>)

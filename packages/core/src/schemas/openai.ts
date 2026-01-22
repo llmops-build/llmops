@@ -330,6 +330,14 @@ export type ChatCompletionCreateParamsBase = z.infer<
 >;
 
 /**
+ * Schema for variant message - simplified message format for variant config
+ */
+const variantMessageSchema = z.object({
+  role: z.enum(['system', 'user', 'assistant']),
+  content: z.string(),
+});
+
+/**
  * Schema for variant jsonData - these are the parameters that can be
  * configured per variant to override the default chat completion settings.
  * This is a subset of ChatCompletionCreateParamsBase that makes sense to
@@ -337,7 +345,8 @@ export type ChatCompletionCreateParamsBase = z.infer<
  */
 export const variantJsonDataSchema = z.object({
   // LLMOps-specific fields
-  system_prompt: z.string().optional(),
+  system_prompt: z.string().optional(), // Deprecated: use messages instead
+  messages: z.array(variantMessageSchema).optional(), // New: array of messages
 
   // OpenAI-compatible fields
   model: z.string().optional(),
