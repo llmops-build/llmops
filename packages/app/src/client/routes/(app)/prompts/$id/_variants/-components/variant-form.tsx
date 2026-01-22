@@ -1,17 +1,21 @@
-import { useWatch, type UseFormReturn } from 'react-hook-form';
+import { useFieldArray, type UseFormReturn } from 'react-hook-form';
+import { Plus } from 'lucide-react';
 import {
   variantFormContainer,
   variantPropertyLabel,
   variantPropertyColumn,
+  messagesContainer,
+  addMessageButton,
+  actionsRow,
 } from './variants.css';
-import MarkdownEditor from './editor';
 import ModelSelector, { type ModelSettings } from './model-selector';
+import MessageBlock, { type Message, type MessageRole } from './message-block';
 
 export type VariantFormData = {
   variant_name: string;
   provider: string;
   modelName: string;
-  system_prompt: string;
+  messages: Message[];
   // Model parameters
   temperature?: number;
   maxTokens?: number;
@@ -25,95 +29,66 @@ type VariantFormProps = {
   editorKey?: string;
 };
 
+let messageIdCounter = 0;
+const generateMessageId = () => `msg_${Date.now()}_${++messageIdCounter}`;
+
 const VariantForm = ({ form, editorKey }: VariantFormProps) => {
   const { setValue, control } = form;
 
-  const selectedProvider = useWatch({
-    control: form.control,
-    name: 'provider',
-  });
-  const selectedModel = useWatch({
+  const { fields, append, remove } = useFieldArray({
     control,
-    name: 'modelName',
+    name: 'messages',
+    keyName: '_fieldId', // Use different name to avoid conflict with Message.id
   });
-  const systemPromptValue = useWatch({
-    control,
-    name: 'system_prompt',
-  });
-  const temperature = useWatch({
-    control,
-    name: 'temperature',
-  });
-  const maxTokens = useWatch({
-    control,
-    name: 'maxTokens',
-  });
-  const topP = useWatch({
-    control,
-    name: 'topP',
-  });
-  const frequencyPenalty = useWatch({
-    control,
-    name: 'frequencyPenalty',
-  });
-  const presencePenalty = useWatch({
-    control,
-    name: 'presencePenalty',
-  });
-
-  const modelSettings: ModelSettings = {
-    provider: selectedProvider || '',
-    modelName: selectedModel || '',
-    temperature,
-    maxTokens,
-    topP,
-    frequencyPenalty,
-    presencePenalty,
-  };
 
   const handleModelSettingsChange = (settings: ModelSettings) => {
-    if (settings.provider !== selectedProvider) {
-      setValue('provider', settings.provider, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-    if (settings.modelName !== selectedModel) {
-      setValue('modelName', settings.modelName, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-    if (settings.temperature !== temperature) {
-      setValue('temperature', settings.temperature, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-    if (settings.maxTokens !== maxTokens) {
-      setValue('maxTokens', settings.maxTokens, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-    if (settings.topP !== topP) {
-      setValue('topP', settings.topP, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-    if (settings.frequencyPenalty !== frequencyPenalty) {
-      setValue('frequencyPenalty', settings.frequencyPenalty, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-    if (settings.presencePenalty !== presencePenalty) {
-      setValue('presencePenalty', settings.presencePenalty, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
+    setValue('provider', settings.provider, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('modelName', settings.modelName, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('temperature', settings.temperature, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('maxTokens', settings.maxTokens, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('topP', settings.topP, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('frequencyPenalty', settings.frequencyPenalty, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('presencePenalty', settings.presencePenalty, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
+
+  const handleMessageChange = (index: number, message: Message) => {
+    // Use setValue instead of update() to avoid replacing the entire field
+    // which would cause the field ID to change and remount the editor
+    setValue(`messages.${index}.role`, message.role, { shouldDirty: true });
+    setValue(`messages.${index}.content`, message.content, { shouldDirty: true });
+  };
+
+  const handleAddMessage = (role: MessageRole = 'user') => {
+    append({
+      id: generateMessageId(),
+      role,
+      content: '',
+    });
+  };
+
+  const handleDeleteMessage = (index: number) => {
+    remove(index);
   };
 
   return (
@@ -122,27 +97,36 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
         <div className={variantPropertyLabel}>
           <span>Model</span>
         </div>
-        <ModelSelector value={modelSettings} onChange={handleModelSettingsChange} />
+        <ModelSelector
+          control={control}
+          onChange={handleModelSettingsChange}
+        />
       </div>
 
-      <div className={variantPropertyColumn}>
-        <div className={variantPropertyLabel}>
-          <span>System</span>
-          {/*<div className={markdownLabelInfo}>
-            <Markdown width={14} height={14} />
-            <span>Markdown Supported</span>
-          </div>*/}
-        </div>
-        <MarkdownEditor
-          key={editorKey}
-          value={systemPromptValue}
-          onChange={(value) =>
-            setValue('system_prompt', value, {
-              shouldValidate: true,
-              shouldDirty: true,
-            })
-          }
-        />
+      <div className={messagesContainer}>
+        {fields.map((field, index) => (
+          <MessageBlock
+            key={field._fieldId}
+            message={field}
+            onChange={(msg) => handleMessageChange(index, msg)}
+            onDelete={() => handleDeleteMessage(index)}
+            canDelete={fields.length > 1}
+            editorKey={`${editorKey}-${field._fieldId}`}
+            control={control}
+            index={index}
+          />
+        ))}
+      </div>
+
+      <div className={actionsRow}>
+        <button
+          type="button"
+          className={addMessageButton}
+          onClick={() => handleAddMessage('user')}
+        >
+          <Plus size={14} />
+          Message
+        </button>
       </div>
     </div>
   );

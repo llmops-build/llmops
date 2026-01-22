@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useWatch, type Control } from 'react-hook-form';
 import { Slider } from '@ui';
 import {
   Combobox as BaseCombobox,
@@ -45,8 +46,19 @@ export type ModelSettings = {
   presencePenalty?: number;
 };
 
+type ModelSelectorFormData = {
+  provider: string;
+  modelName: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+};
+
 type ModelSelectorProps = {
-  value: ModelSettings;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<any>;
   onChange: (settings: ModelSettings) => void;
 };
 
@@ -143,11 +155,27 @@ const ProvidersMenubarContent = ({
   );
 };
 
-const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
+const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
   const { data: providerGroups } = useModelsGroupedByProvider();
   const [inputValue, setInputValue] = useState('');
   const menubarRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Watch only model-related fields - this isolates re-renders to this component
+  const value = useWatch<ModelSelectorFormData>({
+    control,
+    name: ['provider', 'modelName', 'temperature', 'maxTokens', 'topP', 'frequencyPenalty', 'presencePenalty'],
+  }) as [string, string, number | undefined, number | undefined, number | undefined, number | undefined, number | undefined];
+
+  const currentSettings: ModelSettings = {
+    provider: value[0] || '',
+    modelName: value[1] || '',
+    temperature: value[2],
+    maxTokens: value[3],
+    topP: value[4],
+    frequencyPenalty: value[5],
+    presencePenalty: value[6],
+  };
 
   const handleInputValueChange = (newValue: string) => {
     const wasEmpty = !inputValue?.trim();
@@ -167,7 +195,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
     newValue: number | undefined
   ) => {
     const updatedSettings = {
-      ...value,
+      ...currentSettings,
       [key]: newValue,
     };
 
@@ -237,10 +265,10 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
       .filter((g): g is ProviderGroupWithModels => g !== null);
   }, [groupsWithProviderInfo, inputValue]);
 
-  // Derive selectedKey from value.provider and value.modelName
+  // Derive selectedKey from currentSettings.provider and currentSettings.modelName
   const selectedKey =
-    value.provider && value.modelName
-      ? `${value.provider}_${value.modelName}`
+    currentSettings.provider && currentSettings.modelName
+      ? `${currentSettings.provider}_${currentSettings.modelName}`
       : null;
 
   const selectedModel = selectedKey
@@ -257,7 +285,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
     if (item && 'value' in item) {
       justSelectedRef.current = true;
       onChange({
-        ...value,
+        ...currentSettings,
         provider: item.provider.id,
         modelName: item.value,
       });
@@ -268,7 +296,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
     } else if (!item && !justSelectedRef.current) {
       // Only clear if this isn't a spurious null after selection
       onChange({
-        ...value,
+        ...currentSettings,
         provider: '',
         modelName: '',
       });
@@ -435,7 +463,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                       <input
                         type="number"
                         className={styles.paramsInput}
-                        value={value.maxTokens ?? ''}
+                        value={currentSettings.maxTokens ?? ''}
                         placeholder="Default"
                         min={1}
                         max={selectedModel?.limit?.output || undefined}
@@ -451,7 +479,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
                     {selectedModel?.temperature !== false && (
                       <Slider
                         label="Temperature"
-                        value={value.temperature ?? 1}
+                        value={currentSettings.temperature ?? 1}
                         min={0}
                         max={2}
                         step={0.1}
@@ -464,7 +492,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
 
                     <Slider
                       label="Top P"
-                      value={value.topP ?? 1}
+                      value={currentSettings.topP ?? 1}
                       min={0}
                       max={1}
                       step={0.05}
@@ -474,7 +502,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
 
                     <Slider
                       label="Frequency Penalty"
-                      value={value.frequencyPenalty ?? 0}
+                      value={currentSettings.frequencyPenalty ?? 0}
                       min={-2}
                       max={2}
                       step={0.1}
@@ -486,7 +514,7 @@ const ModelSelector = ({ value, onChange }: ModelSelectorProps) => {
 
                     <Slider
                       label="Presence Penalty"
-                      value={value.presencePenalty ?? 0}
+                      value={currentSettings.presencePenalty ?? 0}
                       min={-2}
                       max={2}
                       step={0.1}

@@ -18,6 +18,7 @@ export const headerStyles = style({
   left: '0',
   top: '0',
   backgroundColor: colors.background,
+  zIndex: 10,
 });
 
 export const configSlugStyles = style({

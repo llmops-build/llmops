@@ -17,6 +17,7 @@ export const variantHeader = style({
   borderBottom: `1px solid ${colors.gray4}`,
   left: '0',
   backgroundColor: colors.background,
+  zIndex: 10,
 });
 
 export const variantHeaderActions = style({
@@ -123,4 +124,45 @@ export const variantInlineInput = style([
 export const variantContentArea = style({
   marginTop: spacing.lg,
   padding: spacing.md,
+});
+
+// Messages section styles
+export const messagesContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.sm,
+  marginTop: spacing.md,
+});
+
+export const addMessageButton = style([
+  sprinkles({
+    fontSize: 'sm',
+    borderRadius: 'xs',
+    paddingLeft: 'sm',
+    paddingRight: 'sm',
+  }),
+  {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: spacing.xs,
+    height: '2rem',
+    backgroundColor: 'transparent',
+    border: `1px dashed ${colors.gray6}`,
+    cursor: 'pointer',
+    color: colors.gray11,
+    transition: 'all 150ms ease',
+    ':hover': {
+      backgroundColor: colors.gray2,
+      borderColor: colors.gray8,
+      color: colors.gray12,
+    },
+  },
+]);
+
+export const actionsRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  marginTop: spacing.sm,
+  flexWrap: 'wrap',
 });
