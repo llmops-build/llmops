@@ -69,6 +69,16 @@ function getPortkeyProviderId(providerId: string): string {
  * Portkey Gateway Config format
  * @see packages/gateway/src/middlewares/requestValidator/schema/config.ts
  */
+/**
+ * Gateway guardrail format
+ * Each guardrail object has the function ID as key with parameters
+ */
+type GatewayGuardrail = {
+  deny?: boolean;
+  on_fail?: string;
+  [functionId: string]: unknown;
+};
+
 interface PortkeyConfig {
   provider: string;
   api_key?: string;
@@ -117,6 +127,51 @@ interface PortkeyConfig {
   forward_headers?: string[];
   weight?: number;
   on_status_codes?: number[];
+  // Guardrails
+  default_input_guardrails?: GatewayGuardrail[];
+  default_output_guardrails?: GatewayGuardrail[];
+}
+
+/**
+ * Database guardrail config type
+ */
+interface DbGuardrailConfig {
+  id: string;
+  pluginId: string;
+  functionId: string;
+  hookType: 'beforeRequestHook' | 'afterRequestHook';
+  parameters: Record<string, unknown>;
+  enabled: boolean;
+  priority: number;
+  onFail: 'block' | 'log';
+}
+
+/**
+ * Converts database guardrail configs to gateway format.
+ * The gateway expects guardrails as objects with function ID as key.
+ *
+ * @example
+ * DB format: { functionId: 'regexMatch', parameters: { rule: '.*' }, onFail: 'block' }
+ * Gateway format: { deny: true, regexMatch: { id: 'default.regexMatch', rule: '.*' } }
+ */
+function convertGuardrailsToGatewayFormat(
+  guardrails: DbGuardrailConfig[]
+): GatewayGuardrail[] {
+  return guardrails.map((guardrail) => {
+    const gatewayGuardrail: GatewayGuardrail = {
+      // deny: true means block the request if guardrail fails
+      deny: guardrail.onFail === 'block',
+    };
+
+    // Add the function with its parameters
+    // The gateway expects the function ID as key with parameters as value
+    gatewayGuardrail[guardrail.functionId] = {
+      id: `${guardrail.pluginId}.${guardrail.functionId}`,
+      ...guardrail.parameters,
+    };
+
+    return gatewayGuardrail;
+  });
 }
 
 /**
@@ -396,6 +451,29 @@ async function handleDirectProviderRequest(
   // Build Portkey config for the gateway
   const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
 
+  // Fetch enabled guardrails from database and add to config
+  try {
+    const [beforeGuardrails, afterGuardrails] = await Promise.all([
+      db.getEnabledGuardrailsByHookType?.('beforeRequestHook') ??
+        Promise.resolve([]),
+      db.getEnabledGuardrailsByHookType?.('afterRequestHook') ??
+        Promise.resolve([]),
+    ]);
+
+    if (beforeGuardrails.length > 0) {
+      portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
+        beforeGuardrails as DbGuardrailConfig[]
+      );
+    }
+    if (afterGuardrails.length > 0) {
+      portkeyConfig.default_output_guardrails =
+        convertGuardrailsToGatewayFormat(afterGuardrails as DbGuardrailConfig[]);
+    }
+  } catch (error) {
+    console.warn('Failed to fetch guardrails:', error);
+    // Continue without guardrails if fetch fails
+  }
+
   // Update the body with the extracted model name (without the @slug/ prefix)
   const updatedBody: Record<string, unknown> = {
     ...originalBody,
@@ -625,6 +703,32 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
 
       // Build Portkey config for the gateway
       const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
+
+      // Fetch enabled guardrails from database and add to config
+      try {
+        const [beforeGuardrails, afterGuardrails] = await Promise.all([
+          db.getEnabledGuardrailsByHookType?.('beforeRequestHook') ??
+            Promise.resolve([]),
+          db.getEnabledGuardrailsByHookType?.('afterRequestHook') ??
+            Promise.resolve([]),
+        ]);
+
+        if (beforeGuardrails.length > 0) {
+          portkeyConfig.default_input_guardrails =
+            convertGuardrailsToGatewayFormat(
+              beforeGuardrails as DbGuardrailConfig[]
+            );
+        }
+        if (afterGuardrails.length > 0) {
+          portkeyConfig.default_output_guardrails =
+            convertGuardrailsToGatewayFormat(
+              afterGuardrails as DbGuardrailConfig[]
+            );
+        }
+      } catch (error) {
+        console.warn('Failed to fetch guardrails:', error);
+        // Continue without guardrails if fetch fails
+      }
 
       if (isChatRequest) {
         // Get original body and merge with variant config
