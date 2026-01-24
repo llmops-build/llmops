@@ -4,6 +4,7 @@ import {
   SupportedProviders,
   ManifestRouter,
   logger,
+  type ManifestGuardrail,
   type VariantJsonData,
   type RoutingContext,
 } from '@llmops/core';
@@ -134,29 +135,15 @@ interface PortkeyConfig {
 }
 
 /**
- * Database guardrail config type
- */
-interface DbGuardrailConfig {
-  id: string;
-  pluginId: string;
-  functionId: string;
-  hookType: 'beforeRequestHook' | 'afterRequestHook';
-  parameters: Record<string, unknown>;
-  enabled: boolean;
-  priority: number;
-  onFail: 'block' | 'log';
-}
-
-/**
- * Converts database guardrail configs to gateway format.
+ * Converts manifest guardrails to gateway format.
  * The gateway expects guardrails as objects with function ID as key.
  *
  * @example
- * DB format: { functionId: 'regexMatch', parameters: { rule: '.*' }, onFail: 'block' }
+ * Manifest format: { functionId: 'regexMatch', parameters: { rule: '.*' }, onFail: 'block' }
  * Gateway format: { deny: true, regexMatch: { id: 'default.regexMatch', rule: '.*' } }
  */
 function convertGuardrailsToGatewayFormat(
-  guardrails: DbGuardrailConfig[]
+  guardrails: ManifestGuardrail[]
 ): GatewayGuardrail[] {
   return guardrails.map((guardrail) => {
     const gatewayGuardrail: GatewayGuardrail = {
@@ -407,6 +394,7 @@ async function handleDirectProviderRequest(
   modelName: string
 ) {
   const db = c.var.db;
+  const kyselyDb = c.var.kyselyDb;
 
   // Look up provider credentials by slug
   const result = await getProviderCredentialsBySlug(providerSlug, db);
@@ -450,27 +438,24 @@ async function handleDirectProviderRequest(
   // Build Portkey config for the gateway
   const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
 
-  // Fetch enabled guardrails from database and add to config
+  // Get guardrails from manifest (pre-loaded and cached)
+  // Always set both arrays (even if empty) - gateway expects arrays, not undefined
   try {
-    const [beforeGuardrails, afterGuardrails] = await Promise.all([
-      db.getEnabledGuardrailsByHookType?.('beforeRequestHook') ??
-        Promise.resolve([]),
-      db.getEnabledGuardrailsByHookType?.('afterRequestHook') ??
-        Promise.resolve([]),
-    ]);
+    const manifestService = getManifestService(kyselyDb);
+    const manifest = await manifestService.getManifest();
+    const { guardrails } = manifest;
 
-    if (beforeGuardrails.length > 0) {
-      portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
-        beforeGuardrails as DbGuardrailConfig[]
-      );
-    }
-    if (afterGuardrails.length > 0) {
-      portkeyConfig.default_output_guardrails =
-        convertGuardrailsToGatewayFormat(afterGuardrails as DbGuardrailConfig[]);
-    }
+    portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
+      guardrails.beforeRequestHook
+    );
+    portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
+      guardrails.afterRequestHook
+    );
   } catch (error) {
-    logger.warn(`Failed to fetch guardrails: ${error}`);
-    // Continue without guardrails if fetch fails
+    logger.warn(`Failed to get guardrails from manifest: ${error}`);
+    // Set empty arrays as fallback - gateway expects arrays, not undefined
+    portkeyConfig.default_input_guardrails = [];
+    portkeyConfig.default_output_guardrails = [];
   }
 
   // Update the body with the extracted model name (without the @slug/ prefix)
@@ -487,6 +472,21 @@ async function handleDirectProviderRequest(
 
   // Set the gateway config header with provider credentials
   newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
+
+  // Set guardrails headers - gateway reads these to apply guardrails
+  // (gateway overwrites config JSON guardrails with these header values)
+  if (portkeyConfig.default_input_guardrails) {
+    newHeaders.set(
+      'x-portkey-default-input-guardrails',
+      JSON.stringify(portkeyConfig.default_input_guardrails)
+    );
+  }
+  if (portkeyConfig.default_output_guardrails) {
+    newHeaders.set(
+      'x-portkey-default-output-guardrails',
+      JSON.stringify(portkeyConfig.default_output_guardrails)
+    );
+  }
 
   // Create a completely new Request object with the updated body
   const newRequest = new Request(c.req.raw.url, {
@@ -703,30 +703,22 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       // Build Portkey config for the gateway
       const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
 
-      // Fetch enabled guardrails from database and add to config
-      try {
-        const [beforeGuardrails, afterGuardrails] = await Promise.all([
-          db.getEnabledGuardrailsByHookType?.('beforeRequestHook') ??
-            Promise.resolve([]),
-          db.getEnabledGuardrailsByHookType?.('afterRequestHook') ??
-            Promise.resolve([]),
-        ]);
-
-        if (beforeGuardrails.length > 0) {
-          portkeyConfig.default_input_guardrails =
-            convertGuardrailsToGatewayFormat(
-              beforeGuardrails as DbGuardrailConfig[]
-            );
-        }
-        if (afterGuardrails.length > 0) {
-          portkeyConfig.default_output_guardrails =
-            convertGuardrailsToGatewayFormat(
-              afterGuardrails as DbGuardrailConfig[]
-            );
-        }
-      } catch (error) {
-        logger.warn(`Failed to fetch guardrails: ${error}`);
-        // Continue without guardrails if fetch fails
+      // Add guardrails from manifest (already fetched and cached)
+      // Always set both arrays (even if empty) - gateway expects arrays, not undefined
+      const { guardrails } = manifest;
+      logger.info(
+        `Manifest guardrails: before=${guardrails.beforeRequestHook.length}, after=${guardrails.afterRequestHook.length}`
+      );
+      portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
+        guardrails.beforeRequestHook
+      );
+      portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
+        guardrails.afterRequestHook
+      );
+      if (guardrails.beforeRequestHook.length > 0) {
+        logger.info(
+          `Added input guardrails: ${JSON.stringify(portkeyConfig.default_input_guardrails)}`
+        );
       }
 
       if (isChatRequest) {
@@ -756,6 +748,21 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         // This is required by the gateway's requestValidator
         newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
 
+        // Set guardrails headers - gateway reads these to apply guardrails
+        // (gateway overwrites config JSON guardrails with these header values)
+        if (portkeyConfig.default_input_guardrails) {
+          newHeaders.set(
+            'x-portkey-default-input-guardrails',
+            JSON.stringify(portkeyConfig.default_input_guardrails)
+          );
+        }
+        if (portkeyConfig.default_output_guardrails) {
+          newHeaders.set(
+            'x-portkey-default-output-guardrails',
+            JSON.stringify(portkeyConfig.default_output_guardrails)
+          );
+        }
+
         // Create a completely new Request object with the merged body
         const newRequest = new Request(c.req.raw.url, {
           method: c.req.raw.method,
@@ -777,6 +784,19 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       } else {
         // For non-chat requests, set the gateway config header
         c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
+        // Set guardrails headers for non-chat requests as well
+        if (portkeyConfig.default_input_guardrails) {
+          c.req.raw.headers.set(
+            'x-portkey-default-input-guardrails',
+            JSON.stringify(portkeyConfig.default_input_guardrails)
+          );
+        }
+        if (portkeyConfig.default_output_guardrails) {
+          c.req.raw.headers.set(
+            'x-portkey-default-output-guardrails',
+            JSON.stringify(portkeyConfig.default_output_guardrails)
+          );
+        }
       }
 
       // Store resolved data in context

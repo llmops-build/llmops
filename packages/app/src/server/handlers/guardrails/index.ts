@@ -4,6 +4,7 @@ import {
   internalServerError,
   successResponse,
 } from '@shared/responses';
+import { invalidateManifest } from '@server/services/manifest';
 import { Hono } from 'hono';
 import z from 'zod';
 import fs from 'fs';
@@ -189,6 +190,9 @@ const app = new Hono()
           );
         }
 
+        // Invalidate manifest so guardrails are reloaded
+        await invalidateManifest();
+
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error creating guardrail config:', error);
@@ -236,6 +240,10 @@ const app = new Hono()
             404
           );
         }
+
+        // Invalidate manifest so guardrails are reloaded
+        await invalidateManifest();
+
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error updating guardrail config:', error);
@@ -272,6 +280,10 @@ const app = new Hono()
             404
           );
         }
+
+        // Invalidate manifest so guardrails are reloaded
+        await invalidateManifest();
+
         return c.json(successResponse(config, 200));
       } catch (error) {
         console.error('Error deleting guardrail config:', error);
@@ -372,6 +384,9 @@ const app = new Hono()
           );
         }
 
+        // Invalidate manifest so guardrails are reloaded
+        await invalidateManifest();
+
         return c.json(successResponse(override, 200));
       } catch (error) {
         console.error('Error creating guardrail override:', error);
@@ -415,6 +430,10 @@ const app = new Hono()
             404
           );
         }
+
+        // Invalidate manifest so guardrails are reloaded
+        await invalidateManifest();
+
         return c.json(successResponse(override, 200));
       } catch (error) {
         console.error('Error updating guardrail override:', error);
@@ -447,6 +466,10 @@ const app = new Hono()
             404
           );
         }
+
+        // Invalidate manifest so guardrails are reloaded
+        await invalidateManifest();
+
         return c.json(successResponse(override, 200));
       } catch (error) {
         console.error('Error deleting guardrail override:', error);
