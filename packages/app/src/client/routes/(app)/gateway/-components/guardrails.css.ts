@@ -63,7 +63,7 @@ export const guardrailsTableContainer = style({
 
 export const guardrailsTableHeader = style({
   display: 'grid',
-  gridTemplateColumns: '1fr 120px 80px 80px auto',
+  gridTemplateColumns: '1fr 140px 80px 70px 70px',
   gap: spacing.md,
   padding: `${spacing.sm} ${spacing.md}`,
   backgroundColor: colors.gray2,
@@ -71,11 +71,12 @@ export const guardrailsTableHeader = style({
   fontSize: '0.75rem',
   fontWeight: 500,
   color: colors.gray10,
+  alignItems: 'center',
 });
 
 export const guardrailRow = style({
   display: 'grid',
-  gridTemplateColumns: '1fr 120px 80px 80px auto',
+  gridTemplateColumns: '1fr 140px 80px 70px 70px',
   gap: spacing.md,
   padding: `${spacing.sm} ${spacing.md}`,
   alignItems: 'center',
