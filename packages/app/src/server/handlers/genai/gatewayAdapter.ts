@@ -3,6 +3,7 @@ import {
   variantJsonDataSchema,
   SupportedProviders,
   ManifestRouter,
+  logger,
   type VariantJsonData,
   type RoutingContext,
 } from '@llmops/core';
@@ -217,9 +218,8 @@ function mergeChatCompletionBody(
           content = renderTemplate(msg.content, inputVariables);
         } catch (error) {
           // If template rendering fails, use original content
-          console.warn(
-            'Template rendering failed, using original content:',
-            error
+          logger.warn(
+            `Template rendering failed, using original content: ${error}`
           );
         }
       }
@@ -239,9 +239,8 @@ function mergeChatCompletionBody(
         );
       } catch (error) {
         // If template rendering fails, use original prompt
-        console.warn(
-          'Template rendering failed, using original prompt:',
-          error
+        logger.warn(
+          `Template rendering failed, using original prompt: ${error}`
         );
       }
     }
@@ -470,7 +469,7 @@ async function handleDirectProviderRequest(
         convertGuardrailsToGatewayFormat(afterGuardrails as DbGuardrailConfig[]);
     }
   } catch (error) {
-    console.warn('Failed to fetch guardrails:', error);
+    logger.warn(`Failed to fetch guardrails: ${error}`);
     // Continue without guardrails if fetch fails
   }
 
@@ -726,7 +725,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
             );
         }
       } catch (error) {
-        console.warn('Failed to fetch guardrails:', error);
+        logger.warn(`Failed to fetch guardrails: ${error}`);
         // Continue without guardrails if fetch fails
       }
 
@@ -789,7 +788,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
 
       await next();
     } catch (error) {
-      console.error('Gateway adapter error:', error);
+      logger.error(`Gateway adapter error: ${error}`);
 
       // If manifest is unavailable, could add fallback to direct DB lookup here
       // For now, return error
