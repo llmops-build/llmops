@@ -108,12 +108,14 @@ export const guardrailFunction = style({
 export const hookTypeBadge = style({
   display: 'inline-flex',
   alignItems: 'center',
-  padding: `2px ${spacing.xs}`,
-  fontSize: '0.6875rem',
-  fontWeight: 500,
+  justifyContent: 'center',
+  padding: `2px 6px`,
+  fontSize: '0.625rem',
+  fontWeight: 600,
   borderRadius: '4px',
   textTransform: 'uppercase',
-  letterSpacing: '0.02em',
+  letterSpacing: '0.03em',
+  width: 'fit-content',
 });
 
 export const hookTypeBefore = style({
@@ -133,12 +135,14 @@ export const statusToggle = style({
 
 export const toggleSwitch = style({
   position: 'relative',
-  width: '36px',
-  height: '20px',
-  backgroundColor: colors.gray6,
-  borderRadius: '10px',
+  width: '32px',
+  height: '18px',
+  backgroundColor: colors.gray5,
+  borderRadius: '9px',
   cursor: 'pointer',
   transition: 'background-color 150ms',
+  border: 'none',
+  padding: 0,
   selectors: {
     '&[data-checked="true"]': {
       backgroundColor: colors.accent9,
@@ -150,14 +154,15 @@ export const toggleKnob = style({
   position: 'absolute',
   top: '2px',
   left: '2px',
-  width: '16px',
-  height: '16px',
-  backgroundColor: colors.gray12,
+  width: '14px',
+  height: '14px',
+  backgroundColor: 'white',
   borderRadius: '50%',
   transition: 'transform 150ms',
+  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.15)',
   selectors: {
     '[data-checked="true"] &': {
-      transform: 'translateX(16px)',
+      transform: 'translateX(14px)',
     },
   },
 });
