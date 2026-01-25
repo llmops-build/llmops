@@ -467,13 +467,7 @@ function RouteComponent() {
             <AlertDialog.Title className={styles.dialogTitle}>
               Delete Guardrail
             </AlertDialog.Title>
-            <p
-              style={{
-                margin: 0,
-                color: 'var(--gray11)',
-                fontSize: '0.875rem',
-              }}
-            >
+            <p className={styles.dialogDescription}>
               Are you sure you want to delete the{' '}
               <strong>{editingConfig?.name}</strong> guardrail? This action
               cannot be undone.

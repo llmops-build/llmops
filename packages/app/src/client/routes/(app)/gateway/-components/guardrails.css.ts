@@ -412,6 +412,12 @@ export const dialogTitle = style({
   marginBottom: spacing.md,
 });
 
+export const dialogDescription = style({
+  margin: 0,
+  color: colors.gray11,
+  fontSize: '0.875rem',
+});
+
 export const dialogActions = style({
   display: 'flex',
   justifyContent: 'flex-end',
