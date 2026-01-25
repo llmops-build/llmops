@@ -20,7 +20,7 @@ export const overviewContent = style({
 export const heroSection = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: spacing.md,
+  gap: spacing.sm,
 });
 
 export const heroTitle = style([
@@ -71,7 +71,7 @@ export const baseUrlContainer = style({
   backgroundColor: colors.gray2,
   border: `1px solid ${colors.gray4}`,
   borderRadius: spacing.xs,
-  padding: spacing.sm,
+  padding: spacing.xs,
 });
 
 export const baseUrlCode = style([

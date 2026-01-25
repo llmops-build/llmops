@@ -171,7 +171,8 @@ function RouteComponent() {
             <div className={styles.heroSection}>
               <h1 className={styles.heroTitle}>Mission Control</h1>
               <p className={styles.heroSubtitle}>
-                Route requests to any provider. Manage prompts. Track everything.
+                Route requests to any provider. Manage prompts. Track
+                everything.
               </p>
               <div className={styles.baseUrlSection}>
                 <span className={styles.baseUrlLabel}>Base URL</span>
@@ -189,6 +190,10 @@ function RouteComponent() {
                 </div>
               </div>
             </div>
+
+            {/* Stats & Insights */}
+            <QuickStats />
+            <InsightsSection />
 
             {/* Quick Links */}
             <div className={styles.quickLinksSection}>
@@ -208,10 +213,6 @@ function RouteComponent() {
                 <ArrowRight size={16} className={styles.quickLinkArrow} />
               </Link>
             </div>
-
-            {/* Stats & Insights */}
-            <QuickStats />
-            <InsightsSection />
           </div>
         </div>
       </div>
