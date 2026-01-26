@@ -5,6 +5,8 @@ export type {
   GatewayManifest,
   ManifestConfig,
   ManifestEnvironment,
+  ManifestGuardrail,
+  ManifestProviderGuardrailOverride,
   ManifestTargetingRule,
   ManifestVariantVersion,
   RoutingContext,

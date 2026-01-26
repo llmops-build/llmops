@@ -96,6 +96,43 @@ export const playgroundsSchema = z.object({
   name: z.string(),
 });
 
+// Guardrail configs table schema - stores global guardrail configurations
+export const guardrailConfigsSchema = z.object({
+  ...baseSchema,
+  name: z.string(), // Display name for the guardrail
+  pluginId: z.string(), // "default" for built-in guardrails
+  functionId: z.string(), // e.g., "regexMatch", "modelWhitelist"
+  hookType: z.enum(['beforeRequestHook', 'afterRequestHook']),
+  parameters: z.record(z.string(), z.unknown()).default({}), // JSON parameters for the guardrail
+  enabled: z.boolean().default(true), // Toggle without deleting
+  priority: z.number().int().default(0), // Higher priority = runs first
+  onFail: z.enum(['block', 'log']).default('block'), // Action on failure
+});
+
+// Provider guardrail overrides table schema - per-provider guardrail overrides
+export const providerGuardrailOverridesSchema = z.object({
+  ...baseSchema,
+  providerConfigId: z.string().uuid(), // FK -> provider_configs.id
+  guardrailConfigId: z.string().uuid(), // FK -> guardrail_configs.id
+  enabled: z.boolean().default(true), // Override: enable/disable for this provider
+  parameters: z.record(z.string(), z.unknown()).nullable().optional(), // Override parameters (null = use global)
+});
+
+// Guardrail results schema - for telemetry tracking
+const guardrailResultSchema = z.object({
+  configId: z.string().uuid(),
+  functionId: z.string(),
+  hookType: z.enum(['beforeRequestHook', 'afterRequestHook']),
+  verdict: z.boolean(),
+  latencyMs: z.number(),
+});
+
+const guardrailResultsSchema = z.object({
+  results: z.array(guardrailResultSchema),
+  action: z.enum(['allowed', 'blocked', 'logged']),
+  totalLatencyMs: z.number(),
+});
+
 // LLM Requests table schema - stores request logs with cost tracking
 export const llmRequestsSchema = z.object({
   ...baseSchema,
@@ -131,6 +168,9 @@ export const llmRequestsSchema = z.object({
   // Optional identifiers (for future budget tracking)
   userId: z.string().nullable().optional(), // User identifier from request
   tags: z.record(z.string(), z.string()).default({}), // Custom tags/metadata
+
+  // Guardrail telemetry (nullable for seamless migration)
+  guardrailResults: guardrailResultsSchema.nullable().optional(), // Guardrail execution results
 });
 
 /**
@@ -146,6 +186,12 @@ export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
 export type ProviderConfig = z.infer<typeof providerConfigsSchema>;
 export type Playground = z.infer<typeof playgroundsSchema>;
+export type GuardrailConfig = z.infer<typeof guardrailConfigsSchema>;
+export type ProviderGuardrailOverride = z.infer<
+  typeof providerGuardrailOverridesSchema
+>;
+export type GuardrailResult = z.infer<typeof guardrailResultSchema>;
+export type GuardrailResults = z.infer<typeof guardrailResultsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 
 /**
@@ -233,6 +279,30 @@ export interface PlaygroundsTable extends BaseTable {
   name: string;
 }
 
+// Guardrail configs table - global guardrail configurations
+export interface GuardrailConfigsTable extends BaseTable {
+  name: string;
+  pluginId: string;
+  functionId: string;
+  hookType: string;
+  parameters: ColumnType<Record<string, unknown>, string, string>;
+  enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+  priority: ColumnType<number, number | undefined, number | undefined>;
+  onFail: ColumnType<string, string | undefined, string | undefined>;
+}
+
+// Provider guardrail overrides table - per-provider overrides
+export interface ProviderGuardrailOverridesTable extends BaseTable {
+  providerConfigId: string;
+  guardrailConfigId: string;
+  enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
+  parameters: ColumnType<
+    Record<string, unknown> | null,
+    string | null,
+    string | null
+  >;
+}
+
 // LLM Requests table - request logs with cost tracking
 export interface LLMRequestsTable extends BaseTable {
   requestId: string;
@@ -255,6 +325,7 @@ export interface LLMRequestsTable extends BaseTable {
   isStreaming: ColumnType<boolean, boolean | undefined, boolean | undefined>;
   userId: string | null;
   tags: ColumnType<Record<string, string>, string, string>;
+  guardrailResults: ColumnType<GuardrailResults | null, string | null, string | null>;
 }
 
 /**
@@ -271,6 +342,8 @@ export interface Database {
   workspace_settings: WorkspaceSettingsTable;
   provider_configs: ProviderConfigsTable;
   playgrounds: PlaygroundsTable;
+  guardrail_configs: GuardrailConfigsTable;
+  provider_guardrail_overrides: ProviderGuardrailOverridesTable;
   llm_requests: LLMRequestsTable;
 }
 
@@ -473,8 +546,45 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    llm_requests: {
+    guardrail_configs: {
       order: 11,
+      schema: guardrailConfigsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
+        pluginId: { type: 'text' },
+        functionId: { type: 'text' },
+        hookType: { type: 'text' },
+        parameters: { type: 'jsonb', default: '{}' },
+        enabled: { type: 'boolean', default: true },
+        priority: { type: 'integer', default: 0 },
+        onFail: { type: 'text', default: 'block' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    provider_guardrail_overrides: {
+      order: 12,
+      schema: providerGuardrailOverridesSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        providerConfigId: {
+          type: 'uuid',
+          references: { table: 'provider_configs', column: 'id' },
+        },
+        guardrailConfigId: {
+          type: 'uuid',
+          references: { table: 'guardrail_configs', column: 'id' },
+        },
+        enabled: { type: 'boolean', default: true },
+        parameters: { type: 'jsonb', nullable: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+      uniqueConstraints: [{ columns: ['providerConfigId', 'guardrailConfigId'] }],
+    },
+    llm_requests: {
+      order: 13,
       schema: llmRequestsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -514,6 +624,7 @@ export const SCHEMA_METADATA = {
         isStreaming: { type: 'boolean', default: false },
         userId: { type: 'text', nullable: true },
         tags: { type: 'jsonb', default: '{}' },
+        guardrailResults: { type: 'jsonb', nullable: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
@@ -535,5 +646,7 @@ export const schemas = {
   workspace_settings: workspaceSettingsSchema,
   provider_configs: providerConfigsSchema,
   playgrounds: playgroundsSchema,
+  guardrail_configs: guardrailConfigsSchema,
+  provider_guardrail_overrides: providerGuardrailOverridesSchema,
   llm_requests: llmRequestsSchema,
 } as const;
