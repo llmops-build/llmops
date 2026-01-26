@@ -478,3 +478,152 @@ export const chartTitle = style([
     fontWeight: 500,
   },
 ]);
+
+// Minimal cost metrics layout (no cards)
+export const costMetricsContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xl,
+});
+
+export const costHero = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+  paddingBottom: spacing.lg,
+  borderBottom: `1px solid ${colors.gray3}`,
+});
+
+export const costHeroLabel = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray9',
+  }),
+  {
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+  },
+]);
+
+export const costHeroValue = style([
+  sprinkles({
+    fontFamily: 'mono',
+    color: 'gray12',
+  }),
+  {
+    fontSize: '3rem',
+    fontWeight: 600,
+    letterSpacing: '-0.03em',
+    lineHeight: 1,
+    margin: 0,
+  },
+]);
+
+export const costMetricsRow = style({
+  display: 'flex',
+  gap: spacing.xl,
+  flexWrap: 'wrap',
+});
+
+export const costMetricItem = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+  minWidth: '120px',
+});
+
+export const costMetricLabel = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray9',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.xs,
+    letterSpacing: '0.02em',
+  },
+]);
+
+export const costMetricValue = style([
+  sprinkles({
+    fontSize: 'lg',
+    fontFamily: 'mono',
+    color: 'gray12',
+  }),
+  {
+    fontWeight: 600,
+    margin: 0,
+    lineHeight: 1.2,
+  },
+]);
+
+export const costMetricSubvalue = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray10',
+  }),
+]);
+
+export const costBreakdownContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.md,
+  paddingTop: spacing.md,
+});
+
+export const costBreakdownLabel = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray9',
+  }),
+  {
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    marginBottom: spacing.xs,
+  },
+]);
+
+export const costBreakdownBarWrapper = style({
+  position: 'relative',
+  height: '32px',
+  borderRadius: spacing.xs,
+  overflow: 'hidden',
+  backgroundColor: colors.gray3,
+});
+
+export const costBreakdownLegend = style({
+  display: 'flex',
+  gap: spacing.lg,
+  marginTop: spacing.sm,
+});
+
+export const costBreakdownLegendItem = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+]);
+
+export const costBreakdownDot = style({
+  width: '8px',
+  height: '8px',
+  borderRadius: '50%',
+});
+
+export const costBreakdownDotInput = style({
+  backgroundColor: '#10b981',
+});
+
+export const costBreakdownDotOutput = style({
+  backgroundColor: '#f59e0b',
+});

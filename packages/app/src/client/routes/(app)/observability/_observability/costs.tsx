@@ -4,13 +4,25 @@ import { DollarSign, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTotalCost } from '@client/hooks/queries/useAnalytics';
 import {
-  overviewGrid,
-  statsCard,
-  statsCardLabel,
-  statsCardValue,
-  statsCardSubvalue,
   emptyState,
   loadingSpinner,
+  costMetricsContainer,
+  costHero,
+  costHeroLabel,
+  costHeroValue,
+  costMetricsRow,
+  costMetricItem,
+  costMetricLabel,
+  costMetricValue,
+  costMetricSubvalue,
+  costBreakdownContainer,
+  costBreakdownLabel,
+  costBreakdownBarWrapper,
+  costBreakdownLegend,
+  costBreakdownLegendItem,
+  costBreakdownDot,
+  costBreakdownDotInput,
+  costBreakdownDotOutput,
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
@@ -75,34 +87,119 @@ function RouteComponent() {
     );
   }
 
+  // Calculate percentages for the breakdown bar
+  // Use Number() to coerce values since PostgreSQL may return strings
+  const inputCost = Number(totalCost?.totalInputCost) || 0;
+  const outputCost = Number(totalCost?.totalOutputCost) || 0;
+  const totalCostValue = inputCost + outputCost;
+  const inputPercentage =
+    totalCostValue > 0 ? (inputCost / totalCostValue) * 100 : 0;
+  const outputPercentage =
+    totalCostValue > 0 ? (outputCost / totalCostValue) * 100 : 0;
+
   return (
-    <div>
-      <div className={overviewGrid}>
-        <div className={statsCard}>
-          <span className={statsCardLabel}>Total Cost</span>
-          <p className={statsCardValue}>{totalCost?.totalCostFormatted}</p>
-        </div>
-        <div className={statsCard}>
-          <span className={statsCardLabel}>Input Cost</span>
-          <p className={statsCardValue}>{totalCost?.totalInputCostFormatted}</p>
-          <span className={statsCardSubvalue}>
+    <div className={costMetricsContainer}>
+      {/* Hero: Total Cost */}
+      <div className={costHero}>
+        <span className={costHeroLabel}>Total Cost</span>
+        <p className={costHeroValue}>{totalCost?.totalCostFormatted}</p>
+      </div>
+
+      {/* Secondary metrics row */}
+      <div className={costMetricsRow}>
+        <div className={costMetricItem}>
+          <span className={costMetricLabel}>
+            <span
+              className={`${costBreakdownDot} ${costBreakdownDotInput}`}
+              style={{ width: 6, height: 6 }}
+            />
+            Input
+          </span>
+          <p className={costMetricValue}>
+            {totalCost?.totalInputCostFormatted}
+          </p>
+          <span className={costMetricSubvalue}>
             {totalCost?.totalPromptTokens.toLocaleString()} tokens
           </span>
         </div>
-        <div className={statsCard}>
-          <span className={statsCardLabel}>Output Cost</span>
-          <p className={statsCardValue}>
+
+        <div className={costMetricItem}>
+          <span className={costMetricLabel}>
+            <span
+              className={`${costBreakdownDot} ${costBreakdownDotOutput}`}
+              style={{ width: 6, height: 6 }}
+            />
+            Output
+          </span>
+          <p className={costMetricValue}>
             {totalCost?.totalOutputCostFormatted}
           </p>
-          <span className={statsCardSubvalue}>
+          <span className={costMetricSubvalue}>
             {totalCost?.totalCompletionTokens.toLocaleString()} tokens
           </span>
         </div>
-        <div className={statsCard}>
-          <span className={statsCardLabel}>Requests</span>
-          <p className={statsCardValue}>
+
+        <div className={costMetricItem}>
+          <span className={costMetricLabel}>Requests</span>
+          <p className={costMetricValue}>
             {totalCost?.requestCount.toLocaleString()}
           </p>
+        </div>
+      </div>
+
+      {/* Cost breakdown visualization - CSS-based stacked bar */}
+      <div className={costBreakdownContainer}>
+        <span className={costBreakdownLabel}>Cost Distribution</span>
+        <div
+          className={costBreakdownBarWrapper}
+          title={`Input: ${totalCost?.totalInputCostFormatted} (${inputPercentage.toFixed(1)}%)\nOutput: ${totalCost?.totalOutputCostFormatted} (${outputPercentage.toFixed(1)}%)`}
+        >
+          <div
+            style={{
+              display: 'flex',
+              height: '100%',
+              width: '100%',
+            }}
+          >
+            <div
+              title={`Input: ${totalCost?.totalInputCostFormatted} (${inputPercentage.toFixed(1)}%)`}
+              style={{
+                width: `${inputPercentage}%`,
+                height: '100%',
+                backgroundColor: '#10b981',
+                borderRadius:
+                  outputPercentage === 0 ? '4px' : '4px 0 0 4px',
+                transition: 'width 0.3s ease',
+                cursor: 'default',
+              }}
+            />
+            <div
+              title={`Output: ${totalCost?.totalOutputCostFormatted} (${outputPercentage.toFixed(1)}%)`}
+              style={{
+                width: `${outputPercentage}%`,
+                height: '100%',
+                backgroundColor: '#f59e0b',
+                borderRadius:
+                  inputPercentage === 0 ? '4px' : '0 4px 4px 0',
+                transition: 'width 0.3s ease',
+                cursor: 'default',
+              }}
+            />
+          </div>
+        </div>
+        <div className={costBreakdownLegend}>
+          <div className={costBreakdownLegendItem}>
+            <span className={`${costBreakdownDot} ${costBreakdownDotInput}`} />
+            <span style={{ color: '#b4b4b4' }}>
+              Input: {totalCost?.totalInputCostFormatted} ({inputPercentage.toFixed(0)}%)
+            </span>
+          </div>
+          <div className={costBreakdownLegendItem}>
+            <span className={`${costBreakdownDot} ${costBreakdownDotOutput}`} />
+            <span style={{ color: '#b4b4b4' }}>
+              Output: {totalCost?.totalOutputCostFormatted} ({outputPercentage.toFixed(0)}%)
+            </span>
+          </div>
         </div>
       </div>
     </div>
