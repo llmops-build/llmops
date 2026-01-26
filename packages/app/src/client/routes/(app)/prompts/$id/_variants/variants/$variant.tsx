@@ -25,7 +25,6 @@ import {
   useVariantVersions,
   type VariantVersion,
 } from '@client/hooks/queries/useVariantVersions';
-import { useTargetingRules } from '@client/hooks/queries/useTargetingRules';
 import { useEffect, useState } from 'react';
 import {
   SaveVariantPopup,
@@ -69,7 +68,6 @@ function RouteComponent() {
   const { data: versions } = useVariantVersions(
     variant === 'new' ? '' : variant
   );
-  const { data: targetingRules } = useTargetingRules(configId);
   const { data: environments } = useEnvironments();
   const { data: config } = useConfigById(configId);
   const [editorKey, setEditorKey] = useState<string>('new');
@@ -90,9 +88,7 @@ function RouteComponent() {
       variant_name: '',
       provider: '',
       modelName: '',
-      messages: [
-        { id: 'default-system', role: 'system', content: '' },
-      ],
+      messages: [{ id: 'default-system', role: 'system', content: '' }],
       temperature: undefined,
       maxTokens: undefined,
       topP: undefined,
@@ -164,7 +160,11 @@ function RouteComponent() {
         // Old format: convert system_prompt to messages array
         const systemPrompt = (jsonData?.system_prompt as string) || '';
         messages = [
-          { id: `system-${selectedVersionId}`, role: 'system', content: systemPrompt },
+          {
+            id: `system-${selectedVersionId}`,
+            role: 'system',
+            content: systemPrompt,
+          },
         ];
       }
 

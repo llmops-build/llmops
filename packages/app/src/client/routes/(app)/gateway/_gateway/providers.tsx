@@ -366,13 +366,7 @@ function RouteComponent() {
             <AlertDialog.Title className={styles.dialogTitle}>
               Delete Provider
             </AlertDialog.Title>
-            <p
-              style={{
-                margin: 0,
-                color: 'var(--gray11)',
-                fontSize: '0.875rem',
-              }}
-            >
+            <p className={styles.dialogDescription}>
               Are you sure you want to delete the{' '}
               <strong>
                 {getProviderInfo(editingConfig?.providerId || '')?.name}
