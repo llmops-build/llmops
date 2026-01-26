@@ -14,6 +14,7 @@ import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as authSetupRouteImport } from './routes/(auth)/setup'
 import { Route as appPromptsRouteImport } from './routes/(app)/prompts'
+import { Route as appPlaygroundsRouteImport } from './routes/(app)/playgrounds'
 import { Route as appEnvironmentsRouteImport } from './routes/(app)/environments'
 import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
 import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
@@ -68,6 +69,11 @@ const authSetupRoute = authSetupRouteImport.update({
 const appPromptsRoute = appPromptsRouteImport.update({
   id: '/prompts',
   path: '/prompts',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appPlaygroundsRoute = appPlaygroundsRouteImport.update({
+  id: '/playgrounds',
+  path: '/playgrounds',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appEnvironmentsRoute = appEnvironmentsRouteImport.update({
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/observability': typeof appObservabilityObservabilityRouteWithChildren
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/playgrounds': typeof appPlaygroundsRoute
   '/prompts': typeof appPromptsRouteWithChildren
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/environments': typeof appEnvironmentsRouteWithChildren
+  '/playgrounds': typeof appPlaygroundsRoute
   '/prompts': typeof appPromptsRouteWithChildren
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
+  '/(app)/playgrounds': typeof appPlaygroundsRoute
   '/(app)/prompts': typeof appPromptsRouteWithChildren
   '/(auth)/setup': typeof authSetupRoute
   '/(auth)/signin': typeof authSigninRoute
@@ -340,6 +349,7 @@ export interface FileRouteTypes {
     | '/observability'
     | '/settings'
     | '/environments'
+    | '/playgrounds'
     | '/prompts'
     | '/setup'
     | '/signin'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/environments'
+    | '/playgrounds'
     | '/prompts'
     | '/setup'
     | '/signin'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/(app)/observability'
     | '/(app)/settings'
     | '/(app)/environments'
+    | '/(app)/playgrounds'
     | '/(app)/prompts'
     | '/(auth)/setup'
     | '/(auth)/signin'
@@ -472,6 +484,13 @@ declare module '@tanstack/react-router' {
       path: '/prompts'
       fullPath: '/prompts'
       preLoaderRoute: typeof appPromptsRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/playgrounds': {
+      id: '/(app)/playgrounds'
+      path: '/playgrounds'
+      fullPath: '/playgrounds'
+      preLoaderRoute: typeof appPlaygroundsRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/(app)/environments': {
@@ -895,6 +914,7 @@ interface appRouteRouteChildren {
   appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
+  appPlaygroundsRoute: typeof appPlaygroundsRoute
   appPromptsRoute: typeof appPromptsRouteWithChildren
   appIndexRoute: typeof appIndexRoute
 }
@@ -904,6 +924,7 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
+  appPlaygroundsRoute: appPlaygroundsRoute,
   appPromptsRoute: appPromptsRouteWithChildren,
   appIndexRoute: appIndexRoute,
 }
