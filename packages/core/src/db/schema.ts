@@ -90,6 +90,12 @@ export const providerConfigsSchema = z.object({
   enabled: z.boolean().default(true), // Toggle without deleting
 });
 
+// Playgrounds table schema - stores playground configurations
+export const playgroundsSchema = z.object({
+  ...baseSchema,
+  name: z.string(),
+});
+
 // LLM Requests table schema - stores request logs with cost tracking
 export const llmRequestsSchema = z.object({
   ...baseSchema,
@@ -139,6 +145,7 @@ export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
 export type ProviderConfig = z.infer<typeof providerConfigsSchema>;
+export type Playground = z.infer<typeof playgroundsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 
 /**
@@ -221,6 +228,11 @@ export interface ProviderConfigsTable extends BaseTable {
   enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
 }
 
+// Playgrounds table
+export interface PlaygroundsTable extends BaseTable {
+  name: string;
+}
+
 // LLM Requests table - request logs with cost tracking
 export interface LLMRequestsTable extends BaseTable {
   requestId: string;
@@ -258,6 +270,7 @@ export interface Database {
   targeting_rules: TargetingRulesTable;
   workspace_settings: WorkspaceSettingsTable;
   provider_configs: ProviderConfigsTable;
+  playgrounds: PlaygroundsTable;
   llm_requests: LLMRequestsTable;
 }
 
@@ -450,8 +463,18 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    llm_requests: {
+    playgrounds: {
       order: 10,
+      schema: playgroundsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    llm_requests: {
+      order: 11,
       schema: llmRequestsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -511,5 +534,6 @@ export const schemas = {
   targeting_rules: targetingRulesSchema,
   workspace_settings: workspaceSettingsSchema,
   provider_configs: providerConfigsSchema,
+  playgrounds: playgroundsSchema,
   llm_requests: llmRequestsSchema,
 } as const;

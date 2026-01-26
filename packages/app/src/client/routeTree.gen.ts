@@ -26,8 +26,10 @@ import { Route as appSettingsSettingsRouteImport } from './routes/(app)/settings
 import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
 import { Route as appGatewayGatewayRouteImport } from './routes/(app)/gateway/_gateway'
 import { Route as appPromptsIdRouteRouteImport } from './routes/(app)/prompts/$id/route'
+import { Route as appPlaygroundsIdRouteRouteImport } from './routes/(app)/playgrounds/$id/route'
 import { Route as appEnvironmentsEnvironmentRouteRouteImport } from './routes/(app)/environments/$environment/route'
 import { Route as appPromptsIdIndexRouteImport } from './routes/(app)/prompts/$id/index'
+import { Route as appPlaygroundsIdIndexRouteImport } from './routes/(app)/playgrounds/$id/index'
 import { Route as appEnvironmentsEnvironmentIndexRouteImport } from './routes/(app)/environments/$environment/index'
 import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
 import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
@@ -129,6 +131,11 @@ const appPromptsIdRouteRoute = appPromptsIdRouteRouteImport.update({
   path: '/$id',
   getParentRoute: () => appPromptsRoute,
 } as any)
+const appPlaygroundsIdRouteRoute = appPlaygroundsIdRouteRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => appPlaygroundsRoute,
+} as any)
 const appEnvironmentsEnvironmentRouteRoute =
   appEnvironmentsEnvironmentRouteRouteImport.update({
     id: '/$environment',
@@ -139,6 +146,11 @@ const appPromptsIdIndexRoute = appPromptsIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appPromptsIdRouteRoute,
+} as any)
+const appPlaygroundsIdIndexRoute = appPlaygroundsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appPlaygroundsIdRouteRoute,
 } as any)
 const appEnvironmentsEnvironmentIndexRoute =
   appEnvironmentsEnvironmentIndexRouteImport.update({
@@ -248,12 +260,13 @@ export interface FileRoutesByFullPath {
   '/observability': typeof appObservabilityObservabilityRouteWithChildren
   '/settings': typeof appSettingsSettingsRouteWithChildren
   '/environments': typeof appEnvironmentsRouteWithChildren
-  '/playgrounds': typeof appPlaygroundsRoute
+  '/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/prompts': typeof appPromptsRouteWithChildren
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
   '/': typeof appIndexRoute
   '/environments/$environment': typeof appEnvironmentsEnvironmentTabsRouteWithChildren
+  '/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
   '/prompts/$id': typeof appPromptsIdVariantsRouteWithChildren
   '/gateway/': typeof appGatewayIndexRoute
   '/observability/': typeof appObservabilityIndexRoute
@@ -266,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
+  '/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
   '/prompts/$id/': typeof appPromptsIdIndexRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
@@ -277,7 +291,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/environments': typeof appEnvironmentsRouteWithChildren
-  '/playgrounds': typeof appPlaygroundsRoute
+  '/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/prompts': typeof appPromptsRouteWithChildren
   '/setup': typeof authSetupRoute
   '/signin': typeof authSigninRoute
@@ -294,6 +308,7 @@ export interface FileRoutesByTo {
   '/prompts/$id': typeof appPromptsIdIndexRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
+  '/playgrounds/$id': typeof appPlaygroundsIdIndexRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
@@ -309,12 +324,13 @@ export interface FileRoutesById {
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
   '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/environments': typeof appEnvironmentsRouteWithChildren
-  '/(app)/playgrounds': typeof appPlaygroundsRoute
+  '/(app)/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/(app)/prompts': typeof appPromptsRouteWithChildren
   '/(auth)/setup': typeof authSetupRoute
   '/(auth)/signin': typeof authSigninRoute
   '/(app)/': typeof appIndexRoute
   '/(app)/environments/$environment': typeof appEnvironmentsEnvironmentRouteRouteWithChildren
+  '/(app)/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
   '/(app)/prompts/$id': typeof appPromptsIdRouteRouteWithChildren
   '/(app)/gateway/_gateway': typeof appGatewayGatewayRouteWithChildren
   '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
@@ -333,6 +349,7 @@ export interface FileRoutesById {
   '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
+  '/(app)/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
   '/(app)/prompts/$id/': typeof appPromptsIdIndexRoute
   '/(app)/environments/$environment/_tabs/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/(app)/environments/$environment/_tabs/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
@@ -355,6 +372,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/'
     | '/environments/$environment'
+    | '/playgrounds/$id'
     | '/prompts/$id'
     | '/gateway/'
     | '/observability/'
@@ -367,6 +385,7 @@ export interface FileRouteTypes {
     | '/settings/user-profile'
     | '/settings/workspace-general'
     | '/environments/$environment/'
+    | '/playgrounds/$id/'
     | '/prompts/$id/'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
@@ -395,6 +414,7 @@ export interface FileRouteTypes {
     | '/prompts/$id'
     | '/settings/user-profile'
     | '/settings/workspace-general'
+    | '/playgrounds/$id'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
     | '/prompts/$id/settings'
@@ -415,6 +435,7 @@ export interface FileRouteTypes {
     | '/(auth)/signin'
     | '/(app)/'
     | '/(app)/environments/$environment'
+    | '/(app)/playgrounds/$id'
     | '/(app)/prompts/$id'
     | '/(app)/gateway/_gateway'
     | '/(app)/observability/_observability'
@@ -433,6 +454,7 @@ export interface FileRouteTypes {
     | '/(app)/settings/_settings/user-profile'
     | '/(app)/settings/_settings/workspace-general'
     | '/(app)/environments/$environment/'
+    | '/(app)/playgrounds/$id/'
     | '/(app)/prompts/$id/'
     | '/(app)/environments/$environment/_tabs/secrets'
     | '/(app)/environments/$environment/_tabs/settings'
@@ -570,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appPromptsIdRouteRouteImport
       parentRoute: typeof appPromptsRoute
     }
+    '/(app)/playgrounds/$id': {
+      id: '/(app)/playgrounds/$id'
+      path: '/$id'
+      fullPath: '/playgrounds/$id'
+      preLoaderRoute: typeof appPlaygroundsIdRouteRouteImport
+      parentRoute: typeof appPlaygroundsRoute
+    }
     '/(app)/environments/$environment': {
       id: '/(app)/environments/$environment'
       path: '/$environment'
@@ -583,6 +612,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/prompts/$id/'
       preLoaderRoute: typeof appPromptsIdIndexRouteImport
       parentRoute: typeof appPromptsIdRouteRoute
+    }
+    '/(app)/playgrounds/$id/': {
+      id: '/(app)/playgrounds/$id/'
+      path: '/'
+      fullPath: '/playgrounds/$id/'
+      preLoaderRoute: typeof appPlaygroundsIdIndexRouteImport
+      parentRoute: typeof appPlaygroundsIdRouteRoute
     }
     '/(app)/environments/$environment/': {
       id: '/(app)/environments/$environment/'
@@ -852,6 +888,31 @@ const appEnvironmentsRouteWithChildren = appEnvironmentsRoute._addFileChildren(
   appEnvironmentsRouteChildren,
 )
 
+interface appPlaygroundsIdRouteRouteChildren {
+  appPlaygroundsIdIndexRoute: typeof appPlaygroundsIdIndexRoute
+}
+
+const appPlaygroundsIdRouteRouteChildren: appPlaygroundsIdRouteRouteChildren = {
+  appPlaygroundsIdIndexRoute: appPlaygroundsIdIndexRoute,
+}
+
+const appPlaygroundsIdRouteRouteWithChildren =
+  appPlaygroundsIdRouteRoute._addFileChildren(
+    appPlaygroundsIdRouteRouteChildren,
+  )
+
+interface appPlaygroundsRouteChildren {
+  appPlaygroundsIdRouteRoute: typeof appPlaygroundsIdRouteRouteWithChildren
+}
+
+const appPlaygroundsRouteChildren: appPlaygroundsRouteChildren = {
+  appPlaygroundsIdRouteRoute: appPlaygroundsIdRouteRouteWithChildren,
+}
+
+const appPlaygroundsRouteWithChildren = appPlaygroundsRoute._addFileChildren(
+  appPlaygroundsRouteChildren,
+)
+
 interface appPromptsIdTabsRouteChildren {
   appPromptsIdTabsSettingsRoute: typeof appPromptsIdTabsSettingsRoute
   appPromptsIdTabsTargetingRoute: typeof appPromptsIdTabsTargetingRoute
@@ -914,7 +975,7 @@ interface appRouteRouteChildren {
   appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
   appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appEnvironmentsRoute: typeof appEnvironmentsRouteWithChildren
-  appPlaygroundsRoute: typeof appPlaygroundsRoute
+  appPlaygroundsRoute: typeof appPlaygroundsRouteWithChildren
   appPromptsRoute: typeof appPromptsRouteWithChildren
   appIndexRoute: typeof appIndexRoute
 }
@@ -924,7 +985,7 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appEnvironmentsRoute: appEnvironmentsRouteWithChildren,
-  appPlaygroundsRoute: appPlaygroundsRoute,
+  appPlaygroundsRoute: appPlaygroundsRouteWithChildren,
   appPromptsRoute: appPromptsRouteWithChildren,
   appIndexRoute: appIndexRoute,
 }

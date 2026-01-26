@@ -1,19 +1,33 @@
+import { useTileWidth } from '@client/hooks/ui/useTileWidth';
 import {
   createFileRoute,
   Link,
+  Outlet,
   useMatches,
+  useNavigate,
+  useParams,
 } from '@tanstack/react-router';
+import clsx from 'clsx';
+import {
+  leftTile,
+  rightTile,
+  twinSplitContainer,
+} from './-components/twin-split.css';
+import { gridElement, workingArea } from './-components/area.css';
+import { Icon } from '@client/components/icons';
+import { ChevronRight, Columns2, Play, Plus } from 'lucide-react';
+import { PlaygroundsDataTable } from './playgrounds/-components/playgrounds-data-table';
+import { useEffect } from 'react';
+import { Breadcrumbs, Button, Header } from '@ui';
 import {
   breadcrumbLink,
   chevronStyle,
   headerGroup,
   headerStyle,
 } from './-components/_layout.css';
-import { Breadcrumbs, Button, Header } from '@ui';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
-import { ChevronRight, Columns2, Play } from 'lucide-react';
-import { Icon } from '@client/components/icons';
-import { gridElement, workingArea } from './-components/area.css';
+import { headerStyles } from './prompts/-components/configs.css';
+import PlaygroundsHeader from './playgrounds/$id/-components/playgrounds-header';
 
 export const Route = createFileRoute('/(app)/playgrounds')({
   component: RouteComponent,
@@ -26,8 +40,11 @@ export const Route = createFileRoute('/(app)/playgrounds')({
 });
 
 function RouteComponent() {
-  const { toggleSidebar } = useSidebarWidth();
+  const { containerRef, setTileWidth } = useTileWidth();
+  const params = useParams({ strict: false });
+  const navigate = useNavigate();
   const matches = useMatches();
+  const { toggleSidebar } = useSidebarWidth();
 
   const breadcrumbItems = matches
     .filter(
@@ -54,6 +71,18 @@ function RouteComponent() {
       };
     });
 
+  const handleNavigateToNew = () => {
+    navigate({ to: '/playgrounds/$id', params: { id: 'new' } });
+  };
+
+  useEffect(() => {
+    if (params?.id) {
+      setTileWidth('25%');
+    } else {
+      setTileWidth('100%');
+    }
+  }, [params?.id]);
+
   return (
     <>
       <Header className={headerStyle}>
@@ -71,12 +100,24 @@ function RouteComponent() {
           <Icon icon={ChevronRight} className={chevronStyle} />
           <Breadcrumbs items={breadcrumbItems} />
         </div>
+        <div className={headerGroup}>
+          <Button variant="outline" scheme="gray" onClick={handleNavigateToNew}>
+            <Icon icon={Plus} className={chevronStyle} />
+            New Playground
+          </Button>
+        </div>
       </Header>
       <div className={gridElement}>
-        <div className={workingArea}>
-          <div style={{ padding: '24px' }}>
-            <h2>Playgrounds</h2>
-            <p>Playground feature coming soon.</p>
+        <div ref={containerRef} className={twinSplitContainer}>
+          <div className={clsx(workingArea, leftTile)}>
+            <div className={headerStyles}></div>
+            <PlaygroundsDataTable />
+          </div>
+          <div className={clsx(workingArea, rightTile)}>
+            <div>
+              <PlaygroundsHeader id={params.id as string} />
+              <Outlet />
+            </div>
           </div>
         </div>
       </div>

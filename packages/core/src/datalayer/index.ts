@@ -5,6 +5,7 @@ import { createConfigVariantDataLayer } from './configVariants';
 import { createEnvironmentDataLayer } from './environments';
 import { createEnvironmentSecretDataLayer } from './environmentSecrets';
 import { createLLMRequestsDataLayer } from './llmRequests';
+import { createPlaygroundDataLayer } from './playgrounds';
 import { createProviderConfigsDataLayer } from './providerConfigs';
 import { createTargetingRulesDataLayer } from './targetingRules';
 import { createVariantDataLayer } from './variants';
@@ -23,6 +24,7 @@ export const createDataLayer = async (db: Kysely<Database>) => {
     ...createEnvironmentDataLayer(db),
     ...createEnvironmentSecretDataLayer(db),
     ...createLLMRequestsDataLayer(db),
+    ...createPlaygroundDataLayer(db),
     ...createProviderConfigsDataLayer(db),
     ...createTargetingRulesDataLayer(db),
     ...createVariantDataLayer(db),
