@@ -9,6 +9,40 @@
  */
 
 /**
+ * Gateway hook result structure (from SSE events)
+ */
+export interface GatewayHookResults {
+  before_request_hooks?: Array<{
+    id: string;
+    verdict: boolean;
+    execution_time: number;
+    checks: Array<{
+      id: string;
+      verdict: boolean;
+      execution_time: number;
+      error?: Error | null;
+      data?: unknown;
+    }>;
+    deny: boolean;
+    type: string;
+  }>;
+  after_request_hooks?: Array<{
+    id: string;
+    verdict: boolean;
+    execution_time: number;
+    checks: Array<{
+      id: string;
+      verdict: boolean;
+      execution_time: number;
+      error?: Error | null;
+      data?: unknown;
+    }>;
+    deny: boolean;
+    type: string;
+  }>;
+}
+
+/**
  * Extracted usage data from streaming response
  */
 export interface StreamingUsage {
@@ -16,6 +50,7 @@ export interface StreamingUsage {
   completionTokens: number;
   totalTokens: number;
   cachedTokens?: number;
+  hookResults?: GatewayHookResults;
 }
 
 /**
@@ -30,6 +65,13 @@ interface StreamChunkUsage {
       cached_tokens?: number;
     };
   };
+}
+
+/**
+ * Hook results SSE event structure
+ */
+interface HookResultsEvent {
+  hook_results?: GatewayHookResults;
 }
 
 /**
@@ -62,6 +104,7 @@ export function createStreamingCostExtractor(): {
   usagePromise: Promise<StreamingUsage | null>;
 } {
   let extractedUsage: StreamingUsage | null = null;
+  let extractedHookResults: GatewayHookResults | undefined = undefined;
   let buffer = '';
   let resolveUsage: (usage: StreamingUsage | null) => void;
 
@@ -70,6 +113,60 @@ export function createStreamingCostExtractor(): {
   });
 
   const decoder = new TextDecoder();
+
+  /**
+   * Parse an SSE message and extract usage/hook_results
+   */
+  function parseSSEMessage(message: string): void {
+    const trimmed = message.trim();
+    if (!trimmed) return;
+
+    // Parse SSE event format: "event: xxx\ndata: {...}"
+    const lines = trimmed.split('\n');
+    let eventType: string | null = null;
+    let dataLine: string | null = null;
+
+    for (const line of lines) {
+      if (line.startsWith('event:')) {
+        eventType = line.slice(6).trim();
+      } else if (line.startsWith('data:')) {
+        dataLine = line.slice(5).trim();
+      }
+    }
+
+    // Skip [DONE] marker
+    if (dataLine === '[DONE]') return;
+    if (!dataLine) return;
+
+    try {
+      const parsed = JSON.parse(dataLine);
+
+      // Check for hook_results event (Anthropic messages format)
+      if (eventType === 'hook_results' || parsed.hook_results) {
+        const hookData = parsed.hook_results || parsed;
+        if (hookData.before_request_hooks || hookData.after_request_hooks) {
+          extractedHookResults = {
+            before_request_hooks: hookData.before_request_hooks,
+            after_request_hooks: hookData.after_request_hooks,
+          };
+        }
+      }
+
+      // Check for usage in this chunk (OpenAI format)
+      const usageData = parsed as StreamChunkUsage;
+      if (usageData.usage) {
+        extractedUsage = {
+          promptTokens: usageData.usage.prompt_tokens ?? 0,
+          completionTokens: usageData.usage.completion_tokens ?? 0,
+          totalTokens: usageData.usage.total_tokens ?? 0,
+          cachedTokens: usageData.usage.prompt_tokens_details?.cached_tokens,
+          hookResults: extractedHookResults,
+        };
+      }
+    } catch {
+      // Ignore parse errors - not all chunks are JSON
+    }
+  }
 
   const stream = new TransformStream<Uint8Array, Uint8Array>({
     transform(chunk, controller) {
@@ -86,59 +183,27 @@ export function createStreamingCostExtractor(): {
       buffer = messages.pop() || '';
 
       for (const message of messages) {
-        const trimmed = message.trim();
-        if (!trimmed) continue;
-
-        // Skip non-data messages
-        if (!trimmed.startsWith('data:')) continue;
-
-        // Extract the JSON part
-        const jsonPart = trimmed.slice(5).trim();
-
-        // Skip [DONE] marker
-        if (jsonPart === '[DONE]') continue;
-
-        try {
-          const parsed: StreamChunkUsage = JSON.parse(jsonPart);
-
-          // Check for usage in this chunk
-          if (parsed.usage) {
-            extractedUsage = {
-              promptTokens: parsed.usage.prompt_tokens ?? 0,
-              completionTokens: parsed.usage.completion_tokens ?? 0,
-              totalTokens: parsed.usage.total_tokens ?? 0,
-              cachedTokens: parsed.usage.prompt_tokens_details?.cached_tokens,
-            };
-          }
-        } catch {
-          // Ignore parse errors - not all chunks are JSON
-        }
+        parseSSEMessage(message);
       }
     },
 
     flush(controller) {
       // Process any remaining buffer
       if (buffer.trim()) {
-        const trimmed = buffer.trim();
-        if (trimmed.startsWith('data:')) {
-          const jsonPart = trimmed.slice(5).trim();
-          if (jsonPart !== '[DONE]') {
-            try {
-              const parsed: StreamChunkUsage = JSON.parse(jsonPart);
-              if (parsed.usage) {
-                extractedUsage = {
-                  promptTokens: parsed.usage.prompt_tokens ?? 0,
-                  completionTokens: parsed.usage.completion_tokens ?? 0,
-                  totalTokens: parsed.usage.total_tokens ?? 0,
-                  cachedTokens:
-                    parsed.usage.prompt_tokens_details?.cached_tokens,
-                };
-              }
-            } catch {
-              // Ignore parse errors
-            }
-          }
-        }
+        parseSSEMessage(buffer);
+      }
+
+      // Add hook results to usage if we have them
+      if (extractedUsage && extractedHookResults) {
+        extractedUsage.hookResults = extractedHookResults;
+      } else if (!extractedUsage && extractedHookResults) {
+        // If we have hook results but no usage, create a minimal usage object
+        extractedUsage = {
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          hookResults: extractedHookResults,
+        };
       }
 
       // Resolve the usage promise

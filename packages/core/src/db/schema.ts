@@ -114,7 +114,7 @@ export const providerGuardrailOverridesSchema = z.object({
 
 // Guardrail results schema - for telemetry tracking
 const guardrailResultSchema = z.object({
-  configId: z.string().uuid(),
+  checkId: z.string(), // Guardrail check ID (format: pluginId.functionId, e.g., "default.regexMatch")
   functionId: z.string(),
   hookType: z.enum(['beforeRequestHook', 'afterRequestHook']),
   verdict: z.boolean(),

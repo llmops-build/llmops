@@ -1,6 +1,26 @@
 import { logger } from '@llmops/core';
 
 /**
+ * Individual guardrail result for telemetry
+ */
+export interface GuardrailResult {
+  checkId: string; // Guardrail check ID (format: pluginId.functionId, e.g., "default.regexMatch")
+  functionId: string;
+  hookType: 'beforeRequestHook' | 'afterRequestHook';
+  verdict: boolean;
+  latencyMs: number;
+}
+
+/**
+ * Guardrail results aggregate for telemetry
+ */
+export interface GuardrailResults {
+  results: GuardrailResult[];
+  action: 'allowed' | 'blocked' | 'logged';
+  totalLatencyMs: number;
+}
+
+/**
  * LLM Request data for batch insertion
  * Mirrors the schema from @llmops/core datalayer
  */
@@ -25,6 +45,7 @@ export interface LLMRequestData {
   isStreaming?: boolean;
   userId?: string | null;
   tags?: Record<string, string>;
+  guardrailResults?: GuardrailResults | null;
 }
 
 /**
