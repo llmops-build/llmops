@@ -8,7 +8,8 @@ import { invalidateManifest } from '@server/services/manifest';
 import { Hono } from 'hono';
 import z from 'zod';
 // Import manifest directly - works in both dev and production builds
-import defaultManifest from '@llmops/gateway/plugins/default/manifest.json';
+// Note: 'with { type: "json" }' is required for Node.js v24+ compatibility
+import defaultManifest from '@llmops/gateway/plugins/default/manifest.json' with { type: 'json' };
 
 // Type for the manifest structure
 interface ManifestFunction {
