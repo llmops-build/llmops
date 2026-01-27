@@ -12,6 +12,7 @@ import {
   Blocks,
   BookOpen,
   ChevronDown,
+  Database,
   Globe,
   LogOut,
   MessageSquare,
@@ -162,6 +163,12 @@ export function AppSidebar() {
           <Link to="/playgrounds">
             <Icon icon={Play} />
             Playgrounds
+          </Link>
+        </SidebarItem>
+        <SidebarItem asChild>
+          <Link to="/datasets">
+            <Icon icon={Database} />
+            Datasets
           </Link>
         </SidebarItem>
         <SidebarItem asChild>
