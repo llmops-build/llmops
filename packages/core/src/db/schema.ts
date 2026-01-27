@@ -96,6 +96,44 @@ export const playgroundsSchema = z.object({
   name: z.string(),
 });
 
+// Datasets table schema - stores dataset metadata
+export const datasetsSchema = z.object({
+  ...baseSchema,
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  // Stats (denormalized for performance)
+  recordCount: z.number().int().default(0),
+  latestVersionNumber: z.number().int().default(1),
+});
+
+// Dataset versions table schema - track dataset snapshots for reproducible experiments
+export const datasetVersionsSchema = z.object({
+  ...baseSchema,
+  datasetId: z.string().uuid(), // FK -> datasets.id
+  versionNumber: z.number().int().min(1), // Auto-incremented per dataset
+  name: z.string().nullable().optional(), // Optional version name
+  description: z.string().nullable().optional(),
+  recordCount: z.number().int().default(0),
+  snapshotHash: z.string(), // SHA-256 hash of record IDs for integrity check
+});
+
+// Dataset records table schema - individual test case records
+export const datasetRecordsSchema = z.object({
+  ...baseSchema,
+  datasetId: z.string().uuid(), // FK -> datasets.id
+  input: z.record(z.string(), z.unknown()), // Required: input data for the test case
+  expected: z.record(z.string(), z.unknown()).nullable().optional(), // Optional: ground truth / ideal output
+  metadata: z.record(z.string(), z.unknown()).default({}), // Arbitrary key-value pairs
+});
+
+// Dataset version records table schema - junction table mapping records to versions
+export const datasetVersionRecordsSchema = z.object({
+  ...baseSchema,
+  datasetVersionId: z.string().uuid(), // FK -> dataset_versions.id
+  datasetRecordId: z.string().uuid(), // FK -> dataset_records.id
+  position: z.number().int().default(0), // Position in version (for ordering)
+});
+
 // Guardrail configs table schema - stores global guardrail configurations
 export const guardrailConfigsSchema = z.object({
   ...baseSchema,
@@ -192,6 +230,10 @@ export type ProviderGuardrailOverride = z.infer<
 >;
 export type GuardrailResult = z.infer<typeof guardrailResultSchema>;
 export type GuardrailResults = z.infer<typeof guardrailResultsSchema>;
+export type Dataset = z.infer<typeof datasetsSchema>;
+export type DatasetVersion = z.infer<typeof datasetVersionsSchema>;
+export type DatasetRecord = z.infer<typeof datasetRecordsSchema>;
+export type DatasetVersionRecord = z.infer<typeof datasetVersionRecordsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 
 /**
@@ -279,6 +321,39 @@ export interface PlaygroundsTable extends BaseTable {
   name: string;
 }
 
+// Datasets table
+export interface DatasetsTable extends BaseTable {
+  name: string;
+  description: string | null;
+  recordCount: ColumnType<number, number | undefined, number | undefined>;
+  latestVersionNumber: ColumnType<number, number | undefined, number | undefined>;
+}
+
+// Dataset versions table
+export interface DatasetVersionsTable extends BaseTable {
+  datasetId: string;
+  versionNumber: number;
+  name: string | null;
+  description: string | null;
+  recordCount: ColumnType<number, number | undefined, number | undefined>;
+  snapshotHash: string;
+}
+
+// Dataset records table
+export interface DatasetRecordsTable extends BaseTable {
+  datasetId: string;
+  input: ColumnType<Record<string, unknown>, string, string>;
+  expected: ColumnType<Record<string, unknown> | null, string | null, string | null>;
+  metadata: ColumnType<Record<string, unknown>, string, string>;
+}
+
+// Dataset version records table (junction)
+export interface DatasetVersionRecordsTable extends BaseTable {
+  datasetVersionId: string;
+  datasetRecordId: string;
+  position: ColumnType<number, number | undefined, number | undefined>;
+}
+
 // Guardrail configs table - global guardrail configurations
 export interface GuardrailConfigsTable extends BaseTable {
   name: string;
@@ -344,6 +419,10 @@ export interface Database {
   playgrounds: PlaygroundsTable;
   guardrail_configs: GuardrailConfigsTable;
   provider_guardrail_overrides: ProviderGuardrailOverridesTable;
+  datasets: DatasetsTable;
+  dataset_versions: DatasetVersionsTable;
+  dataset_records: DatasetRecordsTable;
+  dataset_version_records: DatasetVersionRecordsTable;
   llm_requests: LLMRequestsTable;
 }
 
@@ -563,8 +642,75 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    provider_guardrail_overrides: {
+    datasets: {
       order: 12,
+      schema: datasetsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
+        description: { type: 'text', nullable: true },
+        recordCount: { type: 'integer', default: 0 },
+        latestVersionNumber: { type: 'integer', default: 1 },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    dataset_versions: {
+      order: 13,
+      schema: datasetVersionsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        datasetId: {
+          type: 'uuid',
+          references: { table: 'datasets', column: 'id' },
+        },
+        versionNumber: { type: 'integer' },
+        name: { type: 'text', nullable: true },
+        description: { type: 'text', nullable: true },
+        recordCount: { type: 'integer', default: 0 },
+        snapshotHash: { type: 'text' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+      uniqueConstraints: [{ columns: ['datasetId', 'versionNumber'] }],
+    },
+    dataset_records: {
+      order: 14,
+      schema: datasetRecordsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        datasetId: {
+          type: 'uuid',
+          references: { table: 'datasets', column: 'id' },
+        },
+        input: { type: 'jsonb' },
+        expected: { type: 'jsonb', nullable: true },
+        metadata: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    dataset_version_records: {
+      order: 15,
+      schema: datasetVersionRecordsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        datasetVersionId: {
+          type: 'uuid',
+          references: { table: 'dataset_versions', column: 'id' },
+        },
+        datasetRecordId: {
+          type: 'uuid',
+          references: { table: 'dataset_records', column: 'id' },
+        },
+        position: { type: 'integer', default: 0 },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+      uniqueConstraints: [{ columns: ['datasetVersionId', 'datasetRecordId'] }],
+    },
+    provider_guardrail_overrides: {
+      order: 16,
       schema: providerGuardrailOverridesSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -584,7 +730,7 @@ export const SCHEMA_METADATA = {
       uniqueConstraints: [{ columns: ['providerConfigId', 'guardrailConfigId'] }],
     },
     llm_requests: {
-      order: 13,
+      order: 17,
       schema: llmRequestsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -648,5 +794,9 @@ export const schemas = {
   playgrounds: playgroundsSchema,
   guardrail_configs: guardrailConfigsSchema,
   provider_guardrail_overrides: providerGuardrailOverridesSchema,
+  datasets: datasetsSchema,
+  dataset_versions: datasetVersionsSchema,
+  dataset_records: datasetRecordsSchema,
+  dataset_version_records: datasetVersionRecordsSchema,
   llm_requests: llmRequestsSchema,
 } as const;

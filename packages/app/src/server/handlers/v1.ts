@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import analytics from '@server/handlers/analytics';
 import configs from '@server/handlers/configs';
+import datasets from '@server/handlers/datasets';
 import environments from '@server/handlers/environments';
 import guardrails from '@server/handlers/guardrails';
 import playgrounds from '@server/handlers/playgrounds';
@@ -15,6 +16,7 @@ const app = new Hono()
   .use('*', verifySuperAdmin)
   .route('/analytics', analytics)
   .route('/configs', configs)
+  .route('/datasets', datasets)
   .route('/environments', environments)
   .route('/guardrails', guardrails)
   .route('/playgrounds', playgrounds)
