@@ -7,13 +7,8 @@ import {
 import { invalidateManifest } from '@server/services/manifest';
 import { Hono } from 'hono';
 import z from 'zod';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// ESM-compatible __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Import manifest directly - works in both dev and production builds
+import defaultManifest from '@llmops/gateway/plugins/default/manifest.json';
 
 // Type for the manifest structure
 interface ManifestFunction {
@@ -37,43 +32,8 @@ interface Manifest {
   functions: ManifestFunction[];
 }
 
-// Lazy load the manifest
-let cachedManifest: Manifest | null = null;
-
 function getDefaultManifest(): Manifest {
-  if (cachedManifest) return cachedManifest;
-
-  // Try multiple paths to find the manifest
-  const possiblePaths = [
-    // When running from packages/app
-    path.resolve(__dirname, '../../../../gateway/plugins/default/manifest.json'),
-    // When running from root
-    path.resolve(process.cwd(), 'packages/gateway/plugins/default/manifest.json'),
-    // Relative to app package
-    path.resolve(__dirname, '../../../../../gateway/plugins/default/manifest.json'),
-  ];
-
-  for (const manifestPath of possiblePaths) {
-    try {
-      if (fs.existsSync(manifestPath)) {
-        const content = fs.readFileSync(manifestPath, 'utf-8');
-        cachedManifest = JSON.parse(content) as Manifest;
-        return cachedManifest;
-      }
-    } catch {
-      // Try next path
-    }
-  }
-
-  // Return empty manifest if not found
-  console.warn('Could not find default guardrails manifest');
-  return {
-    id: 'default',
-    name: 'Default',
-    description: 'Default guardrails',
-    credentials: [],
-    functions: [],
-  };
+  return defaultManifest as Manifest;
 }
 
 const app = new Hono()

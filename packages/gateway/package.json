@@ -21,7 +21,8 @@
     "OpenAI"
   ],
   "files": [
-    "dist"
+    "dist",
+    "plugins/default/manifest.json"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -37,6 +38,7 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./plugins/default/manifest.json": "./plugins/default/manifest.json",
     "./package.json": "./package.json"
   },
   "publishConfig": {
