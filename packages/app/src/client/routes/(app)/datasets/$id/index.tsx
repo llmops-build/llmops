@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { datasetByIdQueryOptions } from '@client/hooks/queries/useDatasetById';
 import type { RouterContext } from '@client/routes/__root';
 import NewDatasetState from './-components/new-dataset-state';
+import { DatasetRecordsTable } from './-components/dataset-records-table';
 
 export const Route = createFileRoute('/(app)/datasets/$id/')({
   component: RouteComponent,
@@ -23,13 +24,8 @@ export const Route = createFileRoute('/(app)/datasets/$id/')({
 
 function RouteComponent() {
   const { id } = Route.useParams();
+
   if (id === 'new') return <NewDatasetState />;
 
-  // For now, just show a placeholder for existing datasets
-  // This can be expanded later with dataset-specific content
-  return (
-    <div style={{ padding: '24px' }}>
-      <p>Dataset content will appear here.</p>
-    </div>
-  );
+  return <DatasetRecordsTable datasetId={id} />;
 }

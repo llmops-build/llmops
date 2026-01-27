@@ -50,6 +50,7 @@ import { Route as appPromptsIdTabsTargetingRouteImport } from './routes/(app)/pr
 import { Route as appPromptsIdTabsSettingsRouteImport } from './routes/(app)/prompts/$id/_tabs/settings'
 import { Route as appEnvironmentsEnvironmentTabsSettingsRouteImport } from './routes/(app)/environments/$environment/_tabs/settings'
 import { Route as appEnvironmentsEnvironmentTabsSecretsRouteImport } from './routes/(app)/environments/$environment/_tabs/secrets'
+import { Route as appDatasetsIdRecordsRecordIdRouteImport } from './routes/(app)/datasets/$id/records/$recordId'
 import { Route as appPromptsIdVariantsVariantsVariantRouteImport } from './routes/(app)/prompts/$id/_variants/variants/$variant'
 import { Route as appPromptsIdTargetingTargetingEnvironmentRouteImport } from './routes/(app)/prompts/$id/_targeting/targeting/$environment'
 
@@ -267,6 +268,12 @@ const appEnvironmentsEnvironmentTabsSecretsRoute =
     path: '/secrets',
     getParentRoute: () => appEnvironmentsEnvironmentTabsRoute,
   } as any)
+const appDatasetsIdRecordsRecordIdRoute =
+  appDatasetsIdRecordsRecordIdRouteImport.update({
+    id: '/records/$recordId',
+    path: '/records/$recordId',
+    getParentRoute: () => appDatasetsIdRouteRoute,
+  } as any)
 const appPromptsIdVariantsVariantsVariantRoute =
   appPromptsIdVariantsVariantsVariantRouteImport.update({
     id: '/variants/$variant',
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
   '/prompts/$id/': typeof appPromptsIdIndexRoute
+  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
@@ -341,6 +349,7 @@ export interface FileRoutesByTo {
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/datasets/$id': typeof appDatasetsIdIndexRoute
   '/playgrounds/$id': typeof appPlaygroundsIdIndexRoute
+  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
@@ -387,6 +396,7 @@ export interface FileRoutesById {
   '/(app)/environments/$environment/': typeof appEnvironmentsEnvironmentIndexRoute
   '/(app)/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
   '/(app)/prompts/$id/': typeof appPromptsIdIndexRoute
+  '/(app)/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/(app)/environments/$environment/_tabs/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/(app)/environments/$environment/_tabs/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
   '/(app)/prompts/$id/_tabs/settings': typeof appPromptsIdTabsSettingsRoute
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/environments/$environment/'
     | '/playgrounds/$id/'
     | '/prompts/$id/'
+    | '/datasets/$id/records/$recordId'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
     | '/prompts/$id/settings'
@@ -458,6 +469,7 @@ export interface FileRouteTypes {
     | '/settings/workspace-general'
     | '/datasets/$id'
     | '/playgrounds/$id'
+    | '/datasets/$id/records/$recordId'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
     | '/prompts/$id/settings'
@@ -503,6 +515,7 @@ export interface FileRouteTypes {
     | '/(app)/environments/$environment/'
     | '/(app)/playgrounds/$id/'
     | '/(app)/prompts/$id/'
+    | '/(app)/datasets/$id/records/$recordId'
     | '/(app)/environments/$environment/_tabs/secrets'
     | '/(app)/environments/$environment/_tabs/settings'
     | '/(app)/prompts/$id/_tabs/settings'
@@ -807,6 +820,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appEnvironmentsEnvironmentTabsSecretsRouteImport
       parentRoute: typeof appEnvironmentsEnvironmentTabsRoute
     }
+    '/(app)/datasets/$id/records/$recordId': {
+      id: '/(app)/datasets/$id/records/$recordId'
+      path: '/records/$recordId'
+      fullPath: '/datasets/$id/records/$recordId'
+      preLoaderRoute: typeof appDatasetsIdRecordsRecordIdRouteImport
+      parentRoute: typeof appDatasetsIdRouteRoute
+    }
     '/(app)/prompts/$id/_variants/variants/$variant': {
       id: '/(app)/prompts/$id/_variants/variants/$variant'
       path: '/variants/$variant'
@@ -919,10 +939,12 @@ const appSettingsRouteRouteWithChildren =
 
 interface appDatasetsIdRouteRouteChildren {
   appDatasetsIdIndexRoute: typeof appDatasetsIdIndexRoute
+  appDatasetsIdRecordsRecordIdRoute: typeof appDatasetsIdRecordsRecordIdRoute
 }
 
 const appDatasetsIdRouteRouteChildren: appDatasetsIdRouteRouteChildren = {
   appDatasetsIdIndexRoute: appDatasetsIdIndexRoute,
+  appDatasetsIdRecordsRecordIdRoute: appDatasetsIdRecordsRecordIdRoute,
 }
 
 const appDatasetsIdRouteRouteWithChildren =
