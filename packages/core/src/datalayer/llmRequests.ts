@@ -6,6 +6,26 @@ import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 /**
+ * Schema for individual guardrail result in telemetry
+ */
+const guardrailResultSchema = z.object({
+  checkId: z.string(), // Guardrail check ID (format: pluginId.functionId, e.g., "default.regexMatch")
+  functionId: z.string(),
+  hookType: z.enum(['beforeRequestHook', 'afterRequestHook']),
+  verdict: z.boolean(),
+  latencyMs: z.number(),
+});
+
+/**
+ * Schema for guardrail results aggregate
+ */
+const guardrailResultsSchema = z.object({
+  results: z.array(guardrailResultSchema),
+  action: z.enum(['allowed', 'blocked', 'logged']),
+  totalLatencyMs: z.number(),
+});
+
+/**
  * Schema for inserting a new LLM request log
  */
 const insertLLMRequestSchema = z.object({
@@ -29,6 +49,7 @@ const insertLLMRequestSchema = z.object({
   isStreaming: z.boolean().default(false),
   userId: z.string().nullable().optional(),
   tags: z.record(z.string(), z.string()).default({}),
+  guardrailResults: guardrailResultsSchema.nullable().optional(),
 });
 
 export type LLMRequestInsert = z.infer<typeof insertLLMRequestSchema>;
@@ -127,6 +148,9 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         isStreaming: req.isStreaming,
         userId: req.userId ?? null,
         tags: JSON.stringify(req.tags),
+        guardrailResults: req.guardrailResults
+          ? JSON.stringify(req.guardrailResults)
+          : null,
         createdAt: now,
         updatedAt: now,
       }));
@@ -172,6 +196,9 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           isStreaming: req.isStreaming,
           userId: req.userId ?? null,
           tags: JSON.stringify(req.tags),
+          guardrailResults: req.guardrailResults
+            ? JSON.stringify(req.guardrailResults)
+            : null,
           createdAt: now,
           updatedAt: now,
         })
