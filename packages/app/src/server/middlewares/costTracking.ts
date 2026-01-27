@@ -8,6 +8,7 @@ import {
 import {
   getGlobalBatchWriter,
   type LLMRequestData,
+  type GuardrailResults,
 } from '@server/services/batchWriter';
 
 /**
@@ -132,10 +133,108 @@ interface OpenAIUsage {
 }
 
 /**
- * OpenAI-compatible response body
+ * Gateway guardrail check result from hook execution
+ */
+interface GatewayGuardrailCheckResult {
+  id: string;
+  verdict: boolean;
+  execution_time: number;
+  error?: Error | null;
+  data?: unknown;
+}
+
+/**
+ * Gateway guardrail/hook result structure
+ */
+interface GatewayHookResult {
+  id: string;
+  verdict: boolean;
+  execution_time: number;
+  checks: GatewayGuardrailCheckResult[];
+  deny: boolean;
+  type: string;
+}
+
+/**
+ * Gateway hook_results structure returned in response body
+ */
+interface GatewayHookResults {
+  before_request_hooks?: GatewayHookResult[];
+  after_request_hooks?: GatewayHookResult[];
+}
+
+/**
+ * OpenAI-compatible response body with hook results
  */
 interface OpenAIResponse {
   usage?: OpenAIUsage;
+  hook_results?: GatewayHookResults;
+}
+
+/**
+ * Transform gateway hook results to our schema format for telemetry
+ */
+function transformHookResultsToGuardrailResults(
+  hookResults: GatewayHookResults | undefined,
+  wasBlocked: boolean
+): GuardrailResults | null {
+  if (!hookResults) return null;
+
+  const beforeHooks = hookResults.before_request_hooks || [];
+  const afterHooks = hookResults.after_request_hooks || [];
+
+  // If no hooks were executed, return null
+  if (beforeHooks.length === 0 && afterHooks.length === 0) {
+    return null;
+  }
+
+  const results: GuardrailResults['results'] = [];
+  let totalLatencyMs = 0;
+
+  // Process before request hooks
+  for (const hook of beforeHooks) {
+    totalLatencyMs += hook.execution_time;
+    for (const check of hook.checks) {
+      results.push({
+        checkId: check.id, // Guardrail check ID (format: pluginId.functionId)
+        functionId: check.id.split('.')[1] || check.id,
+        hookType: 'beforeRequestHook',
+        verdict: check.verdict,
+        latencyMs: check.execution_time,
+      });
+    }
+  }
+
+  // Process after request hooks
+  for (const hook of afterHooks) {
+    totalLatencyMs += hook.execution_time;
+    for (const check of hook.checks) {
+      results.push({
+        checkId: check.id,
+        functionId: check.id.split('.')[1] || check.id,
+        hookType: 'afterRequestHook',
+        verdict: check.verdict,
+        latencyMs: check.execution_time,
+      });
+    }
+  }
+
+  // Determine action based on results
+  const anyFailed = results.some((r) => !r.verdict);
+  let action: GuardrailResults['action'];
+  if (wasBlocked) {
+    action = 'blocked';
+  } else if (anyFailed) {
+    action = 'logged'; // Failed but not blocked (on_fail: 'log')
+  } else {
+    action = 'allowed';
+  }
+
+  return {
+    results,
+    action,
+    totalLatencyMs,
+  };
 }
 
 /**
@@ -340,6 +439,15 @@ export function createCostTrackingMiddleware(
       // Process usage asynchronously after stream completes
       usagePromise
         .then(async (usage) => {
+          // For streaming, guardrail results are sent as SSE events
+          // The wrapStreamingResponse extracts hook_results if present
+          const guardrailResults = usage?.hookResults
+            ? transformHookResultsToGuardrailResults(
+                usage.hookResults,
+                statusCode === 446
+              )
+            : null;
+
           await processUsageAndLog({
             requestId,
             provider,
@@ -360,6 +468,7 @@ export function createCostTrackingMiddleware(
                   cachedTokens: usage.cachedTokens,
                 }
               : null,
+            guardrailResults,
             tags: customTags,
             batchWriter,
             trackErrors,
@@ -372,13 +481,14 @@ export function createCostTrackingMiddleware(
           );
         });
     } else {
-      // Non-streaming: extract usage from response body
+      // Non-streaming: extract usage and hook_results from response body
       let usage: {
         promptTokens: number;
         completionTokens: number;
         totalTokens: number;
         cachedTokens?: number;
       } | null = null;
+      let guardrailResults: GuardrailResults | null = null;
 
       try {
         const clonedResponse = response.clone();
@@ -392,6 +502,21 @@ export function createCostTrackingMiddleware(
             cachedTokens:
               responseBody.usage.prompt_tokens_details?.cached_tokens,
           };
+        }
+
+        // Extract guardrail results from hook_results
+        if (responseBody.hook_results) {
+          // Check if request was blocked (status 446 indicates guardrail failure)
+          const wasBlocked = statusCode === 446;
+          guardrailResults = transformHookResultsToGuardrailResults(
+            responseBody.hook_results,
+            wasBlocked
+          );
+          if (guardrailResults) {
+            log(
+              `Extracted guardrail results: ${guardrailResults.results.length} checks, action=${guardrailResults.action}`
+            );
+          }
         }
       } catch {
         log('Failed to parse response body for usage');
@@ -411,6 +536,7 @@ export function createCostTrackingMiddleware(
         latencyMs,
         isStreaming: false,
         usage,
+        guardrailResults,
         tags: customTags,
         batchWriter,
         trackErrors,
@@ -441,6 +567,7 @@ async function processUsageAndLog(params: {
     totalTokens: number;
     cachedTokens?: number;
   } | null;
+  guardrailResults?: GuardrailResults | null;
   tags?: Record<string, string>;
   batchWriter: ReturnType<typeof getGlobalBatchWriter>;
   trackErrors: boolean;
@@ -459,6 +586,7 @@ async function processUsageAndLog(params: {
     latencyMs,
     isStreaming,
     usage,
+    guardrailResults,
     tags = {},
     batchWriter,
     trackErrors,
@@ -540,6 +668,7 @@ async function processUsageAndLog(params: {
     latencyMs,
     isStreaming,
     tags,
+    guardrailResults: guardrailResults || null,
   };
 
   // Enqueue for batch insert
