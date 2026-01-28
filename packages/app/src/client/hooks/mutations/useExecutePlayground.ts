@@ -34,6 +34,7 @@ export type CellState = {
   resultId: string;
   columnId: string;
   recordId: string | null;
+  inputVariables?: Record<string, unknown>;
   status: 'pending' | 'running' | 'completed' | 'failed';
   output: string;
   error?: string;
