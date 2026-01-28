@@ -1,3 +1,4 @@
+import { playgroundColumnSchema } from '@llmops/core';
 import { zv } from '@server/lib/zv';
 import {
   clientErrorResponse,
@@ -6,8 +7,13 @@ import {
 } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import runs from './runs';
+import execute from './execute';
 
 const app = new Hono()
+  // Mount sub-routers
+  .route('/:id/runs', runs)
+  .route('/:id/execute', execute)
   // Create a new playground
   .post(
     '/',
@@ -15,14 +21,20 @@ const app = new Hono()
       'json',
       z.object({
         name: z.string().min(1),
+        datasetId: z.string().uuid().nullable().optional(),
+        columns: z.array(playgroundColumnSchema).nullable().optional(),
       })
     ),
     async (c) => {
       const db = c.get('db');
-      const { name } = c.req.valid('json');
+      const { name, datasetId, columns } = c.req.valid('json');
 
       try {
-        const playground = await db.createNewPlayground({ name });
+        const playground = await db.createNewPlayground({
+          name,
+          datasetId,
+          columns,
+        });
 
         if (!playground) {
           return c.json(
@@ -97,17 +109,21 @@ const app = new Hono()
       'json',
       z.object({
         name: z.string().min(1).optional(),
+        datasetId: z.string().uuid().nullable().optional(),
+        columns: z.array(playgroundColumnSchema).nullable().optional(),
       })
     ),
     async (c) => {
       const db = c.get('db');
       const { id } = c.req.valid('param');
-      const body = c.req.valid('json');
+      const { name, datasetId, columns } = c.req.valid('json');
 
       try {
         const playground = await db.updatePlayground({
           playgroundId: id,
-          ...body,
+          name,
+          datasetId,
+          columns,
         });
         if (!playground) {
           return c.json(clientErrorResponse('Playground not found', 404), 404);

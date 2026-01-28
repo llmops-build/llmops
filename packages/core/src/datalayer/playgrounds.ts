@@ -1,16 +1,21 @@
 import { LLMOpsError } from '@/error';
 import type { Database } from '@/schemas';
+import { playgroundColumnSchema } from '@/schemas';
 import type { Kysely } from 'kysely';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
 const createNewPlayground = z.object({
   name: z.string(),
+  datasetId: z.string().uuid().nullable().optional(),
+  columns: z.array(playgroundColumnSchema).nullable().optional(),
 });
 
 const updatePlayground = z.object({
   playgroundId: z.uuidv4(),
   name: z.string().optional(),
+  datasetId: z.string().uuid().nullable().optional(),
+  columns: z.array(playgroundColumnSchema).nullable().optional(),
 });
 
 const getPlaygroundById = z.object({
@@ -35,13 +40,15 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { name } = value.data;
+      const { name, datasetId, columns } = value.data;
 
       return db
         .insertInto('playgrounds')
         .values({
           id: randomUUID(),
           name,
+          datasetId: datasetId ?? null,
+          columns: columns ? JSON.stringify(columns) : null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
@@ -53,12 +60,15 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { playgroundId, name } = value.data;
+      const { playgroundId, name, datasetId, columns } = value.data;
 
       const updateData: Record<string, unknown> = {
         updatedAt: new Date().toISOString(),
       };
       if (name !== undefined) updateData.name = name;
+      if (datasetId !== undefined) updateData.datasetId = datasetId;
+      if (columns !== undefined)
+        updateData.columns = columns ? JSON.stringify(columns) : null;
 
       return db
         .updateTable('playgrounds')

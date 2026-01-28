@@ -90,10 +90,62 @@ export const providerConfigsSchema = z.object({
   enabled: z.boolean().default(true), // Toggle without deleting
 });
 
+// Playground column schema (stored as JSON array in playgrounds.columns)
+export const playgroundColumnSchema = z.object({
+  id: z.string().uuid(), // Client-generated for React keys & result mapping
+  name: z.string(),
+  position: z.number().int().min(0),
+  providerConfigId: z.string().uuid(), // FK to provider_configs - get slug for gateway calls
+  modelName: z.string(),
+  messages: z.array(
+    z.object({
+      role: z.enum(['system', 'user', 'assistant']),
+      content: z.string(),
+    })
+  ),
+  temperature: z.number().nullable().optional(),
+  maxTokens: z.number().int().nullable().optional(),
+  topP: z.number().nullable().optional(),
+  frequencyPenalty: z.number().nullable().optional(),
+  presencePenalty: z.number().nullable().optional(),
+});
+
 // Playgrounds table schema - stores playground configurations
 export const playgroundsSchema = z.object({
   ...baseSchema,
   name: z.string(),
+  datasetId: z.string().uuid().nullable().optional(), // FK to datasets
+  columns: z.array(playgroundColumnSchema).nullable(), // JSON column for prompt configurations
+});
+
+// Playground runs table schema - execution run metadata
+export const playgroundRunsSchema = z.object({
+  ...baseSchema,
+  playgroundId: z.string().uuid(),
+  datasetId: z.string().uuid().nullable(),
+  datasetVersionId: z.string().uuid().nullable(),
+  status: z.enum(['pending', 'running', 'completed', 'failed', 'cancelled']),
+  startedAt: z.date().nullable(),
+  completedAt: z.date().nullable(),
+  totalRecords: z.number().int().default(0),
+  completedRecords: z.number().int().default(0),
+});
+
+// Playground results table schema - individual execution results
+export const playgroundResultsSchema = z.object({
+  ...baseSchema,
+  runId: z.string().uuid(),
+  columnId: z.string().uuid(), // References playgroundColumn.id (from JSON)
+  datasetRecordId: z.string().uuid().nullable(),
+  inputVariables: z.record(z.string(), z.unknown()),
+  outputContent: z.string().nullable(),
+  status: z.enum(['pending', 'running', 'completed', 'failed']),
+  error: z.string().nullable(),
+  latencyMs: z.number().int().nullable(),
+  promptTokens: z.number().int().nullable(),
+  completionTokens: z.number().int().nullable(),
+  totalTokens: z.number().int().nullable(),
+  cost: z.number().int().nullable(), // In micro-dollars
 });
 
 // Datasets table schema - stores dataset metadata
@@ -223,7 +275,10 @@ export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
 export type ProviderConfig = z.infer<typeof providerConfigsSchema>;
+export type PlaygroundColumn = z.infer<typeof playgroundColumnSchema>;
 export type Playground = z.infer<typeof playgroundsSchema>;
+export type PlaygroundRun = z.infer<typeof playgroundRunsSchema>;
+export type PlaygroundResult = z.infer<typeof playgroundResultsSchema>;
 export type GuardrailConfig = z.infer<typeof guardrailConfigsSchema>;
 export type ProviderGuardrailOverride = z.infer<
   typeof providerGuardrailOverridesSchema
@@ -319,6 +374,36 @@ export interface ProviderConfigsTable extends BaseTable {
 // Playgrounds table
 export interface PlaygroundsTable extends BaseTable {
   name: string;
+  datasetId: string | null;
+  columns: ColumnType<PlaygroundColumn[] | null, string | null, string | null>;
+}
+
+// Playground runs table
+export interface PlaygroundRunsTable extends BaseTable {
+  playgroundId: string;
+  datasetId: string | null;
+  datasetVersionId: string | null;
+  status: string;
+  startedAt: ColumnType<Date | null, string | null, string | null>;
+  completedAt: ColumnType<Date | null, string | null, string | null>;
+  totalRecords: ColumnType<number, number | undefined, number | undefined>;
+  completedRecords: ColumnType<number, number | undefined, number | undefined>;
+}
+
+// Playground results table
+export interface PlaygroundResultsTable extends BaseTable {
+  runId: string;
+  columnId: string;
+  datasetRecordId: string | null;
+  inputVariables: ColumnType<Record<string, unknown>, string, string>;
+  outputContent: string | null;
+  status: string;
+  error: string | null;
+  latencyMs: number | null;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  cost: number | null;
 }
 
 // Datasets table
@@ -417,6 +502,8 @@ export interface Database {
   workspace_settings: WorkspaceSettingsTable;
   provider_configs: ProviderConfigsTable;
   playgrounds: PlaygroundsTable;
+  playground_runs: PlaygroundRunsTable;
+  playground_results: PlaygroundResultsTable;
   guardrail_configs: GuardrailConfigsTable;
   provider_guardrail_overrides: ProviderGuardrailOverridesTable;
   datasets: DatasetsTable;
@@ -621,6 +708,68 @@ export const SCHEMA_METADATA = {
       fields: {
         id: { type: 'uuid', primaryKey: true },
         name: { type: 'text' },
+        datasetId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'datasets', column: 'id' },
+        },
+        columns: { type: 'jsonb', nullable: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    playground_runs: {
+      order: 18,
+      schema: playgroundRunsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        playgroundId: {
+          type: 'uuid',
+          references: { table: 'playgrounds', column: 'id' },
+        },
+        datasetId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'datasets', column: 'id' },
+        },
+        datasetVersionId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'dataset_versions', column: 'id' },
+        },
+        status: { type: 'text' },
+        startedAt: { type: 'timestamp', nullable: true },
+        completedAt: { type: 'timestamp', nullable: true },
+        totalRecords: { type: 'integer', default: 0 },
+        completedRecords: { type: 'integer', default: 0 },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    playground_results: {
+      order: 19,
+      schema: playgroundResultsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        runId: {
+          type: 'uuid',
+          references: { table: 'playground_runs', column: 'id' },
+        },
+        columnId: { type: 'uuid' }, // References JSON column ID, no FK
+        datasetRecordId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'dataset_records', column: 'id' },
+        },
+        inputVariables: { type: 'jsonb', default: '{}' },
+        outputContent: { type: 'text', nullable: true },
+        status: { type: 'text' },
+        error: { type: 'text', nullable: true },
+        latencyMs: { type: 'integer', nullable: true },
+        promptTokens: { type: 'integer', nullable: true },
+        completionTokens: { type: 'integer', nullable: true },
+        totalTokens: { type: 'integer', nullable: true },
+        cost: { type: 'integer', nullable: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
@@ -792,6 +941,9 @@ export const schemas = {
   workspace_settings: workspaceSettingsSchema,
   provider_configs: providerConfigsSchema,
   playgrounds: playgroundsSchema,
+  playground_columns: playgroundColumnSchema,
+  playground_runs: playgroundRunsSchema,
+  playground_results: playgroundResultsSchema,
   guardrail_configs: guardrailConfigsSchema,
   provider_guardrail_overrides: providerGuardrailOverridesSchema,
   datasets: datasetsSchema,

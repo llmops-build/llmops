@@ -1,9 +1,12 @@
 import { hc } from '@client/lib/hc';
 import { queryOptions, useQuery } from '@tanstack/react-query';
+import type { PlaygroundColumn } from '@llmops/core';
 
 export type Playground = {
   id: string;
   name: string;
+  datasetId: string | null;
+  columns: PlaygroundColumn[] | null;
   createdAt: string;
   updatedAt: string;
 };

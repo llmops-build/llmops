@@ -321,6 +321,9 @@ importers:
       nunjucks:
         specifier: ^3.2.4
         version: 3.2.4(chokidar@3.6.0)
+      openai:
+        specifier: ^6.10.0
+        version: 6.10.0(ws@8.18.3)(zod@4.3.5)
       react:
         specifier: ^19.2.1
         version: 19.2.3
