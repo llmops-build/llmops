@@ -4,7 +4,7 @@ import { calc } from '@vanilla-extract/css-utils';
 
 export const variantHeader = style({
   display: 'flex',
-  justifyContent: 'flex-end',
+  justifyContent: 'space-between',
   alignItems: 'center',
   gap: spacing.sm,
   width: '100%',
@@ -18,6 +18,12 @@ export const variantHeader = style({
   left: '0',
   backgroundColor: colors.background,
   zIndex: 10,
+});
+
+export const variantHeaderLeft = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
 });
 
 export const variantHeaderActions = style({
@@ -194,4 +200,29 @@ export const actionsRow = style({
   gap: spacing.sm,
   marginTop: spacing.sm,
   flexWrap: 'wrap',
+});
+
+export const evaluateMenuPopup = style({
+  backgroundColor: colors.gray1,
+  border: `1px solid ${colors.gray4}`,
+  borderRadius: spacing.xs,
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+  padding: spacing.xs,
+  minWidth: '140px',
+  zIndex: 100,
+});
+
+export const evaluateMenuItem = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  padding: `${spacing.sm} ${spacing.md}`,
+  borderRadius: spacing.xs,
+  cursor: 'pointer',
+  fontSize: '0.8125rem',
+  color: colors.gray11,
+  transition: 'background-color 150ms ease',
+  ':hover': {
+    backgroundColor: colors.gray3,
+  },
 });

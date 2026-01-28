@@ -1,4 +1,7 @@
-import { Combobox } from '@ui';
+import { Combobox, Button } from '@ui';
+import { Menu as BaseMenu } from '@base-ui/react';
+import { Icon } from '@client/components/icons';
+import { ChevronDown, Play } from 'lucide-react';
 import {
   createFileRoute,
   useBlocker,
@@ -8,7 +11,10 @@ import { useForm } from 'react-hook-form';
 import {
   variantContainer,
   variantHeader,
+  variantHeaderLeft,
   variantHeaderActions,
+  evaluateMenuPopup,
+  evaluateMenuItem,
 } from '../-components/variants.css';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import type { Message } from '../-components/message-block';
@@ -351,11 +357,19 @@ function RouteComponent() {
     }
   };
 
+  const handleEvaluateInPlayground = () => {
+    navigate({
+      to: '/playgrounds/$id',
+      params: { id: 'new' },
+      search: { configId, variantId: variant === 'new' ? undefined : variant },
+    });
+  };
+
   return (
     <div>
       <div className={variantHeader}>
-        {/* Version selector and save button */}
-        <div className={variantHeaderActions}>
+        {/* Version selector on the left */}
+        <div className={variantHeaderLeft}>
           {!isNewVariant && versionOptions.length > 0 && (
             <Combobox<VariantVersion>
               items={versionOptions}
@@ -380,6 +394,32 @@ function RouteComponent() {
               }
             />
           )}
+        </div>
+        {/* Evaluate in and save button on the right */}
+        <div className={variantHeaderActions}>
+          <BaseMenu.Root>
+            <BaseMenu.Trigger
+              render={
+                <Button variant="outline" scheme="gray">
+                  Evaluate in
+                  <Icon icon={ChevronDown} />
+                </Button>
+              }
+            />
+            <BaseMenu.Portal>
+              <BaseMenu.Positioner sideOffset={4} align="end">
+                <BaseMenu.Popup className={evaluateMenuPopup}>
+                  <BaseMenu.Item
+                    className={evaluateMenuItem}
+                    onClick={handleEvaluateInPlayground}
+                  >
+                    <Icon icon={Play} />
+                    Playground
+                  </BaseMenu.Item>
+                </BaseMenu.Popup>
+              </BaseMenu.Positioner>
+            </BaseMenu.Portal>
+          </BaseMenu.Root>
           <SaveVariantPopup
             isNewVariant={isNewVariant}
             onSave={handleSave}
