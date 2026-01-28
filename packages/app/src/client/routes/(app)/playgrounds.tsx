@@ -116,7 +116,7 @@ function RouteComponent() {
           <div className={clsx(workingArea, rightTile)}>
             <div>
               <PlaygroundsHeader id={params.id as string} />
-              <Outlet />
+              <Outlet key={`${params.id}-${(params as { rowId?: string }).rowId ?? 'index'}`} />
             </div>
           </div>
         </div>
