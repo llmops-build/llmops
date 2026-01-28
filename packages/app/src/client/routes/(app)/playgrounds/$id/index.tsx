@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
   DndContext,
@@ -21,7 +21,6 @@ import {
   usePlaygroundById,
 } from '@client/hooks/queries/usePlaygroundById';
 import { useUpdatePlayground } from '@client/hooks/mutations/useUpdatePlayground';
-import { useDatasets } from '@client/hooks/queries/useDatasets';
 import type { RouterContext } from '@client/routes/__root';
 import type { PlaygroundColumn } from '@llmops/core';
 import { Button } from '@ui';
@@ -29,6 +28,7 @@ import { Icon } from '@client/components/icons';
 import { Plus, Play } from 'lucide-react';
 import NewPlaygroundState from './-components/new-playground-state';
 import PromptColumn from './-components/prompt-column';
+import DatasetSelector from './-components/dataset-selector';
 import {
   container,
   toolbar,
@@ -41,9 +41,6 @@ import {
   addColumnButton,
   bottomSection,
   bottomToolbar,
-  datasetSelector,
-  datasetLabel,
-  datasetSelect,
   resultsPlaceholder,
 } from './index.css';
 
@@ -85,7 +82,6 @@ type SaveStatus = 'idle' | 'saving' | 'saved';
 
 function PlaygroundContent({ id }: { id: string }) {
   const { data: playground, isLoading } = usePlaygroundById(id);
-  const { data: datasets } = useDatasets();
   const updatePlayground = useUpdatePlayground();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [localColumns, setLocalColumns] = useState<PlaygroundColumn[] | null>(
@@ -175,8 +171,7 @@ function PlaygroundContent({ id }: { id: string }) {
     }, 2000);
   };
 
-  const handleDatasetChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const newDatasetId = e.target.value || null;
+  const handleDatasetChange = (newDatasetId: string | null) => {
     setLocalDatasetId(newDatasetId);
 
     // Clear any pending debounce
@@ -327,21 +322,8 @@ function PlaygroundContent({ id }: { id: string }) {
       </div>
       <div className={bottomSection}>
         <div className={bottomToolbar}>
-          <div className={datasetSelector}>
-            <span className={datasetLabel}>Dataset:</span>
-            <select
-              className={datasetSelect}
-              value={datasetId ?? ''}
-              onChange={handleDatasetChange}
-            >
-              <option value="">No dataset selected</option>
-              {datasets?.map((dataset) => (
-                <option key={dataset.id} value={dataset.id}>
-                  {dataset.name} ({dataset.recordCount} records)
-                </option>
-              ))}
-            </select>
-          </div>
+          <div />
+          <DatasetSelector value={datasetId} onChange={handleDatasetChange} />
         </div>
         <div className={resultsPlaceholder}>
           {datasetId

@@ -115,35 +115,6 @@ export const bottomToolbar = style({
   borderBottom: `1px solid ${colors.gray4}`,
 });
 
-export const datasetSelector = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: spacing.sm,
-});
-
-export const datasetLabel = style({
-  fontSize: '13px',
-  color: colors.gray11,
-});
-
-export const datasetSelect = style({
-  fontSize: '13px',
-  padding: `${spacing.xs} ${spacing.sm}`,
-  borderRadius: spacing.xs,
-  border: `1px solid ${colors.gray6}`,
-  backgroundColor: colors.gray2,
-  color: colors.gray12,
-  cursor: 'pointer',
-  minWidth: '200px',
-  ':hover': {
-    borderColor: colors.gray8,
-  },
-  ':focus': {
-    outline: 'none',
-    borderColor: colors.blue9,
-  },
-});
-
 export const resultsPlaceholder = style({
   display: 'flex',
   alignItems: 'center',
