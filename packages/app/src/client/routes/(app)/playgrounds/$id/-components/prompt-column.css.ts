@@ -7,9 +7,8 @@ export const columnCard = style({
   backgroundColor: colors.gray1,
   border: `1px solid ${colors.gray4}`,
   borderRadius: spacing.sm,
-  minWidth: '400px',
-  maxWidth: '600px',
-  flex: '1 1 400px',
+  width: '400px',
+  flexShrink: 0,
 });
 
 export const columnHeader = style({

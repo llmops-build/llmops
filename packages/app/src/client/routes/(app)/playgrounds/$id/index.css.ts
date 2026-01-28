@@ -5,7 +5,7 @@ import { calc } from '@vanilla-extract/css-utils';
 export const container = style({
   display: 'flex',
   flexDirection: 'column',
-  minHeight: calc('100%').subtract(spacing['2xl']).toString(),
+  height: calc('100%').subtract(spacing['2xl']).toString(),
 });
 
 export const toolbar = style({
@@ -33,8 +33,8 @@ export const toolbarRight = style({
 });
 
 export const content = style({
-  flex: 1,
   padding: spacing.sm,
+  flexShrink: 0,
 });
 
 export const infoText = style({
@@ -95,4 +95,60 @@ export const addColumnButton = style({
     borderColor: colors.gray8,
     color: colors.gray11,
   },
+});
+
+export const bottomSection = style({
+  borderTop: `1px solid ${colors.gray4}`,
+  marginTop: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+});
+
+export const bottomToolbar = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: `${spacing.sm} ${spacing.md}`,
+  height: spacing['2xl'],
+  backgroundColor: colors.background,
+  borderBottom: `1px solid ${colors.gray4}`,
+});
+
+export const datasetSelector = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+});
+
+export const datasetLabel = style({
+  fontSize: '13px',
+  color: colors.gray11,
+});
+
+export const datasetSelect = style({
+  fontSize: '13px',
+  padding: `${spacing.xs} ${spacing.sm}`,
+  borderRadius: spacing.xs,
+  border: `1px solid ${colors.gray6}`,
+  backgroundColor: colors.gray2,
+  color: colors.gray12,
+  cursor: 'pointer',
+  minWidth: '200px',
+  ':hover': {
+    borderColor: colors.gray8,
+  },
+  ':focus': {
+    outline: 'none',
+    borderColor: colors.blue9,
+  },
+});
+
+export const resultsPlaceholder = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flex: 1,
+  color: colors.gray9,
+  fontSize: '14px',
 });

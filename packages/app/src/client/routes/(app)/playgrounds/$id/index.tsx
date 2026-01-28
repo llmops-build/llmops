@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
   DndContext,
@@ -21,6 +21,7 @@ import {
   usePlaygroundById,
 } from '@client/hooks/queries/usePlaygroundById';
 import { useUpdatePlayground } from '@client/hooks/mutations/useUpdatePlayground';
+import { useDatasets } from '@client/hooks/queries/useDatasets';
 import type { RouterContext } from '@client/routes/__root';
 import type { PlaygroundColumn } from '@llmops/core';
 import { Button } from '@ui';
@@ -38,6 +39,12 @@ import {
   emptyState,
   promptsContainer,
   addColumnButton,
+  bottomSection,
+  bottomToolbar,
+  datasetSelector,
+  datasetLabel,
+  datasetSelect,
+  resultsPlaceholder,
 } from './index.css';
 
 export const Route = createFileRoute('/(app)/playgrounds/$id/')({
@@ -78,11 +85,13 @@ type SaveStatus = 'idle' | 'saving' | 'saved';
 
 function PlaygroundContent({ id }: { id: string }) {
   const { data: playground, isLoading } = usePlaygroundById(id);
+  const { data: datasets } = useDatasets();
   const updatePlayground = useUpdatePlayground();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [localColumns, setLocalColumns] = useState<PlaygroundColumn[] | null>(
     null
   );
+  const [localDatasetId, setLocalDatasetId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -108,6 +117,9 @@ function PlaygroundContent({ id }: { id: string }) {
     columns = playground.columns;
   }
 
+  // Derive datasetId from local state or server data
+  const datasetId = localDatasetId ?? playground?.datasetId ?? null;
+
   // Sync local state when server data changes (initial load)
   useEffect(() => {
     if (playground?.columns && localColumns === null) {
@@ -117,12 +129,18 @@ function PlaygroundContent({ id }: { id: string }) {
           : playground.columns;
       setLocalColumns(cols);
     }
-  }, [playground?.columns, localColumns]);
+    if (playground?.datasetId !== undefined && localDatasetId === null) {
+      setLocalDatasetId(playground.datasetId);
+    }
+  }, [playground?.columns, playground?.datasetId, localColumns, localDatasetId]);
 
-  const saveColumns = (columnsToSave: PlaygroundColumn[]) => {
+  const savePlayground = (data: {
+    columns?: PlaygroundColumn[];
+    datasetId?: string | null;
+  }) => {
     setSaveStatus('saving');
     updatePlayground.mutate(
-      { id, columns: columnsToSave },
+      { id, ...data },
       {
         onSuccess: () => {
           setSaveStatus('saved');
@@ -153,7 +171,22 @@ function PlaygroundContent({ id }: { id: string }) {
 
     // Debounce the save by 2 seconds
     debounceRef.current = setTimeout(() => {
-      saveColumns(newColumns);
+      savePlayground({ columns: newColumns });
+    }, 2000);
+  };
+
+  const handleDatasetChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const newDatasetId = e.target.value || null;
+    setLocalDatasetId(newDatasetId);
+
+    // Clear any pending debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Debounce the save by 2 seconds
+    debounceRef.current = setTimeout(() => {
+      savePlayground({ datasetId: newDatasetId });
     }, 2000);
   };
 
@@ -291,6 +324,30 @@ function PlaygroundContent({ id }: { id: string }) {
             </div>
           </SortableContext>
         </DndContext>
+      </div>
+      <div className={bottomSection}>
+        <div className={bottomToolbar}>
+          <div className={datasetSelector}>
+            <span className={datasetLabel}>Dataset:</span>
+            <select
+              className={datasetSelect}
+              value={datasetId ?? ''}
+              onChange={handleDatasetChange}
+            >
+              <option value="">No dataset selected</option>
+              {datasets?.map((dataset) => (
+                <option key={dataset.id} value={dataset.id}>
+                  {dataset.name} ({dataset.recordCount} records)
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className={resultsPlaceholder}>
+          {datasetId
+            ? 'Run the playground to see results here'
+            : 'Select a dataset to run prompts against multiple inputs'}
+        </div>
       </div>
     </div>
   );
