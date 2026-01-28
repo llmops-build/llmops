@@ -63,11 +63,12 @@ const app = new Hono()
         configId: z.string().uuid(),
         variantId: z.string().uuid().optional(),
         datasetId: z.string().uuid().nullable().optional(),
+        name: z.string().min(1).optional(),
       })
     ),
     async (c) => {
       const db = c.get('db');
-      const { configId, variantId, datasetId } = c.req.valid('json');
+      const { configId, variantId, datasetId, name } = c.req.valid('json');
 
       try {
         // Get config with its variants
@@ -163,7 +164,7 @@ const app = new Hono()
 
         // Create the playground
         const playground = await db.createNewPlayground({
-          name: config.name || 'Untitled Playground',
+          name: name || config.name || 'Untitled Playground',
           datasetId: datasetId ?? null,
           columns: [firstColumn],
         });

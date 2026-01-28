@@ -21,6 +21,7 @@ import type { Message } from '../-components/message-block';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
 import { useSetTargeting } from '@client/hooks/mutations/useSetTargeting';
+import { useCreatePlaygroundFromConfig } from '@client/hooks/mutations/useCreatePlaygroundFromConfig';
 import {
   useVariantById,
   variantByIdQueryOptions,
@@ -38,6 +39,7 @@ import {
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useConfigById } from '@client/hooks/queries/useConfigById';
 import { DeploymentSuccessDialog } from '@client/components/deployment-success-dialog';
+import { showToast } from '@client/components/toast';
 import type { RouterContext } from '@client/routes/__root';
 
 export const Route = createFileRoute(
@@ -66,6 +68,7 @@ function RouteComponent() {
   const createVariant = useCreateVariant();
   const createVariantVersion = useCreateVariantVersion();
   const setTargeting = useSetTargeting();
+  const createPlaygroundFromConfig = useCreatePlaygroundFromConfig();
   const { data: variantData } = useVariantById(
     variant === 'new' ? '' : variant
   );
@@ -357,12 +360,34 @@ function RouteComponent() {
     }
   };
 
-  const handleEvaluateInPlayground = () => {
-    navigate({
-      to: '/playgrounds/$id',
-      params: { id: 'new' },
-      search: { configId, variantId: variant === 'new' ? undefined : variant },
-    });
+  const handleEvaluateInPlayground = async () => {
+    // Generate a short hash for the playground name
+    const hash = Math.random().toString(36).substring(2, 8);
+    const configName = config?.name || 'Untitled';
+    const playgroundName = `${configName}-${hash}`;
+
+    showToast.info('Creating playground...', `Setting up "${playgroundName}"`);
+
+    try {
+      const playground = await createPlaygroundFromConfig.mutateAsync({
+        configId,
+        variantId: variant === 'new' ? undefined : variant,
+        name: playgroundName,
+      });
+
+      if (playground) {
+        showToast.success('Playground created', `"${playgroundName}" is ready`);
+        navigate({
+          to: '/playgrounds/$id',
+          params: { id: playground.id },
+        });
+      }
+    } catch (error) {
+      showToast.error(
+        'Failed to create playground',
+        error instanceof Error ? error.message : 'An error occurred'
+      );
+    }
   };
 
   return (
