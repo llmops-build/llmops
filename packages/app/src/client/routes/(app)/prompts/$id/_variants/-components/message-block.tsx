@@ -57,8 +57,6 @@ export function MessageBlock({
   // Use watched value if available, otherwise fall back to prop
   const message = watchedMessage ?? initialMessage;
 
-  console.log(message.role);
-
   const config = roleConfig[message.role];
   const RoleIcon = config.icon;
 

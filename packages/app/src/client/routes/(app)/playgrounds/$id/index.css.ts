@@ -34,7 +34,7 @@ export const toolbarRight = style({
 
 export const content = style({
   flex: 1,
-  padding: spacing.lg,
+  padding: spacing.sm,
 });
 
 export const infoText = style({
@@ -57,10 +57,42 @@ export const emptyStateTitle = style({
   fontSize: '16px',
   fontWeight: 500,
   color: colors.gray12,
+  margin: 0,
 });
 
 export const emptyStateDescription = style({
   fontSize: '14px',
   color: colors.gray11,
   textAlign: 'center',
+  margin: 0,
+});
+
+export const promptsContainer = style({
+  display: 'flex',
+  gap: spacing.md,
+  alignItems: 'flex-start',
+  flexWrap: 'nowrap',
+  overflowX: 'auto',
+  paddingBottom: spacing.md,
+});
+
+export const addColumnButton = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  alignSelf: 'center',
+  width: '40px',
+  height: '40px',
+  backgroundColor: colors.gray2,
+  border: `1px dashed ${colors.gray6}`,
+  borderRadius: spacing.sm,
+  cursor: 'pointer',
+  color: colors.gray9,
+  flexShrink: 0,
+  transition: 'all 150ms ease',
+  ':hover': {
+    backgroundColor: colors.gray3,
+    borderColor: colors.gray8,
+    color: colors.gray11,
+  },
 });

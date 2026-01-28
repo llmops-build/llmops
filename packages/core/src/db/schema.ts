@@ -95,7 +95,7 @@ export const playgroundColumnSchema = z.object({
   id: z.string().uuid(), // Client-generated for React keys & result mapping
   name: z.string(),
   position: z.number().int().min(0),
-  providerConfigId: z.string().uuid(), // FK to provider_configs - get slug for gateway calls
+  providerConfigId: z.union([z.string().uuid(), z.null()]), // FK to provider_configs - get slug for gateway calls (null when no model selected)
   modelName: z.string(),
   messages: z.array(
     z.object({
