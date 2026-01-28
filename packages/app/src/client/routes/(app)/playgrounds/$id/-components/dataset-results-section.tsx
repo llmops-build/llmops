@@ -18,6 +18,11 @@ import {
   TableCell,
 } from '@ui';
 import type { PlaygroundColumn } from '@llmops/core';
+import {
+  type CellResult,
+  type CellKey,
+  makeCellKey,
+} from '@client/hooks/usePlaygroundExecution';
 import DatasetSelector from './dataset-selector';
 import * as styles from './dataset-results-section.css';
 
@@ -25,6 +30,8 @@ type DatasetResultsSectionProps = {
   datasetId: string | null;
   onDatasetChange: (datasetId: string | null) => void;
   columns: PlaygroundColumn[];
+  executionResults: Map<CellKey, CellResult>;
+  isExecuting: boolean;
 };
 
 type RecordRow = DatasetRecord & { rowIndex: number };
@@ -36,22 +43,59 @@ function formatInputDisplay(input: unknown): string {
     return '';
   }
   if (typeof input === 'string') {
-    // Try to parse if it's a JSON string
     try {
       const parsed = JSON.parse(input);
-      return typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
+      return typeof parsed === 'string'
+        ? parsed
+        : JSON.stringify(parsed, null, 2);
     } catch {
       return input;
     }
   }
-  // If it's already an object, stringify it
   return JSON.stringify(input, null, 2);
+}
+
+function OutputCell({
+  columnId,
+  recordId,
+  executionResults,
+}: {
+  columnId: string;
+  recordId: string;
+  executionResults: Map<CellKey, CellResult>;
+}) {
+  const cellKey = makeCellKey(columnId, recordId);
+  const result = executionResults.get(cellKey);
+
+  if (!result) {
+    return <div className={styles.outputText}>—</div>;
+  }
+
+  if (result.status === 'running') {
+    return (
+      <div className={styles.clampedText}>
+        {result.output || <span className={styles.runningText}>Running...</span>}
+      </div>
+    );
+  }
+
+  if (result.status === 'failed') {
+    return <div className={styles.errorText}>{result.error || 'Failed'}</div>;
+  }
+
+  if (result.status === 'completed') {
+    return <div className={styles.clampedText}>{result.output}</div>;
+  }
+
+  return <div className={styles.outputText}>—</div>;
 }
 
 export function DatasetResultsSection({
   datasetId,
   onDatasetChange,
   columns: playgroundColumns,
+  executionResults,
+  isExecuting,
 }: DatasetResultsSectionProps) {
   const { data: records, isLoading: isLoadingRecords } = useDatasetRecords(
     datasetId ?? '',
@@ -82,14 +126,20 @@ export function DatasetResultsSection({
         size: 300,
       }),
       ...playgroundColumns.map((col) =>
-        columnHelper.display({
+        columnHelper.accessor((row) => row.id, {
           id: `output-${col.id}`,
           header: col.name,
-          cell: () => <div className={styles.outputText}>—</div>,
+          cell: (info) => (
+            <OutputCell
+              columnId={col.id}
+              recordId={info.row.original.id}
+              executionResults={executionResults}
+            />
+          ),
         })
       ),
     ],
-    [columnKey]
+    [columnKey, executionResults]
   );
 
   const table = useReactTable({

@@ -21,11 +21,12 @@ import {
   usePlaygroundById,
 } from '@client/hooks/queries/usePlaygroundById';
 import { useUpdatePlayground } from '@client/hooks/mutations/useUpdatePlayground';
+import { usePlaygroundExecution } from '@client/hooks/usePlaygroundExecution';
 import type { RouterContext } from '@client/routes/__root';
 import type { PlaygroundColumn } from '@llmops/core';
 import { Button } from '@ui';
 import { Icon } from '@client/components/icons';
-import { Plus, Play } from 'lucide-react';
+import { Plus, Play, Square } from 'lucide-react';
 import NewPlaygroundState from './-components/new-playground-state';
 import PromptColumn from './-components/prompt-column';
 import DatasetResultsSection from './-components/dataset-results-section';
@@ -80,6 +81,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved';
 function PlaygroundContent({ id }: { id: string }) {
   const { data: playground, isLoading } = usePlaygroundById(id);
   const updatePlayground = useUpdatePlayground();
+  const execution = usePlaygroundExecution(id);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [localColumns, setLocalColumns] = useState<PlaygroundColumn[] | null>(
     null
@@ -286,10 +288,17 @@ function PlaygroundContent({ id }: { id: string }) {
           <span className={infoText}>{getStatusText()}</span>
         </div>
         <div className={toolbarRight}>
-          <Button variant="primary">
-            <Icon icon={Play} />
-            Run
-          </Button>
+          {execution.isRunning ? (
+            <Button variant="outline" scheme="gray" onClick={execution.stopExecution}>
+              <Icon icon={Square} />
+              Stop
+            </Button>
+          ) : (
+            <Button variant="primary" onClick={execution.startExecution}>
+              <Icon icon={Play} />
+              Run
+            </Button>
+          )}
         </div>
       </div>
       <div className={content}>
@@ -329,6 +338,8 @@ function PlaygroundContent({ id }: { id: string }) {
         datasetId={datasetId}
         onDatasetChange={handleDatasetChange}
         columns={columns}
+        executionResults={execution.results}
+        isExecuting={execution.isRunning}
       />
     </div>
   );

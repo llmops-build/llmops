@@ -1,5 +1,5 @@
 import { hc } from '@client/lib/hc';
-import { useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 
 export type PlaygroundRun = {
   id: string;
@@ -20,8 +20,8 @@ export const getQueryKey = (playgroundId: string) => [
   playgroundId,
 ];
 
-export const usePlaygroundRuns = (playgroundId: string) => {
-  return useQuery({
+export const playgroundRunsQueryOptions = (playgroundId: string) =>
+  queryOptions({
     queryKey: getQueryKey(playgroundId),
     queryFn: async () => {
       const response = await hc.v1.playgrounds[':id'].runs.$get({
@@ -30,6 +30,9 @@ export const usePlaygroundRuns = (playgroundId: string) => {
       const result = await response.json();
       return ('data' in result ? result.data : []) as PlaygroundRun[];
     },
-    enabled: !!playgroundId,
+    enabled: !!playgroundId && playgroundId !== 'new',
   });
+
+export const usePlaygroundRuns = (playgroundId: string) => {
+  return useQuery(playgroundRunsQueryOptions(playgroundId));
 };

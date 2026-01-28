@@ -58,3 +58,13 @@ export const outputText = style({
 export const outputCell = style({
   minWidth: '200px',
 });
+
+export const runningText = style({
+  color: colors.accent9,
+  fontStyle: 'italic',
+});
+
+export const errorText = style({
+  color: colors.error9,
+  fontSize: '13px',
+});

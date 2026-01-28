@@ -243,7 +243,13 @@ const app = new Hono()
       }
 
       // Get provider configs for all columns
-      const providerConfigIds = [...new Set(columns.map((c) => c.providerConfigId))];
+      const providerConfigIds = [
+        ...new Set(
+          columns
+            .map((c) => c.providerConfigId)
+            .filter((id): id is string => id !== null)
+        ),
+      ];
       const providerConfigs = new Map<string, { slug: string | null }>();
       for (const configId of providerConfigIds) {
         const config = await db.getProviderConfigById({
@@ -255,8 +261,9 @@ const app = new Hono()
       }
 
       // Create OpenAI client pointing to our gateway
-      const baseURL =
-        process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
+      // Derive base URL from request origin
+      const url = new URL(c.req.url);
+      const baseURL = `${url.protocol}//${url.host}`;
       const openai = new OpenAI({
         baseURL: `${baseURL}/api/genai/v1`,
         apiKey: secret.keyValue,
@@ -277,156 +284,165 @@ const app = new Hono()
           });
         };
 
+        // Track completion counts
+        let completedCount = 0;
+        let failedCount = 0;
+
+        // Process a single cell
+        const processCell = async (result: (typeof pendingResults)[0]) => {
+          const column = columnMap.get(result.columnId);
+          if (!column) {
+            failedCount++;
+            await sendEvent({
+              type: 'cell_failed',
+              data: { resultId: result.id, error: 'Column not found' },
+            });
+            return;
+          }
+
+          if (!column.providerConfigId) {
+            failedCount++;
+            await sendEvent({
+              type: 'cell_failed',
+              data: {
+                resultId: result.id,
+                error: 'No provider configured for this column',
+              },
+            });
+            return;
+          }
+
+          const providerConfig = providerConfigs.get(column.providerConfigId);
+          if (!providerConfig || !providerConfig.slug) {
+            failedCount++;
+            await sendEvent({
+              type: 'cell_failed',
+              data: {
+                resultId: result.id,
+                error: 'Provider config not found or missing slug',
+              },
+            });
+            return;
+          }
+
+          // Update result status to running
+          await db.updatePlaygroundResult({
+            resultId: result.id,
+            status: 'running',
+          });
+
+          await sendEvent({
+            type: 'cell_started',
+            data: {
+              resultId: result.id,
+              columnId: result.columnId,
+              recordId: result.datasetRecordId,
+            },
+          });
+
+          const startTime = Date.now();
+          let fullOutput = '';
+
+          try {
+            // Resolve template variables in messages
+            const inputVariables = result.inputVariables as Record<
+              string,
+              unknown
+            >;
+            const resolvedMessages = column.messages.map((msg) => ({
+              role: msg.role as 'system' | 'user' | 'assistant',
+              content: resolveTemplateVariables(msg.content, inputVariables),
+            }));
+
+            // Construct model string with provider slug
+            const model = `@${providerConfig.slug}/${column.modelName}`;
+
+            // Make streaming call to gateway via OpenAI SDK
+            const response = await openai.chat.completions.create({
+              model,
+              messages: resolvedMessages,
+              temperature: column.temperature ?? undefined,
+              max_tokens: column.maxTokens ?? undefined,
+              top_p: column.topP ?? undefined,
+              frequency_penalty: column.frequencyPenalty ?? undefined,
+              presence_penalty: column.presencePenalty ?? undefined,
+              stream: true,
+            });
+
+            // Stream tokens
+            for await (const chunk of response) {
+              const content = chunk.choices[0]?.delta?.content;
+              if (content) {
+                fullOutput += content;
+                await sendEvent({
+                  type: 'cell_token',
+                  data: { resultId: result.id, token: content },
+                });
+              }
+            }
+
+            const latencyMs = Date.now() - startTime;
+
+            // Update result with completion
+            await db.updatePlaygroundResult({
+              resultId: result.id,
+              status: 'completed',
+              outputContent: fullOutput,
+              latencyMs,
+              promptTokens: null,
+              completionTokens: null,
+              totalTokens: null,
+            });
+
+            completedCount++;
+            await sendEvent({
+              type: 'cell_completed',
+              data: {
+                resultId: result.id,
+                output: fullOutput,
+                latencyMs,
+                promptTokens: null,
+                completionTokens: null,
+                totalTokens: null,
+              },
+            });
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
+            console.error(
+              `Error executing cell ${result.id}:`,
+              errorMessage
+            );
+
+            await db.updatePlaygroundResult({
+              resultId: result.id,
+              status: 'failed',
+              error: errorMessage,
+            });
+
+            failedCount++;
+            await sendEvent({
+              type: 'cell_failed',
+              data: { resultId: result.id, error: errorMessage },
+            });
+          }
+        };
+
         try {
           await sendEvent({
             type: 'run_started',
             data: { runId, totalCells: pendingResults.length },
           });
 
-          let completedCount = 0;
-          let failedCount = 0;
-
-          // Process each result
-          for (const result of pendingResults) {
-            const column = columnMap.get(result.columnId);
-            if (!column) {
-              failedCount++;
-              await sendEvent({
-                type: 'cell_failed',
-                data: { resultId: result.id, error: 'Column not found' },
-              });
-              continue;
-            }
-
-            const providerConfig = providerConfigs.get(column.providerConfigId);
-            if (!providerConfig || !providerConfig.slug) {
-              failedCount++;
-              await sendEvent({
-                type: 'cell_failed',
-                data: {
-                  resultId: result.id,
-                  error: 'Provider config not found or missing slug',
-                },
-              });
-              continue;
-            }
-
-            // Update result status to running
-            await db.updatePlaygroundResult({
-              resultId: result.id,
-              status: 'running',
-            });
-
-            await sendEvent({
-              type: 'cell_started',
-              data: {
-                resultId: result.id,
-                columnId: result.columnId,
-                recordId: result.datasetRecordId,
-              },
-            });
-
-            const startTime = Date.now();
-            let fullOutput = '';
-
-            try {
-              // Resolve template variables in messages
-              const inputVariables = result.inputVariables as Record<
-                string,
-                unknown
-              >;
-              const resolvedMessages = column.messages.map((msg) => ({
-                role: msg.role as 'system' | 'user' | 'assistant',
-                content: resolveTemplateVariables(msg.content, inputVariables),
-              }));
-
-              // Construct model string with provider slug
-              const model = `@${providerConfig.slug}/${column.modelName}`;
-
-              // Make streaming call to gateway via OpenAI SDK
-              const response = await openai.chat.completions.create({
-                model,
-                messages: resolvedMessages,
-                temperature: column.temperature ?? undefined,
-                max_tokens: column.maxTokens ?? undefined,
-                top_p: column.topP ?? undefined,
-                frequency_penalty: column.frequencyPenalty ?? undefined,
-                presence_penalty: column.presencePenalty ?? undefined,
-                stream: true,
-              });
-
-              // Stream tokens
-              for await (const chunk of response) {
-                const content = chunk.choices[0]?.delta?.content;
-                if (content) {
-                  fullOutput += content;
-                  await sendEvent({
-                    type: 'cell_token',
-                    data: { resultId: result.id, token: content },
-                  });
-                }
-              }
-
-              const latencyMs = Date.now() - startTime;
-
-              // Update result with completion
-              await db.updatePlaygroundResult({
-                resultId: result.id,
-                status: 'completed',
-                outputContent: fullOutput,
-                latencyMs,
-                // Note: Token counts would ideally come from the streaming response
-                // but OpenAI streaming doesn't always include usage in chunks
-                promptTokens: null,
-                completionTokens: null,
-                totalTokens: null,
-              });
-
-              completedCount++;
-              await sendEvent({
-                type: 'cell_completed',
-                data: {
-                  resultId: result.id,
-                  output: fullOutput,
-                  latencyMs,
-                  promptTokens: null,
-                  completionTokens: null,
-                  totalTokens: null,
-                },
-              });
-            } catch (error) {
-              const errorMessage =
-                error instanceof Error ? error.message : 'Unknown error';
-              console.error(
-                `Error executing cell ${result.id}:`,
-                errorMessage
-              );
-
-              await db.updatePlaygroundResult({
-                resultId: result.id,
-                status: 'failed',
-                error: errorMessage,
-              });
-
-              failedCount++;
-              await sendEvent({
-                type: 'cell_failed',
-                data: { resultId: result.id, error: errorMessage },
-              });
-            }
-
-            // Update run progress
-            await db.updatePlaygroundRun({
-              runId,
-              completedRecords: completedCount + failedCount,
-            });
-          }
+          // Run all cells in parallel
+          await Promise.all(pendingResults.map(processCell));
 
           // Mark run as completed
           await db.updatePlaygroundRun({
             runId,
             status: failedCount === pendingResults.length ? 'failed' : 'completed',
             completedAt: new Date(),
+            completedRecords: completedCount + failedCount,
           });
 
           await sendEvent({
