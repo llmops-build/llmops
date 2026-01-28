@@ -367,6 +367,9 @@ const app = new Hono()
               frequency_penalty: column.frequencyPenalty ?? undefined,
               presence_penalty: column.presencePenalty ?? undefined,
               stream: true,
+              metadata: {
+                llmops_feature: 'playground',
+              },
             });
 
             // Stream tokens

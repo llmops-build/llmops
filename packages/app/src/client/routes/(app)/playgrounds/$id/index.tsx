@@ -335,6 +335,7 @@ function PlaygroundContent({ id }: { id: string }) {
         </DndContext>
       </div>
       <DatasetResultsSection
+        playgroundId={id}
         datasetId={datasetId}
         onDatasetChange={handleDatasetChange}
         columns={columns}

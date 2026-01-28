@@ -68,3 +68,10 @@ export const errorText = style({
   color: colors.error9,
   fontSize: '13px',
 });
+
+export const clickableRow = style({
+  cursor: 'pointer',
+  ':hover': {
+    backgroundColor: colors.gray2,
+  },
+});

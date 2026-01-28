@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,6 +28,7 @@ import DatasetSelector from './dataset-selector';
 import * as styles from './dataset-results-section.css';
 
 type DatasetResultsSectionProps = {
+  playgroundId: string;
   datasetId: string | null;
   onDatasetChange: (datasetId: string | null) => void;
   columns: PlaygroundColumn[];
@@ -91,16 +93,25 @@ function OutputCell({
 }
 
 export function DatasetResultsSection({
+  playgroundId,
   datasetId,
   onDatasetChange,
   columns: playgroundColumns,
   executionResults,
   isExecuting,
 }: DatasetResultsSectionProps) {
+  const navigate = useNavigate();
   const { data: records, isLoading: isLoadingRecords } = useDatasetRecords(
     datasetId ?? '',
     { limit: 100 }
   );
+
+  const handleRowClick = (recordId: string) => {
+    navigate({
+      to: '/playgrounds/$id/row/$rowId',
+      params: { id: playgroundId, rowId: recordId },
+    });
+  };
 
   const dataWithIndex: RecordRow[] = useMemo(
     () =>
@@ -199,7 +210,11 @@ export function DatasetResultsSection({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className={styles.clickableRow}
+                  onClick={() => handleRowClick(row.original.id)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
