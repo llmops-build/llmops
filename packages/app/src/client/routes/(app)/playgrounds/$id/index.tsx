@@ -28,7 +28,7 @@ import { Icon } from '@client/components/icons';
 import { Plus, Play } from 'lucide-react';
 import NewPlaygroundState from './-components/new-playground-state';
 import PromptColumn from './-components/prompt-column';
-import DatasetSelector from './-components/dataset-selector';
+import DatasetResultsSection from './-components/dataset-results-section';
 import {
   container,
   toolbar,
@@ -39,9 +39,6 @@ import {
   emptyState,
   promptsContainer,
   addColumnButton,
-  bottomSection,
-  bottomToolbar,
-  resultsPlaceholder,
 } from './index.css';
 
 export const Route = createFileRoute('/(app)/playgrounds/$id/')({
@@ -320,17 +317,10 @@ function PlaygroundContent({ id }: { id: string }) {
           </SortableContext>
         </DndContext>
       </div>
-      <div className={bottomSection}>
-        <div className={bottomToolbar}>
-          <div />
-          <DatasetSelector value={datasetId} onChange={handleDatasetChange} />
-        </div>
-        <div className={resultsPlaceholder}>
-          {datasetId
-            ? 'Run the playground to see results here'
-            : 'Select a dataset to run prompts against multiple inputs'}
-        </div>
-      </div>
+      <DatasetResultsSection
+        datasetId={datasetId}
+        onDatasetChange={handleDatasetChange}
+      />
     </div>
   );
 }
