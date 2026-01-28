@@ -10,7 +10,6 @@ import {
   variantHeader,
   variantHeaderActions,
 } from '../-components/variants.css';
-import { configTitleInput } from '../../../-components/configs.css';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import type { Message } from '../-components/message-block';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
@@ -355,16 +354,7 @@ function RouteComponent() {
   return (
     <div>
       <div className={variantHeader}>
-        {/* Variant name input on the left */}
-        <input
-          title="Variant Name"
-          data-1p-ignore
-          autoComplete="off"
-          placeholder="Variant Name"
-          className={configTitleInput}
-          {...form.register('variant_name')}
-        />
-        {/* Version selector and save button on the right */}
+        {/* Version selector and save button */}
         <div className={variantHeaderActions}>
           {!isNewVariant && versionOptions.length > 0 && (
             <Combobox<VariantVersion>

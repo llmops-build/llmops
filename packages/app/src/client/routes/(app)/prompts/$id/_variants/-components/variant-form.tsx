@@ -1,4 +1,4 @@
-import { useFieldArray, type UseFormReturn } from 'react-hook-form';
+import { useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Plus } from 'lucide-react';
 import {
   variantFormContainer,
@@ -7,6 +7,7 @@ import {
   messagesContainer,
   addMessageButton,
   actionsRow,
+  variantNameInput,
 } from './variants.css';
 import ModelSelector, { type ModelSettings } from './model-selector';
 import MessageBlock, { type Message, type MessageRole } from './message-block';
@@ -34,6 +35,9 @@ const generateMessageId = () => `msg_${Date.now()}_${++messageIdCounter}`;
 
 const VariantForm = ({ form, editorKey }: VariantFormProps) => {
   const { setValue, control } = form;
+
+  // Watch variant_name to ensure re-render when form.reset() is called
+  const variantName = useWatch({ control, name: 'variant_name' });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -93,6 +97,23 @@ const VariantForm = ({ form, editorKey }: VariantFormProps) => {
 
   return (
     <div className={variantFormContainer}>
+      <div className={variantPropertyColumn}>
+        <div className={variantPropertyLabel}>
+          <span>Name</span>
+        </div>
+        <input
+          title="Variant Name"
+          data-1p-ignore
+          autoComplete="off"
+          placeholder="Variant Name"
+          className={variantNameInput}
+          value={variantName ?? ''}
+          onChange={(e) =>
+            setValue('variant_name', e.target.value, { shouldDirty: true })
+          }
+        />
+      </div>
+
       <div className={variantPropertyColumn}>
         <div className={variantPropertyLabel}>
           <span>Model</span>

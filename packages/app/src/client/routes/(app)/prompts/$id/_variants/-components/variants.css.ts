@@ -4,7 +4,7 @@ import { calc } from '@vanilla-extract/css-utils';
 
 export const variantHeader = style({
   display: 'flex',
-  justifyContent: 'space-between',
+  justifyContent: 'flex-end',
   alignItems: 'center',
   gap: spacing.sm,
   width: '100%',
@@ -44,6 +44,35 @@ export const variantContainer = style({
 export const variantFormContainer = style({
   margin: '0 auto',
 });
+
+export const variantNameInput = style([
+  sprinkles({
+    fontSize: 'sm',
+    borderRadius: 'xs',
+    paddingLeft: 'sm',
+    paddingRight: 'sm',
+    backgroundColor: 'gray1',
+    color: 'gray11',
+  }),
+  {
+    maxWidth: '400px',
+    height: spacing.xl,
+    border: `1px solid ${colors.gray4}`,
+    outline: 'none',
+    ':-moz-placeholder': {
+      color: colors.gray7,
+    },
+    '::-webkit-input-placeholder': {
+      color: colors.gray7,
+    },
+    '::placeholder': {
+      color: colors.gray7,
+    },
+    ':focus': {
+      borderColor: colors.accent9,
+    },
+  },
+]);
 
 export const variantPropertyRow = style({
   display: 'flex',
