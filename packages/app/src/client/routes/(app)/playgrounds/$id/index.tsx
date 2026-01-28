@@ -125,7 +125,12 @@ function PlaygroundContent({ id }: { id: string }) {
     if (playground?.datasetId !== undefined && localDatasetId === null) {
       setLocalDatasetId(playground.datasetId);
     }
-  }, [playground?.columns, playground?.datasetId, localColumns, localDatasetId]);
+  }, [
+    playground?.columns,
+    playground?.datasetId,
+    localColumns,
+    localDatasetId,
+  ]);
 
   const savePlayground = (data: {
     columns?: PlaygroundColumn[];
@@ -194,7 +199,10 @@ function PlaygroundContent({ id }: { id: string }) {
     };
   }, []);
 
-  const handleColumnChange = (index: number, updatedColumn: PlaygroundColumn) => {
+  const handleColumnChange = (
+    index: number,
+    updatedColumn: PlaygroundColumn
+  ) => {
     const newColumns = [...columns];
     newColumns[index] = updatedColumn;
     handleColumnsChange(newColumns);
@@ -320,6 +328,7 @@ function PlaygroundContent({ id }: { id: string }) {
       <DatasetResultsSection
         datasetId={datasetId}
         onDatasetChange={handleDatasetChange}
+        columns={columns}
       />
     </div>
   );

@@ -96,30 +96,3 @@ export const addColumnButton = style({
     color: colors.gray11,
   },
 });
-
-export const bottomSection = style({
-  borderTop: `1px solid ${colors.gray4}`,
-  marginTop: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  flex: 1,
-});
-
-export const bottomToolbar = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: `${spacing.sm} ${spacing.md}`,
-  height: spacing['2xl'],
-  backgroundColor: colors.background,
-  borderBottom: `1px solid ${colors.gray4}`,
-});
-
-export const resultsPlaceholder = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flex: 1,
-  color: colors.gray9,
-  fontSize: '14px',
-});
