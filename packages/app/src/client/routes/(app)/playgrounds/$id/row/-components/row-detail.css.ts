@@ -45,7 +45,7 @@ export const codeBlock = style({
   padding: spacing.md,
   backgroundColor: colors.gray2,
   border: `1px solid ${colors.gray4}`,
-  borderRadius: spacing.sm,
+  borderRadius: spacing.xs,
   fontSize: '13px',
   fontFamily: 'monospace',
   color: colors.gray12,
@@ -66,7 +66,7 @@ export const outputCard = style({
   display: 'flex',
   flexDirection: 'column',
   border: `1px solid ${colors.gray4}`,
-  borderRadius: spacing.sm,
+  borderRadius: spacing.xs,
   overflow: 'hidden',
 });
 

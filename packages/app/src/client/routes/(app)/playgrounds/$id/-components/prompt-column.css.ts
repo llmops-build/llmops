@@ -6,7 +6,7 @@ export const columnCard = style({
   flexDirection: 'column',
   backgroundColor: colors.gray1,
   border: `1px solid ${colors.gray4}`,
-  borderRadius: spacing.sm,
+  borderRadius: spacing.xs,
   width: '400px',
   flexShrink: 0,
 });
