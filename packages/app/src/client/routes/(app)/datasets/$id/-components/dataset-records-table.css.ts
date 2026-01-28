@@ -67,10 +67,12 @@ export const emptyStateTitle = style({
   fontSize: '16px',
   fontWeight: 500,
   color: colors.gray12,
+  margin: 0,
 });
 
 export const emptyStateDescription = style({
   fontSize: '14px',
   color: colors.gray11,
   textAlign: 'center',
+  margin: 0,
 });
