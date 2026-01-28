@@ -2,6 +2,21 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import {
   playgroundByIdQueryOptions,
   usePlaygroundById,
 } from '@client/hooks/queries/usePlaygroundById';
@@ -70,6 +85,18 @@ function PlaygroundContent({ id }: { id: string }) {
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Configure dnd-kit sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Derive columns from local state or server data
   let columns: PlaygroundColumn[];
@@ -174,6 +201,22 @@ function PlaygroundContent({ id }: { id: string }) {
     handleColumnsChange([...columns, newColumn]);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = columns.findIndex((col) => col.id === active.id);
+      const newIndex = columns.findIndex((col) => col.id === over.id);
+
+      const reorderedColumns = arrayMove(columns, oldIndex, newIndex);
+      // Update positions after reorder
+      reorderedColumns.forEach((col, i) => {
+        col.position = i;
+      });
+      handleColumnsChange(reorderedColumns);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={emptyState}>
@@ -217,26 +260,37 @@ function PlaygroundContent({ id }: { id: string }) {
         </div>
       </div>
       <div className={content}>
-        <div className={promptsContainer}>
-          {columns.map((column, index) => (
-            <PromptColumn
-              key={column.id}
-              column={column}
-              onChange={(updated) => handleColumnChange(index, updated)}
-              onDelete={() => handleDeleteColumn(index)}
-              onDuplicate={() => handleDuplicateColumn(index)}
-              canDelete={columns.length > 1}
-            />
-          ))}
-          <button
-            type="button"
-            className={addColumnButton}
-            onClick={handleAddColumn}
-            title="Add prompt"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={columns.map((col) => col.id)}
+            strategy={horizontalListSortingStrategy}
           >
-            <Plus size={20} />
-          </button>
-        </div>
+            <div className={promptsContainer}>
+              {columns.map((column, index) => (
+                <PromptColumn
+                  key={column.id}
+                  column={column}
+                  onChange={(updated) => handleColumnChange(index, updated)}
+                  onDelete={() => handleDeleteColumn(index)}
+                  onDuplicate={() => handleDuplicateColumn(index)}
+                  canDelete={columns.length > 1}
+                />
+              ))}
+              <button
+                type="button"
+                className={addColumnButton}
+                onClick={handleAddColumn}
+                title="Add prompt"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

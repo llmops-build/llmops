@@ -1,6 +1,8 @@
 import { useRef, type ChangeEvent } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Plus, Copy, Trash2, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { PlaygroundColumn } from '@llmops/core';
 import ModelSelector, {
   type ModelSettings,
@@ -42,6 +44,21 @@ export function PromptColumn({
 }: PromptColumnProps) {
   const columnRef = useRef(column);
   columnRef.current = column;
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const form = useForm<PromptColumnFormData>({
     defaultValues: {
@@ -144,7 +161,7 @@ export function PromptColumn({
   const name = watch('name');
 
   return (
-    <div className={styles.columnCard}>
+    <div ref={setNodeRef} style={style} className={styles.columnCard}>
       <div className={styles.columnHeader}>
         <div className={styles.columnHeaderLeft}>
           <div className={styles.columnIndicator} />
@@ -177,7 +194,12 @@ export function PromptColumn({
               <Trash2 size={14} />
             </button>
           )}
-          <div className={styles.dragHandle} title="Drag to reorder">
+          <div
+            className={styles.dragHandle}
+            title="Drag to reorder"
+            {...attributes}
+            {...listeners}
+          >
             <GripVertical size={14} />
           </div>
         </div>
