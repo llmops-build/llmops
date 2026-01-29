@@ -415,7 +415,11 @@ export interface DatasetsTable extends BaseTable {
   name: string;
   description: string | null;
   recordCount: ColumnType<number, number | undefined, number | undefined>;
-  latestVersionNumber: ColumnType<number, number | undefined, number | undefined>;
+  latestVersionNumber: ColumnType<
+    number,
+    number | undefined,
+    number | undefined
+  >;
 }
 
 // Dataset versions table
@@ -432,7 +436,11 @@ export interface DatasetVersionsTable extends BaseTable {
 export interface DatasetRecordsTable extends BaseTable {
   datasetId: string;
   input: ColumnType<Record<string, unknown>, string, string>;
-  expected: ColumnType<Record<string, unknown> | null, string | null, string | null>;
+  expected: ColumnType<
+    Record<string, unknown> | null,
+    string | null,
+    string | null
+  >;
   metadata: ColumnType<Record<string, unknown>, string, string>;
 }
 
@@ -489,7 +497,11 @@ export interface LLMRequestsTable extends BaseTable {
   isStreaming: ColumnType<boolean, boolean | undefined, boolean | undefined>;
   userId: string | null;
   tags: ColumnType<Record<string, string>, string, string>;
-  guardrailResults: ColumnType<GuardrailResults | null, string | null, string | null>;
+  guardrailResults: ColumnType<
+    GuardrailResults | null,
+    string | null,
+    string | null
+  >;
 }
 
 /**
@@ -707,7 +719,7 @@ export const SCHEMA_METADATA = {
       },
     },
     playgrounds: {
-      order: 10,
+      order: 20,
       schema: playgroundsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -723,7 +735,7 @@ export const SCHEMA_METADATA = {
       },
     },
     playground_runs: {
-      order: 18,
+      order: 21,
       schema: playgroundRunsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -751,7 +763,7 @@ export const SCHEMA_METADATA = {
       },
     },
     playground_results: {
-      order: 19,
+      order: 22,
       schema: playgroundResultsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -779,7 +791,7 @@ export const SCHEMA_METADATA = {
       },
     },
     guardrail_configs: {
-      order: 11,
+      order: 14,
       schema: guardrailConfigsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -796,7 +808,7 @@ export const SCHEMA_METADATA = {
       },
     },
     datasets: {
-      order: 12,
+      order: 10,
       schema: datasetsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -809,7 +821,7 @@ export const SCHEMA_METADATA = {
       },
     },
     dataset_versions: {
-      order: 13,
+      order: 11,
       schema: datasetVersionsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -828,7 +840,7 @@ export const SCHEMA_METADATA = {
       uniqueConstraints: [{ columns: ['datasetId', 'versionNumber'] }],
     },
     dataset_records: {
-      order: 14,
+      order: 12,
       schema: datasetRecordsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -844,7 +856,7 @@ export const SCHEMA_METADATA = {
       },
     },
     dataset_version_records: {
-      order: 15,
+      order: 13,
       schema: datasetVersionRecordsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -863,7 +875,7 @@ export const SCHEMA_METADATA = {
       uniqueConstraints: [{ columns: ['datasetVersionId', 'datasetRecordId'] }],
     },
     provider_guardrail_overrides: {
-      order: 16,
+      order: 15,
       schema: providerGuardrailOverridesSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -880,7 +892,9 @@ export const SCHEMA_METADATA = {
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
-      uniqueConstraints: [{ columns: ['providerConfigId', 'guardrailConfigId'] }],
+      uniqueConstraints: [
+        { columns: ['providerConfigId', 'guardrailConfigId'] },
+      ],
     },
     llm_requests: {
       order: 17,
