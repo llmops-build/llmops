@@ -152,7 +152,7 @@ export const columnFooter = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: `${spacing.sm} ${spacing.md}`,
+  padding: `${spacing.sm}`,
   borderTop: `1px solid ${colors.gray4}`,
   color: colors.gray9,
   fontSize: '13px',
