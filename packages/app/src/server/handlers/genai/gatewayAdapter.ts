@@ -464,14 +464,9 @@ async function handleDirectProviderRequest(
     model: modelName,
   };
 
-  // Only remove 'input' for chat completions endpoints where it's used for template variables
-  // For /responses endpoint, 'input' is the actual request content and must be preserved
-  const path = c.req.path;
-  const isChatCompletionsEndpoint =
-    path.endsWith('/chat/completions') || path.endsWith('/completions');
-  if (isChatCompletionsEndpoint) {
-    delete updatedBody.input;
-  }
+  // Remove 'input_variables' from the final body as it's not part of OpenAI API spec
+  // This field is used for nunjucks template rendering only
+  delete updatedBody.input_variables;
 
   // Clone headers from the original request
   const newHeaders = new Headers(c.req.raw.headers);
@@ -738,9 +733,11 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         const originalBody = await c.req.json();
 
         // Extract input variables for nunjucks template rendering
+        // Users pass variables via `input_variables` field (not part of OpenAI API spec)
         const inputVariables =
-          originalBody.input && typeof originalBody.input === 'object'
-            ? (originalBody.input as Record<string, unknown>)
+          originalBody.input_variables &&
+          typeof originalBody.input_variables === 'object'
+            ? (originalBody.input_variables as Record<string, unknown>)
             : {};
 
         const mergedBody = mergeChatCompletionBody(
@@ -750,8 +747,8 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
           inputVariables
         );
 
-        // Remove 'input' from the final body as it's not part of OpenAI API spec
-        delete mergedBody.input;
+        // Remove 'input_variables' from the final body as it's not part of OpenAI API spec
+        delete mergedBody.input_variables;
 
         // Clone headers from the original request
         const newHeaders = new Headers(c.req.raw.headers);
