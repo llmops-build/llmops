@@ -152,22 +152,71 @@ export const columnFooter = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  height: spacing['xl'],
+  padding: `${spacing.sm} ${spacing.md}`,
   borderTop: `1px solid ${colors.gray4}`,
   color: colors.gray9,
   fontSize: '13px',
+  gap: spacing.sm,
 });
 
 export const footerLeft = style({
   display: 'flex',
   alignItems: 'center',
   gap: spacing.sm,
+  overflow: 'hidden',
+  minWidth: 0,
 });
 
 export const footerRight = style({
   display: 'flex',
   alignItems: 'center',
   gap: spacing.xs,
-  color: colors.gray8,
+  flexShrink: 0,
+});
+
+export const sourceLink = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.xs,
+  color: colors.gray11,
+  textDecoration: 'none',
   fontSize: '12px',
+  padding: `${spacing.xs} ${spacing.sm}`,
+  borderRadius: spacing.xs,
+  backgroundColor: colors.gray2,
+  border: `1px solid ${colors.gray4}`,
+  maxWidth: '200px',
+  ':hover': {
+    backgroundColor: colors.gray3,
+    borderColor: colors.gray5,
+    color: colors.gray12,
+  },
+});
+
+export const sourceLinkIcon = style({
+  flexShrink: 0,
+  color: colors.gray9,
+});
+
+export const sourceLinkText = style({
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
+
+export const versionBadge = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: spacing.xs,
+  fontSize: '11px',
+  color: colors.gray9,
+  padding: `2px ${spacing.xs}`,
+  borderRadius: spacing.xs,
+  backgroundColor: colors.gray3,
+});
+
+export const noSourceText = style({
+  fontSize: '12px',
+  color: colors.gray8,
+  fontStyle: 'italic',
 });

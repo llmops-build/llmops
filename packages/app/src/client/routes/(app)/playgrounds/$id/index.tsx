@@ -232,6 +232,10 @@ function PlaygroundContent({ id }: { id: string }) {
       id: uuidv4(),
       name: `${columnToDuplicate.name} (copy)`,
       position: columns.length,
+      // Don't copy source tracking - duplicated column is independent
+      configId: null,
+      variantId: null,
+      variantVersionId: null,
     };
     handleColumnsChange([...columns, newColumn]);
   };

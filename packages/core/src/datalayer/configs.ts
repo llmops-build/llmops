@@ -158,6 +158,7 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
           provider: null,
           modelName: null,
           jsonData: null,
+          variantVersionId: null,
         }));
       }
 
@@ -187,6 +188,7 @@ export const createConfigDataLayer = (db: Kysely<Database>) => {
           provider: version?.provider ?? null,
           modelName: version?.modelName ?? null,
           jsonData: version?.jsonData ?? null,
+          variantVersionId: version?.id ?? null,
         };
       });
     },

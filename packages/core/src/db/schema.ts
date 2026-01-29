@@ -108,6 +108,10 @@ export const playgroundColumnSchema = z.object({
   topP: z.number().nullable().optional(),
   frequencyPenalty: z.number().nullable().optional(),
   presencePenalty: z.number().nullable().optional(),
+  // Source tracking - links column back to the original prompt config/variant
+  configId: z.string().uuid().nullable().optional(), // FK to configs
+  variantId: z.string().uuid().nullable().optional(), // FK to variants
+  variantVersionId: z.string().uuid().nullable().optional(), // FK to variant_versions
 });
 
 // Playgrounds table schema - stores playground configurations

@@ -1,8 +1,9 @@
-import { useRef, type ChangeEvent } from 'react';
+import { useMemo, useRef, type ChangeEvent } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { Plus, Copy, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Copy, Trash2, GripVertical, RefreshCw } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Link } from '@tanstack/react-router';
 import type { PlaygroundColumn } from '@llmops/core';
 import ModelSelector, {
   type ModelSettings,
@@ -10,6 +11,11 @@ import ModelSelector, {
 import MessageBlock, {
   type Message,
 } from '@client/routes/(app)/prompts/$id/_variants/-components/message-block';
+import { SaveVariantPopup } from '@client/components/save-variant-popup';
+import { useConfigById } from '@client/hooks/queries/useConfigById';
+import { useVariantVersions } from '@client/hooks/queries/useVariantVersions';
+import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
+import { showToast } from '@client/components/toast';
 import * as styles from './prompt-column.css';
 
 type PromptColumnFormData = {
@@ -44,6 +50,125 @@ export function PromptColumn({
 }: PromptColumnProps) {
   const columnRef = useRef(column);
   columnRef.current = column;
+
+  // Source tracking - fetch config and variant data if linked
+  const { data: config } = useConfigById(column.configId ?? '');
+  const { data: versions } = useVariantVersions(column.variantId ?? '');
+  const createVariantVersion = useCreateVariantVersion();
+
+  // Find the original version this column was created from
+  const originalVersion = useMemo(() => {
+    if (!versions || !column.variantVersionId) return null;
+    return versions.find((v) => v.id === column.variantVersionId) ?? null;
+  }, [versions, column.variantVersionId]);
+
+  // Find the latest version for comparison
+  const latestVersion = useMemo(() => {
+    if (!versions || versions.length === 0) return null;
+    return versions.reduce((latest, current) =>
+      current.version > latest.version ? current : latest
+    );
+  }, [versions]);
+
+  // Check if the column has been modified from the original version
+  const hasChanges = useMemo(() => {
+    if (!originalVersion) return false;
+
+    const originalData =
+      typeof originalVersion.jsonData === 'string'
+        ? (JSON.parse(originalVersion.jsonData) as Record<string, unknown>)
+        : (originalVersion.jsonData as Record<string, unknown> | null);
+
+    // Helper to compare values treating null/undefined as equivalent
+    const isEqual = (a: unknown, b: unknown): boolean => {
+      // Treat null and undefined as equivalent
+      if ((a === null || a === undefined) && (b === null || b === undefined)) {
+        return true;
+      }
+      return a === b;
+    };
+
+    // Compare messages
+    const originalMessages = originalData?.messages as
+      | Array<{ role: string; content: string }>
+      | undefined;
+    if (originalMessages) {
+      if (originalMessages.length !== column.messages.length) return true;
+      for (let i = 0; i < originalMessages.length; i++) {
+        if (
+          originalMessages[i].role !== column.messages[i].role ||
+          originalMessages[i].content !== column.messages[i].content
+        ) {
+          return true;
+        }
+      }
+    }
+
+    // Compare model settings
+    const originalModel = (originalData?.model as string) || originalVersion.modelName;
+    if (originalModel !== column.modelName) return true;
+
+    if (originalVersion.provider !== column.providerConfigId) return true;
+
+    // Compare parameters (treat null/undefined as equivalent)
+    if (!isEqual(originalData?.temperature, column.temperature)) return true;
+    if (!isEqual(originalData?.max_tokens, column.maxTokens)) return true;
+    if (!isEqual(originalData?.top_p, column.topP)) return true;
+    if (!isEqual(originalData?.frequency_penalty, column.frequencyPenalty)) return true;
+    if (!isEqual(originalData?.presence_penalty, column.presencePenalty)) return true;
+
+    return false;
+  }, [column, originalVersion]);
+
+  // Handle saving changes back to the variant
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSaveToVariant = async (_options: { mode: string }) => {
+    if (!column.variantId) return;
+
+    const jsonData: Record<string, unknown> = {
+      messages: column.messages.map(({ role, content }) => ({ role, content })),
+      model: column.modelName,
+    };
+
+    if (column.temperature !== null && column.temperature !== undefined) {
+      jsonData.temperature = column.temperature;
+    }
+    if (column.maxTokens !== null && column.maxTokens !== undefined) {
+      jsonData.max_tokens = column.maxTokens;
+    }
+    if (column.topP !== null && column.topP !== undefined) {
+      jsonData.top_p = column.topP;
+    }
+    if (column.frequencyPenalty !== null && column.frequencyPenalty !== undefined) {
+      jsonData.frequency_penalty = column.frequencyPenalty;
+    }
+    if (column.presencePenalty !== null && column.presencePenalty !== undefined) {
+      jsonData.presence_penalty = column.presencePenalty;
+    }
+
+    try {
+      const newVersion = await createVariantVersion.mutateAsync({
+        variantId: column.variantId,
+        provider: column.providerConfigId ?? '',
+        modelName: column.modelName,
+        jsonData,
+      });
+
+      if (newVersion) {
+        // Update the column to reference the new version
+        onChange({
+          ...column,
+          variantVersionId: newVersion.id,
+        });
+        showToast.success('Changes saved', `Created version ${newVersion.version}`);
+      }
+    } catch (error) {
+      showToast.error(
+        'Failed to save',
+        error instanceof Error ? error.message : 'An error occurred'
+      );
+    }
+  };
 
   const {
     attributes,
@@ -237,7 +362,41 @@ export function PromptColumn({
         </div>
       </div>
 
-      <div className={styles.columnFooter}></div>
+      <div className={styles.columnFooter}>
+        <div className={styles.footerLeft}>
+          {column.configId && column.variantId ? (
+            <Link
+              to="/prompts/$id/variants/$variant"
+              params={{ id: column.configId, variant: column.variantId }}
+              className={styles.sourceLink}
+            >
+              <RefreshCw size={12} className={styles.sourceLinkIcon} />
+              <span className={styles.sourceLinkText}>
+                {config?.name ?? 'Prompt'}
+              </span>
+              {originalVersion && (
+                <span className={styles.versionBadge}>
+                  v{originalVersion.version}
+                  {latestVersion &&
+                    originalVersion.id === latestVersion.id &&
+                    ' (latest)'}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <span className={styles.noSourceText}>No linked prompt</span>
+          )}
+        </div>
+        <div className={styles.footerRight}>
+          {column.variantId && hasChanges && (
+            <SaveVariantPopup
+              isNewVariant={false}
+              onSave={handleSaveToVariant}
+              isSaving={createVariantVersion.isPending}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

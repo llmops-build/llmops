@@ -18,6 +18,7 @@ export const toolbar = style({
   position: 'sticky',
   top: spacing['2xl'],
   backgroundColor: colors.background,
+  zIndex: 10,
 });
 
 export const toolbarLeft = style({

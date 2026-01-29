@@ -115,16 +115,9 @@ const app = new Hono()
             ];
           }
 
-          // Get provider config ID from provider slug
-          let providerConfigId: string | null = null;
-          if (selectedVariant.provider) {
-            const providerConfig = await db.getProviderConfigBySlug({
-              slug: selectedVariant.provider,
-            });
-            if (providerConfig) {
-              providerConfigId = providerConfig.id;
-            }
-          }
+          // The provider field stores the provider config ID directly
+          // (set by ModelSelector when selecting a model)
+          const providerConfigId = selectedVariant.provider || null;
 
           // Get model name from jsonData or fallback to modelName column
           const modelName =
@@ -142,6 +135,10 @@ const app = new Hono()
             topP: (jsonData?.top_p as number) ?? null,
             frequencyPenalty: (jsonData?.frequency_penalty as number) ?? null,
             presencePenalty: (jsonData?.presence_penalty as number) ?? null,
+            // Source tracking - link back to original prompt
+            configId,
+            variantId: selectedVariant.variantId,
+            variantVersionId: selectedVariant.variantVersionId,
           };
         } else {
           // No variant found, create default column
@@ -159,6 +156,10 @@ const app = new Hono()
             topP: null,
             frequencyPenalty: null,
             presencePenalty: null,
+            // Source tracking - no variant
+            configId,
+            variantId: null,
+            variantVersionId: null,
           };
         }
 
