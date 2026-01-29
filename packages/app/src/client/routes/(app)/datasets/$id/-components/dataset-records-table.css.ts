@@ -1,5 +1,6 @@
 import { colors, spacing } from '@ui';
 import { style } from '@vanilla-extract/css';
+import { calc } from '@vanilla-extract/css-utils';
 
 export const container = style({
   display: 'flex',
@@ -11,8 +12,12 @@ export const toolbar = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: `${spacing.md} ${spacing.lg}`,
+  padding: `${spacing.sm}`,
   borderBottom: `1px solid ${colors.gray4}`,
+  position: 'sticky',
+  top: spacing['2xl'],
+  backgroundColor: colors.background,
+  zIndex: 1,
 });
 
 export const toolbarLeft = style({
