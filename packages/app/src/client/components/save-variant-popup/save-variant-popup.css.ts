@@ -139,3 +139,35 @@ export const saveActions = style({
   paddingTop: spacing.sm,
   borderTop: `1px solid ${colors.gray4}`,
 });
+
+export const inputGroup = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+});
+
+export const inputLabel = style({
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  color: colors.gray11,
+});
+
+export const textInput = style({
+  padding: `${spacing.xs} ${spacing.sm}`,
+  fontSize: '0.875rem',
+  borderRadius: spacing.xs,
+  border: `1px solid ${colors.gray6}`,
+  backgroundColor: colors.gray1,
+  color: colors.gray12,
+  outline: 'none',
+  transition: 'border-color 0.15s ease',
+  ':hover': {
+    borderColor: colors.gray8,
+  },
+  ':focus': {
+    borderColor: colors.accent8,
+  },
+  '::placeholder': {
+    color: colors.gray8,
+  },
+});

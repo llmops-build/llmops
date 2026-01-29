@@ -11,10 +11,16 @@ import ModelSelector, {
 import MessageBlock, {
   type Message,
 } from '@client/routes/(app)/prompts/$id/_variants/-components/message-block';
-import { SaveVariantPopup } from '@client/components/save-variant-popup';
+import {
+  SaveVariantPopup,
+  SavePromptPopup,
+  type SavePromptOptions,
+} from '@client/components/save-variant-popup';
 import { useConfigById } from '@client/hooks/queries/useConfigById';
 import { useVariantVersions } from '@client/hooks/queries/useVariantVersions';
 import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
+import { useCreateConfig } from '@client/hooks/mutations/useCreateConfig';
+import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { showToast } from '@client/components/toast';
 import * as styles from './prompt-column.css';
 
@@ -55,6 +61,8 @@ export function PromptColumn({
   const { data: config } = useConfigById(column.configId ?? '');
   const { data: versions } = useVariantVersions(column.variantId ?? '');
   const createVariantVersion = useCreateVariantVersion();
+  const createConfig = useCreateConfig({ navigateOnSuccess: false });
+  const createVariant = useCreateVariant();
 
   // Find the original version this column was created from
   const originalVersion = useMemo(() => {
@@ -169,6 +177,134 @@ export function PromptColumn({
       );
     }
   };
+
+  // Build JSON data from current column state
+  const buildJsonData = (): Record<string, unknown> => {
+    const jsonData: Record<string, unknown> = {
+      messages: column.messages.map(({ role, content }) => ({ role, content })),
+      model: column.modelName,
+    };
+
+    if (column.temperature !== null && column.temperature !== undefined) {
+      jsonData.temperature = column.temperature;
+    }
+    if (column.maxTokens !== null && column.maxTokens !== undefined) {
+      jsonData.max_tokens = column.maxTokens;
+    }
+    if (column.topP !== null && column.topP !== undefined) {
+      jsonData.top_p = column.topP;
+    }
+    if (column.frequencyPenalty !== null && column.frequencyPenalty !== undefined) {
+      jsonData.frequency_penalty = column.frequencyPenalty;
+    }
+    if (column.presencePenalty !== null && column.presencePenalty !== undefined) {
+      jsonData.presence_penalty = column.presencePenalty;
+    }
+
+    return jsonData;
+  };
+
+  // Handle saving as a new prompt (for unlinked columns)
+  const handleSaveAsPrompt = async (options: SavePromptOptions) => {
+    const jsonData = buildJsonData();
+
+    try {
+      if (options.mode === 'new_prompt') {
+        // Create a new config, then add a variant to it
+        if (!options.promptName || !options.variantName) {
+          showToast.error('Missing name', 'Please provide prompt and variant names');
+          return;
+        }
+
+        const newConfig = await createConfig.mutateAsync({
+          name: options.promptName,
+        });
+
+        if (!newConfig?.id) {
+          showToast.error('Failed to create prompt', 'Could not create the new prompt');
+          return;
+        }
+
+        const result = await createVariant.mutateAsync({
+          configId: newConfig.id,
+          name: options.variantName,
+          provider: column.providerConfigId ?? '',
+          modelName: column.modelName,
+          jsonData,
+        });
+
+        if (result) {
+          // Update the column to reference the new config/variant/version
+          onChange({
+            ...column,
+            configId: newConfig.id,
+            variantId: result.variant.id,
+            variantVersionId: result.version.id,
+          });
+          showToast.success('Prompt created', `Created "${options.promptName}" with variant "${options.variantName}"`);
+        }
+      } else if (options.mode === 'new_variant') {
+        // Add a new variant to an existing config
+        if (!options.configId || !options.variantName) {
+          showToast.error('Missing info', 'Please select a prompt and provide a variant name');
+          return;
+        }
+
+        const result = await createVariant.mutateAsync({
+          configId: options.configId,
+          name: options.variantName,
+          provider: column.providerConfigId ?? '',
+          modelName: column.modelName,
+          jsonData,
+        });
+
+        if (result) {
+          // Update the column to reference the new variant/version
+          onChange({
+            ...column,
+            configId: options.configId,
+            variantId: result.variant.id,
+            variantVersionId: result.version.id,
+          });
+          showToast.success('Variant created', `Created variant "${options.variantName}"`);
+        }
+      } else if (options.mode === 'new_version') {
+        // Add a new version to an existing variant
+        if (!options.configId || !options.variantId) {
+          showToast.error('Missing info', 'Please select a prompt and variant');
+          return;
+        }
+
+        const newVersion = await createVariantVersion.mutateAsync({
+          variantId: options.variantId,
+          provider: column.providerConfigId ?? '',
+          modelName: column.modelName,
+          jsonData,
+        });
+
+        if (newVersion) {
+          // Update the column to reference the existing config/variant and new version
+          onChange({
+            ...column,
+            configId: options.configId,
+            variantId: options.variantId,
+            variantVersionId: newVersion.id,
+          });
+          showToast.success('Version created', `Created version ${newVersion.version}`);
+        }
+      }
+    } catch (error) {
+      showToast.error(
+        'Failed to save',
+        error instanceof Error ? error.message : 'An error occurred'
+      );
+    }
+  };
+
+  const isSavingPrompt =
+    createConfig.isPending ||
+    createVariant.isPending ||
+    createVariantVersion.isPending;
 
   const {
     attributes,
@@ -384,7 +520,12 @@ export function PromptColumn({
               )}
             </Link>
           ) : (
-            <span className={styles.noSourceText}>No linked prompt</span>
+            <SavePromptPopup
+              defaultPromptName={column.name}
+              defaultVariantName="default"
+              onSave={handleSaveAsPrompt}
+              isSaving={isSavingPrompt}
+            />
           )}
         </div>
         <div className={styles.footerRight}>
