@@ -122,13 +122,24 @@ const pricingProvider = new PricingProvider();
 
 /**
  * OpenAI-compatible usage structure in response body
+ * Supports both chat completions format and responses API format
  */
 interface OpenAIUsage {
+  // Chat completions format
   prompt_tokens?: number;
   completion_tokens?: number;
   total_tokens?: number;
   prompt_tokens_details?: {
     cached_tokens?: number;
+  };
+  // Responses API format (OpenAI Agents SDK)
+  input_tokens?: number;
+  output_tokens?: number;
+  input_tokens_details?: {
+    cached_tokens?: number;
+  };
+  output_tokens_details?: {
+    reasoning_tokens?: number;
   };
 }
 
@@ -318,9 +329,29 @@ export function createCostTrackingMiddleware(
       return next();
     }
 
-    // Only track chat completions and completions endpoints
+    // Track all model-related endpoints that incur costs
     const path = c.req.path;
-    if (!path.endsWith('/chat/completions') && !path.endsWith('/completions')) {
+    const trackableEndpoints = [
+      '/chat/completions',
+      '/completions',
+      '/responses', // OpenAI Agents SDK
+      '/embeddings',
+      '/images/generations',
+      '/images/edits',
+      '/audio/speech',
+      '/audio/transcriptions',
+      '/audio/translations',
+      '/messages', // Anthropic format
+    ];
+
+    const shouldTrack = trackableEndpoints.some(
+      (endpoint) =>
+        path.endsWith(endpoint) ||
+        // Handle /responses/:id pattern but not /responses/:id/input_items
+        (endpoint === '/responses' && path.match(/\/responses\/[^/]+$/))
+    );
+
+    if (!shouldTrack) {
       return next();
     }
 
@@ -495,12 +526,23 @@ export function createCostTrackingMiddleware(
         const responseBody: OpenAIResponse = await clonedResponse.json();
 
         if (responseBody.usage) {
+          // Handle both chat completions format and responses API format
+          const promptTokens =
+            responseBody.usage.prompt_tokens ??
+            responseBody.usage.input_tokens ??
+            0;
+          const completionTokens =
+            responseBody.usage.completion_tokens ??
+            responseBody.usage.output_tokens ??
+            0;
           usage = {
-            promptTokens: responseBody.usage.prompt_tokens || 0,
-            completionTokens: responseBody.usage.completion_tokens || 0,
-            totalTokens: responseBody.usage.total_tokens || 0,
+            promptTokens,
+            completionTokens,
+            totalTokens:
+              responseBody.usage.total_tokens || promptTokens + completionTokens,
             cachedTokens:
-              responseBody.usage.prompt_tokens_details?.cached_tokens,
+              responseBody.usage.prompt_tokens_details?.cached_tokens ??
+              responseBody.usage.input_tokens_details?.cached_tokens,
           };
         }
 

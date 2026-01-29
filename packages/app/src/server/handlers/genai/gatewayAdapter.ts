@@ -464,8 +464,14 @@ async function handleDirectProviderRequest(
     model: modelName,
   };
 
-  // Remove 'input' from the final body as it's not part of OpenAI API spec
-  delete updatedBody.input;
+  // Only remove 'input' for chat completions endpoints where it's used for template variables
+  // For /responses endpoint, 'input' is the actual request content and must be preserved
+  const path = c.req.path;
+  const isChatCompletionsEndpoint =
+    path.endsWith('/chat/completions') || path.endsWith('/completions');
+  if (isChatCompletionsEndpoint) {
+    delete updatedBody.input;
+  }
 
   // Clone headers from the original request
   const newHeaders = new Headers(c.req.raw.headers);
@@ -540,8 +546,14 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       contentType === 'application/json' &&
       (path.endsWith('/chat/completions') || path.endsWith('/completions'));
 
-    // If no configId, check for @provider-slug/model format
-    if (!configId && isChatRequest) {
+    // Check if this is a JSON POST request that might contain a model field
+    // This includes /responses endpoint used by OpenAI Agents SDK
+    const isJsonPostRequest =
+      method === 'POST' && contentType === 'application/json';
+
+    // If no configId, check for @provider-slug/model format in any JSON POST request
+    // This supports both /chat/completions and /responses endpoints (used by OpenAI Agents SDK)
+    if (!configId && isJsonPostRequest) {
       try {
         const body = await c.req.json();
         const model = body.model as string | undefined;
