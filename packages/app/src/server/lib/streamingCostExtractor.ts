@@ -55,14 +55,25 @@ export interface StreamingUsage {
 
 /**
  * OpenAI-compatible chunk structure for usage
+ * Supports both chat completions format and responses API format
  */
 interface StreamChunkUsage {
   usage?: {
+    // Chat completions format
     prompt_tokens?: number;
     completion_tokens?: number;
     total_tokens?: number;
     prompt_tokens_details?: {
       cached_tokens?: number;
+    };
+    // Responses API format (OpenAI Agents SDK)
+    input_tokens?: number;
+    output_tokens?: number;
+    input_tokens_details?: {
+      cached_tokens?: number;
+    };
+    output_tokens_details?: {
+      reasoning_tokens?: number;
     };
   };
 }
@@ -153,13 +164,23 @@ export function createStreamingCostExtractor(): {
       }
 
       // Check for usage in this chunk (OpenAI format)
+      // Handle both chat completions format and responses API format
       const usageData = parsed as StreamChunkUsage;
       if (usageData.usage) {
+        const promptTokens =
+          usageData.usage.prompt_tokens ?? usageData.usage.input_tokens ?? 0;
+        const completionTokens =
+          usageData.usage.completion_tokens ??
+          usageData.usage.output_tokens ??
+          0;
         extractedUsage = {
-          promptTokens: usageData.usage.prompt_tokens ?? 0,
-          completionTokens: usageData.usage.completion_tokens ?? 0,
-          totalTokens: usageData.usage.total_tokens ?? 0,
-          cachedTokens: usageData.usage.prompt_tokens_details?.cached_tokens,
+          promptTokens,
+          completionTokens,
+          totalTokens:
+            usageData.usage.total_tokens ?? promptTokens + completionTokens,
+          cachedTokens:
+            usageData.usage.prompt_tokens_details?.cached_tokens ??
+            usageData.usage.input_tokens_details?.cached_tokens,
           hookResults: extractedHookResults,
         };
       }
