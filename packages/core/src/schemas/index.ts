@@ -16,5 +16,28 @@ export type {
   PlaygroundResult,
 } from '../db/schema';
 
+// Re-export entity types for SDK consumers
+export type {
+  Config,
+  Variant,
+  VariantVersion,
+  Environment,
+  EnvironmentSecret,
+  ConfigVariant,
+  TargetingRule,
+  WorkspaceSettings,
+  ProviderConfig,
+  Playground,
+  GuardrailConfig,
+  ProviderGuardrailOverride,
+  GuardrailResult,
+  GuardrailResults,
+  Dataset,
+  DatasetVersion,
+  DatasetRecord,
+  DatasetVersionRecord,
+  LLMRequest,
+} from '../db/schema';
+
 // Re-export Zod schemas for runtime validation
 export { playgroundColumnSchema } from '../db/schema';
