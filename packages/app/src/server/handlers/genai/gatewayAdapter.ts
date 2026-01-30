@@ -181,6 +181,105 @@ const PROVIDER_MAP: Record<string, string> = {
 };
 
 /**
+ * Extracts system message content from variant config messages.
+ * Used by the Responses API to convert messages to instructions.
+ */
+function extractSystemContent(
+  variantConfig: VariantJsonData,
+  inputVariables?: Record<string, unknown>
+): string | null {
+  // Check for new messages array format first
+  if (variantConfig.messages && Array.isArray(variantConfig.messages)) {
+    const systemMessages = variantConfig.messages.filter(
+      (msg) => msg.role === 'system'
+    );
+    if (systemMessages.length > 0) {
+      // Combine all system messages and render templates
+      return systemMessages
+        .map((msg) => {
+          if (inputVariables && Object.keys(inputVariables).length > 0) {
+            try {
+              return renderTemplate(msg.content, inputVariables);
+            } catch (error) {
+              logger.warn(
+                `Template rendering failed, using original content: ${error}`
+              );
+              return msg.content;
+            }
+          }
+          return msg.content;
+        })
+        .join('\n');
+    }
+  }
+
+  // Fall back to old system_prompt format
+  if (variantConfig.system_prompt) {
+    if (inputVariables && Object.keys(inputVariables).length > 0) {
+      try {
+        return renderTemplate(variantConfig.system_prompt, inputVariables);
+      } catch (error) {
+        logger.warn(
+          `Template rendering failed, using original prompt: ${error}`
+        );
+        return variantConfig.system_prompt;
+      }
+    }
+    return variantConfig.system_prompt;
+  }
+
+  return null;
+}
+
+/**
+ * Merges variant config with the request body for the Responses API.
+ * Converts system messages from variant config to the `instructions` parameter.
+ * Variant config takes precedence over request body values.
+ */
+function mergeResponsesBody(
+  body: Record<string, unknown>,
+  variantConfig: VariantJsonData,
+  modelName: string,
+  inputVariables?: Record<string, unknown>
+): Record<string, unknown> {
+  // Use model from jsonData, fallback to modelName column
+  const model = variantConfig.model || modelName;
+
+  // Extract system content for instructions
+  const instructions = extractSystemContent(variantConfig, inputVariables);
+
+  // Build merged body - Responses API uses different parameter names
+  const merged: Record<string, unknown> = {
+    ...body,
+    model,
+  };
+
+  // Set instructions from variant config (system messages)
+  // Only set if variant config has system content
+  if (instructions) {
+    merged.instructions = instructions;
+  }
+
+  // Responses API uses max_output_tokens instead of max_tokens
+  if (variantConfig.max_tokens !== undefined) {
+    merged.max_output_tokens = variantConfig.max_tokens;
+  }
+  if (variantConfig.max_completion_tokens !== undefined) {
+    merged.max_output_tokens = variantConfig.max_completion_tokens;
+  }
+
+  // Map other common parameters
+  if (variantConfig.temperature !== undefined) {
+    merged.temperature = variantConfig.temperature;
+  }
+  if (variantConfig.top_p !== undefined) {
+    merged.top_p = variantConfig.top_p;
+  }
+
+  return merged;
+}
+
+/**
  * Merges variant config with the request body for chat completions.
  * Variant config takes precedence over request body values.
  * If input variables are provided, they are used to render nunjucks templates in messages.
@@ -541,6 +640,12 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       contentType === 'application/json' &&
       (path.endsWith('/chat/completions') || path.endsWith('/completions'));
 
+    // Check if this is a responses API request (used by OpenAI Agents SDK)
+    const isResponsesRequest =
+      method === 'POST' &&
+      contentType === 'application/json' &&
+      path.endsWith('/responses');
+
     // Check if this is a JSON POST request that might contain a model field
     // This includes /responses endpoint used by OpenAI Agents SDK
     const isJsonPostRequest =
@@ -728,7 +833,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         );
       }
 
-      if (isChatRequest) {
+      if (isChatRequest || isResponsesRequest) {
         // Get original body and merge with variant config
         const originalBody = await c.req.json();
 
@@ -740,12 +845,20 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
             ? (originalBody.input_variables as Record<string, unknown>)
             : {};
 
-        const mergedBody = mergeChatCompletionBody(
-          originalBody,
-          variantConfig,
-          version.modelName,
-          inputVariables
-        );
+        // Use different merge function based on endpoint type
+        const mergedBody = isResponsesRequest
+          ? mergeResponsesBody(
+              originalBody,
+              variantConfig,
+              version.modelName,
+              inputVariables
+            )
+          : mergeChatCompletionBody(
+              originalBody,
+              variantConfig,
+              version.modelName,
+              inputVariables
+            );
 
         // Remove 'input_variables' from the final body as it's not part of OpenAI API spec
         delete mergedBody.input_variables;

@@ -77,8 +77,8 @@ When calling the API, pass template variables in the `input_variables` field of 
 ```bash
 curl -X POST https://your-api.com/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "x-llmops-config-id: your-config-id" \
-  -H "x-llmops-env-sec: your-env-secret" \
+  -H "x-llmops-prompt: your-config-id" \
+  -H "Authorization: Bearer your-env-secret" \
   -d '{
     "messages": [{"role": "user", "content": "Hello!"}],
     "input_variables": {

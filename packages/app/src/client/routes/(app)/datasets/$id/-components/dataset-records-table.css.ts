@@ -1,6 +1,5 @@
 import { colors, spacing } from '@ui';
 import { style } from '@vanilla-extract/css';
-import { calc } from '@vanilla-extract/css-utils';
 
 export const container = style({
   display: 'flex',
