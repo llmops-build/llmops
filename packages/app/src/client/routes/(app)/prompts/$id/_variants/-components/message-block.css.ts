@@ -3,7 +3,7 @@ import { style, globalStyle } from '@vanilla-extract/css';
 
 export const messageBlockContainer = style({
   backgroundColor: colors.gray2,
-  borderRadius: spacing.sm,
+  borderRadius: spacing.xs,
   border: `1px solid ${colors.gray4}`,
   overflow: 'hidden',
 });
@@ -69,7 +69,8 @@ export const expandButton = style({
   borderRadius: spacing.xs,
   cursor: 'pointer',
   color: colors.gray9,
-  transition: 'background-color 150ms ease, color 150ms ease, transform 200ms ease',
+  transition:
+    'background-color 150ms ease, color 150ms ease, transform 200ms ease',
   ':hover': {
     backgroundColor: colors.gray3,
     color: colors.gray11,

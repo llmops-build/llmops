@@ -12,12 +12,14 @@ import {
   Blocks,
   BookOpen,
   ChevronDown,
+  Database,
   Globe,
   LogOut,
   MessageSquare,
   Monitor,
   Moon,
   Network,
+  Play,
   Settings,
   Sun,
   Telescope,
@@ -155,6 +157,18 @@ export function AppSidebar() {
           <Link to="/prompts">
             <Icon icon={MessageSquare} />
             Prompts
+          </Link>
+        </SidebarItem>
+        <SidebarItem asChild>
+          <Link to="/playgrounds">
+            <Icon icon={Play} />
+            Playgrounds
+          </Link>
+        </SidebarItem>
+        <SidebarItem asChild>
+          <Link to="/datasets">
+            <Icon icon={Database} />
+            Datasets
           </Link>
         </SidebarItem>
         <SidebarItem asChild>

@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import analytics from '@server/handlers/analytics';
 import configs from '@server/handlers/configs';
+import datasets from '@server/handlers/datasets';
 import environments from '@server/handlers/environments';
 import guardrails from '@server/handlers/guardrails';
+import playgrounds from '@server/handlers/playgrounds';
 import providers from '@server/handlers/providers';
 import targeting from '@server/handlers/targeting';
 import variants from '@server/handlers/variants';
@@ -14,8 +16,10 @@ const app = new Hono()
   .use('*', verifySuperAdmin)
   .route('/analytics', analytics)
   .route('/configs', configs)
+  .route('/datasets', datasets)
   .route('/environments', environments)
   .route('/guardrails', guardrails)
+  .route('/playgrounds', playgrounds)
   .route('/providers', providers)
   .route('/targeting', targeting)
   .route('/variants', variants)

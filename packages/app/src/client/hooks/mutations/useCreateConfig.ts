@@ -3,7 +3,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKey } from '../queries/useConfigList';
 import { useNavigate } from '@tanstack/react-router';
 
-export const useCreateConfig = () => {
+type UseCreateConfigOptions = {
+  navigateOnSuccess?: boolean;
+};
+
+export const useCreateConfig = (options: UseCreateConfigOptions = {}) => {
+  const { navigateOnSuccess = true } = options;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -19,7 +24,7 @@ export const useCreateConfig = () => {
     },
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: queryKey });
-      if (!data?.id) return;
+      if (!data?.id || !navigateOnSuccess) return;
       navigate({
         to: '/prompts/$id',
         params: { id: data?.id },

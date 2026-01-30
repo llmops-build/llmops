@@ -20,6 +20,12 @@ export const variantHeader = style({
   zIndex: 10,
 });
 
+export const variantHeaderLeft = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+});
+
 export const variantHeaderActions = style({
   display: 'flex',
   alignItems: 'center',
@@ -44,6 +50,35 @@ export const variantContainer = style({
 export const variantFormContainer = style({
   margin: '0 auto',
 });
+
+export const variantNameInput = style([
+  sprinkles({
+    fontSize: 'sm',
+    borderRadius: 'xs',
+    paddingLeft: 'sm',
+    paddingRight: 'sm',
+    backgroundColor: 'gray1',
+    color: 'gray11',
+  }),
+  {
+    maxWidth: '400px',
+    height: spacing.xl,
+    border: `1px solid ${colors.gray4}`,
+    outline: 'none',
+    ':-moz-placeholder': {
+      color: colors.gray7,
+    },
+    '::-webkit-input-placeholder': {
+      color: colors.gray7,
+    },
+    '::placeholder': {
+      color: colors.gray7,
+    },
+    ':focus': {
+      borderColor: colors.accent9,
+    },
+  },
+]);
 
 export const variantPropertyRow = style({
   display: 'flex',
@@ -165,4 +200,29 @@ export const actionsRow = style({
   gap: spacing.sm,
   marginTop: spacing.sm,
   flexWrap: 'wrap',
+});
+
+export const evaluateMenuPopup = style({
+  backgroundColor: colors.gray1,
+  border: `1px solid ${colors.gray4}`,
+  borderRadius: spacing.xs,
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+  padding: spacing.xs,
+  minWidth: '140px',
+  zIndex: 100,
+});
+
+export const evaluateMenuItem = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  padding: `${spacing.sm} ${spacing.md}`,
+  borderRadius: spacing.xs,
+  cursor: 'pointer',
+  fontSize: '0.8125rem',
+  color: colors.gray11,
+  transition: 'background-color 150ms ease',
+  ':hover': {
+    backgroundColor: colors.gray3,
+  },
 });

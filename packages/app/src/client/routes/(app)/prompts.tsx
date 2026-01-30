@@ -116,7 +116,7 @@ function RouteComponent() {
           <div className={clsx(workingArea, rightTile)}>
             <div>
               <ConfigsHeader id={params.id as string} />
-              <Outlet />
+              <Outlet key={`${params.id}-${(params as { variant?: string }).variant ?? 'index'}`} />
             </div>
           </div>
         </div>

@@ -90,6 +90,106 @@ export const providerConfigsSchema = z.object({
   enabled: z.boolean().default(true), // Toggle without deleting
 });
 
+// Playground column schema (stored as JSON array in playgrounds.columns)
+export const playgroundColumnSchema = z.object({
+  id: z.string().uuid(), // Client-generated for React keys & result mapping
+  name: z.string(),
+  position: z.number().int().min(0),
+  providerConfigId: z.union([z.string().uuid(), z.null()]), // FK to provider_configs - get slug for gateway calls (null when no model selected)
+  modelName: z.string(),
+  messages: z.array(
+    z.object({
+      role: z.enum(['system', 'user', 'assistant']),
+      content: z.string(),
+    })
+  ),
+  temperature: z.number().nullable().optional(),
+  maxTokens: z.number().int().nullable().optional(),
+  topP: z.number().nullable().optional(),
+  frequencyPenalty: z.number().nullable().optional(),
+  presencePenalty: z.number().nullable().optional(),
+  // Source tracking - links column back to the original prompt config/variant
+  configId: z.string().uuid().nullable().optional(), // FK to configs
+  variantId: z.string().uuid().nullable().optional(), // FK to variants
+  variantVersionId: z.string().uuid().nullable().optional(), // FK to variant_versions
+});
+
+// Playgrounds table schema - stores playground configurations
+export const playgroundsSchema = z.object({
+  ...baseSchema,
+  name: z.string(),
+  datasetId: z.string().uuid().nullable().optional(), // FK to datasets
+  columns: z.array(playgroundColumnSchema).nullable(), // JSON column for prompt configurations
+});
+
+// Playground runs table schema - execution run metadata
+export const playgroundRunsSchema = z.object({
+  ...baseSchema,
+  playgroundId: z.string().uuid(),
+  datasetId: z.string().uuid().nullable(),
+  datasetVersionId: z.string().uuid().nullable(),
+  status: z.enum(['pending', 'running', 'completed', 'failed', 'cancelled']),
+  startedAt: z.date().nullable(),
+  completedAt: z.date().nullable(),
+  totalRecords: z.number().int().default(0),
+  completedRecords: z.number().int().default(0),
+});
+
+// Playground results table schema - individual execution results
+export const playgroundResultsSchema = z.object({
+  ...baseSchema,
+  runId: z.string().uuid(),
+  columnId: z.string().uuid(), // References playgroundColumn.id (from JSON)
+  datasetRecordId: z.string().uuid().nullable(),
+  inputVariables: z.record(z.string(), z.unknown()),
+  outputContent: z.string().nullable(),
+  status: z.enum(['pending', 'running', 'completed', 'failed']),
+  error: z.string().nullable(),
+  latencyMs: z.number().int().nullable(),
+  promptTokens: z.number().int().nullable(),
+  completionTokens: z.number().int().nullable(),
+  totalTokens: z.number().int().nullable(),
+  cost: z.number().int().nullable(), // In micro-dollars
+});
+
+// Datasets table schema - stores dataset metadata
+export const datasetsSchema = z.object({
+  ...baseSchema,
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  // Stats (denormalized for performance)
+  recordCount: z.number().int().default(0),
+  latestVersionNumber: z.number().int().default(1),
+});
+
+// Dataset versions table schema - track dataset snapshots for reproducible experiments
+export const datasetVersionsSchema = z.object({
+  ...baseSchema,
+  datasetId: z.string().uuid(), // FK -> datasets.id
+  versionNumber: z.number().int().min(1), // Auto-incremented per dataset
+  name: z.string().nullable().optional(), // Optional version name
+  description: z.string().nullable().optional(),
+  recordCount: z.number().int().default(0),
+  snapshotHash: z.string(), // SHA-256 hash of record IDs for integrity check
+});
+
+// Dataset records table schema - individual test case records
+export const datasetRecordsSchema = z.object({
+  ...baseSchema,
+  datasetId: z.string().uuid(), // FK -> datasets.id
+  input: z.record(z.string(), z.unknown()), // Required: input data for the test case
+  expected: z.record(z.string(), z.unknown()).nullable().optional(), // Optional: ground truth / ideal output
+  metadata: z.record(z.string(), z.unknown()).default({}), // Arbitrary key-value pairs
+});
+
+// Dataset version records table schema - junction table mapping records to versions
+export const datasetVersionRecordsSchema = z.object({
+  ...baseSchema,
+  datasetVersionId: z.string().uuid(), // FK -> dataset_versions.id
+  datasetRecordId: z.string().uuid(), // FK -> dataset_records.id
+  position: z.number().int().default(0), // Position in version (for ordering)
+});
+
 // Guardrail configs table schema - stores global guardrail configurations
 export const guardrailConfigsSchema = z.object({
   ...baseSchema,
@@ -179,12 +279,20 @@ export type ConfigVariant = z.infer<typeof configVariantsSchema>;
 export type TargetingRule = z.infer<typeof targetingRulesSchema>;
 export type WorkspaceSettings = z.infer<typeof workspaceSettingsSchema>;
 export type ProviderConfig = z.infer<typeof providerConfigsSchema>;
+export type PlaygroundColumn = z.infer<typeof playgroundColumnSchema>;
+export type Playground = z.infer<typeof playgroundsSchema>;
+export type PlaygroundRun = z.infer<typeof playgroundRunsSchema>;
+export type PlaygroundResult = z.infer<typeof playgroundResultsSchema>;
 export type GuardrailConfig = z.infer<typeof guardrailConfigsSchema>;
 export type ProviderGuardrailOverride = z.infer<
   typeof providerGuardrailOverridesSchema
 >;
 export type GuardrailResult = z.infer<typeof guardrailResultSchema>;
 export type GuardrailResults = z.infer<typeof guardrailResultsSchema>;
+export type Dataset = z.infer<typeof datasetsSchema>;
+export type DatasetVersion = z.infer<typeof datasetVersionsSchema>;
+export type DatasetRecord = z.infer<typeof datasetRecordsSchema>;
+export type DatasetVersionRecord = z.infer<typeof datasetVersionRecordsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 
 /**
@@ -267,6 +375,82 @@ export interface ProviderConfigsTable extends BaseTable {
   enabled: ColumnType<boolean, boolean | undefined, boolean | undefined>;
 }
 
+// Playgrounds table
+export interface PlaygroundsTable extends BaseTable {
+  name: string;
+  datasetId: string | null;
+  columns: ColumnType<PlaygroundColumn[] | null, string | null, string | null>;
+}
+
+// Playground runs table
+export interface PlaygroundRunsTable extends BaseTable {
+  playgroundId: string;
+  datasetId: string | null;
+  datasetVersionId: string | null;
+  status: string;
+  startedAt: ColumnType<Date | null, string | null, string | null>;
+  completedAt: ColumnType<Date | null, string | null, string | null>;
+  totalRecords: ColumnType<number, number | undefined, number | undefined>;
+  completedRecords: ColumnType<number, number | undefined, number | undefined>;
+}
+
+// Playground results table
+export interface PlaygroundResultsTable extends BaseTable {
+  runId: string;
+  columnId: string;
+  datasetRecordId: string | null;
+  inputVariables: ColumnType<Record<string, unknown>, string, string>;
+  outputContent: string | null;
+  status: string;
+  error: string | null;
+  latencyMs: number | null;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  cost: number | null;
+}
+
+// Datasets table
+export interface DatasetsTable extends BaseTable {
+  name: string;
+  description: string | null;
+  recordCount: ColumnType<number, number | undefined, number | undefined>;
+  latestVersionNumber: ColumnType<
+    number,
+    number | undefined,
+    number | undefined
+  >;
+}
+
+// Dataset versions table
+export interface DatasetVersionsTable extends BaseTable {
+  datasetId: string;
+  versionNumber: number;
+  name: string | null;
+  description: string | null;
+  recordCount: ColumnType<number, number | undefined, number | undefined>;
+  snapshotHash: string;
+}
+
+// Dataset records table
+export interface DatasetRecordsTable extends BaseTable {
+  datasetId: string;
+  input: ColumnType<Record<string, unknown>, string, string>;
+  expected: ColumnType<
+    Record<string, unknown> | null,
+    string | null,
+    string | null
+  >;
+  metadata: ColumnType<Record<string, unknown>, string, string>;
+}
+
+// Dataset version records table (junction)
+export interface DatasetVersionRecordsTable extends BaseTable {
+  datasetVersionId: string;
+  datasetRecordId: string;
+  position: ColumnType<number, number | undefined, number | undefined>;
+}
+
 // Guardrail configs table - global guardrail configurations
 export interface GuardrailConfigsTable extends BaseTable {
   name: string;
@@ -313,7 +497,11 @@ export interface LLMRequestsTable extends BaseTable {
   isStreaming: ColumnType<boolean, boolean | undefined, boolean | undefined>;
   userId: string | null;
   tags: ColumnType<Record<string, string>, string, string>;
-  guardrailResults: ColumnType<GuardrailResults | null, string | null, string | null>;
+  guardrailResults: ColumnType<
+    GuardrailResults | null,
+    string | null,
+    string | null
+  >;
 }
 
 /**
@@ -329,8 +517,15 @@ export interface Database {
   targeting_rules: TargetingRulesTable;
   workspace_settings: WorkspaceSettingsTable;
   provider_configs: ProviderConfigsTable;
+  playgrounds: PlaygroundsTable;
+  playground_runs: PlaygroundRunsTable;
+  playground_results: PlaygroundResultsTable;
   guardrail_configs: GuardrailConfigsTable;
   provider_guardrail_overrides: ProviderGuardrailOverridesTable;
+  datasets: DatasetsTable;
+  dataset_versions: DatasetVersionsTable;
+  dataset_records: DatasetRecordsTable;
+  dataset_version_records: DatasetVersionRecordsTable;
   llm_requests: LLMRequestsTable;
 }
 
@@ -523,8 +718,80 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
+    playgrounds: {
+      order: 20,
+      schema: playgroundsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
+        datasetId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'datasets', column: 'id' },
+        },
+        columns: { type: 'jsonb', nullable: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    playground_runs: {
+      order: 21,
+      schema: playgroundRunsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        playgroundId: {
+          type: 'uuid',
+          references: { table: 'playgrounds', column: 'id' },
+        },
+        datasetId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'datasets', column: 'id' },
+        },
+        datasetVersionId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'dataset_versions', column: 'id' },
+        },
+        status: { type: 'text' },
+        startedAt: { type: 'timestamp', nullable: true },
+        completedAt: { type: 'timestamp', nullable: true },
+        totalRecords: { type: 'integer', default: 0 },
+        completedRecords: { type: 'integer', default: 0 },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    playground_results: {
+      order: 22,
+      schema: playgroundResultsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        runId: {
+          type: 'uuid',
+          references: { table: 'playground_runs', column: 'id' },
+        },
+        columnId: { type: 'uuid' }, // References JSON column ID, no FK
+        datasetRecordId: {
+          type: 'uuid',
+          nullable: true,
+          references: { table: 'dataset_records', column: 'id' },
+        },
+        inputVariables: { type: 'jsonb', default: '{}' },
+        outputContent: { type: 'text', nullable: true },
+        status: { type: 'text' },
+        error: { type: 'text', nullable: true },
+        latencyMs: { type: 'integer', nullable: true },
+        promptTokens: { type: 'integer', nullable: true },
+        completionTokens: { type: 'integer', nullable: true },
+        totalTokens: { type: 'integer', nullable: true },
+        cost: { type: 'integer', nullable: true },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
     guardrail_configs: {
-      order: 10,
+      order: 14,
       schema: guardrailConfigsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -540,8 +807,75 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    provider_guardrail_overrides: {
+    datasets: {
+      order: 10,
+      schema: datasetsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        name: { type: 'text' },
+        description: { type: 'text', nullable: true },
+        recordCount: { type: 'integer', default: 0 },
+        latestVersionNumber: { type: 'integer', default: 1 },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    dataset_versions: {
       order: 11,
+      schema: datasetVersionsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        datasetId: {
+          type: 'uuid',
+          references: { table: 'datasets', column: 'id' },
+        },
+        versionNumber: { type: 'integer' },
+        name: { type: 'text', nullable: true },
+        description: { type: 'text', nullable: true },
+        recordCount: { type: 'integer', default: 0 },
+        snapshotHash: { type: 'text' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+      uniqueConstraints: [{ columns: ['datasetId', 'versionNumber'] }],
+    },
+    dataset_records: {
+      order: 12,
+      schema: datasetRecordsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        datasetId: {
+          type: 'uuid',
+          references: { table: 'datasets', column: 'id' },
+        },
+        input: { type: 'jsonb' },
+        expected: { type: 'jsonb', nullable: true },
+        metadata: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    dataset_version_records: {
+      order: 13,
+      schema: datasetVersionRecordsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        datasetVersionId: {
+          type: 'uuid',
+          references: { table: 'dataset_versions', column: 'id' },
+        },
+        datasetRecordId: {
+          type: 'uuid',
+          references: { table: 'dataset_records', column: 'id' },
+        },
+        position: { type: 'integer', default: 0 },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+      uniqueConstraints: [{ columns: ['datasetVersionId', 'datasetRecordId'] }],
+    },
+    provider_guardrail_overrides: {
+      order: 15,
       schema: providerGuardrailOverridesSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -558,10 +892,12 @@ export const SCHEMA_METADATA = {
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
-      uniqueConstraints: [{ columns: ['providerConfigId', 'guardrailConfigId'] }],
+      uniqueConstraints: [
+        { columns: ['providerConfigId', 'guardrailConfigId'] },
+      ],
     },
     llm_requests: {
-      order: 12,
+      order: 17,
       schema: llmRequestsSchema,
       fields: {
         id: { type: 'uuid', primaryKey: true },
@@ -622,7 +958,15 @@ export const schemas = {
   targeting_rules: targetingRulesSchema,
   workspace_settings: workspaceSettingsSchema,
   provider_configs: providerConfigsSchema,
+  playgrounds: playgroundsSchema,
+  playground_columns: playgroundColumnSchema,
+  playground_runs: playgroundRunsSchema,
+  playground_results: playgroundResultsSchema,
   guardrail_configs: guardrailConfigsSchema,
   provider_guardrail_overrides: providerGuardrailOverridesSchema,
+  datasets: datasetsSchema,
+  dataset_versions: datasetVersionsSchema,
+  dataset_records: datasetRecordsSchema,
+  dataset_version_records: datasetVersionRecordsSchema,
   llm_requests: llmRequestsSchema,
 } as const;

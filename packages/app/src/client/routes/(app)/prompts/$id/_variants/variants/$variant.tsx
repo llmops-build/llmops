@@ -1,4 +1,7 @@
-import { Combobox } from '@ui';
+import { Combobox, Button } from '@ui';
+import { Menu as BaseMenu } from '@base-ui/react';
+import { Icon } from '@client/components/icons';
+import { ChevronDown, Play } from 'lucide-react';
 import {
   createFileRoute,
   useBlocker,
@@ -8,14 +11,17 @@ import { useForm } from 'react-hook-form';
 import {
   variantContainer,
   variantHeader,
+  variantHeaderLeft,
   variantHeaderActions,
+  evaluateMenuPopup,
+  evaluateMenuItem,
 } from '../-components/variants.css';
-import { configTitleInput } from '../../../-components/configs.css';
 import VariantForm, { type VariantFormData } from '../-components/variant-form';
 import type { Message } from '../-components/message-block';
 import { useCreateVariant } from '@client/hooks/mutations/useCreateVariant';
 import { useCreateVariantVersion } from '@client/hooks/mutations/useCreateVariantVersion';
 import { useSetTargeting } from '@client/hooks/mutations/useSetTargeting';
+import { useCreatePlaygroundFromConfig } from '@client/hooks/mutations/useCreatePlaygroundFromConfig';
 import {
   useVariantById,
   variantByIdQueryOptions,
@@ -33,6 +39,7 @@ import {
 import { useEnvironments } from '@client/hooks/queries/useEnvironments';
 import { useConfigById } from '@client/hooks/queries/useConfigById';
 import { DeploymentSuccessDialog } from '@client/components/deployment-success-dialog';
+import { showToast } from '@client/components/toast';
 import type { RouterContext } from '@client/routes/__root';
 
 export const Route = createFileRoute(
@@ -61,6 +68,7 @@ function RouteComponent() {
   const createVariant = useCreateVariant();
   const createVariantVersion = useCreateVariantVersion();
   const setTargeting = useSetTargeting();
+  const createPlaygroundFromConfig = useCreatePlaygroundFromConfig();
   const { data: variantData } = useVariantById(
     variant === 'new' ? '' : variant
   );
@@ -352,20 +360,41 @@ function RouteComponent() {
     }
   };
 
+  const handleEvaluateInPlayground = async () => {
+    // Generate a short hash for the playground name
+    const hash = Math.random().toString(36).substring(2, 8);
+    const configName = config?.name || 'Untitled';
+    const playgroundName = `${configName}-${hash}`;
+
+    showToast.info('Creating playground...', `Setting up "${playgroundName}"`);
+
+    try {
+      const playground = await createPlaygroundFromConfig.mutateAsync({
+        configId,
+        variantId: variant === 'new' ? undefined : variant,
+        name: playgroundName,
+      });
+
+      if (playground) {
+        showToast.success('Playground created', `"${playgroundName}" is ready`);
+        navigate({
+          to: '/playgrounds/$id',
+          params: { id: playground.id },
+        });
+      }
+    } catch (error) {
+      showToast.error(
+        'Failed to create playground',
+        error instanceof Error ? error.message : 'An error occurred'
+      );
+    }
+  };
+
   return (
     <div>
       <div className={variantHeader}>
-        {/* Variant name input on the left */}
-        <input
-          title="Variant Name"
-          data-1p-ignore
-          autoComplete="off"
-          placeholder="Variant Name"
-          className={configTitleInput}
-          {...form.register('variant_name')}
-        />
-        {/* Version selector and save button on the right */}
-        <div className={variantHeaderActions}>
+        {/* Version selector on the left */}
+        <div className={variantHeaderLeft}>
           {!isNewVariant && versionOptions.length > 0 && (
             <Combobox<VariantVersion>
               items={versionOptions}
@@ -390,6 +419,32 @@ function RouteComponent() {
               }
             />
           )}
+        </div>
+        {/* Evaluate in and save button on the right */}
+        <div className={variantHeaderActions}>
+          <BaseMenu.Root>
+            <BaseMenu.Trigger
+              render={
+                <Button variant="outline" scheme="gray">
+                  Evaluate in
+                  <Icon icon={ChevronDown} />
+                </Button>
+              }
+            />
+            <BaseMenu.Portal>
+              <BaseMenu.Positioner sideOffset={4} align="end">
+                <BaseMenu.Popup className={evaluateMenuPopup}>
+                  <BaseMenu.Item
+                    className={evaluateMenuItem}
+                    onClick={handleEvaluateInPlayground}
+                  >
+                    <Icon icon={Play} />
+                    Playground
+                  </BaseMenu.Item>
+                </BaseMenu.Popup>
+              </BaseMenu.Positioner>
+            </BaseMenu.Portal>
+          </BaseMenu.Root>
           <SaveVariantPopup
             isNewVariant={isNewVariant}
             onSave={handleSave}
