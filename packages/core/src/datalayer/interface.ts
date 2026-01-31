@@ -51,22 +51,20 @@ export type WorkspaceSettingsDataLayer = ReturnType<
   typeof createWorkspaceSettingsDataLayer
 >;
 
-// Combined interface
-export interface DataLayer {
-  configs: ConfigsDataLayer;
-  configVariants: ConfigVariantsDataLayer;
-  datasets: DatasetsDataLayer;
-  environments: EnvironmentsDataLayer;
-  environmentSecrets: EnvironmentSecretsDataLayer;
-  guardrailConfigs: GuardrailConfigsDataLayer;
-  llmRequests: LLMRequestsDataLayer;
-  playgrounds: PlaygroundsDataLayer;
-  playgroundResults: PlaygroundResultsDataLayer;
-  playgroundRuns: PlaygroundRunsDataLayer;
-  providerConfigs: ProviderConfigsDataLayer;
-  providerGuardrailOverrides: ProviderGuardrailOverridesDataLayer;
-  targetingRules: TargetingRulesDataLayer;
-  variants: VariantsDataLayer;
-  variantVersions: VariantVersionsDataLayer;
-  workspaceSettings: WorkspaceSettingsDataLayer;
-}
+// Combined flat interface (all methods spread together)
+export type DataLayer = ConfigsDataLayer &
+  ConfigVariantsDataLayer &
+  DatasetsDataLayer &
+  EnvironmentsDataLayer &
+  EnvironmentSecretsDataLayer &
+  GuardrailConfigsDataLayer &
+  LLMRequestsDataLayer &
+  PlaygroundsDataLayer &
+  PlaygroundResultsDataLayer &
+  PlaygroundRunsDataLayer &
+  ProviderConfigsDataLayer &
+  ProviderGuardrailOverridesDataLayer &
+  TargetingRulesDataLayer &
+  VariantsDataLayer &
+  VariantVersionsDataLayer &
+  WorkspaceSettingsDataLayer;
