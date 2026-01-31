@@ -21,24 +21,25 @@ import { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 /**
  * Create all datalayers from a Kysely database instance.
+ * Returns a flat object with all datalayer methods spread together.
  */
 export function createDataLayer(db: Kysely<Database>): DataLayer {
   return {
-    configs: createConfigDataLayer(db),
-    configVariants: createConfigVariantDataLayer(db),
-    datasets: createDatasetsDataLayer(db),
-    environments: createEnvironmentDataLayer(db),
-    environmentSecrets: createEnvironmentSecretDataLayer(db),
-    guardrailConfigs: createGuardrailConfigsDataLayer(db),
-    llmRequests: createLLMRequestsDataLayer(db),
-    playgrounds: createPlaygroundDataLayer(db),
-    playgroundResults: createPlaygroundResultsDataLayer(db),
-    playgroundRuns: createPlaygroundRunsDataLayer(db),
-    providerConfigs: createProviderConfigsDataLayer(db),
-    providerGuardrailOverrides: createProviderGuardrailOverridesDataLayer(db),
-    targetingRules: createTargetingRulesDataLayer(db),
-    variants: createVariantDataLayer(db),
-    variantVersions: createVariantVersionsDataLayer(db),
-    workspaceSettings: createWorkspaceSettingsDataLayer(db),
+    ...createConfigDataLayer(db),
+    ...createConfigVariantDataLayer(db),
+    ...createDatasetsDataLayer(db),
+    ...createEnvironmentDataLayer(db),
+    ...createEnvironmentSecretDataLayer(db),
+    ...createGuardrailConfigsDataLayer(db),
+    ...createLLMRequestsDataLayer(db),
+    ...createPlaygroundDataLayer(db),
+    ...createPlaygroundResultsDataLayer(db),
+    ...createPlaygroundRunsDataLayer(db),
+    ...createProviderConfigsDataLayer(db),
+    ...createProviderGuardrailOverridesDataLayer(db),
+    ...createTargetingRulesDataLayer(db),
+    ...createVariantDataLayer(db),
+    ...createVariantVersionsDataLayer(db),
+    ...createWorkspaceSettingsDataLayer(db),
   };
 }
