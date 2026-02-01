@@ -115,30 +115,30 @@ const Hero = () => {
                 {copied ? <CheckIcon /> : <CopyIcon />}
               </button>
             </div>
-            <a
-              href="https://github.com/llmops-build/llmops"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full px-3 py-2 flex gap-2 items-center text-gray-8 hover:text-gray-12 hover:bg-gray-2 transition-colors rounded-b-md"
-            >
-              <GitHubLogo className="w-4 h-4 fill-current" />
-              <span className="text-sm">llmops-build/llmops</span>
-              <span className="text-sm font-mono ml-auto">
-                {loading ? <StarsSkeleton /> : stars && formatStars(stars)}
-              </span>
-            </a>
-          </div>
-          <div className="dark flex gap-3">
             <Link
               to="/docs/$"
               params={{
                 // @ts-expect-error Expected
                 "*": "getting-started/installation",
               }}
-              className="bg-accent-9 text-accent-12 dark:text-accent-12 hover:bg-accent-10 h-8 px-3 text-sm font-medium rounded flex items-center justify-center gap-1 transition-colors"
+              className="w-full px-3 py-2 flex gap-2 items-center text-gray-8 hover:text-gray-12 hover:bg-gray-2 transition-colors rounded-b-md"
             >
-              Get Started &rarr;
+              <span className="text-sm">View Docs &rarr;</span>
             </Link>
+          </div>
+          <div className="dark flex gap-3">
+            <a
+              href="https://github.com/llmops-build/llmops"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gray-12 text-gray-1 hover:bg-gray-11 h-8 px-3 text-sm font-medium rounded flex items-center justify-center gap-2 transition-colors"
+            >
+              <GitHubLogo className="w-4 h-4 fill-current" />
+              Star on Github
+              <span className="font-mono">
+                {loading ? <StarsSkeleton /> : stars && formatStars(stars)}
+              </span>
+            </a>
             <a
               href="https://railway.com/deploy/llmops?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic"
               target="_blank"
