@@ -1,3 +1,4 @@
+import Header from '@/components/home/header';
 import './-styles/base.css';
 import { createFileRoute } from '@tanstack/react-router';
 
@@ -7,14 +8,10 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-    // <HomeLayout
-    //   {...baseOptions({
-    //     noTitle: true,
-    //   })}
-    //   nav={{ enabled: false }}
-    // >
-    //   {/* Redesign content here */}
-    // </HomeLayout>
-    <div></div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl w-full mx-auto border-x border-gray-4">
+        <Header />
+      </div>
+    </div>
   );
 }
