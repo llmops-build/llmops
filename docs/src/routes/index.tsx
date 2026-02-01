@@ -8,8 +8,8 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl w-full mx-auto border-x border-gray-4">
+    <div className="min-h-screen bg-background overflow-x-hidden px-6 xl:px-0">
+      <div className="max-w-7xl w-full xl:mx-auto border-x border-gray-4 flex flex-col">
         <Header />
       </div>
     </div>
