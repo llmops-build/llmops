@@ -1,4 +1,5 @@
 import type { PlaygroundColumn } from '@llmops/core';
+import { logger } from '@llmops/core';
 import { zv } from '@server/lib/zv';
 import {
   clientErrorResponse,
@@ -262,12 +263,33 @@ const app = new Hono()
 
       // Create OpenAI client pointing to our gateway
       // Derive base URL from request origin, including basePath
+      // Handle reverse proxy scenarios by checking forwarded headers
+      const forwardedProto = c.req.header('x-forwarded-proto');
+      const forwardedHost = c.req.header('x-forwarded-host') || c.req.header('host');
       const url = new URL(c.req.url);
-      const baseURL = `${url.protocol}//${url.host}`;
+      const protocol = forwardedProto ? `${forwardedProto}:` : url.protocol;
+      const host = forwardedHost || url.host;
+      const baseURL = `${protocol}//${host}`;
       const basePath = c.get('llmopsConfig')?.basePath || '';
       const gatewayPath = basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
+      const gatewayBaseURL = `${baseURL}${gatewayPath}`;
+
+      logger.info({
+        msg: 'Playground execute: constructing gateway URL',
+        forwardedProto,
+        forwardedHost,
+        urlProtocol: url.protocol,
+        urlHost: url.host,
+        protocol,
+        host,
+        baseURL,
+        basePath,
+        gatewayPath,
+        gatewayBaseURL,
+      });
+
       const openai = new OpenAI({
-        baseURL: `${baseURL}${gatewayPath}`,
+        baseURL: gatewayBaseURL,
         apiKey: secret.keyValue,
       });
 
