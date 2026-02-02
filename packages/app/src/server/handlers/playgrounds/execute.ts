@@ -1,4 +1,5 @@
 import type { PlaygroundColumn } from '@llmops/core';
+import { logger } from '@llmops/core';
 import { zv } from '@server/lib/zv';
 import {
   clientErrorResponse,
@@ -271,8 +272,24 @@ const app = new Hono()
       const baseURL = `${protocol}//${host}`;
       const basePath = c.get('llmopsConfig')?.basePath || '';
       const gatewayPath = basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
+      const gatewayBaseURL = `${baseURL}${gatewayPath}`;
+
+      logger.info({
+        msg: 'Playground execute: constructing gateway URL',
+        forwardedProto,
+        forwardedHost,
+        urlProtocol: url.protocol,
+        urlHost: url.host,
+        protocol,
+        host,
+        baseURL,
+        basePath,
+        gatewayPath,
+        gatewayBaseURL,
+      });
+
       const openai = new OpenAI({
-        baseURL: `${baseURL}${gatewayPath}`,
+        baseURL: gatewayBaseURL,
         apiKey: secret.keyValue,
       });
 
