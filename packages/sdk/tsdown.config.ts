@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     express: 'src/lib/express/index.ts',
     hono: 'src/lib/hono/index.ts',
+    vite: 'src/lib/vite/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
