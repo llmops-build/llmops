@@ -218,6 +218,10 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       cancelBatch: path,
       getBatchOutput: path,
       createBatch: path,
+      createModelResponse: '/responses',
+      getModelResponse: path,
+      deleteModelResponse: path,
+      listResponseInputItems: path,
     };
 
     const isGithub = providerOptions.provider === GITHUB;
@@ -266,7 +270,11 @@ const AzureAIInferenceAPI: ProviderAPIConfig = {
       case 'retrieveFile':
       case 'listFiles':
       case 'deleteFile':
-      case 'retrieveFileContent': {
+      case 'retrieveFileContent':
+      case 'createModelResponse':
+      case 'getModelResponse':
+      case 'deleteModelResponse':
+      case 'listResponseInputItems': {
         return `${ENDPOINT_MAPPING[mappedFn]}?${searchParamsString}`;
       }
 
