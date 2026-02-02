@@ -69,6 +69,7 @@ type RequestRow = {
   configId: string | null;
   provider: string;
   model: string;
+  endpoint: string;
   statusCode: number;
   promptTokens: number;
   completionTokens: number;
@@ -168,6 +169,13 @@ function RouteComponent() {
         cell: (info) => (
           <span className={timestampCell}>{info.getValue()}</span>
         ),
+      }),
+      columnHelper.accessor('endpoint', {
+        header: 'Endpoint',
+        cell: (info) => {
+          const endpoint = info.getValue().replace(/^\/api\/genai\/v1\//, '');
+          return <span className={timestampCell}>{endpoint}</span>;
+        },
       }),
       columnHelper.accessor('statusCode', {
         id: 'status',
