@@ -261,11 +261,13 @@ const app = new Hono()
       }
 
       // Create OpenAI client pointing to our gateway
-      // Derive base URL from request origin
+      // Derive base URL from request origin, including basePath
       const url = new URL(c.req.url);
       const baseURL = `${url.protocol}//${url.host}`;
+      const basePath = c.get('llmopsConfig')?.basePath || '';
+      const gatewayPath = basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
       const openai = new OpenAI({
-        baseURL: `${baseURL}/api/genai/v1`,
+        baseURL: `${baseURL}${gatewayPath}`,
         apiKey: secret.keyValue,
       });
 
