@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { ProviderGuardrailOverride } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -38,9 +38,7 @@ const getOverrideByProviderAndGuardrail = z.object({
   guardrailConfigId: z.string().uuid(),
 });
 
-export const createProviderGuardrailOverridesDataLayer = (
-  db: Kysely<Database>
-) => {
+export const createProviderGuardrailOverridesDataLayer = (adapter: Adapter) => {
   return {
     createProviderGuardrailOverride: async (
       params: z.infer<typeof createProviderGuardrailOverride>
@@ -53,9 +51,9 @@ export const createProviderGuardrailOverridesDataLayer = (
       const { providerConfigId, guardrailConfigId, enabled, parameters } =
         value.data;
 
-      return db
-        .insertInto('provider_guardrail_overrides')
-        .values({
+      return adapter.create<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        {
           id: randomUUID(),
           providerConfigId,
           guardrailConfigId,
@@ -63,9 +61,8 @@ export const createProviderGuardrailOverridesDataLayer = (
           parameters: parameters ? JSON.stringify(parameters) : null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+        }
+      );
     },
 
     updateProviderGuardrailOverride: async (
@@ -85,12 +82,11 @@ export const createProviderGuardrailOverridesDataLayer = (
       if (parameters !== undefined)
         updateData.parameters = parameters ? JSON.stringify(parameters) : null;
 
-      return db
-        .updateTable('provider_guardrail_overrides')
-        .set(updateData)
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        [{ field: 'id', value: id }],
+        updateData
+      );
     },
 
     getOverrideById: async (params: z.infer<typeof getOverrideById>) => {
@@ -100,11 +96,10 @@ export const createProviderGuardrailOverridesDataLayer = (
       }
       const { id } = value.data;
 
-      return db
-        .selectFrom('provider_guardrail_overrides')
-        .selectAll()
-        .where('id', '=', id)
-        .executeTakeFirst();
+      return adapter.findOne<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        [{ field: 'id', value: id }]
+      );
     },
 
     deleteProviderGuardrailOverride: async (
@@ -116,11 +111,10 @@ export const createProviderGuardrailOverridesDataLayer = (
       }
       const { id } = value.data;
 
-      return db
-        .deleteFrom('provider_guardrail_overrides')
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        [{ field: 'id', value: id }]
+      );
     },
 
     getOverridesByProviderConfigId: async (
@@ -133,11 +127,12 @@ export const createProviderGuardrailOverridesDataLayer = (
       }
       const { providerConfigId } = value.data;
 
-      return db
-        .selectFrom('provider_guardrail_overrides')
-        .selectAll()
-        .where('providerConfigId', '=', providerConfigId)
-        .execute();
+      return adapter.findMany<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        {
+          where: [{ field: 'providerConfigId', value: providerConfigId }],
+        }
+      );
     },
 
     getOverridesByGuardrailConfigId: async (
@@ -150,11 +145,12 @@ export const createProviderGuardrailOverridesDataLayer = (
       }
       const { guardrailConfigId } = value.data;
 
-      return db
-        .selectFrom('provider_guardrail_overrides')
-        .selectAll()
-        .where('guardrailConfigId', '=', guardrailConfigId)
-        .execute();
+      return adapter.findMany<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        {
+          where: [{ field: 'guardrailConfigId', value: guardrailConfigId }],
+        }
+      );
     },
 
     getOverrideByProviderAndGuardrail: async (
@@ -167,12 +163,13 @@ export const createProviderGuardrailOverridesDataLayer = (
       }
       const { providerConfigId, guardrailConfigId } = value.data;
 
-      return db
-        .selectFrom('provider_guardrail_overrides')
-        .selectAll()
-        .where('providerConfigId', '=', providerConfigId)
-        .where('guardrailConfigId', '=', guardrailConfigId)
-        .executeTakeFirst();
+      return adapter.findOne<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        [
+          { field: 'providerConfigId', value: providerConfigId },
+          { field: 'guardrailConfigId', value: guardrailConfigId },
+        ]
+      );
     },
 
     /**
@@ -190,31 +187,31 @@ export const createProviderGuardrailOverridesDataLayer = (
         value.data;
 
       // Check if override already exists
-      const existing = await db
-        .selectFrom('provider_guardrail_overrides')
-        .selectAll()
-        .where('providerConfigId', '=', providerConfigId)
-        .where('guardrailConfigId', '=', guardrailConfigId)
-        .executeTakeFirst();
+      const existing = await adapter.findOne<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        [
+          { field: 'providerConfigId', value: providerConfigId },
+          { field: 'guardrailConfigId', value: guardrailConfigId },
+        ]
+      );
 
       if (existing) {
         // Update existing override
-        return db
-          .updateTable('provider_guardrail_overrides')
-          .set({
+        return adapter.update<ProviderGuardrailOverride>(
+          'provider_guardrail_overrides',
+          [{ field: 'id', value: existing.id }],
+          {
             enabled,
             parameters: parameters ? JSON.stringify(parameters) : null,
             updatedAt: new Date().toISOString(),
-          })
-          .where('id', '=', existing.id)
-          .returningAll()
-          .executeTakeFirst();
+          }
+        );
       }
 
       // Create new override
-      return db
-        .insertInto('provider_guardrail_overrides')
-        .values({
+      return adapter.create<ProviderGuardrailOverride>(
+        'provider_guardrail_overrides',
+        {
           id: randomUUID(),
           providerConfigId,
           guardrailConfigId,
@@ -222,9 +219,8 @@ export const createProviderGuardrailOverridesDataLayer = (
           parameters: parameters ? JSON.stringify(parameters) : null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+        }
+      );
     },
 
     /**
@@ -241,10 +237,9 @@ export const createProviderGuardrailOverridesDataLayer = (
       }
       const { guardrailConfigId } = value.data;
 
-      return db
-        .deleteFrom('provider_guardrail_overrides')
-        .where('guardrailConfigId', '=', guardrailConfigId)
-        .execute();
+      return adapter.deleteMany('provider_guardrail_overrides', [
+        { field: 'guardrailConfigId', value: guardrailConfigId },
+      ]);
     },
   };
 };

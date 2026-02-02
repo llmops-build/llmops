@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { PlaygroundResult } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -43,7 +43,7 @@ const deletePlaygroundResultsByRunId = z.object({
   runId: z.string().uuid(),
 });
 
-export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
+export const createPlaygroundResultsDataLayer = (adapter: Adapter) => {
   return {
     createPlaygroundResult: async (
       params: z.infer<typeof createPlaygroundResult>
@@ -55,27 +55,23 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
       const { runId, columnId, datasetRecordId, inputVariables, status } =
         value.data;
 
-      return db
-        .insertInto('playground_results')
-        .values({
-          id: randomUUID(),
-          runId,
-          columnId,
-          datasetRecordId: datasetRecordId ?? null,
-          inputVariables: JSON.stringify(inputVariables),
-          outputContent: null,
-          status,
-          error: null,
-          latencyMs: null,
-          promptTokens: null,
-          completionTokens: null,
-          totalTokens: null,
-          cost: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<PlaygroundResult>('playground_results', {
+        id: randomUUID(),
+        runId,
+        columnId,
+        datasetRecordId: datasetRecordId ?? null,
+        inputVariables: JSON.stringify(inputVariables),
+        outputContent: null,
+        status,
+        error: null,
+        latencyMs: null,
+        promptTokens: null,
+        completionTokens: null,
+        totalTokens: null,
+        cost: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
 
     createPlaygroundResultsBatch: async (
@@ -110,11 +106,7 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
         updatedAt: now,
       }));
 
-      return db
-        .insertInto('playground_results')
-        .values(values)
-        .returningAll()
-        .execute();
+      return adapter.createMany<PlaygroundResult>('playground_results', values);
     },
 
     updatePlaygroundResult: async (
@@ -149,12 +141,11 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
       if (totalTokens !== undefined) updateData.totalTokens = totalTokens;
       if (cost !== undefined) updateData.cost = cost;
 
-      return db
-        .updateTable('playground_results')
-        .set(updateData)
-        .where('id', '=', resultId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<PlaygroundResult>(
+        'playground_results',
+        [{ field: 'id', value: resultId }],
+        updateData
+      );
     },
 
     getPlaygroundResultById: async (
@@ -166,11 +157,9 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
       }
       const { resultId } = value.data;
 
-      return db
-        .selectFrom('playground_results')
-        .selectAll()
-        .where('id', '=', resultId)
-        .executeTakeFirst();
+      return adapter.findOne<PlaygroundResult>('playground_results', [
+        { field: 'id', value: resultId },
+      ]);
     },
 
     listPlaygroundResults: async (
@@ -182,20 +171,19 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
       }
       const { runId, columnId, limit = 500, offset = 0 } = value.data;
 
-      let query = db
-        .selectFrom('playground_results')
-        .selectAll()
-        .where('runId', '=', runId);
-
+      const where: Array<{ field: string; value: string }> = [
+        { field: 'runId', value: runId },
+      ];
       if (columnId) {
-        query = query.where('columnId', '=', columnId);
+        where.push({ field: 'columnId', value: columnId });
       }
 
-      return query
-        .orderBy('createdAt', 'asc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<PlaygroundResult>('playground_results', {
+        where,
+        orderBy: [{ field: 'createdAt', direction: 'asc' }],
+        limit,
+        offset,
+      });
     },
 
     deletePlaygroundResultsByRunId: async (
@@ -207,30 +195,33 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
       }
       const { runId } = value.data;
 
-      return db
-        .deleteFrom('playground_results')
-        .where('runId', '=', runId)
-        .returningAll()
-        .execute();
+      // First get the results to return them
+      const results = await adapter.findMany<PlaygroundResult>(
+        'playground_results',
+        {
+          where: [{ field: 'runId', value: runId }],
+        }
+      );
+
+      // Then delete them
+      await adapter.deleteMany('playground_results', [
+        { field: 'runId', value: runId },
+      ]);
+
+      return results;
     },
 
     countPlaygroundResults: async (runId: string) => {
-      const result = await db
-        .selectFrom('playground_results')
-        .select(db.fn.countAll().as('count'))
-        .where('runId', '=', runId)
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('playground_results', [
+        { field: 'runId', value: runId },
+      ]);
     },
 
     countCompletedPlaygroundResults: async (runId: string) => {
-      const result = await db
-        .selectFrom('playground_results')
-        .select(db.fn.countAll().as('count'))
-        .where('runId', '=', runId)
-        .where('status', '=', 'completed')
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('playground_results', [
+        { field: 'runId', value: runId },
+        { field: 'status', value: 'completed' },
+      ]);
     },
   };
 };

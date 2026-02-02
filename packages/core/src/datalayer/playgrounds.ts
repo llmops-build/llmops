@@ -1,7 +1,7 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
+import type { Adapter } from '@/adapter/types';
+import type { Playground } from '@/schemas';
 import { playgroundColumnSchema } from '@/schemas';
-import type { Kysely } from 'kysely';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -31,7 +31,7 @@ const listPlaygrounds = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
-export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
+export const createPlaygroundDataLayer = (adapter: Adapter) => {
   return {
     createNewPlayground: async (
       params: z.infer<typeof createNewPlayground>
@@ -42,18 +42,14 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       }
       const { name, datasetId, columns } = value.data;
 
-      return db
-        .insertInto('playgrounds')
-        .values({
-          id: randomUUID(),
-          name,
-          datasetId: datasetId ?? null,
-          columns: columns ? JSON.stringify(columns) : null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<Playground>('playgrounds', {
+        id: randomUUID(),
+        name,
+        datasetId: datasetId ?? null,
+        columns: columns ? JSON.stringify(columns) : null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
     updatePlayground: async (params: z.infer<typeof updatePlayground>) => {
       const value = await updatePlayground.safeParseAsync(params);
@@ -70,12 +66,11 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       if (columns !== undefined)
         updateData.columns = columns ? JSON.stringify(columns) : null;
 
-      return db
-        .updateTable('playgrounds')
-        .set(updateData)
-        .where('id', '=', playgroundId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<Playground>(
+        'playgrounds',
+        [{ field: 'id', value: playgroundId }],
+        updateData
+      );
     },
     getPlaygroundById: async (params: z.infer<typeof getPlaygroundById>) => {
       const value = await getPlaygroundById.safeParseAsync(params);
@@ -84,11 +79,9 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       }
       const { playgroundId } = value.data;
 
-      return db
-        .selectFrom('playgrounds')
-        .selectAll()
-        .where('id', '=', playgroundId)
-        .executeTakeFirst();
+      return adapter.findOne<Playground>('playgrounds', [
+        { field: 'id', value: playgroundId },
+      ]);
     },
     deletePlayground: async (params: z.infer<typeof deletePlayground>) => {
       const value = await deletePlayground.safeParseAsync(params);
@@ -97,11 +90,9 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       }
       const { playgroundId } = value.data;
 
-      return db
-        .deleteFrom('playgrounds')
-        .where('id', '=', playgroundId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<Playground>('playgrounds', [
+        { field: 'id', value: playgroundId },
+      ]);
     },
     listPlaygrounds: async (params?: z.infer<typeof listPlaygrounds>) => {
       const value = await listPlaygrounds.safeParseAsync(params || {});
@@ -110,20 +101,14 @@ export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('playgrounds')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<Playground>('playgrounds', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
     countPlaygrounds: async () => {
-      const result = await db
-        .selectFrom('playgrounds')
-        .select(db.fn.countAll().as('count'))
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('playgrounds');
     },
   };
 };

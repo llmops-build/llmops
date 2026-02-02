@@ -1,6 +1,12 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type {
+  ConfigVariant,
+  Environment,
+  TargetingRule,
+  Variant,
+  VariantVersion,
+} from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -69,7 +75,7 @@ const setTargetingForEnvironment = z.object({
   variantVersionId: z.string().uuid().nullable().optional(),
 });
 
-export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
+export const createTargetingRulesDataLayer = (adapter: Adapter) => {
   return {
     createTargetingRule: async (
       params: z.infer<typeof createTargetingRule>
@@ -89,23 +95,19 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
         conditions,
       } = value.data;
 
-      return db
-        .insertInto('targeting_rules')
-        .values({
-          id: randomUUID(),
-          environmentId,
-          configId,
-          configVariantId,
-          variantVersionId: variantVersionId ?? null,
-          weight,
-          priority,
-          enabled,
-          conditions: JSON.stringify(conditions ?? {}),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<TargetingRule>('targeting_rules', {
+        id: randomUUID(),
+        environmentId,
+        configId,
+        configVariantId,
+        variantVersionId: variantVersionId ?? null,
+        weight,
+        priority,
+        enabled,
+        conditions: JSON.stringify(conditions ?? {}),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
 
     updateTargetingRule: async (
@@ -130,12 +132,11 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
         updateData.conditions = conditions ? JSON.stringify(conditions) : null;
       }
 
-      return db
-        .updateTable('targeting_rules')
-        .set(updateData)
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<TargetingRule>(
+        'targeting_rules',
+        [{ field: 'id', value: id }],
+        updateData
+      );
     },
 
     getTargetingRuleById: async (
@@ -147,11 +148,9 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .selectFrom('targeting_rules')
-        .selectAll()
-        .where('id', '=', id)
-        .executeTakeFirst();
+      return adapter.findOne<TargetingRule>('targeting_rules', [
+        { field: 'id', value: id },
+      ]);
     },
 
     getTargetingRulesByConfigId: async (
@@ -163,16 +162,18 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { configId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('targeting_rules')
-        .selectAll()
-        .where('configId', '=', configId)
-        .where('enabled', '=', true)
-        .orderBy('priority', 'desc')
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<TargetingRule>('targeting_rules', {
+        where: [
+          { field: 'configId', value: configId },
+          { field: 'enabled', value: true },
+        ],
+        orderBy: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'createdAt', direction: 'desc' },
+        ],
+        limit,
+        offset,
+      });
     },
 
     getTargetingRulesByEnvironmentId: async (
@@ -185,16 +186,18 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('targeting_rules')
-        .selectAll()
-        .where('environmentId', '=', environmentId)
-        .where('enabled', '=', true)
-        .orderBy('priority', 'desc')
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<TargetingRule>('targeting_rules', {
+        where: [
+          { field: 'environmentId', value: environmentId },
+          { field: 'enabled', value: true },
+        ],
+        orderBy: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'createdAt', direction: 'desc' },
+        ],
+        limit,
+        offset,
+      });
     },
 
     getTargetingRulesByConfigAndEnvironment: async (
@@ -207,15 +210,17 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { configId, environmentId } = value.data;
 
-      return db
-        .selectFrom('targeting_rules')
-        .selectAll()
-        .where('configId', '=', configId)
-        .where('environmentId', '=', environmentId)
-        .where('enabled', '=', true)
-        .orderBy('priority', 'desc')
-        .orderBy('weight', 'desc')
-        .execute();
+      return adapter.findMany<TargetingRule>('targeting_rules', {
+        where: [
+          { field: 'configId', value: configId },
+          { field: 'environmentId', value: environmentId },
+          { field: 'enabled', value: true },
+        ],
+        orderBy: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'weight', direction: 'desc' },
+        ],
+      });
     },
 
     deleteTargetingRule: async (
@@ -227,11 +232,9 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .deleteFrom('targeting_rules')
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<TargetingRule>('targeting_rules', [
+        { field: 'id', value: id },
+      ]);
     },
 
     deleteTargetingRulesByConfigId: async (
@@ -243,11 +246,17 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { configId } = value.data;
 
-      return db
-        .deleteFrom('targeting_rules')
-        .where('configId', '=', configId)
-        .returningAll()
-        .execute();
+      // Get all rules first to return them
+      const rules = await adapter.findMany<TargetingRule>('targeting_rules', {
+        where: [{ field: 'configId', value: configId }],
+      });
+
+      // Delete all rules
+      await adapter.deleteMany('targeting_rules', [
+        { field: 'configId', value: configId },
+      ]);
+
+      return rules;
     },
 
     deleteTargetingRulesByEnvironmentId: async (
@@ -260,11 +269,17 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId } = value.data;
 
-      return db
-        .deleteFrom('targeting_rules')
-        .where('environmentId', '=', environmentId)
-        .returningAll()
-        .execute();
+      // Get all rules first to return them
+      const rules = await adapter.findMany<TargetingRule>('targeting_rules', {
+        where: [{ field: 'environmentId', value: environmentId }],
+      });
+
+      // Delete all rules
+      await adapter.deleteMany('targeting_rules', [
+        { field: 'environmentId', value: environmentId },
+      ]);
+
+      return rules;
     },
 
     listTargetingRules: async (params?: z.infer<typeof listTargetingRules>) => {
@@ -274,14 +289,14 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('targeting_rules')
-        .selectAll()
-        .orderBy('priority', 'desc')
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<TargetingRule>('targeting_rules', {
+        orderBy: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'createdAt', direction: 'desc' },
+        ],
+        limit,
+        offset,
+      });
     },
 
     /**
@@ -297,68 +312,63 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       }
       const { configId, limit = 100, offset = 0 } = value.data;
 
-      const rules = await db
-        .selectFrom('targeting_rules')
-        .leftJoin(
-          'environments',
-          'targeting_rules.environmentId',
-          'environments.id'
-        )
-        .leftJoin(
-          'config_variants',
-          'targeting_rules.configVariantId',
-          'config_variants.id'
-        )
-        .leftJoin('variants', 'config_variants.variantId', 'variants.id')
-        .select([
-          'targeting_rules.id',
-          'targeting_rules.environmentId',
-          'targeting_rules.configId',
-          'targeting_rules.configVariantId',
-          'targeting_rules.variantVersionId',
-          'targeting_rules.weight',
-          'targeting_rules.priority',
-          'targeting_rules.enabled',
-          'targeting_rules.conditions',
-          'targeting_rules.createdAt',
-          'targeting_rules.updatedAt',
-          'environments.name as environmentName',
-          'environments.slug as environmentSlug',
-          'variants.name as variantName',
-          'config_variants.variantId',
-        ])
-        .where('targeting_rules.configId', '=', configId)
-        .orderBy('targeting_rules.priority', 'desc')
-        .orderBy('targeting_rules.createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      const rules = await adapter.findMany<TargetingRule>('targeting_rules', {
+        where: [{ field: 'configId', value: configId }],
+        orderBy: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'createdAt', direction: 'desc' },
+        ],
+        limit,
+        offset,
+      });
 
-      // For each rule, get the version info (either pinned version or latest)
-      const rulesWithVersions = await Promise.all(
+      // For each rule, get the related details
+      const rulesWithDetails = await Promise.all(
         rules.map(async (rule) => {
-          let versionInfo = null;
+          // Get environment, config variant, and variant info
+          const [environment, configVariant] = await Promise.all([
+            adapter.findOne<Environment>('environments', [
+              { field: 'id', value: rule.environmentId },
+            ]),
+            adapter.findOne<ConfigVariant>('config_variants', [
+              { field: 'id', value: rule.configVariantId },
+            ]),
+          ]);
+
+          let variant: Variant | null = null;
+          if (configVariant) {
+            variant = await adapter.findOne<Variant>('variants', [
+              { field: 'id', value: configVariant.variantId },
+            ]);
+          }
+
+          let versionInfo: VariantVersion | null = null;
 
           if (rule.variantVersionId) {
             // Get the specific pinned version
-            versionInfo = await db
-              .selectFrom('variant_versions')
-              .select(['provider', 'modelName', 'version'])
-              .where('id', '=', rule.variantVersionId)
-              .executeTakeFirst();
-          } else if (rule.variantId) {
+            versionInfo = await adapter.findOne<VariantVersion>(
+              'variant_versions',
+              [{ field: 'id', value: rule.variantVersionId }]
+            );
+          } else if (configVariant) {
             // Get the latest version
-            versionInfo = await db
-              .selectFrom('variant_versions')
-              .select(['provider', 'modelName', 'version'])
-              .where('variantId', '=', rule.variantId)
-              .orderBy('version', 'desc')
-              .limit(1)
-              .executeTakeFirst();
+            const versions = await adapter.findMany<VariantVersion>(
+              'variant_versions',
+              {
+                where: [{ field: 'variantId', value: configVariant.variantId }],
+                orderBy: [{ field: 'version', direction: 'desc' }],
+                limit: 1,
+              }
+            );
+            versionInfo = versions[0] ?? null;
           }
 
           return {
             ...rule,
+            variantId: configVariant?.variantId ?? null,
+            environmentName: environment?.name ?? null,
+            environmentSlug: environment?.slug ?? null,
+            variantName: variant?.name ?? null,
             variantProvider: versionInfo?.provider ?? null,
             variantModelName: versionInfo?.modelName ?? null,
             pinnedVersion: rule.variantVersionId ? versionInfo?.version : null,
@@ -367,7 +377,7 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
         })
       );
 
-      return rulesWithVersions;
+      return rulesWithDetails;
     },
 
     /**
@@ -387,30 +397,25 @@ export const createTargetingRulesDataLayer = (db: Kysely<Database>) => {
       const now = new Date().toISOString();
 
       // Delete existing rules for this config+environment
-      await db
-        .deleteFrom('targeting_rules')
-        .where('configId', '=', configId)
-        .where('environmentId', '=', environmentId)
-        .execute();
+      await adapter.deleteMany('targeting_rules', [
+        { field: 'configId', value: configId },
+        { field: 'environmentId', value: environmentId },
+      ]);
 
       // Create new rule with 100% weight
-      return db
-        .insertInto('targeting_rules')
-        .values({
-          id: randomUUID(),
-          environmentId,
-          configId,
-          configVariantId,
-          variantVersionId: variantVersionId ?? null,
-          weight: 10000,
-          priority: 0,
-          enabled: true,
-          conditions: JSON.stringify({}),
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<TargetingRule>('targeting_rules', {
+        id: randomUUID(),
+        environmentId,
+        configId,
+        configVariantId,
+        variantVersionId: variantVersionId ?? null,
+        weight: 10000,
+        priority: 0,
+        enabled: true,
+        conditions: JSON.stringify({}),
+        createdAt: now,
+        updatedAt: now,
+      });
     },
   };
 };

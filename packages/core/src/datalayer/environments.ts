@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { Environment } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -33,7 +33,7 @@ const listEnvironments = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
-export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
+export const createEnvironmentDataLayer = (adapter: Adapter) => {
   return {
     createNewEnvironment: async (
       params: z.infer<typeof createNewEnvironment>
@@ -44,19 +44,16 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       }
       const { name, slug, isProd } = value.data;
 
-      return db
-        .insertInto('environments')
-        .values({
-          id: randomUUID(),
-          name,
-          slug,
-          isProd,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<Environment>('environments', {
+        id: randomUUID(),
+        name,
+        slug,
+        isProd,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
+
     updateEnvironment: async (params: z.infer<typeof updateEnvironment>) => {
       const value = await updateEnvironment.safeParseAsync(params);
       if (!value.success) {
@@ -70,13 +67,13 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       if (name !== undefined) updateData.name = name;
       if (slug !== undefined) updateData.slug = slug;
 
-      return db
-        .updateTable('environments')
-        .set(updateData)
-        .where('id', '=', environmentId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<Environment>(
+        'environments',
+        [{ field: 'id', value: environmentId }],
+        updateData
+      );
     },
+
     getEnvironmentById: async (params: z.infer<typeof getEnvironmentById>) => {
       const value = await getEnvironmentById.safeParseAsync(params);
       if (!value.success) {
@@ -84,12 +81,11 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId } = value.data;
 
-      return db
-        .selectFrom('environments')
-        .selectAll()
-        .where('id', '=', environmentId)
-        .executeTakeFirst();
+      return adapter.findOne<Environment>('environments', [
+        { field: 'id', value: environmentId },
+      ]);
     },
+
     getEnvironmentBySlug: async (
       params: z.infer<typeof getEnvironmentBySlug>
     ) => {
@@ -99,12 +95,11 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       }
       const { slug } = value.data;
 
-      return db
-        .selectFrom('environments')
-        .selectAll()
-        .where('slug', '=', slug)
-        .executeTakeFirst();
+      return adapter.findOne<Environment>('environments', [
+        { field: 'slug', value: slug },
+      ]);
     },
+
     deleteEnvironment: async (params: z.infer<typeof deleteEnvironment>) => {
       const value = await deleteEnvironment.safeParseAsync(params);
       if (!value.success) {
@@ -112,12 +107,11 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId } = value.data;
 
-      return db
-        .deleteFrom('environments')
-        .where('id', '=', environmentId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<Environment>('environments', [
+        { field: 'id', value: environmentId },
+      ]);
     },
+
     listEnvironments: async (params?: z.infer<typeof listEnvironments>) => {
       const value = await listEnvironments.safeParseAsync(params || {});
       if (!value.success) {
@@ -125,20 +119,15 @@ export const createEnvironmentDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('environments')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<Environment>('environments', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
+
     countEnvironments: async () => {
-      const result = await db
-        .selectFrom('environments')
-        .select(db.fn.countAll().as('count'))
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('environments');
     },
   };
 };

@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { ProviderConfig } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -9,15 +9,13 @@ import z from 'zod';
  * If the base slug already exists, appends -01, -02, etc.
  */
 async function generateUniqueSlug(
-  db: Kysely<Database>,
+  adapter: Adapter,
   baseSlug: string
 ): Promise<string> {
   // Check if base slug exists
-  const existing = await db
-    .selectFrom('provider_configs')
-    .select('slug')
-    .where('slug', 'like', `${baseSlug}%`)
-    .execute();
+  const existing = await adapter.findMany<ProviderConfig>('provider_configs', {
+    where: [{ field: 'slug', operator: 'starts_with', value: baseSlug }],
+  });
 
   if (existing.length === 0) {
     return baseSlug;
@@ -82,7 +80,7 @@ const listProviderConfigs = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
-export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
+export const createProviderConfigsDataLayer = (adapter: Adapter) => {
   return {
     createProviderConfig: async (
       params: z.infer<typeof createProviderConfig>
@@ -94,23 +92,20 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       const { providerId, slug, name, config, enabled } = value.data;
 
       // Auto-generate unique slug if not provided
-      const finalSlug = slug ?? (await generateUniqueSlug(db, providerId));
+      const finalSlug = slug ?? (await generateUniqueSlug(adapter, providerId));
 
-      return db
-        .insertInto('provider_configs')
-        .values({
-          id: randomUUID(),
-          providerId,
-          slug: finalSlug,
-          name: name ?? null,
-          config: JSON.stringify(config),
-          enabled,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<ProviderConfig>('provider_configs', {
+        id: randomUUID(),
+        providerId,
+        slug: finalSlug,
+        name: name ?? null,
+        config: JSON.stringify(config),
+        enabled,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
+
     updateProviderConfig: async (
       params: z.infer<typeof updateProviderConfig>
     ) => {
@@ -128,13 +123,13 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       if (config !== undefined) updateData.config = JSON.stringify(config);
       if (enabled !== undefined) updateData.enabled = enabled;
 
-      return db
-        .updateTable('provider_configs')
-        .set(updateData)
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<ProviderConfig>(
+        'provider_configs',
+        [{ field: 'id', value: id }],
+        updateData
+      );
     },
+
     getProviderConfigById: async (
       params: z.infer<typeof getProviderConfigById>
     ) => {
@@ -144,12 +139,11 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .selectFrom('provider_configs')
-        .selectAll()
-        .where('id', '=', id)
-        .executeTakeFirst();
+      return adapter.findOne<ProviderConfig>('provider_configs', [
+        { field: 'id', value: id },
+      ]);
     },
+
     getProviderConfigByProviderId: async (
       params: z.infer<typeof getProviderConfigByProviderId>
     ) => {
@@ -159,12 +153,11 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { providerId } = value.data;
 
-      return db
-        .selectFrom('provider_configs')
-        .selectAll()
-        .where('providerId', '=', providerId)
-        .executeTakeFirst();
+      return adapter.findOne<ProviderConfig>('provider_configs', [
+        { field: 'providerId', value: providerId },
+      ]);
     },
+
     getProviderConfigBySlug: async (
       params: z.infer<typeof getProviderConfigBySlug>
     ) => {
@@ -174,12 +167,11 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { slug } = value.data;
 
-      return db
-        .selectFrom('provider_configs')
-        .selectAll()
-        .where('slug', '=', slug)
-        .executeTakeFirst();
+      return adapter.findOne<ProviderConfig>('provider_configs', [
+        { field: 'slug', value: slug },
+      ]);
     },
+
     deleteProviderConfig: async (
       params: z.infer<typeof deleteProviderConfig>
     ) => {
@@ -189,12 +181,11 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .deleteFrom('provider_configs')
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<ProviderConfig>('provider_configs', [
+        { field: 'id', value: id },
+      ]);
     },
+
     listProviderConfigs: async (
       params?: z.infer<typeof listProviderConfigs>
     ) => {
@@ -204,21 +195,17 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('provider_configs')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<ProviderConfig>('provider_configs', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
+
     countProviderConfigs: async () => {
-      const result = await db
-        .selectFrom('provider_configs')
-        .select(db.fn.countAll().as('count'))
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('provider_configs');
     },
+
     /**
      * Upsert provider config - creates if not exists, updates if exists
      * Useful for the dashboard UI where you want to set/update a provider config
@@ -233,50 +220,43 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
       const { providerId, slug, name, config, enabled } = value.data;
 
       // Check if a config already exists for this provider
-      const existing = await db
-        .selectFrom('provider_configs')
-        .selectAll()
-        .where('providerId', '=', providerId)
-        .executeTakeFirst();
+      const existing = await adapter.findOne<ProviderConfig>('provider_configs', [
+        { field: 'providerId', value: providerId },
+      ]);
 
       if (existing) {
         // Update existing config
         // Generate slug if not provided and existing doesn't have one
         const finalSlug =
-          slug ?? existing.slug ?? (await generateUniqueSlug(db, providerId));
+          slug ?? existing.slug ?? (await generateUniqueSlug(adapter, providerId));
 
-        return db
-          .updateTable('provider_configs')
-          .set({
+        return adapter.update<ProviderConfig>(
+          'provider_configs',
+          [{ field: 'id', value: existing.id }],
+          {
             slug: finalSlug,
             name: name ?? existing.name,
             config: JSON.stringify(config),
             enabled,
             updatedAt: new Date().toISOString(),
-          })
-          .where('id', '=', existing.id)
-          .returningAll()
-          .executeTakeFirst();
+          }
+        );
       }
 
       // Auto-generate unique slug if not provided for new configs
-      const finalSlug = slug ?? (await generateUniqueSlug(db, providerId));
+      const finalSlug = slug ?? (await generateUniqueSlug(adapter, providerId));
 
       // Create new config
-      return db
-        .insertInto('provider_configs')
-        .values({
-          id: randomUUID(),
-          providerId,
-          slug: finalSlug,
-          name: name ?? null,
-          config: JSON.stringify(config),
-          enabled,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<ProviderConfig>('provider_configs', {
+        id: randomUUID(),
+        providerId,
+        slug: finalSlug,
+        name: name ?? null,
+        config: JSON.stringify(config),
+        enabled,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
   };
 };

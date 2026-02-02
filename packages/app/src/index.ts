@@ -1,8 +1,10 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import mainApp from './server';
-import type { LLMOpsConfig } from '@llmops/core';
+import type { LLMOpsConfig, DataLayer } from '@llmops/core';
 import {
   createDataLayer,
+  createKyselyAdapter,
+  createLLMRequestsDataLayer,
   validateLLMOpsConfig,
   type ValidatedLLMOpsConfig,
 } from '@llmops/core';
@@ -45,7 +47,12 @@ const createDatabaseMiddleware = (
       throw new Error('Failed to detect database type');
     }
 
-    const dataLayer = await createDataLayer(kyselyDb);
+    // Create adapter and data layer
+    const adapter = createKyselyAdapter(kyselyDb);
+    const dataLayer: DataLayer = {
+      ...createDataLayer(adapter),
+      ...createLLMRequestsDataLayer(kyselyDb),
+    };
     c.set('db', dataLayer);
     c.set('kyselyDb', kyselyDb);
     c.set('dbType', dbType);

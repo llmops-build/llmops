@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { Variant, VariantVersion } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -26,7 +26,7 @@ const listVariants = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
-export const createVariantDataLayer = (db: Kysely<Database>) => {
+export const createVariantDataLayer = (adapter: Adapter) => {
   return {
     /**
      * Create a new variant (metadata only, no version data)
@@ -38,16 +38,12 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { name } = value.data;
 
-      return db
-        .insertInto('variants')
-        .values({
-          id: randomUUID(),
-          name,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<Variant>('variants', {
+        id: randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
 
     /**
@@ -68,12 +64,11 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
         updateData.name = updates.name;
       }
 
-      return db
-        .updateTable('variants')
-        .set(updateData)
-        .where('id', '=', variantId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<Variant>(
+        'variants',
+        [{ field: 'id', value: variantId }],
+        updateData
+      );
     },
 
     /**
@@ -86,11 +81,9 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId } = value.data;
 
-      return db
-        .selectFrom('variants')
-        .selectAll()
-        .where('id', '=', variantId)
-        .executeTakeFirst();
+      return adapter.findOne<Variant>('variants', [
+        { field: 'id', value: variantId },
+      ]);
     },
 
     /**
@@ -105,28 +98,28 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId } = value.data;
 
-      // Get the variant with its latest version
-      const variant = await db
-        .selectFrom('variants')
-        .selectAll()
-        .where('id', '=', variantId)
-        .executeTakeFirst();
+      // Get the variant
+      const variant = await adapter.findOne<Variant>('variants', [
+        { field: 'id', value: variantId },
+      ]);
 
       if (!variant) {
         return undefined;
       }
 
-      const latestVersion = await db
-        .selectFrom('variant_versions')
-        .selectAll()
-        .where('variantId', '=', variantId)
-        .orderBy('version', 'desc')
-        .limit(1)
-        .executeTakeFirst();
+      // Get the latest version
+      const versions = await adapter.findMany<VariantVersion>(
+        'variant_versions',
+        {
+          where: [{ field: 'variantId', value: variantId }],
+          orderBy: [{ field: 'version', direction: 'desc' }],
+          limit: 1,
+        }
+      );
 
       return {
         ...variant,
-        latestVersion: latestVersion ?? null,
+        latestVersion: versions[0] ?? null,
       };
     },
 
@@ -141,17 +134,14 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       const { variantId } = value.data;
 
       // First delete all versions
-      await db
-        .deleteFrom('variant_versions')
-        .where('variantId', '=', variantId)
-        .execute();
+      await adapter.deleteMany('variant_versions', [
+        { field: 'variantId', value: variantId },
+      ]);
 
       // Then delete the variant
-      return db
-        .deleteFrom('variants')
-        .where('id', '=', variantId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<Variant>('variants', [
+        { field: 'id', value: variantId },
+      ]);
     },
 
     /**
@@ -164,13 +154,11 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('variants')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<Variant>('variants', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
 
     /**
@@ -186,13 +174,11 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       const { limit = 100, offset = 0 } = value.data;
 
       // Get variants
-      const variants = await db
-        .selectFrom('variants')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      const variants = await adapter.findMany<Variant>('variants', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
 
       if (variants.length === 0) {
         return [];
@@ -201,17 +187,18 @@ export const createVariantDataLayer = (db: Kysely<Database>) => {
       // Get latest version for each variant individually
       const variantsWithVersions = await Promise.all(
         variants.map(async (variant) => {
-          const latestVersion = await db
-            .selectFrom('variant_versions')
-            .selectAll()
-            .where('variantId', '=', variant.id)
-            .orderBy('version', 'desc')
-            .limit(1)
-            .executeTakeFirst();
+          const versions = await adapter.findMany<VariantVersion>(
+            'variant_versions',
+            {
+              where: [{ field: 'variantId', value: variant.id }],
+              orderBy: [{ field: 'version', direction: 'desc' }],
+              limit: 1,
+            }
+          );
 
           return {
             ...variant,
-            latestVersion: latestVersion ?? null,
+            latestVersion: versions[0] ?? null,
           };
         })
       );

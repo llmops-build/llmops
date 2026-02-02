@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { PlaygroundRun } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -38,7 +38,7 @@ const deletePlaygroundRun = z.object({
   runId: z.string().uuid(),
 });
 
-export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
+export const createPlaygroundRunsDataLayer = (adapter: Adapter) => {
   return {
     createPlaygroundRun: async (
       params: z.infer<typeof createPlaygroundRun>
@@ -50,23 +50,19 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
       const { playgroundId, datasetId, datasetVersionId, status, totalRecords } =
         value.data;
 
-      return db
-        .insertInto('playground_runs')
-        .values({
-          id: randomUUID(),
-          playgroundId,
-          datasetId: datasetId ?? null,
-          datasetVersionId: datasetVersionId ?? null,
-          status,
-          startedAt: null,
-          completedAt: null,
-          totalRecords,
-          completedRecords: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<PlaygroundRun>('playground_runs', {
+        id: randomUUID(),
+        playgroundId,
+        datasetId: datasetId ?? null,
+        datasetVersionId: datasetVersionId ?? null,
+        status,
+        startedAt: null,
+        completedAt: null,
+        totalRecords,
+        completedRecords: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
 
     updatePlaygroundRun: async (
@@ -90,12 +86,11 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
       if (completedRecords !== undefined)
         updateData.completedRecords = completedRecords;
 
-      return db
-        .updateTable('playground_runs')
-        .set(updateData)
-        .where('id', '=', runId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<PlaygroundRun>(
+        'playground_runs',
+        [{ field: 'id', value: runId }],
+        updateData
+      );
     },
 
     getPlaygroundRunById: async (
@@ -107,11 +102,9 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
       }
       const { runId } = value.data;
 
-      return db
-        .selectFrom('playground_runs')
-        .selectAll()
-        .where('id', '=', runId)
-        .executeTakeFirst();
+      return adapter.findOne<PlaygroundRun>('playground_runs', [
+        { field: 'id', value: runId },
+      ]);
     },
 
     listPlaygroundRuns: async (params: z.infer<typeof listPlaygroundRuns>) => {
@@ -121,14 +114,12 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
       }
       const { playgroundId, limit = 50, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('playground_runs')
-        .selectAll()
-        .where('playgroundId', '=', playgroundId)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<PlaygroundRun>('playground_runs', {
+        where: [{ field: 'playgroundId', value: playgroundId }],
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
 
     deletePlaygroundRun: async (
@@ -140,20 +131,15 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
       }
       const { runId } = value.data;
 
-      return db
-        .deleteFrom('playground_runs')
-        .where('id', '=', runId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<PlaygroundRun>('playground_runs', [
+        { field: 'id', value: runId },
+      ]);
     },
 
     countPlaygroundRuns: async (playgroundId: string) => {
-      const result = await db
-        .selectFrom('playground_runs')
-        .select(db.fn.countAll().as('count'))
-        .where('playgroundId', '=', playgroundId)
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('playground_runs', [
+        { field: 'playgroundId', value: playgroundId },
+      ]);
     },
   };
 };

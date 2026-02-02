@@ -17,7 +17,7 @@ export { createVariantDataLayer } from './variants';
 export { createVariantVersionsDataLayer } from './variantVersions';
 export { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
-// New exports
+// DataLayer factory
 export { createDataLayer } from './create';
 export type {
   DataLayer,
@@ -38,3 +38,13 @@ export type {
   VariantVersionsDataLayer,
   WorkspaceSettingsDataLayer,
 } from './interface';
+
+// Adapter exports
+export {
+  createKyselyAdapter,
+  type Adapter,
+  type Where,
+  type WhereOperator,
+  type OrderBy,
+  type FindManyOptions,
+} from '../adapter';

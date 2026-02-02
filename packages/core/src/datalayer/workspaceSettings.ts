@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { WorkspaceSettings } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -10,30 +10,27 @@ const updateWorkspaceSettings = z.object({
   superAdminId: z.string().nullable().optional(),
 });
 
-export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
+export const createWorkspaceSettingsDataLayer = (adapter: Adapter) => {
   return {
     /**
      * Get workspace settings (creates default if not exists)
      */
     getWorkspaceSettings: async () => {
-      let settings = await db
-        .selectFrom('workspace_settings')
-        .selectAll()
-        .executeTakeFirst();
+      const allSettings = await adapter.findMany<WorkspaceSettings>(
+        'workspace_settings',
+        { limit: 1 }
+      );
+      let settings = allSettings[0];
 
       // Create default settings if none exist
       if (!settings) {
-        settings = await db
-          .insertInto('workspace_settings')
-          .values({
-            id: randomUUID(),
-            name: null,
-            setupComplete: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .returningAll()
-          .executeTakeFirst();
+        settings = await adapter.create<WorkspaceSettings>('workspace_settings', {
+          id: randomUUID(),
+          name: null,
+          setupComplete: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       }
 
       return settings;
@@ -51,24 +48,21 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
       }
 
       // Ensure settings exist first
-      let settings = await db
-        .selectFrom('workspace_settings')
-        .selectAll()
-        .executeTakeFirst();
+      const allSettings = await adapter.findMany<WorkspaceSettings>(
+        'workspace_settings',
+        { limit: 1 }
+      );
+      let settings = allSettings[0];
 
       if (!settings) {
         // Create with the provided values
-        return db
-          .insertInto('workspace_settings')
-          .values({
-            id: randomUUID(),
-            name: value.data.name ?? null,
-            setupComplete: value.data.setupComplete ?? false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .returningAll()
-          .executeTakeFirst();
+        return adapter.create<WorkspaceSettings>('workspace_settings', {
+          id: randomUUID(),
+          name: value.data.name ?? null,
+          setupComplete: value.data.setupComplete ?? false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       }
 
       // Update existing settings
@@ -85,22 +79,22 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
         updateData.superAdminId = value.data.superAdminId ?? null;
       }
 
-      return db
-        .updateTable('workspace_settings')
-        .set(updateData)
-        .where('id', '=', settings.id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<WorkspaceSettings>(
+        'workspace_settings',
+        [{ field: 'id', value: settings.id }],
+        updateData
+      );
     },
 
     /**
      * Get the super admin user ID
      */
     getSuperAdminId: async (): Promise<string | null> => {
-      const settings = await db
-        .selectFrom('workspace_settings')
-        .select('superAdminId')
-        .executeTakeFirst();
+      const allSettings = await adapter.findMany<WorkspaceSettings>(
+        'workspace_settings',
+        { limit: 1 }
+      );
+      const settings = allSettings[0];
 
       return settings?.superAdminId ?? null;
     },
@@ -109,10 +103,11 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
      * Set the super admin user ID (only if not already set)
      */
     setSuperAdminId: async (userId: string): Promise<boolean> => {
-      let settings = await db
-        .selectFrom('workspace_settings')
-        .selectAll()
-        .executeTakeFirst();
+      const allSettings = await adapter.findMany<WorkspaceSettings>(
+        'workspace_settings',
+        { limit: 1 }
+      );
+      let settings = allSettings[0];
 
       // If superAdminId is already set, don't allow changes
       if (settings?.superAdminId) {
@@ -120,28 +115,25 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
       }
 
       if (!settings) {
-        await db
-          .insertInto('workspace_settings')
-          .values({
-            id: randomUUID(),
-            name: null,
-            setupComplete: false,
-            superAdminId: userId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .execute();
+        await adapter.create<WorkspaceSettings>('workspace_settings', {
+          id: randomUUID(),
+          name: null,
+          setupComplete: false,
+          superAdminId: userId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
         return true;
       }
 
-      await db
-        .updateTable('workspace_settings')
-        .set({
+      await adapter.update<WorkspaceSettings>(
+        'workspace_settings',
+        [{ field: 'id', value: settings.id }],
+        {
           superAdminId: userId,
           updatedAt: new Date().toISOString(),
-        })
-        .where('id', '=', settings.id)
-        .execute();
+        }
+      );
 
       return true;
     },
@@ -150,10 +142,11 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
      * Check if initial setup has been completed
      */
     isSetupComplete: async (): Promise<boolean> => {
-      const settings = await db
-        .selectFrom('workspace_settings')
-        .select('setupComplete')
-        .executeTakeFirst();
+      const allSettings = await adapter.findMany<WorkspaceSettings>(
+        'workspace_settings',
+        { limit: 1 }
+      );
+      const settings = allSettings[0];
 
       return settings?.setupComplete ?? false;
     },
@@ -162,36 +155,32 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
      * Mark initial setup as complete
      */
     markSetupComplete: async () => {
-      let settings = await db
-        .selectFrom('workspace_settings')
-        .selectAll()
-        .executeTakeFirst();
+      const allSettings = await adapter.findMany<WorkspaceSettings>(
+        'workspace_settings',
+        { limit: 1 }
+      );
+      let settings = allSettings[0];
 
       if (!settings) {
         // Create with setupComplete = true
-        return db
-          .insertInto('workspace_settings')
-          .values({
-            id: randomUUID(),
-            name: null,
-            setupComplete: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })
-          .returningAll()
-          .executeTakeFirst();
+        return adapter.create<WorkspaceSettings>('workspace_settings', {
+          id: randomUUID(),
+          name: null,
+          setupComplete: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       }
 
       // Update existing settings
-      return db
-        .updateTable('workspace_settings')
-        .set({
+      return adapter.update<WorkspaceSettings>(
+        'workspace_settings',
+        [{ field: 'id', value: settings.id }],
+        {
           setupComplete: true,
           updatedAt: new Date().toISOString(),
-        })
-        .where('id', '=', settings.id)
-        .returningAll()
-        .executeTakeFirst();
+        }
+      );
     },
   };
 };

@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { EnvironmentSecret } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -37,7 +37,7 @@ const listEnvironmentSecrets = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
-export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
+export const createEnvironmentSecretDataLayer = (adapter: Adapter) => {
   return {
     createEnvironmentSecret: async (
       params: z.infer<typeof createEnvironmentSecret>
@@ -48,19 +48,16 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId, keyName, keyValue } = value.data;
 
-      return db
-        .insertInto('environment_secrets')
-        .values({
-          id: randomUUID(),
-          environmentId,
-          keyName,
-          keyValue,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<EnvironmentSecret>('environment_secrets', {
+        id: randomUUID(),
+        environmentId,
+        keyName,
+        keyValue,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
+
     updateEnvironmentSecret: async (
       params: z.infer<typeof updateEnvironmentSecret>
     ) => {
@@ -76,13 +73,13 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       if (keyName !== undefined) updateData.keyName = keyName;
       if (keyValue !== undefined) updateData.keyValue = keyValue;
 
-      return db
-        .updateTable('environment_secrets')
-        .set(updateData)
-        .where('id', '=', secretId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<EnvironmentSecret>(
+        'environment_secrets',
+        [{ field: 'id', value: secretId }],
+        updateData
+      );
     },
+
     getEnvironmentSecretById: async (
       params: z.infer<typeof getEnvironmentSecretById>
     ) => {
@@ -92,12 +89,11 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       }
       const { secretId } = value.data;
 
-      return db
-        .selectFrom('environment_secrets')
-        .selectAll()
-        .where('id', '=', secretId)
-        .executeTakeFirst();
+      return adapter.findOne<EnvironmentSecret>('environment_secrets', [
+        { field: 'id', value: secretId },
+      ]);
     },
+
     getSecretsByEnvironmentId: async (
       params: z.infer<typeof getSecretsByEnvironmentId>
     ) => {
@@ -107,13 +103,12 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId } = value.data;
 
-      return db
-        .selectFrom('environment_secrets')
-        .selectAll()
-        .where('environmentId', '=', environmentId)
-        .orderBy('createdAt', 'desc')
-        .execute();
+      return adapter.findMany<EnvironmentSecret>('environment_secrets', {
+        where: [{ field: 'environmentId', value: environmentId }],
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+      });
     },
+
     deleteEnvironmentSecret: async (
       params: z.infer<typeof deleteEnvironmentSecret>
     ) => {
@@ -123,12 +118,11 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       }
       const { secretId } = value.data;
 
-      return db
-        .deleteFrom('environment_secrets')
-        .where('id', '=', secretId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<EnvironmentSecret>('environment_secrets', [
+        { field: 'id', value: secretId },
+      ]);
     },
+
     deleteSecretsByEnvironmentId: async (
       params: z.infer<typeof deleteSecretsByEnvironmentId>
     ) => {
@@ -138,12 +132,22 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       }
       const { environmentId } = value.data;
 
-      return db
-        .deleteFrom('environment_secrets')
-        .where('environmentId', '=', environmentId)
-        .returningAll()
-        .execute();
+      // Get all secrets first to return them
+      const secrets = await adapter.findMany<EnvironmentSecret>(
+        'environment_secrets',
+        {
+          where: [{ field: 'environmentId', value: environmentId }],
+        }
+      );
+
+      // Delete all secrets
+      await adapter.deleteMany('environment_secrets', [
+        { field: 'environmentId', value: environmentId },
+      ]);
+
+      return secrets;
     },
+
     listEnvironmentSecrets: async (
       params?: z.infer<typeof listEnvironmentSecrets>
     ) => {
@@ -153,20 +157,15 @@ export const createEnvironmentSecretDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('environment_secrets')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<EnvironmentSecret>('environment_secrets', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
+
     countEnvironmentSecrets: async () => {
-      const result = await db
-        .selectFrom('environment_secrets')
-        .select(db.fn.countAll().as('count'))
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('environment_secrets');
     },
   };
 };

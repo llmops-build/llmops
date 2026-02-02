@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { GuardrailConfig } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -40,7 +40,7 @@ const listGuardrailConfigs = z.object({
   enabled: z.boolean().optional(),
 });
 
-export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
+export const createGuardrailConfigsDataLayer = (adapter: Adapter) => {
   return {
     createGuardrailConfig: async (
       params: z.infer<typeof createGuardrailConfig>
@@ -60,23 +60,19 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
         onFail,
       } = value.data;
 
-      return db
-        .insertInto('guardrail_configs')
-        .values({
-          id: randomUUID(),
-          name,
-          pluginId,
-          functionId,
-          hookType,
-          parameters: JSON.stringify(parameters),
-          enabled,
-          priority,
-          onFail,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<GuardrailConfig>('guardrail_configs', {
+        id: randomUUID(),
+        name,
+        pluginId,
+        functionId,
+        hookType,
+        parameters: JSON.stringify(parameters),
+        enabled,
+        priority,
+        onFail,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
 
     updateGuardrailConfig: async (
@@ -100,12 +96,11 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
       if (priority !== undefined) updateData.priority = priority;
       if (onFail !== undefined) updateData.onFail = onFail;
 
-      return db
-        .updateTable('guardrail_configs')
-        .set(updateData)
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<GuardrailConfig>(
+        'guardrail_configs',
+        [{ field: 'id', value: id }],
+        updateData
+      );
     },
 
     getGuardrailConfigById: async (
@@ -117,11 +112,9 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .selectFrom('guardrail_configs')
-        .selectAll()
-        .where('id', '=', id)
-        .executeTakeFirst();
+      return adapter.findOne<GuardrailConfig>('guardrail_configs', [
+        { field: 'id', value: id },
+      ]);
     },
 
     deleteGuardrailConfig: async (
@@ -133,11 +126,9 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .deleteFrom('guardrail_configs')
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<GuardrailConfig>('guardrail_configs', [
+        { field: 'id', value: id },
+      ]);
     },
 
     listGuardrailConfigs: async (
@@ -149,30 +140,27 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0, hookType, enabled } = value.data;
 
-      let query = db
-        .selectFrom('guardrail_configs')
-        .selectAll()
-        .orderBy('priority', 'desc')
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset);
-
+      const where: Array<{ field: string; value: string | boolean }> = [];
       if (hookType !== undefined) {
-        query = query.where('hookType', '=', hookType);
+        where.push({ field: 'hookType', value: hookType });
       }
       if (enabled !== undefined) {
-        query = query.where('enabled', '=', enabled);
+        where.push({ field: 'enabled', value: enabled });
       }
 
-      return query.execute();
+      return adapter.findMany<GuardrailConfig>('guardrail_configs', {
+        where: where.length > 0 ? where : undefined,
+        orderBy: [
+          { field: 'priority', direction: 'desc' },
+          { field: 'createdAt', direction: 'desc' },
+        ],
+        limit,
+        offset,
+      });
     },
 
     countGuardrailConfigs: async () => {
-      const result = await db
-        .selectFrom('guardrail_configs')
-        .select(db.fn.countAll().as('count'))
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('guardrail_configs');
     },
 
     /**
@@ -182,13 +170,13 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
     getEnabledGuardrailsByHookType: async (
       hookType: 'beforeRequestHook' | 'afterRequestHook'
     ) => {
-      return db
-        .selectFrom('guardrail_configs')
-        .selectAll()
-        .where('hookType', '=', hookType)
-        .where('enabled', '=', true)
-        .orderBy('priority', 'desc')
-        .execute();
+      return adapter.findMany<GuardrailConfig>('guardrail_configs', {
+        where: [
+          { field: 'hookType', value: hookType },
+          { field: 'enabled', value: true },
+        ],
+        orderBy: [{ field: 'priority', direction: 'desc' }],
+      });
     },
   };
 };

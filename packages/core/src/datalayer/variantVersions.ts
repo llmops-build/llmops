@@ -1,6 +1,6 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type { Variant, VariantVersion } from '@/schemas';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
 
@@ -34,7 +34,7 @@ const deleteVariantVersion = z.object({
   id: z.string().uuid(),
 });
 
-export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
+export const createVariantVersionsDataLayer = (adapter: Adapter) => {
   return {
     /**
      * Create a new version for a variant.
@@ -50,31 +50,29 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       const { variantId, provider, modelName, jsonData } = value.data;
 
       // Get the latest version number for this variant
-      const latestVersion = await db
-        .selectFrom('variant_versions')
-        .select('version')
-        .where('variantId', '=', variantId)
-        .orderBy('version', 'desc')
-        .limit(1)
-        .executeTakeFirst();
+      const existingVersions = await adapter.findMany<VariantVersion>(
+        'variant_versions',
+        {
+          where: [{ field: 'variantId', value: variantId }],
+          orderBy: [{ field: 'version', direction: 'desc' }],
+          limit: 1,
+        }
+      );
 
+      const latestVersion = existingVersions[0];
       const newVersionNumber = (latestVersion?.version ?? 0) + 1;
       const now = new Date().toISOString();
 
-      return db
-        .insertInto('variant_versions')
-        .values({
-          id: randomUUID(),
-          variantId,
-          version: newVersionNumber,
-          provider,
-          modelName,
-          jsonData: JSON.stringify(jsonData),
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<VariantVersion>('variant_versions', {
+        id: randomUUID(),
+        variantId,
+        version: newVersionNumber,
+        provider,
+        modelName,
+        jsonData: JSON.stringify(jsonData),
+        createdAt: now,
+        updatedAt: now,
+      });
     },
 
     /**
@@ -89,11 +87,9 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .selectFrom('variant_versions')
-        .selectAll()
-        .where('id', '=', id)
-        .executeTakeFirst();
+      return adapter.findOne<VariantVersion>('variant_versions', [
+        { field: 'id', value: id },
+      ]);
     },
 
     /**
@@ -108,14 +104,12 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('variant_versions')
-        .selectAll()
-        .where('variantId', '=', variantId)
-        .orderBy('version', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<VariantVersion>('variant_versions', {
+        where: [{ field: 'variantId', value: variantId }],
+        orderBy: [{ field: 'version', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
 
     /**
@@ -130,13 +124,16 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId } = value.data;
 
-      return db
-        .selectFrom('variant_versions')
-        .selectAll()
-        .where('variantId', '=', variantId)
-        .orderBy('version', 'desc')
-        .limit(1)
-        .executeTakeFirst();
+      const versions = await adapter.findMany<VariantVersion>(
+        'variant_versions',
+        {
+          where: [{ field: 'variantId', value: variantId }],
+          orderBy: [{ field: 'version', direction: 'desc' }],
+          limit: 1,
+        }
+      );
+
+      return versions[0] ?? undefined;
     },
 
     /**
@@ -151,12 +148,10 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId, version } = value.data;
 
-      return db
-        .selectFrom('variant_versions')
-        .selectAll()
-        .where('variantId', '=', variantId)
-        .where('version', '=', version)
-        .executeTakeFirst();
+      return adapter.findOne<VariantVersion>('variant_versions', [
+        { field: 'variantId', value: variantId },
+        { field: 'version', value: version },
+      ]);
     },
 
     /**
@@ -171,11 +166,9 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .deleteFrom('variant_versions')
-        .where('id', '=', id)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.delete<VariantVersion>('variant_versions', [
+        { field: 'id', value: id },
+      ]);
     },
 
     /**
@@ -190,11 +183,20 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId } = value.data;
 
-      return db
-        .deleteFrom('variant_versions')
-        .where('variantId', '=', variantId)
-        .returningAll()
-        .execute();
+      // Get all versions first to return them
+      const versions = await adapter.findMany<VariantVersion>(
+        'variant_versions',
+        {
+          where: [{ field: 'variantId', value: variantId }],
+        }
+      );
+
+      // Delete all versions
+      await adapter.deleteMany('variant_versions', [
+        { field: 'variantId', value: variantId },
+      ]);
+
+      return versions;
     },
 
     /**
@@ -209,22 +211,24 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { id } = value.data;
 
-      return db
-        .selectFrom('variant_versions')
-        .innerJoin('variants', 'variant_versions.variantId', 'variants.id')
-        .select([
-          'variant_versions.id',
-          'variant_versions.variantId',
-          'variant_versions.version',
-          'variant_versions.provider',
-          'variant_versions.modelName',
-          'variant_versions.jsonData',
-          'variant_versions.createdAt',
-          'variant_versions.updatedAt',
-          'variants.name as variantName',
-        ])
-        .where('variant_versions.id', '=', id)
-        .executeTakeFirst();
+      // Get the version
+      const version = await adapter.findOne<VariantVersion>('variant_versions', [
+        { field: 'id', value: id },
+      ]);
+
+      if (!version) {
+        return undefined;
+      }
+
+      // Get the variant
+      const variant = await adapter.findOne<Variant>('variants', [
+        { field: 'id', value: version.variantId },
+      ]);
+
+      return {
+        ...version,
+        variantName: variant?.name ?? null,
+      };
     },
 
     /**
@@ -239,25 +243,26 @@ export const createVariantVersionsDataLayer = (db: Kysely<Database>) => {
       }
       const { variantId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('variant_versions')
-        .innerJoin('variants', 'variant_versions.variantId', 'variants.id')
-        .select([
-          'variant_versions.id',
-          'variant_versions.variantId',
-          'variant_versions.version',
-          'variant_versions.provider',
-          'variant_versions.modelName',
-          'variant_versions.jsonData',
-          'variant_versions.createdAt',
-          'variant_versions.updatedAt',
-          'variants.name as variantName',
-        ])
-        .where('variant_versions.variantId', '=', variantId)
-        .orderBy('variant_versions.version', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      // Get the variant
+      const variant = await adapter.findOne<Variant>('variants', [
+        { field: 'id', value: variantId },
+      ]);
+
+      // Get all versions
+      const versions = await adapter.findMany<VariantVersion>(
+        'variant_versions',
+        {
+          where: [{ field: 'variantId', value: variantId }],
+          orderBy: [{ field: 'version', direction: 'desc' }],
+          limit,
+          offset,
+        }
+      );
+
+      return versions.map((version) => ({
+        ...version,
+        variantName: variant?.name ?? null,
+      }));
     },
   };
 };

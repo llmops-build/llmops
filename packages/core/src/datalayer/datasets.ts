@@ -1,6 +1,11 @@
 import { LLMOpsError } from '@/error';
-import type { Database } from '@/schemas';
-import type { Kysely } from 'kysely';
+import type { Adapter } from '@/adapter/types';
+import type {
+  Dataset,
+  DatasetRecord,
+  DatasetVersion,
+  DatasetVersionRecord,
+} from '@/schemas';
 import { randomUUID, createHash } from 'node:crypto';
 import z from 'zod';
 
@@ -77,7 +82,7 @@ const getVersionRecords = z.object({
   offset: z.number().int().nonnegative().optional(),
 });
 
-export const createDatasetsDataLayer = (db: Kysely<Database>) => {
+export const createDatasetsDataLayer = (adapter: Adapter) => {
   return {
     // ============ Dataset CRUD ============
     createDataset: async (params: z.infer<typeof createDataset>) => {
@@ -87,19 +92,15 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { name, description } = value.data;
 
-      return db
-        .insertInto('datasets')
-        .values({
-          id: randomUUID(),
-          name,
-          description: description ?? null,
-          recordCount: 0,
-          latestVersionNumber: 1,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.create<Dataset>('datasets', {
+        id: randomUUID(),
+        name,
+        description: description ?? null,
+        recordCount: 0,
+        latestVersionNumber: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
     },
 
     updateDataset: async (params: z.infer<typeof updateDataset>) => {
@@ -115,12 +116,11 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
 
-      return db
-        .updateTable('datasets')
-        .set(updateData)
-        .where('id', '=', datasetId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<Dataset>(
+        'datasets',
+        [{ field: 'id', value: datasetId }],
+        updateData
+      );
     },
 
     getDatasetById: async (params: z.infer<typeof getDatasetById>) => {
@@ -130,11 +130,9 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { datasetId } = value.data;
 
-      return db
-        .selectFrom('datasets')
-        .selectAll()
-        .where('id', '=', datasetId)
-        .executeTakeFirst();
+      return adapter.findOne<Dataset>('datasets', [
+        { field: 'id', value: datasetId },
+      ]);
     },
 
     deleteDataset: async (params: z.infer<typeof deleteDataset>) => {
@@ -144,34 +142,35 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { datasetId } = value.data;
 
-      // Delete in order: version_records -> versions -> records -> dataset
-      await db
-        .deleteFrom('dataset_version_records')
-        .where(
-          'datasetVersionId',
-          'in',
-          db
-            .selectFrom('dataset_versions')
-            .select('id')
-            .where('datasetId', '=', datasetId)
-        )
-        .execute();
+      // Get all versions for this dataset first
+      const versions = await adapter.findMany<DatasetVersion>(
+        'dataset_versions',
+        {
+          where: [{ field: 'datasetId', value: datasetId }],
+        }
+      );
 
-      await db
-        .deleteFrom('dataset_versions')
-        .where('datasetId', '=', datasetId)
-        .execute();
+      // Delete version records for each version
+      for (const version of versions) {
+        await adapter.deleteMany('dataset_version_records', [
+          { field: 'datasetVersionId', value: version.id },
+        ]);
+      }
 
-      await db
-        .deleteFrom('dataset_records')
-        .where('datasetId', '=', datasetId)
-        .execute();
+      // Delete all versions
+      await adapter.deleteMany('dataset_versions', [
+        { field: 'datasetId', value: datasetId },
+      ]);
 
-      return db
-        .deleteFrom('datasets')
-        .where('id', '=', datasetId)
-        .returningAll()
-        .executeTakeFirst();
+      // Delete all records
+      await adapter.deleteMany('dataset_records', [
+        { field: 'datasetId', value: datasetId },
+      ]);
+
+      // Delete the dataset
+      return adapter.delete<Dataset>('datasets', [
+        { field: 'id', value: datasetId },
+      ]);
     },
 
     listDatasets: async (params?: z.infer<typeof listDatasets>) => {
@@ -181,21 +180,15 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('datasets')
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<Dataset>('datasets', {
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
 
     countDatasets: async () => {
-      const result = await db
-        .selectFrom('datasets')
-        .select(db.fn.countAll().as('count'))
-        .executeTakeFirst();
-      return Number(result?.count ?? 0);
+      return adapter.count('datasets');
     },
 
     // ============ Record CRUD ============
@@ -206,29 +199,30 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { datasetId, input, expected, metadata } = value.data;
 
-      const record = await db
-        .insertInto('dataset_records')
-        .values({
-          id: randomUUID(),
-          datasetId,
-          input: JSON.stringify(input),
-          expected: expected ? JSON.stringify(expected) : null,
-          metadata: JSON.stringify(metadata || {}),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      const record = await adapter.create<DatasetRecord>('dataset_records', {
+        id: randomUUID(),
+        datasetId,
+        input: JSON.stringify(input),
+        expected: expected ? JSON.stringify(expected) : null,
+        metadata: JSON.stringify(metadata || {}),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
 
       // Update dataset record count
-      await db
-        .updateTable('datasets')
-        .set((eb) => ({
-          recordCount: eb('recordCount', '+', 1),
-          updatedAt: new Date().toISOString(),
-        }))
-        .where('id', '=', datasetId)
-        .execute();
+      const dataset = await adapter.findOne<Dataset>('datasets', [
+        { field: 'id', value: datasetId },
+      ]);
+      if (dataset) {
+        await adapter.update<Dataset>(
+          'datasets',
+          [{ field: 'id', value: datasetId }],
+          {
+            recordCount: dataset.recordCount + 1,
+            updatedAt: new Date().toISOString(),
+          }
+        );
+      }
 
       return record;
     },
@@ -249,12 +243,11 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       if (metadata !== undefined)
         updateData.metadata = JSON.stringify(metadata);
 
-      return db
-        .updateTable('dataset_records')
-        .set(updateData)
-        .where('id', '=', recordId)
-        .returningAll()
-        .executeTakeFirst();
+      return adapter.update<DatasetRecord>(
+        'dataset_records',
+        [{ field: 'id', value: recordId }],
+        updateData
+      );
     },
 
     deleteRecord: async (params: z.infer<typeof deleteRecord>) => {
@@ -265,37 +258,37 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       const { recordId } = value.data;
 
       // Get the record first to find datasetId
-      const record = await db
-        .selectFrom('dataset_records')
-        .select(['datasetId'])
-        .where('id', '=', recordId)
-        .executeTakeFirst();
+      const record = await adapter.findOne<DatasetRecord>('dataset_records', [
+        { field: 'id', value: recordId },
+      ]);
 
       if (!record) {
         throw new LLMOpsError('Record not found');
       }
 
       // Delete version record associations first
-      await db
-        .deleteFrom('dataset_version_records')
-        .where('datasetRecordId', '=', recordId)
-        .execute();
+      await adapter.deleteMany('dataset_version_records', [
+        { field: 'datasetRecordId', value: recordId },
+      ]);
 
-      const deleted = await db
-        .deleteFrom('dataset_records')
-        .where('id', '=', recordId)
-        .returningAll()
-        .executeTakeFirst();
+      const deleted = await adapter.delete<DatasetRecord>('dataset_records', [
+        { field: 'id', value: recordId },
+      ]);
 
       // Update dataset record count
-      await db
-        .updateTable('datasets')
-        .set((eb) => ({
-          recordCount: eb('recordCount', '-', 1),
-          updatedAt: new Date().toISOString(),
-        }))
-        .where('id', '=', record.datasetId)
-        .execute();
+      const dataset = await adapter.findOne<Dataset>('datasets', [
+        { field: 'id', value: record.datasetId },
+      ]);
+      if (dataset) {
+        await adapter.update<Dataset>(
+          'datasets',
+          [{ field: 'id', value: record.datasetId }],
+          {
+            recordCount: Math.max(0, dataset.recordCount - 1),
+            updatedAt: new Date().toISOString(),
+          }
+        );
+      }
 
       return deleted;
     },
@@ -307,22 +300,18 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { datasetId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('dataset_records')
-        .selectAll()
-        .where('datasetId', '=', datasetId)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<DatasetRecord>('dataset_records', {
+        where: [{ field: 'datasetId', value: datasetId }],
+        orderBy: [{ field: 'createdAt', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
 
     getRecordById: async (recordId: string) => {
-      return db
-        .selectFrom('dataset_records')
-        .selectAll()
-        .where('id', '=', recordId)
-        .executeTakeFirst();
+      return adapter.findOne<DatasetRecord>('dataset_records', [
+        { field: 'id', value: recordId },
+      ]);
     },
 
     // ============ Version CRUD ============
@@ -334,11 +323,9 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       const { datasetId, name, description } = value.data;
 
       // Get current dataset to get next version number
-      const dataset = await db
-        .selectFrom('datasets')
-        .select(['latestVersionNumber', 'recordCount'])
-        .where('id', '=', datasetId)
-        .executeTakeFirst();
+      const dataset = await adapter.findOne<Dataset>('datasets', [
+        { field: 'id', value: datasetId },
+      ]);
 
       if (!dataset) {
         throw new LLMOpsError('Dataset not found');
@@ -347,12 +334,10 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       const newVersionNumber = dataset.latestVersionNumber + 1;
 
       // Get all current record IDs for the snapshot hash
-      const records = await db
-        .selectFrom('dataset_records')
-        .select(['id'])
-        .where('datasetId', '=', datasetId)
-        .orderBy('createdAt', 'asc')
-        .execute();
+      const records = await adapter.findMany<DatasetRecord>('dataset_records', {
+        where: [{ field: 'datasetId', value: datasetId }],
+        orderBy: [{ field: 'createdAt', direction: 'asc' }],
+      });
 
       const recordIds = records.map((r) => r.id);
       const snapshotHash = createHash('sha256')
@@ -360,50 +345,47 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
         .digest('hex');
 
       const versionId = randomUUID();
+      const now = new Date().toISOString();
 
       // Create the version
-      const version = await db
-        .insertInto('dataset_versions')
-        .values({
-          id: versionId,
-          datasetId,
-          versionNumber: newVersionNumber,
-          name: name ?? null,
-          description: description ?? null,
-          recordCount: dataset.recordCount,
-          snapshotHash,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      const version = await adapter.create<DatasetVersion>('dataset_versions', {
+        id: versionId,
+        datasetId,
+        versionNumber: newVersionNumber,
+        name: name ?? null,
+        description: description ?? null,
+        recordCount: dataset.recordCount,
+        snapshotHash,
+        createdAt: now,
+        updatedAt: now,
+      });
 
       // Create version-record associations
       if (recordIds.length > 0) {
-        await db
-          .insertInto('dataset_version_records')
-          .values(
-            recordIds.map((recordId, index) => ({
-              id: randomUUID(),
-              datasetVersionId: versionId,
-              datasetRecordId: recordId,
-              position: index,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }))
-          )
-          .execute();
+        const versionRecords = recordIds.map((recordId, index) => ({
+          id: randomUUID(),
+          datasetVersionId: versionId,
+          datasetRecordId: recordId,
+          position: index,
+          createdAt: now,
+          updatedAt: now,
+        }));
+
+        await adapter.createMany<DatasetVersionRecord>(
+          'dataset_version_records',
+          versionRecords
+        );
       }
 
       // Update dataset's latest version number
-      await db
-        .updateTable('datasets')
-        .set({
+      await adapter.update<Dataset>(
+        'datasets',
+        [{ field: 'id', value: datasetId }],
+        {
           latestVersionNumber: newVersionNumber,
-          updatedAt: new Date().toISOString(),
-        })
-        .where('id', '=', datasetId)
-        .execute();
+          updatedAt: now,
+        }
+      );
 
       return version;
     },
@@ -415,11 +397,9 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { versionId } = value.data;
 
-      return db
-        .selectFrom('dataset_versions')
-        .selectAll()
-        .where('id', '=', versionId)
-        .executeTakeFirst();
+      return adapter.findOne<DatasetVersion>('dataset_versions', [
+        { field: 'id', value: versionId },
+      ]);
     },
 
     listVersions: async (params: z.infer<typeof listVersions>) => {
@@ -429,14 +409,12 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { datasetId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('dataset_versions')
-        .selectAll()
-        .where('datasetId', '=', datasetId)
-        .orderBy('versionNumber', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      return adapter.findMany<DatasetVersion>('dataset_versions', {
+        where: [{ field: 'datasetId', value: datasetId }],
+        orderBy: [{ field: 'versionNumber', direction: 'desc' }],
+        limit,
+        offset,
+      });
     },
 
     getVersionRecords: async (params: z.infer<typeof getVersionRecords>) => {
@@ -446,20 +424,36 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
       }
       const { versionId, limit = 100, offset = 0 } = value.data;
 
-      return db
-        .selectFrom('dataset_version_records')
-        .innerJoin(
-          'dataset_records',
-          'dataset_records.id',
-          'dataset_version_records.datasetRecordId'
-        )
-        .selectAll('dataset_records')
-        .select('dataset_version_records.position')
-        .where('dataset_version_records.datasetVersionId', '=', versionId)
-        .orderBy('dataset_version_records.position', 'asc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      // Get version-record associations ordered by position
+      const versionRecords = await adapter.findMany<DatasetVersionRecord>(
+        'dataset_version_records',
+        {
+          where: [{ field: 'datasetVersionId', value: versionId }],
+          orderBy: [{ field: 'position', direction: 'asc' }],
+          limit,
+          offset,
+        }
+      );
+
+      // Get the actual records
+      const records = await Promise.all(
+        versionRecords.map(async (vr) => {
+          const record = await adapter.findOne<DatasetRecord>(
+            'dataset_records',
+            [{ field: 'id', value: vr.datasetRecordId }]
+          );
+          return record
+            ? {
+                ...record,
+                position: vr.position,
+              }
+            : null;
+        })
+      );
+
+      return records.filter((r): r is DatasetRecord & { position: number } =>
+        r !== null
+      );
     },
   };
 };
