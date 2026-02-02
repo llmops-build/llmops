@@ -371,6 +371,16 @@ export function createCostTrackingMiddleware(
       body = await clonedReq.json();
       isStreaming = body.stream === true;
 
+      logger.debug(
+        {
+          endpoint: path,
+          isStreaming,
+          streamValue: body.stream,
+          model: body.model,
+        },
+        'Cost tracking: parsed request body'
+      );
+
       // For streaming requests, ensure include_usage is set
       if (isStreaming) {
         body = ensureStreamUsageEnabled(body);
@@ -525,6 +535,15 @@ export function createCostTrackingMiddleware(
         const clonedResponse = response.clone();
         const responseBody: OpenAIResponse = await clonedResponse.json();
 
+        logger.debug(
+          {
+            endpoint: context.endpoint,
+            hasUsage: !!responseBody.usage,
+            rawUsage: responseBody.usage,
+          },
+          'Cost tracking: parsing response body'
+        );
+
         if (responseBody.usage) {
           // Handle both chat completions format and responses API format
           const promptTokens =
@@ -544,6 +563,15 @@ export function createCostTrackingMiddleware(
               responseBody.usage.prompt_tokens_details?.cached_tokens ??
               responseBody.usage.input_tokens_details?.cached_tokens,
           };
+          logger.debug(
+            { endpoint: context.endpoint, usage },
+            'Cost tracking: extracted usage'
+          );
+        } else {
+          logger.debug(
+            { endpoint: context.endpoint },
+            'Cost tracking: no usage in response body'
+          );
         }
 
         // Extract guardrail results from hook_results
@@ -560,8 +588,11 @@ export function createCostTrackingMiddleware(
             );
           }
         }
-      } catch {
-        log('Failed to parse response body for usage');
+      } catch (error) {
+        logger.error(
+          { endpoint: context.endpoint, error },
+          'Cost tracking: failed to parse response body for usage'
+        );
       }
 
       // Process and log
