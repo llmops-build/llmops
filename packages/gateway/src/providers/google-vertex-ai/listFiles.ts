@@ -7,6 +7,6 @@ export const GoogleListFilesRequestHandler = async () => {
       status: 'failure',
       provider: GOOGLE_VERTEX_AI,
     }),
-    { status: 500, headers: { 'Content-Type': 'application/json' } }
+    { status: 501, headers: { 'Content-Type': 'application/json' } }
   );
 };

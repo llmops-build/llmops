@@ -156,7 +156,10 @@ const transformToProviderRequestJSON = (
   }
 
   if (!providerConfig) {
-    throw new GatewayError(`${fn} is not supported by ${provider}`);
+    throw new GatewayError(
+      `The endpoint '${fn}' is not supported by the '${provider}' provider`,
+      501
+    );
   }
 
   return transformUsingProviderConfig(providerConfig, params, providerOptions);
