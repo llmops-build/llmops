@@ -5,6 +5,7 @@ import {
   getQueryKey as getRunsQueryKey,
 } from './queries/usePlaygroundRuns';
 import { usePlaygroundResults } from './queries/usePlaygroundResults';
+import { getBasePath } from '@client/lib/api-base';
 
 // SSE Event data types matching the server
 
@@ -126,7 +127,8 @@ export function usePlaygroundExecution(playgroundId: string) {
 
     try {
       // Start the run
-      const response = await fetch(`/api/v1/playgrounds/${playgroundId}/execute`, {
+      const basePath = getBasePath();
+      const response = await fetch(`${basePath}/api/v1/playgrounds/${playgroundId}/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,7 +151,7 @@ export function usePlaygroundExecution(playgroundId: string) {
 
       // Connect to SSE stream
       const eventSource = new EventSource(
-        `/api/v1/playgrounds/${playgroundId}/execute/stream?runId=${runId}`
+        `${basePath}/api/v1/playgrounds/${playgroundId}/execute/stream?runId=${runId}`
       );
       eventSourceRef.current = eventSource;
 

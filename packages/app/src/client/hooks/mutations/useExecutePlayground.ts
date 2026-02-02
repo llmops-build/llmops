@@ -1,4 +1,5 @@
 import { hc } from '@client/lib/hc';
+import { getBasePath } from '@client/lib/api-base';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState } from 'react';
 import { getQueryKey as getRunsQueryKey } from '../queries/usePlaygroundRuns';
@@ -106,7 +107,7 @@ export const useExecutePlayground = (playgroundId: string) => {
       });
 
       // Connect to SSE stream
-      const basePath = window.bootstrapData?.basePath === '/' ? '' : window.bootstrapData?.basePath;
+      const basePath = getBasePath();
       const url = `${basePath}/api/v1/playgrounds/${playgroundId}/execute/stream?runId=${runId}`;
       const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
