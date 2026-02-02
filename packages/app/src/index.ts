@@ -69,6 +69,15 @@ export const createApp = (config: LLMOpsConfig) => {
   // Validate the config immediately, this will throw and panic if invalid
   const validatedConfig = validateLLMOpsConfig(config);
 
+  // The app package requires a SQL database connection (Kysely)
+  // Convex is supported via the adapter pattern but not through this app factory
+  if (!validatedConfig.database) {
+    throw new Error(
+      'The createApp function requires a database connection. ' +
+        'For Convex support, use createConvexAdapter and createDataLayer directly from @llmops/core.'
+    );
+  }
+
   const app = new Hono()
     // Static assets must be served BEFORE any database/auth middlewares
     // to avoid running heavy initialization for asset requests

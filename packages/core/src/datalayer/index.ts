@@ -42,9 +42,12 @@ export type {
 // Adapter exports
 export {
   createKyselyAdapter,
+  createConvexAdapter,
   type Adapter,
   type Where,
   type WhereOperator,
   type OrderBy,
   type FindManyOptions,
+  type ConvexAPI,
+  type ConvexClient,
 } from '../adapter';
