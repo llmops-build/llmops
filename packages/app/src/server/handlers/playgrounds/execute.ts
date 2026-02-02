@@ -262,8 +262,13 @@ const app = new Hono()
 
       // Create OpenAI client pointing to our gateway
       // Derive base URL from request origin, including basePath
+      // Handle reverse proxy scenarios by checking forwarded headers
+      const forwardedProto = c.req.header('x-forwarded-proto');
+      const forwardedHost = c.req.header('x-forwarded-host') || c.req.header('host');
       const url = new URL(c.req.url);
-      const baseURL = `${url.protocol}//${url.host}`;
+      const protocol = forwardedProto ? `${forwardedProto}:` : url.protocol;
+      const host = forwardedHost || url.host;
+      const baseURL = `${protocol}//${host}`;
       const basePath = c.get('llmopsConfig')?.basePath || '';
       const gatewayPath = basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
       const openai = new OpenAI({
