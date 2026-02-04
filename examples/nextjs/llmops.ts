@@ -1,11 +1,11 @@
 import { llmops, type LLMOpsClient } from '@llmops/sdk';
 import { Pool } from 'pg';
 
-let client: LLMOpsClient | null = null;
+let cachedClient: LLMOpsClient | null = null;
 
 export function getLLMOpsClient(): LLMOpsClient {
-  if (!client) {
-    client = llmops({
+  if (!cachedClient) {
+    cachedClient = llmops({
       basePath: '/api/llmops',
       database: new Pool({
         connectionString: process.env.POSTGRES_URL || '',
@@ -13,5 +13,5 @@ export function getLLMOpsClient(): LLMOpsClient {
       schema: 'llmops',
     });
   }
-  return client;
+  return cachedClient;
 }

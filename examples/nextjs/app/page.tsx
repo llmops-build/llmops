@@ -7,6 +7,49 @@ export default function Home() {
         integration.
       </p>
 
+      <h2>Setup</h2>
+      <pre
+        style={{
+          background: '#f4f4f4',
+          padding: '1rem',
+          borderRadius: '4px',
+          overflow: 'auto',
+        }}
+      >
+        {`// llmops.ts - Use lazy initialization to avoid build-time execution
+import { llmops, type LLMOpsClient } from '@llmops/sdk';
+import { Pool } from 'pg';
+
+let cachedClient: LLMOpsClient | null = null;
+
+export function getLLMOpsClient(): LLMOpsClient {
+  if (!cachedClient) {
+    cachedClient = llmops({
+      basePath: '/api/llmops',
+      database: new Pool({
+        connectionString: process.env.POSTGRES_URL || '',
+      }),
+    });
+  }
+  return cachedClient;
+}
+
+// app/api/llmops/[[...path]]/route.ts
+import type { NextRequest } from 'next/server';
+import { toNextJsHandler } from '@llmops/sdk/nextjs';
+import { getLLMOpsClient } from '@/llmops';
+
+export async function GET(request: NextRequest) {
+  return toNextJsHandler(getLLMOpsClient()).GET(request);
+}
+
+export async function POST(request: NextRequest) {
+  return toNextJsHandler(getLLMOpsClient()).POST(request);
+}
+
+// ... similar for PUT, DELETE, PATCH`}
+      </pre>
+
       <h2>Available Endpoints</h2>
       <ul>
         <li>

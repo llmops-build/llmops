@@ -1,23 +1,29 @@
 import type { NextRequest } from 'next/server';
-import { createLLMOpsHandler } from '@llmops/sdk/nextjs';
+import { toNextJsHandler } from '@llmops/sdk/nextjs';
 import { getLLMOpsClient } from '@/llmops';
 
-// Force dynamic rendering to prevent static analysis issues
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
-// Lazy initialization - only create handler when first request comes in
-let handler: ((request: NextRequest) => Promise<Response>) | null = null;
-
-function getHandler() {
-  if (!handler) {
-    handler = createLLMOpsHandler(getLLMOpsClient());
-  }
-  return handler;
+// Use lazy initialization to avoid build-time execution
+export async function GET(request: NextRequest) {
+  const handlers = toNextJsHandler(getLLMOpsClient());
+  return handlers.GET(request);
 }
 
-export const GET = (req: NextRequest) => getHandler()(req);
-export const POST = (req: NextRequest) => getHandler()(req);
-export const PUT = (req: NextRequest) => getHandler()(req);
-export const DELETE = (req: NextRequest) => getHandler()(req);
-export const PATCH = (req: NextRequest) => getHandler()(req);
+export async function POST(request: NextRequest) {
+  const handlers = toNextJsHandler(getLLMOpsClient());
+  return handlers.POST(request);
+}
+
+export async function PUT(request: NextRequest) {
+  const handlers = toNextJsHandler(getLLMOpsClient());
+  return handlers.PUT(request);
+}
+
+export async function DELETE(request: NextRequest) {
+  const handlers = toNextJsHandler(getLLMOpsClient());
+  return handlers.DELETE(request);
+}
+
+export async function PATCH(request: NextRequest) {
+  const handlers = toNextJsHandler(getLLMOpsClient());
+  return handlers.PATCH(request);
+}
