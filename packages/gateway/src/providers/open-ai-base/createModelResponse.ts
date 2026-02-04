@@ -159,6 +159,14 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
 export function* OpenAIModelResponseJSONToStreamGenerator(
   response: OpenAIResponse
 ): Generator<string, void, unknown> {
+  if (!response) {
+    yield getResponseErrorEvent({
+      code: 'null_response',
+      message: 'Model did not return a response',
+    });
+    return;
+  }
+
   if (response.error?.code) {
     yield getResponseErrorEvent(response.error);
     return;
