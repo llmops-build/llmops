@@ -390,9 +390,25 @@ export const OpenAICreateModelResponseTransformer = <
   customTransformer?: CustomTransformer<OpenAIResponse, T>
 ) => {
   const transformer: (
-    response: T | ErrorResponse,
+    response: T | ErrorResponse | null,
     responseStatus: number
   ) => T | ErrorResponse = (response, responseStatus) => {
+    if (!response) {
+      const errorResponse: ErrorResponse = {
+        error: {
+          message: 'Model did not return a response',
+          type: 'null_response',
+          param: null,
+          code: 'null_response',
+        },
+        provider: provider ?? OPEN_AI,
+      };
+      if (customTransformer) {
+        return customTransformer(errorResponse as ErrorResponse, true);
+      }
+      return errorResponse;
+    }
+
     if (responseStatus !== 200 && 'error' in response) {
       const errorResponse = OpenAIErrorResponseTransform(
         response as ErrorResponse,
