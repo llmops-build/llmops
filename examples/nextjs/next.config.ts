@@ -1,13 +1,17 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Treat workspace packages and their dependencies as external server packages
+  // Mark server-side packages as external to avoid webpack bundling issues
+  // with native modules (fsevents, pg) and server-only code
   serverExternalPackages: [
-    'pg',
-    '@llmops/sdk',
     '@llmops/app',
     '@llmops/core',
-    'react-dom',
+    '@llmops/sdk',
+    'pg',
+    'better-auth',
+    'nunjucks',
+    'chokidar',
+    'fsevents',
   ],
   // Suppress output file tracing warning for monorepo
   outputFileTracingRoot: process.cwd(),
@@ -17,10 +21,13 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Mark these packages as external to avoid bundling issues
+      // Mark native/problematic modules as externals
+      // This prevents webpack from trying to bundle them
       config.externals = config.externals || [];
       config.externals.push({
-        '@llmops/app': 'commonjs @llmops/app',
+        fsevents: 'commonjs fsevents',
+        chokidar: 'commonjs chokidar',
+        nunjucks: 'commonjs nunjucks',
       });
     }
     return config;

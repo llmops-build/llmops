@@ -13,7 +13,7 @@
     "url": "https://github.com/llmops-build/llmops/issues"
   },
   "scripts": {
-    "build": "pnpm -r --workspace-concurrency=1 run build",
+    "build": "pnpm -r --workspace-concurrency=1 --filter './packages/*' run build",
     "build:all": "pnpm -r run build",
     "dev": "pnpm -r --parallel run dev",
     "dev:packages": "pnpm --filter './packages/*' --parallel run dev",
