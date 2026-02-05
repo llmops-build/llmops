@@ -169,19 +169,10 @@ export async function createDatabaseFromConnection(
       if (typeof rawConnection === 'function') {
         const { createNeonDialect } = await import('./neon-dialect');
         dialect = createNeonDialect(rawConnection);
-
-        // Warn if using custom schema with HTTP neon (stateless, can't maintain search_path)
-        if (schema && schema !== 'public') {
-          console.warn(
-            `[LLMOps] Warning: Using Neon HTTP driver with custom schema '${schema}'. ` +
-              `The HTTP driver is stateless and cannot maintain search_path. ` +
-              `For custom schemas, pass the connection string directly instead of neon() function.`
-          );
-        }
         break;
       }
 
-      // User passed a connection string directly
+      // User passed a connection string directly - create neon HTTP driver
       const connectionString = rawConnection as string;
 
       if (!connectionString) {
@@ -190,29 +181,10 @@ export async function createDatabaseFromConnection(
         );
       }
 
-      // For custom schemas, use WebSocket Pool to maintain search_path state
-      if (schema && schema !== 'public') {
-        const { Pool, neonConfig } = await import('@neondatabase/serverless');
-        const { default: ws } = await import('ws');
-        neonConfig.webSocketConstructor = ws;
-
-        const pool = new Pool({ connectionString });
-
-        dialect = new PostgresDialect({
-          pool,
-          onCreateConnection: async (connection) => {
-            await connection.executeQuery(
-              CompiledQuery.raw(`SET search_path TO "${schema}"`)
-            );
-          },
-        });
-      } else {
-        // Use HTTP Neon for public schema (faster, serverless-friendly)
-        const { neon } = await import('@neondatabase/serverless');
-        const sql = neon(connectionString);
-        const { createNeonDialect } = await import('./neon-dialect');
-        dialect = createNeonDialect(sql);
-      }
+      const { neon } = await import('@neondatabase/serverless');
+      const sql = neon(connectionString);
+      const { createNeonDialect } = await import('./neon-dialect');
+      dialect = createNeonDialect(sql);
       break;
     }
 
