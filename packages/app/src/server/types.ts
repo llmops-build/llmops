@@ -11,12 +11,14 @@ declare module 'hono' {
     llmopsConfig: ValidatedLLMOpsConfig;
     /** Inline provider configurations from code config */
     inlineProviders?: InlineProvidersConfig;
-    db: Awaited<ReturnType<typeof createDataLayer>>;
-    /** Raw Kysely instance with correct schema configuration */
-    kyselyDb: any;
-    /** Database type (postgres, mysql, sqlite, mssql) */
-    dbType: DatabaseType;
-    authClient: Auth<BetterAuthOptions>;
+    /** Data layer - null when running in inline-only mode (no database) */
+    db: Awaited<ReturnType<typeof createDataLayer>> | null;
+    /** Raw Kysely instance with correct schema configuration - null in inline-only mode */
+    kyselyDb: any | null;
+    /** Database type (postgres, mysql, sqlite, mssql) - null in inline-only mode */
+    dbType: DatabaseType | null;
+    /** Auth client - null in inline-only mode */
+    authClient: Auth<BetterAuthOptions> | null;
     setupComplete: boolean;
   }
 }

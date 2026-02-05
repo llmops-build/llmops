@@ -713,6 +713,21 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       );
     }
 
+    // Config-based routing requires database
+    if (!db || !kyselyDb) {
+      return c.json(
+        {
+          error: {
+            message:
+              'Config-based routing requires a database. ' +
+              'Either configure a database or use @provider-slug/model format for inline providers.',
+            type: 'configuration_error',
+          },
+        },
+        503
+      );
+    }
+
     try {
       // Get manifest service and route the request
       const manifestService = getManifestService(kyselyDb);

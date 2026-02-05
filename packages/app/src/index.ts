@@ -29,6 +29,21 @@ const setConfigMiddleware = (
   };
 };
 
+/**
+ * Middleware for inline-only mode (no database configured).
+ * Sets null values for database-related context variables.
+ */
+const createInlineOnlyMiddleware = (): MiddlewareHandler => {
+  return async (c, next) => {
+    c.set('db', null);
+    c.set('kyselyDb', null);
+    c.set('dbType', null);
+    c.set('authClient', null);
+    c.set('setupComplete', true); // No setup needed for inline-only mode
+    await next();
+  };
+};
+
 const createDatabaseMiddleware = (
   validatedConfig: ValidatedLLMOpsConfig
 ): MiddlewareHandler => {
@@ -71,14 +86,22 @@ export const createApp = (config: LLMOpsConfig) => {
     // to avoid running heavy initialization for asset requests
     .use('/assets/*', createStaticAssetMiddleware())
     .use('*', createEnvValidatorMiddleware())
-    .use('*', setConfigMiddleware(validatedConfig))
+    .use('*', setConfigMiddleware(validatedConfig));
+
+  // Only add database-dependent middlewares if database is configured
+  if (validatedConfig.database) {
     // Migration runs BEFORE database/seed to ensure tables exist
-    .use('*', createMigrationMiddleware(validatedConfig))
-    .use('*', createDatabaseMiddleware(validatedConfig))
-    .use('*', createSeedMiddleware())
-    .use('*', createAuthClientMiddleware())
-    .route('/', mainApp)
-    .basePath(validatedConfig.basePath);
+    app
+      .use('*', createMigrationMiddleware(validatedConfig))
+      .use('*', createDatabaseMiddleware(validatedConfig))
+      .use('*', createSeedMiddleware())
+      .use('*', createAuthClientMiddleware());
+  } else {
+    // Inline-only mode: set null values for database-related context
+    app.use('*', createInlineOnlyMiddleware());
+  }
+
+  app.route('/', mainApp).basePath(validatedConfig.basePath);
 
   return {
     app,
