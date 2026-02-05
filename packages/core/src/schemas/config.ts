@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { InlineProvidersConfig } from '../providers';
+import { mergeWithDefaultProviders } from '../providers';
 
 /**
  * Schema for inline provider configuration
@@ -20,39 +21,61 @@ const inlineProviderConfigSchema = z
  */
 const providersConfigSchema = z.array(inlineProviderConfigSchema).optional();
 
-export const llmopsConfigSchema = z
-  .object({
-    /**
-     * Database connection for storing configs, variants, etc.
-     * Optional when providers are configured inline.
-     * Required for dashboard UI and config management features.
-     */
-    database: z.any().optional(),
-    basePath: z
-      .string()
-      .min(1, 'Base path is required and cannot be empty')
-      .refine(
-        (path) => path.startsWith('/'),
-        'Base path must start with a forward slash'
-      ),
-    /**
-     * Database schema name for PostgreSQL connections.
-     * This sets the search_path on every connection.
-     * Defaults to 'llmops'. Set to 'public' to use the default PostgreSQL schema.
-     */
-    schema: z.string().optional().default('llmops'),
-    /**
-     * Inline provider configurations.
-     * Each provider has a unique slug for routing via @slug/model format.
-     * Code-configured providers take precedence over database providers.
-     */
-    providers: providersConfigSchema,
-  })
+/**
+ * Base schema without refinements (used for transform)
+ */
+const llmopsConfigBaseSchema = z.object({
+  /**
+   * Database connection for storing configs, variants, etc.
+   * Optional when providers are configured inline or env vars are set.
+   * Required for dashboard UI and config management features.
+   */
+  database: z.any().optional(),
+  basePath: z
+    .string()
+    .min(1, 'Base path is required and cannot be empty')
+    .refine(
+      (path) => path.startsWith('/'),
+      'Base path must start with a forward slash'
+    ),
+  /**
+   * Database schema name for PostgreSQL connections.
+   * This sets the search_path on every connection.
+   * Defaults to 'llmops'. Set to 'public' to use the default PostgreSQL schema.
+   */
+  schema: z.string().optional().default('llmops'),
+  /**
+   * Inline provider configurations.
+   * Each provider has a unique slug for routing via @slug/model format.
+   * Code-configured providers take precedence over database providers.
+   *
+   * If not specified, providers are auto-detected from environment variables:
+   * - OPENAI_API_KEY -> @openai/model
+   * - ANTHROPIC_API_KEY -> @anthropic/model
+   * - GOOGLE_API_KEY -> @google/model
+   * - MISTRAL_API_KEY -> @mistral/model
+   * - GROQ_API_KEY -> @groq/model
+   * - And many more...
+   */
+  providers: providersConfigSchema,
+});
+
+export const llmopsConfigSchema = llmopsConfigBaseSchema
+  // Transform: merge user providers with auto-detected defaults from env vars
+  .transform((config) => ({
+    ...config,
+    providers: mergeWithDefaultProviders(
+      config.providers as InlineProvidersConfig | undefined
+    ),
+  }))
+  // Validate: either database or providers (including auto-detected) must exist
   .refine(
     (config) =>
       config.database !== undefined ||
       (config.providers && config.providers.length > 0),
-    'Either database or providers must be configured'
+    'Either database or providers must be configured. ' +
+      'Set a database connection, configure providers explicitly, ' +
+      'or set API key environment variables (e.g., OPENAI_API_KEY).'
   );
 
 /**
