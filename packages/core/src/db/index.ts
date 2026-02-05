@@ -172,12 +172,19 @@ export async function createDatabaseFromConnection(
         break;
       }
 
-      // User passed a connection string directly - create neon HTTP driver
-      const connectionString = rawConnection as string;
+      // User passed a connection string, or get from environment variables
+      const connectionString =
+        (typeof rawConnection === 'string' && rawConnection) ||
+        process.env.NEON_CONNECTION_STRING ||
+        process.env.NEON_PG_URL ||
+        process.env.DATABASE_URL ||
+        process.env.POSTGRES_URL ||
+        '';
 
       if (!connectionString) {
         throw new Error(
-          'Neon connection string is required. Pass it directly as the database option.'
+          'Neon connection string is required. Pass it directly as the database option ' +
+            'or set one of: NEON_CONNECTION_STRING, NEON_PG_URL, DATABASE_URL, POSTGRES_URL'
         );
       }
 
