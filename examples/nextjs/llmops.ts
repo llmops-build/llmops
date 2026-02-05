@@ -1,12 +1,9 @@
 import { llmops } from '@llmops/sdk';
-import { neon } from '@neondatabase/serverless';
 
-// Use Neon serverless driver for Next.js
-// The connection string should be in POSTGRES_URL or DATABASE_URL
-const sql = neon(process.env.POSTGRES_URL || process.env.DATABASE_URL || '');
-
+// For Neon, just pass the connection string directly
+// The SDK will auto-detect it as Neon and handle it appropriately
 export default llmops({
   basePath: '/api/llmops',
-  database: sql,
+  database: process.env.POSTGRES_URL || process.env.DATABASE_URL || '',
   schema: 'llmops',
 });

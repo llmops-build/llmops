@@ -57,9 +57,29 @@ export function createDatabase(
 }
 
 /**
- * Auto-detect database type from connection object
+ * Check if a string looks like a Neon connection string
+ */
+function isNeonConnectionString(str: string): boolean {
+  return (
+    str.includes('.neon.tech') ||
+    str.includes('neon.tech') ||
+    str.includes('@neon-')
+  );
+}
+
+/**
+ * Auto-detect database type from connection object or string
  */
 export function detectDatabaseType(db: unknown): DatabaseType | null {
+  // Check for connection string
+  if (typeof db === 'string') {
+    if (isNeonConnectionString(db)) return 'neon';
+    if (db.startsWith('postgres://') || db.startsWith('postgresql://'))
+      return 'postgres';
+    if (db.startsWith('mysql://')) return 'mysql';
+    return null;
+  }
+
   if (!db || (typeof db !== 'object' && typeof db !== 'function')) {
     return null;
   }
@@ -72,9 +92,8 @@ export function detectDatabaseType(db: unknown): DatabaseType | null {
     if (db instanceof MssqlDialect) return 'mssql';
   }
 
-  // Check for Neon serverless instance
+  // Check for Neon serverless instance (neon() function)
   if (typeof db === 'function' && db.name === 'templateFn') {
-    // Neon instances are functions that return connection pools
     return 'neon';
   }
 
@@ -145,24 +164,30 @@ export async function createDatabaseFromConnection(
       });
       break;
 
-    case 'neon':
+    case 'neon': {
+      // Get connection string - either passed directly or from environment
+      const connectionString =
+        typeof rawConnection === 'string'
+          ? rawConnection
+          : process.env.NEON_CONNECTION_STRING ||
+            process.env.NEON_PG_URL ||
+            process.env.DATABASE_URL ||
+            process.env.POSTGRES_URL ||
+            '';
+
+      if (!connectionString) {
+        throw new Error(
+          'Neon connection string is required. Pass it directly as the database option ' +
+            'or set NEON_CONNECTION_STRING environment variable.'
+        );
+      }
+
       // For Neon with schema requirements, use WebSocket connection instead of HTTP
       // to maintain search_path state
       if (schema && schema !== 'public') {
         const { Pool, neonConfig } = await import('@neondatabase/serverless');
         const { default: ws } = await import('ws');
         neonConfig.webSocketConstructor = ws;
-
-        // Create WebSocket connection for stateful schema support
-        // Check common environment variable names for Neon connection string
-        const connectionString =
-          typeof rawConnection === 'string'
-            ? rawConnection
-            : process.env.NEON_CONNECTION_STRING ||
-              process.env.NEON_PG_URL ||
-              process.env.DATABASE_URL ||
-              process.env.POSTGRES_URL ||
-              '';
 
         const pool = new Pool({
           connectionString: connectionString.includes('currentSchema')
@@ -184,10 +209,13 @@ export async function createDatabaseFromConnection(
         });
       } else {
         // Use standard HTTP Neon connection for public schema
+        const { neon } = await import('@neondatabase/serverless');
+        const sql = neon(connectionString);
         const { createNeonDialect } = await import('./neon-dialect');
-        dialect = createNeonDialect(rawConnection);
+        dialect = createNeonDialect(sql);
       }
       break;
+    }
 
     case 'mssql':
       if ('createDriver' in rawConnection) {
