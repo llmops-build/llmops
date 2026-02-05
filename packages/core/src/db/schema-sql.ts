@@ -334,21 +334,42 @@ function splitSQLStatements(sql: string): string[] {
 /**
  * Create a Neon SQL function from various connection types
  *
+ * The Neon serverless library returns a tagged template function from neon(),
+ * but for conventional string queries we need to use sql.query() instead.
+ * This helper wraps the neon instance to provide a simple query function.
+ *
  * @param rawConnection - neon() function, connection string, or undefined (uses env vars)
  * @returns SQL function that can be used with runSchemaSQL, or null if unable to create
  */
 export async function createNeonSqlFunction(
   rawConnection: unknown
 ): Promise<((query: string) => Promise<unknown>) | null> {
+  // Helper to wrap a neon sql instance with .query() method
+  const wrapNeonSql = (
+    sql: ReturnType<typeof import('@neondatabase/serverless').neon>
+  ): ((query: string) => Promise<unknown>) => {
+    return (query: string) => sql.query(query);
+  };
+
   // User passed neon() function directly
   if (typeof rawConnection === 'function') {
+    // Check if it has a .query method (neon sql instance)
+    if ('query' in rawConnection && typeof rawConnection.query === 'function') {
+      return wrapNeonSql(
+        rawConnection as ReturnType<
+          typeof import('@neondatabase/serverless').neon
+        >
+      );
+    }
+    // Fallback for legacy/custom sql functions
     return rawConnection as (query: string) => Promise<unknown>;
   }
 
   // User passed a connection string
   if (typeof rawConnection === 'string' && rawConnection) {
     const { neon } = await import('@neondatabase/serverless');
-    return neon(rawConnection);
+    const sql = neon(rawConnection);
+    return wrapNeonSql(sql);
   }
 
   // Try to get from environment variables
@@ -364,5 +385,6 @@ export async function createNeonSqlFunction(
   }
 
   const { neon } = await import('@neondatabase/serverless');
-  return neon(connectionString);
+  const sql = neon(connectionString);
+  return wrapNeonSql(sql);
 }
