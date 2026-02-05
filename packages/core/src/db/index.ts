@@ -165,50 +165,49 @@ export async function createDatabaseFromConnection(
       break;
 
     case 'neon': {
-      // Get connection string - either passed directly or from environment
-      const connectionString =
-        typeof rawConnection === 'string'
-          ? rawConnection
-          : process.env.NEON_CONNECTION_STRING ||
-            process.env.NEON_PG_URL ||
-            process.env.DATABASE_URL ||
-            process.env.POSTGRES_URL ||
-            '';
+      // If user passed a neon() function instance, use it directly
+      if (typeof rawConnection === 'function') {
+        const { createNeonDialect } = await import('./neon-dialect');
+        dialect = createNeonDialect(rawConnection);
+
+        // Warn if using custom schema with HTTP neon (stateless, can't maintain search_path)
+        if (schema && schema !== 'public') {
+          console.warn(
+            `[LLMOps] Warning: Using Neon HTTP driver with custom schema '${schema}'. ` +
+              `The HTTP driver is stateless and cannot maintain search_path. ` +
+              `For custom schemas, pass the connection string directly instead of neon() function.`
+          );
+        }
+        break;
+      }
+
+      // User passed a connection string directly
+      const connectionString = rawConnection as string;
 
       if (!connectionString) {
         throw new Error(
-          'Neon connection string is required. Pass it directly as the database option ' +
-            'or set NEON_CONNECTION_STRING environment variable.'
+          'Neon connection string is required. Pass it directly as the database option.'
         );
       }
 
-      // For Neon with schema requirements, use WebSocket connection instead of HTTP
-      // to maintain search_path state
+      // For custom schemas, use WebSocket Pool to maintain search_path state
       if (schema && schema !== 'public') {
         const { Pool, neonConfig } = await import('@neondatabase/serverless');
         const { default: ws } = await import('ws');
         neonConfig.webSocketConstructor = ws;
 
-        const pool = new Pool({
-          connectionString: connectionString.includes('currentSchema')
-            ? connectionString.split('currentSchema=')[1].split('&')[0] ===
-              'public'
-              ? connectionString.replace(/currentSchema=[^&]*&?/, '')
-              : connectionString
-            : connectionString,
-        });
+        const pool = new Pool({ connectionString });
 
         dialect = new PostgresDialect({
           pool,
           onCreateConnection: async (connection) => {
-            // Set search_path on every new connection
             await connection.executeQuery(
               CompiledQuery.raw(`SET search_path TO "${schema}"`)
             );
           },
         });
       } else {
-        // Use standard HTTP Neon connection for public schema
+        // Use HTTP Neon for public schema (faster, serverless-friendly)
         const { neon } = await import('@neondatabase/serverless');
         const sql = neon(connectionString);
         const { createNeonDialect } = await import('./neon-dialect');
