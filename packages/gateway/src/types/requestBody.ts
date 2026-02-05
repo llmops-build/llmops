@@ -483,7 +483,9 @@ export interface Params {
     budget_tokens: number;
   };
   // Embeddings specific
+  input?: string | string[];
   dimensions?: number;
+  encoding_format?: 'float' | 'base64';
   parameters?: any;
   version?: number;
 }
