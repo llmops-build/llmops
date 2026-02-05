@@ -58,6 +58,16 @@
         "default": "./dist/hono.cjs"
       }
     },
+    "./nextjs": {
+      "import": {
+        "types": "./dist/nextjs.d.mts",
+        "default": "./dist/nextjs.mjs"
+      },
+      "require": {
+        "types": "./dist/nextjs.d.cts",
+        "default": "./dist/nextjs.cjs"
+      }
+    },
     "./*": "./*"
   },
   "publishConfig": {
