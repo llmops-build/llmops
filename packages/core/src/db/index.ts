@@ -154,10 +154,15 @@ export async function createDatabaseFromConnection(
         neonConfig.webSocketConstructor = ws;
 
         // Create WebSocket connection for stateful schema support
+        // Check common environment variable names for Neon connection string
         const connectionString =
           typeof rawConnection === 'string'
             ? rawConnection
-            : process.env.NEON_PG_URL || '';
+            : process.env.NEON_CONNECTION_STRING ||
+              process.env.NEON_PG_URL ||
+              process.env.DATABASE_URL ||
+              process.env.POSTGRES_URL ||
+              '';
 
         const pool = new Pool({
           connectionString: connectionString.includes('currentSchema')
