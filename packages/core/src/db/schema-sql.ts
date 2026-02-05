@@ -273,10 +273,16 @@ export async function runSchemaSQL(
   // Split by semicolons but keep DO blocks together
   const statements = splitSQLStatements(schemaSQL);
 
-  for (const statement of statements) {
-    const trimmed = statement.trim();
+  for (let i = 0; i < statements.length; i++) {
+    const trimmed = statements[i].trim();
     if (trimmed && !trimmed.startsWith('--')) {
-      await sql(trimmed);
+      try {
+        await sql(trimmed);
+      } catch (error) {
+        console.error(`[Schema] Failed at statement ${i + 1}/${statements.length}:`);
+        console.error(`[Schema] Statement preview: ${trimmed.slice(0, 100)}...`);
+        throw error;
+      }
     }
   }
 }
