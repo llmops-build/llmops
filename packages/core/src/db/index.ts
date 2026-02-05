@@ -10,6 +10,7 @@ import {
 import type { Database } from './schema';
 
 export * from './schema';
+export * from './schema-sql';
 export * from './validation';
 export * from './migrations';
 export * from './neon-dialect';

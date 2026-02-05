@@ -50,6 +50,7 @@
     "build": "tsdown",
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
+    "generate:schema": "tsx scripts/generate-schema-sql.ts",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },

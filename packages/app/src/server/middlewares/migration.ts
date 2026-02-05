@@ -14,6 +14,11 @@ type LLMOpsConfigWithSchema = LLMOpsConfig & {
  * This middleware runs once on application startup and automatically
  * runs database migrations if needed.
  *
+ * For Neon databases, it uses the idempotent SQL schema approach which
+ * works better with stateless HTTP connections.
+ *
+ * For other databases, it uses the Kysely-based migration system.
+ *
  * IMPORTANT: This middleware should run BEFORE the seed middleware
  * but AFTER the database middleware creates the connection.
  */
@@ -34,15 +39,11 @@ export const createMigrationMiddleware = (
     if (!migrationPromise) {
       migrationPromise = (async () => {
         try {
-          // Dynamically import to avoid build-time dependency issues
-          const {
-            detectDatabaseType,
-            runAutoMigrations,
-            createDatabaseFromConnection,
-          } = await import('@llmops/core/db');
+          const { detectDatabaseType } = await import('@llmops/core/db');
 
           const rawConnection = config.database;
           const dbType = detectDatabaseType(rawConnection);
+          const schema = config.schema ?? 'llmops';
 
           if (!dbType) {
             console.warn(
@@ -51,8 +52,18 @@ export const createMigrationMiddleware = (
             return;
           }
 
+          // For Neon, use the idempotent SQL schema approach
+          // This works better with stateless HTTP connections
+          if (dbType === 'neon') {
+            await runNeonSchemaMigration(rawConnection, schema);
+            return;
+          }
+
+          // For other databases, use the Kysely-based migration system
+          const { runAutoMigrations, createDatabaseFromConnection } =
+            await import('@llmops/core/db');
+
           // Create a fresh Kysely instance for migrations with schema option
-          const schema = config.schema ?? 'llmops';
           const db = await createDatabaseFromConnection(rawConnection, {
             schema,
           });
@@ -88,3 +99,40 @@ export const createMigrationMiddleware = (
     await next();
   };
 };
+
+/**
+ * Run schema migration for Neon using idempotent SQL
+ *
+ * This approach works better with Neon's stateless HTTP connections
+ * because it doesn't rely on Kysely's introspection.
+ */
+async function runNeonSchemaMigration(
+  rawConnection: unknown,
+  schema: string
+): Promise<void> {
+  const { runSchemaSQL, createNeonSqlFunction } = await import(
+    '@llmops/core/db'
+  );
+
+  // Get the sql function from the raw connection
+  const sql = await createNeonSqlFunction(rawConnection);
+
+  if (!sql) {
+    console.warn(
+      '[Migration] Could not create Neon SQL function, skipping schema migration'
+    );
+    return;
+  }
+
+  console.log(
+    `[Migration] Running idempotent schema migration for Neon (schema: ${schema})`
+  );
+
+  try {
+    await runSchemaSQL(sql, schema);
+    console.log('[Migration] Schema migration completed successfully');
+  } catch (error) {
+    console.error('[Migration] Schema migration failed:', error);
+    throw error;
+  }
+}
