@@ -1,5 +1,5 @@
 -- LLMOps Database Schema (MySQL)
--- Generated: 2026-02-05T15:18:39.175Z
+-- Generated: 2026-02-05T15:34:50.951Z
 -- NOTE: MySQL doesn't support ADD COLUMN IF NOT EXISTS in standard SQL.
 -- This schema creates tables if they don't exist.
 

@@ -1,5 +1,5 @@
 -- LLMOps Database Schema (SQLite)
--- Generated: 2026-02-05T15:18:39.174Z
+-- Generated: 2026-02-05T15:34:50.950Z
 -- NOTE: SQLite doesn't support ADD COLUMN IF NOT EXISTS.
 -- This schema creates tables if they don't exist but cannot add columns to existing tables.
 

@@ -145,51 +145,35 @@ export function generatePostgresSchemaSQL(schemaName?: string): string {
   }
   lines.push('');
 
-  // Step 3: Add unique constraints (idempotent using DO block)
-  lines.push(`-- STEP 3: Add unique constraints (if not exist)`);
+  // Step 3: Add unique constraints using unique indexes (works with Neon HTTP)
+  lines.push(`-- STEP 3: Add unique indexes (if not exist)`);
 
   for (const { name, meta } of sortedTables) {
     const snakeTable = toSnakeCase(name);
     const fullTableName = schemaPrefix + snakeTable;
 
-    // Single column unique constraints
+    // Single column unique constraints - use unique indexes
     for (const [columnName, field] of Object.entries(meta.fields)) {
       if (field.unique) {
         const snakeColumn = toSnakeCase(columnName);
-        const constraintName = `uq_${snakeTable}_${snakeColumn}`;
-
-        lines.push(`DO $$`);
-        lines.push(`BEGIN`);
-        lines.push(`  IF NOT EXISTS (`);
-        lines.push(`    SELECT 1 FROM pg_constraint WHERE conname = '${constraintName}'`);
-        lines.push(`  ) THEN`);
-        lines.push(`    ALTER TABLE ${fullTableName} ADD CONSTRAINT ${constraintName} UNIQUE (${snakeColumn});`);
-        lines.push(`  END IF;`);
-        lines.push(`END $$;`);
+        const indexName = `uq_${snakeTable}_${snakeColumn}`;
+        lines.push(`CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${fullTableName}(${snakeColumn});`);
       }
     }
 
-    // Composite unique constraints
+    // Composite unique constraints - use unique indexes
     if (meta.uniqueConstraints) {
       for (const constraint of meta.uniqueConstraints) {
         const cols = constraint.columns.map(toSnakeCase).join(', ');
-        const constraintName = `uq_${snakeTable}_${constraint.columns.map(toSnakeCase).join('_')}`;
-
-        lines.push(`DO $$`);
-        lines.push(`BEGIN`);
-        lines.push(`  IF NOT EXISTS (`);
-        lines.push(`    SELECT 1 FROM pg_constraint WHERE conname = '${constraintName}'`);
-        lines.push(`  ) THEN`);
-        lines.push(`    ALTER TABLE ${fullTableName} ADD CONSTRAINT ${constraintName} UNIQUE (${cols});`);
-        lines.push(`  END IF;`);
-        lines.push(`END $$;`);
+        const indexName = `uq_${snakeTable}_${constraint.columns.map(toSnakeCase).join('_')}`;
+        lines.push(`CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${fullTableName}(${cols});`);
       }
     }
   }
   lines.push('');
 
-  // Step 4: Add foreign key constraints
-  lines.push(`-- STEP 4: Add foreign keys (if not exist)`);
+  // Step 4: Add foreign key constraints (will be executed with error handling)
+  lines.push(`-- STEP 4: Add foreign keys (errors ignored if already exist)`);
 
   for (const { name, meta } of sortedTables) {
     const snakeTable = toSnakeCase(name);
@@ -202,15 +186,9 @@ export function generatePostgresSchemaSQL(schemaName?: string): string {
         const refColumn = toSnakeCase(field.references.column);
         const constraintName = `fk_${snakeTable}_${snakeColumn}`;
 
-        lines.push(`DO $$`);
-        lines.push(`BEGIN`);
-        lines.push(`  IF NOT EXISTS (`);
-        lines.push(`    SELECT 1 FROM pg_constraint WHERE conname = '${constraintName}'`);
-        lines.push(`  ) THEN`);
-        lines.push(`    ALTER TABLE ${fullTableName} ADD CONSTRAINT ${constraintName}`);
-        lines.push(`      FOREIGN KEY (${snakeColumn}) REFERENCES ${refTable}(${refColumn}) ON DELETE CASCADE;`);
-        lines.push(`  END IF;`);
-        lines.push(`END $$;`);
+        // Mark with special comment so execution can handle errors
+        lines.push(`--FK_CONSTRAINT`);
+        lines.push(`ALTER TABLE ${fullTableName} ADD CONSTRAINT ${constraintName} FOREIGN KEY (${snakeColumn}) REFERENCES ${refTable}(${refColumn}) ON DELETE CASCADE;`);
       }
     }
   }
@@ -232,27 +210,12 @@ export function generatePostgresSchemaSQL(schemaName?: string): string {
   }
   lines.push('');
 
-  // Step 6: Create trigger function and triggers
-  lines.push(`-- STEP 6: Create updated_at triggers`);
-
-  // Function must be created in a specific schema
-  const functionSchema = schemaName ? `"${schemaName}".` : 'public.';
-  const functionName = `${functionSchema}update_updated_at_column`;
-
-  lines.push(`CREATE OR REPLACE FUNCTION ${functionName}()`);
-  lines.push(`RETURNS TRIGGER AS $$`);
-  lines.push(`BEGIN`);
-  lines.push(`  NEW.updated_at = NOW();`);
-  lines.push(`  RETURN NEW;`);
-  lines.push(`END;`);
-  lines.push(`$$ language 'plpgsql';`);
-
-  for (const { name } of sortedTables) {
-    const snakeTable = toSnakeCase(name);
-    const fullTableName = schemaPrefix + snakeTable;
-    lines.push(`DROP TRIGGER IF EXISTS update_${snakeTable}_updated_at ON ${fullTableName};`);
-    lines.push(`CREATE TRIGGER update_${snakeTable}_updated_at BEFORE UPDATE ON ${fullTableName} FOR EACH ROW EXECUTE FUNCTION ${functionName}();`);
-  }
+  // Step 6: Note about triggers
+  // Triggers require PL/pgSQL functions with $$ blocks which don't work with Neon HTTP.
+  // The updated_at column should be set at the application level or via a WebSocket migration.
+  lines.push(`-- STEP 6: Triggers (skipped for Neon HTTP compatibility)`);
+  lines.push(`-- NOTE: updated_at triggers require PL/pgSQL which is not supported via Neon HTTP.`);
+  lines.push(`-- Set updated_at at the application level or run triggers via psql/WebSocket.`);
   lines.push('');
 
   return lines.join('\n');
@@ -270,57 +233,70 @@ export async function runSchemaSQL(
 ): Promise<void> {
   const schemaSQL = generatePostgresSchemaSQL(schemaName);
 
-  // Split by semicolons but keep DO blocks together
+  // Split into individual statements
   const statements = splitSQLStatements(schemaSQL);
 
+  let isFkConstraint = false;
   for (let i = 0; i < statements.length; i++) {
     const trimmed = statements[i].trim();
+
+    // Track FK constraint marker
+    if (trimmed === '--FK_CONSTRAINT') {
+      isFkConstraint = true;
+      continue;
+    }
+
     if (trimmed && !trimmed.startsWith('--')) {
       try {
         await sql(trimmed);
-      } catch (error) {
+      } catch (error: unknown) {
+        // For FK constraints, ignore "already exists" errors (code 42710)
+        const isAlreadyExists =
+          error instanceof Error &&
+          'code' in error &&
+          (error as { code: string }).code === '42710';
+
+        if (isFkConstraint && isAlreadyExists) {
+          // Constraint already exists, that's fine
+          continue;
+        }
+
         console.error(`[Schema] Failed at statement ${i + 1}/${statements.length}:`);
         console.error(`[Schema] Statement preview: ${trimmed.slice(0, 100)}...`);
         throw error;
       }
     }
+
+    // Reset FK marker after processing
+    isFkConstraint = false;
   }
 }
 
 /**
- * Split SQL into individual statements, keeping $$ blocks together
- * Handles both DO $$ blocks and CREATE FUNCTION ... AS $$ blocks
+ * Split SQL into individual statements
+ * Each statement ends with a semicolon, comments are preserved as separate entries
  */
 function splitSQLStatements(sql: string): string[] {
   const statements: string[] = [];
   let current = '';
-  let inDollarBlock = false;
 
   const lines = sql.split('\n');
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Skip empty lines and comments
-    if (!trimmed || trimmed.startsWith('--')) {
+    // Skip empty lines
+    if (!trimmed) {
       continue;
     }
 
-    // Track $$ blocks (both DO $$ and AS $$)
-    if (!inDollarBlock && (trimmed === 'DO $$' || trimmed.endsWith('AS $$'))) {
-      inDollarBlock = true;
-      current += line + '\n';
-      continue;
-    }
-
-    if (inDollarBlock) {
-      current += line + '\n';
-      // End of $$ block - look for $$ followed by optional content and ;
-      if (trimmed.startsWith('$$') && trimmed.endsWith(';')) {
+    // Preserve comment markers (like --FK_CONSTRAINT) as separate statements
+    if (trimmed.startsWith('--')) {
+      if (current.trim()) {
         statements.push(current.trim());
         current = '';
-        inDollarBlock = false;
       }
+      statements.push(trimmed);
       continue;
     }
 

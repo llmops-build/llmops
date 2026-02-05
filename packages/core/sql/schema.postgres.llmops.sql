@@ -211,273 +211,63 @@ ALTER TABLE "llmops".playground_results ADD COLUMN IF NOT EXISTS cost INTEGER;
 ALTER TABLE "llmops".playground_results ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE "llmops".playground_results ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
--- STEP 3: Add unique constraints (if not exist)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_configs_slug'
-  ) THEN
-    ALTER TABLE "llmops".configs ADD CONSTRAINT uq_configs_slug UNIQUE (slug);
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_variant_versions_variant_id_version'
-  ) THEN
-    ALTER TABLE "llmops".variant_versions ADD CONSTRAINT uq_variant_versions_variant_id_version UNIQUE (variant_id, version);
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_environments_slug'
-  ) THEN
-    ALTER TABLE "llmops".environments ADD CONSTRAINT uq_environments_slug UNIQUE (slug);
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_dataset_versions_dataset_id_version_number'
-  ) THEN
-    ALTER TABLE "llmops".dataset_versions ADD CONSTRAINT uq_dataset_versions_dataset_id_version_number UNIQUE (dataset_id, version_number);
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_dataset_version_records_dataset_version_id_dataset_record_id'
-  ) THEN
-    ALTER TABLE "llmops".dataset_version_records ADD CONSTRAINT uq_dataset_version_records_dataset_version_id_dataset_record_id UNIQUE (dataset_version_id, dataset_record_id);
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'uq_provider_guardrail_overrides_provider_config_id_guardrail_config_id'
-  ) THEN
-    ALTER TABLE "llmops".provider_guardrail_overrides ADD CONSTRAINT uq_provider_guardrail_overrides_provider_config_id_guardrail_config_id UNIQUE (provider_config_id, guardrail_config_id);
-  END IF;
-END $$;
+-- STEP 3: Add unique indexes (if not exist)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_configs_slug ON "llmops".configs(slug);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_variant_versions_variant_id_version ON "llmops".variant_versions(variant_id, version);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_environments_slug ON "llmops".environments(slug);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_dataset_versions_dataset_id_version_number ON "llmops".dataset_versions(dataset_id, version_number);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_dataset_version_records_dataset_version_id_dataset_record_id ON "llmops".dataset_version_records(dataset_version_id, dataset_record_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_provider_guardrail_overrides_provider_config_id_guardrail_config_id ON "llmops".provider_guardrail_overrides(provider_config_id, guardrail_config_id);
 
--- STEP 4: Add foreign keys (if not exist)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_variant_versions_variant_id'
-  ) THEN
-    ALTER TABLE "llmops".variant_versions ADD CONSTRAINT fk_variant_versions_variant_id
-      FOREIGN KEY (variant_id) REFERENCES "llmops".variants(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_environment_secrets_environment_id'
-  ) THEN
-    ALTER TABLE "llmops".environment_secrets ADD CONSTRAINT fk_environment_secrets_environment_id
-      FOREIGN KEY (environment_id) REFERENCES "llmops".environments(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_config_variants_config_id'
-  ) THEN
-    ALTER TABLE "llmops".config_variants ADD CONSTRAINT fk_config_variants_config_id
-      FOREIGN KEY (config_id) REFERENCES "llmops".configs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_config_variants_variant_id'
-  ) THEN
-    ALTER TABLE "llmops".config_variants ADD CONSTRAINT fk_config_variants_variant_id
-      FOREIGN KEY (variant_id) REFERENCES "llmops".variants(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_targeting_rules_environment_id'
-  ) THEN
-    ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_environment_id
-      FOREIGN KEY (environment_id) REFERENCES "llmops".environments(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_targeting_rules_config_id'
-  ) THEN
-    ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_config_id
-      FOREIGN KEY (config_id) REFERENCES "llmops".configs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_targeting_rules_config_variant_id'
-  ) THEN
-    ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_config_variant_id
-      FOREIGN KEY (config_variant_id) REFERENCES "llmops".config_variants(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_targeting_rules_variant_version_id'
-  ) THEN
-    ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_variant_version_id
-      FOREIGN KEY (variant_version_id) REFERENCES "llmops".variant_versions(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_dataset_versions_dataset_id'
-  ) THEN
-    ALTER TABLE "llmops".dataset_versions ADD CONSTRAINT fk_dataset_versions_dataset_id
-      FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_dataset_records_dataset_id'
-  ) THEN
-    ALTER TABLE "llmops".dataset_records ADD CONSTRAINT fk_dataset_records_dataset_id
-      FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_dataset_version_records_dataset_version_id'
-  ) THEN
-    ALTER TABLE "llmops".dataset_version_records ADD CONSTRAINT fk_dataset_version_records_dataset_version_id
-      FOREIGN KEY (dataset_version_id) REFERENCES "llmops".dataset_versions(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_dataset_version_records_dataset_record_id'
-  ) THEN
-    ALTER TABLE "llmops".dataset_version_records ADD CONSTRAINT fk_dataset_version_records_dataset_record_id
-      FOREIGN KEY (dataset_record_id) REFERENCES "llmops".dataset_records(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_provider_guardrail_overrides_provider_config_id'
-  ) THEN
-    ALTER TABLE "llmops".provider_guardrail_overrides ADD CONSTRAINT fk_provider_guardrail_overrides_provider_config_id
-      FOREIGN KEY (provider_config_id) REFERENCES "llmops".provider_configs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_provider_guardrail_overrides_guardrail_config_id'
-  ) THEN
-    ALTER TABLE "llmops".provider_guardrail_overrides ADD CONSTRAINT fk_provider_guardrail_overrides_guardrail_config_id
-      FOREIGN KEY (guardrail_config_id) REFERENCES "llmops".guardrail_configs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_llm_requests_config_id'
-  ) THEN
-    ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_config_id
-      FOREIGN KEY (config_id) REFERENCES "llmops".configs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_llm_requests_variant_id'
-  ) THEN
-    ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_variant_id
-      FOREIGN KEY (variant_id) REFERENCES "llmops".variants(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_llm_requests_environment_id'
-  ) THEN
-    ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_environment_id
-      FOREIGN KEY (environment_id) REFERENCES "llmops".environments(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_llm_requests_provider_config_id'
-  ) THEN
-    ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_provider_config_id
-      FOREIGN KEY (provider_config_id) REFERENCES "llmops".provider_configs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_playgrounds_dataset_id'
-  ) THEN
-    ALTER TABLE "llmops".playgrounds ADD CONSTRAINT fk_playgrounds_dataset_id
-      FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_playground_runs_playground_id'
-  ) THEN
-    ALTER TABLE "llmops".playground_runs ADD CONSTRAINT fk_playground_runs_playground_id
-      FOREIGN KEY (playground_id) REFERENCES "llmops".playgrounds(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_playground_runs_dataset_id'
-  ) THEN
-    ALTER TABLE "llmops".playground_runs ADD CONSTRAINT fk_playground_runs_dataset_id
-      FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_playground_runs_dataset_version_id'
-  ) THEN
-    ALTER TABLE "llmops".playground_runs ADD CONSTRAINT fk_playground_runs_dataset_version_id
-      FOREIGN KEY (dataset_version_id) REFERENCES "llmops".dataset_versions(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_playground_results_run_id'
-  ) THEN
-    ALTER TABLE "llmops".playground_results ADD CONSTRAINT fk_playground_results_run_id
-      FOREIGN KEY (run_id) REFERENCES "llmops".playground_runs(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_playground_results_dataset_record_id'
-  ) THEN
-    ALTER TABLE "llmops".playground_results ADD CONSTRAINT fk_playground_results_dataset_record_id
-      FOREIGN KEY (dataset_record_id) REFERENCES "llmops".dataset_records(id) ON DELETE CASCADE;
-  END IF;
-END $$;
+-- STEP 4: Add foreign keys (errors ignored if already exist)
+--FK_CONSTRAINT
+ALTER TABLE "llmops".variant_versions ADD CONSTRAINT fk_variant_versions_variant_id FOREIGN KEY (variant_id) REFERENCES "llmops".variants(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".environment_secrets ADD CONSTRAINT fk_environment_secrets_environment_id FOREIGN KEY (environment_id) REFERENCES "llmops".environments(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".config_variants ADD CONSTRAINT fk_config_variants_config_id FOREIGN KEY (config_id) REFERENCES "llmops".configs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".config_variants ADD CONSTRAINT fk_config_variants_variant_id FOREIGN KEY (variant_id) REFERENCES "llmops".variants(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_environment_id FOREIGN KEY (environment_id) REFERENCES "llmops".environments(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_config_id FOREIGN KEY (config_id) REFERENCES "llmops".configs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_config_variant_id FOREIGN KEY (config_variant_id) REFERENCES "llmops".config_variants(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".targeting_rules ADD CONSTRAINT fk_targeting_rules_variant_version_id FOREIGN KEY (variant_version_id) REFERENCES "llmops".variant_versions(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".dataset_versions ADD CONSTRAINT fk_dataset_versions_dataset_id FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".dataset_records ADD CONSTRAINT fk_dataset_records_dataset_id FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".dataset_version_records ADD CONSTRAINT fk_dataset_version_records_dataset_version_id FOREIGN KEY (dataset_version_id) REFERENCES "llmops".dataset_versions(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".dataset_version_records ADD CONSTRAINT fk_dataset_version_records_dataset_record_id FOREIGN KEY (dataset_record_id) REFERENCES "llmops".dataset_records(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".provider_guardrail_overrides ADD CONSTRAINT fk_provider_guardrail_overrides_provider_config_id FOREIGN KEY (provider_config_id) REFERENCES "llmops".provider_configs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".provider_guardrail_overrides ADD CONSTRAINT fk_provider_guardrail_overrides_guardrail_config_id FOREIGN KEY (guardrail_config_id) REFERENCES "llmops".guardrail_configs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_config_id FOREIGN KEY (config_id) REFERENCES "llmops".configs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_variant_id FOREIGN KEY (variant_id) REFERENCES "llmops".variants(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_environment_id FOREIGN KEY (environment_id) REFERENCES "llmops".environments(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".llm_requests ADD CONSTRAINT fk_llm_requests_provider_config_id FOREIGN KEY (provider_config_id) REFERENCES "llmops".provider_configs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".playgrounds ADD CONSTRAINT fk_playgrounds_dataset_id FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".playground_runs ADD CONSTRAINT fk_playground_runs_playground_id FOREIGN KEY (playground_id) REFERENCES "llmops".playgrounds(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".playground_runs ADD CONSTRAINT fk_playground_runs_dataset_id FOREIGN KEY (dataset_id) REFERENCES "llmops".datasets(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".playground_runs ADD CONSTRAINT fk_playground_runs_dataset_version_id FOREIGN KEY (dataset_version_id) REFERENCES "llmops".dataset_versions(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".playground_results ADD CONSTRAINT fk_playground_results_run_id FOREIGN KEY (run_id) REFERENCES "llmops".playground_runs(id) ON DELETE CASCADE;
+--FK_CONSTRAINT
+ALTER TABLE "llmops".playground_results ADD CONSTRAINT fk_playground_results_dataset_record_id FOREIGN KEY (dataset_record_id) REFERENCES "llmops".dataset_records(id) ON DELETE CASCADE;
 
 -- STEP 5: Create indexes (if not exist)
 CREATE INDEX IF NOT EXISTS idx_variant_versions_variant_id ON "llmops".variant_versions(variant_id);
@@ -505,49 +295,6 @@ CREATE INDEX IF NOT EXISTS idx_playground_runs_dataset_version_id ON "llmops".pl
 CREATE INDEX IF NOT EXISTS idx_playground_results_run_id ON "llmops".playground_results(run_id);
 CREATE INDEX IF NOT EXISTS idx_playground_results_dataset_record_id ON "llmops".playground_results(dataset_record_id);
 
--- STEP 6: Create updated_at triggers
-CREATE OR REPLACE FUNCTION "llmops".update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ language 'plpgsql';
-DROP TRIGGER IF EXISTS update_configs_updated_at ON "llmops".configs;
-CREATE TRIGGER update_configs_updated_at BEFORE UPDATE ON "llmops".configs FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_variants_updated_at ON "llmops".variants;
-CREATE TRIGGER update_variants_updated_at BEFORE UPDATE ON "llmops".variants FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_variant_versions_updated_at ON "llmops".variant_versions;
-CREATE TRIGGER update_variant_versions_updated_at BEFORE UPDATE ON "llmops".variant_versions FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_environments_updated_at ON "llmops".environments;
-CREATE TRIGGER update_environments_updated_at BEFORE UPDATE ON "llmops".environments FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_environment_secrets_updated_at ON "llmops".environment_secrets;
-CREATE TRIGGER update_environment_secrets_updated_at BEFORE UPDATE ON "llmops".environment_secrets FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_config_variants_updated_at ON "llmops".config_variants;
-CREATE TRIGGER update_config_variants_updated_at BEFORE UPDATE ON "llmops".config_variants FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_targeting_rules_updated_at ON "llmops".targeting_rules;
-CREATE TRIGGER update_targeting_rules_updated_at BEFORE UPDATE ON "llmops".targeting_rules FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_workspace_settings_updated_at ON "llmops".workspace_settings;
-CREATE TRIGGER update_workspace_settings_updated_at BEFORE UPDATE ON "llmops".workspace_settings FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_provider_configs_updated_at ON "llmops".provider_configs;
-CREATE TRIGGER update_provider_configs_updated_at BEFORE UPDATE ON "llmops".provider_configs FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_datasets_updated_at ON "llmops".datasets;
-CREATE TRIGGER update_datasets_updated_at BEFORE UPDATE ON "llmops".datasets FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_dataset_versions_updated_at ON "llmops".dataset_versions;
-CREATE TRIGGER update_dataset_versions_updated_at BEFORE UPDATE ON "llmops".dataset_versions FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_dataset_records_updated_at ON "llmops".dataset_records;
-CREATE TRIGGER update_dataset_records_updated_at BEFORE UPDATE ON "llmops".dataset_records FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_dataset_version_records_updated_at ON "llmops".dataset_version_records;
-CREATE TRIGGER update_dataset_version_records_updated_at BEFORE UPDATE ON "llmops".dataset_version_records FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_guardrail_configs_updated_at ON "llmops".guardrail_configs;
-CREATE TRIGGER update_guardrail_configs_updated_at BEFORE UPDATE ON "llmops".guardrail_configs FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_provider_guardrail_overrides_updated_at ON "llmops".provider_guardrail_overrides;
-CREATE TRIGGER update_provider_guardrail_overrides_updated_at BEFORE UPDATE ON "llmops".provider_guardrail_overrides FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_llm_requests_updated_at ON "llmops".llm_requests;
-CREATE TRIGGER update_llm_requests_updated_at BEFORE UPDATE ON "llmops".llm_requests FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_playgrounds_updated_at ON "llmops".playgrounds;
-CREATE TRIGGER update_playgrounds_updated_at BEFORE UPDATE ON "llmops".playgrounds FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_playground_runs_updated_at ON "llmops".playground_runs;
-CREATE TRIGGER update_playground_runs_updated_at BEFORE UPDATE ON "llmops".playground_runs FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
-DROP TRIGGER IF EXISTS update_playground_results_updated_at ON "llmops".playground_results;
-CREATE TRIGGER update_playground_results_updated_at BEFORE UPDATE ON "llmops".playground_results FOR EACH ROW EXECUTE FUNCTION "llmops".update_updated_at_column();
+-- STEP 6: Triggers (skipped for Neon HTTP compatibility)
+-- NOTE: updated_at triggers require PL/pgSQL which is not supported via Neon HTTP.
+-- Set updated_at at the application level or run triggers via psql/WebSocket.
