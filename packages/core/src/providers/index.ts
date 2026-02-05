@@ -25,4 +25,6 @@ export type {
   ProviderConfigMap,
   AnyProviderConfig,
   ProvidersConfig,
+  InlineProviderConfig,
+  InlineProvidersConfig,
 } from './provider-configs';

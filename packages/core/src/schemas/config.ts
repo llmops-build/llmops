@@ -1,6 +1,29 @@
 import { z } from 'zod';
+import type { InlineProvidersConfig } from '../providers';
+
+/**
+ * Schema for inline provider configuration
+ */
+const inlineProviderConfigSchema = z
+  .object({
+    provider: z.string().min(1, 'Provider is required'),
+    slug: z.string().min(1, 'Slug is required'),
+    apiKey: z.string().optional(),
+    customHost: z.string().optional(),
+    requestTimeout: z.number().optional(),
+    forwardHeaders: z.array(z.string()).optional(),
+  })
+  .passthrough(); // Allow provider-specific fields
+
+/**
+ * Schema for providers array
+ */
+const providersConfigSchema = z.array(inlineProviderConfigSchema).optional();
 
 export const llmopsConfigSchema = z.object({
+  /**
+   * Database connection for storing configs, variants, etc.
+   */
   database: z.any(),
   basePath: z
     .string()
@@ -15,6 +38,12 @@ export const llmopsConfigSchema = z.object({
    * Defaults to 'llmops'. Set to 'public' to use the default PostgreSQL schema.
    */
   schema: z.string().optional().default('llmops'),
+  /**
+   * Inline provider configurations.
+   * Each provider has a unique slug for routing via @slug/model format.
+   * Code-configured providers take precedence over database providers.
+   */
+  providers: providersConfigSchema,
 });
 
 /**
@@ -22,19 +51,22 @@ export const llmopsConfigSchema = z.object({
  *
  * Note: schema is optional in input but always present after validation
  */
-export type ValidatedLLMOpsConfig = Omit<
-  z.infer<typeof llmopsConfigSchema>,
-  'schema'
-> & {
+export type ValidatedLLMOpsConfig = {
+  database: unknown;
+  basePath: string;
   schema: string;
+  providers?: InlineProvidersConfig;
 };
 
 /**
  * Input type for LLMOps configuration (before validation)
- * Users can omit optional fields like schema
+ * Users can omit optional fields like schema and providers
  */
-export type LLMOpsConfigInput = Omit<ValidatedLLMOpsConfig, 'schema'> & {
+export type LLMOpsConfigInput = {
+  database: unknown;
+  basePath: string;
   schema?: string;
+  providers?: InlineProvidersConfig;
 };
 
 export function validateLLMOpsConfig(config: unknown): ValidatedLLMOpsConfig {

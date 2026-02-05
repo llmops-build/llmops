@@ -12,7 +12,7 @@ import { getManifestService } from '@server/services/manifest';
 import {
   getProviderCredentials,
   getProviderCredentialsByProviderId,
-  getProviderCredentialsBySlug,
+  getProviderCredentialsWithFallback,
   type ProviderCredentials,
 } from '@server/services/credentialsCache';
 import { renderTemplate } from '@server/lib/template-utils';
@@ -494,15 +494,21 @@ async function handleDirectProviderRequest(
 ) {
   const db = c.var.db;
   const kyselyDb = c.var.kyselyDb;
+  const inlineProviders = c.var.inlineProviders;
 
-  // Look up provider credentials by slug
-  const result = await getProviderCredentialsBySlug(providerSlug, db);
+  // Look up provider credentials - inline config takes precedence over database
+  const result = await getProviderCredentialsWithFallback(
+    providerSlug,
+    inlineProviders,
+    db
+  );
 
   if (!result) {
     return c.json(
       {
         error: {
-          message: `Provider config not found for slug: ${providerSlug}`,
+          message: `Provider config not found for slug: ${providerSlug}. ` +
+            `Configure it inline in your llmops config or add it to the database.`,
           type: 'invalid_request_error',
         },
       },
@@ -539,20 +545,27 @@ async function handleDirectProviderRequest(
 
   // Get guardrails from manifest (pre-loaded and cached)
   // Always set both arrays (even if empty) - gateway expects arrays, not undefined
-  try {
-    const manifestService = getManifestService(kyselyDb);
-    const manifest = await manifestService.getManifest();
-    const { guardrails } = manifest;
+  // Note: Guardrails require database, skip if running in inline-only mode
+  if (kyselyDb) {
+    try {
+      const manifestService = getManifestService(kyselyDb);
+      const manifest = await manifestService.getManifest();
+      const { guardrails } = manifest;
 
-    portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
-      guardrails.beforeRequestHook
-    );
-    portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
-      guardrails.afterRequestHook
-    );
-  } catch (error) {
-    logger.warn(`Failed to get guardrails from manifest: ${error}`);
-    // Set empty arrays as fallback - gateway expects arrays, not undefined
+      portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
+        guardrails.beforeRequestHook
+      );
+      portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
+        guardrails.afterRequestHook
+      );
+    } catch (error) {
+      logger.warn(`Failed to get guardrails from manifest: ${error}`);
+      // Set empty arrays as fallback - gateway expects arrays, not undefined
+      portkeyConfig.default_input_guardrails = [];
+      portkeyConfig.default_output_guardrails = [];
+    }
+  } else {
+    // No database - no manifest-based guardrails available
     portkeyConfig.default_input_guardrails = [];
     portkeyConfig.default_output_guardrails = [];
   }

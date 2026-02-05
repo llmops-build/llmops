@@ -21,6 +21,10 @@ const setConfigMiddleware = (
 ): MiddlewareHandler => {
   return async (c, next) => {
     c.set('llmopsConfig', config);
+    // Set inline providers if configured
+    if (config.providers) {
+      c.set('inlineProviders', config.providers);
+    }
     await next();
   };
 };

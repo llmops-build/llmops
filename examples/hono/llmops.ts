@@ -12,4 +12,19 @@ export default llmops({
   }),
   // PostgreSQL schema name (defaults to 'llmops')
   schema: 'llmops-3',
+  // Inline provider configurations (optional)
+  // These take precedence over database-configured providers
+  // Use @slug/model format in requests (e.g., @openai/gpt-4.1-nano)
+  providers: [
+    {
+      provider: 'openai',
+      slug: 'openai',
+      apiKey: env.OPENAI_API_KEY || '',
+    },
+    // {
+    //   provider: 'anthropic',
+    //   slug: 'anthropic',
+    //   apiKey: env.ANTHROPIC_API_KEY || '',
+    // },
+  ],
 });

@@ -1,4 +1,5 @@
 import { cacheService } from './cache';
+import type { InlineProvidersConfig } from '@llmops/core';
 
 const CREDENTIALS_NAMESPACE = 'provider-credentials';
 const CREDENTIALS_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -149,6 +150,57 @@ export async function getProviderCredentialsBySlug(
     },
     { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS }
   );
+}
+
+/**
+ * Get provider credentials from inline config array by slug.
+ * Returns credentials and providerId, or null if not found.
+ */
+export function getInlineProviderCredentials(
+  slug: string,
+  inlineProviders: InlineProvidersConfig
+): ProviderCredentialsWithProvider | null {
+  const config = inlineProviders.find(
+    (p: { slug: string }) => p.slug === slug
+  );
+  if (!config) {
+    return null;
+  }
+
+  // Extract credentials (all fields except provider and slug)
+  const { provider, slug: _, ...credentials } = config;
+
+  return {
+    credentials: credentials as ProviderCredentials,
+    providerId: provider,
+  };
+}
+
+/**
+ * Get provider credentials with fallback order:
+ * 1. Inline config (code-configured providers take precedence)
+ * 2. Database lookup (if db provided)
+ * Returns null if not found in either.
+ */
+export async function getProviderCredentialsWithFallback(
+  slug: string,
+  inlineProviders: InlineProvidersConfig | undefined,
+  db: DataLayerWithProviderConfig | null
+): Promise<ProviderCredentialsWithProvider | null> {
+  // Try inline config first (code-configured takes precedence)
+  if (inlineProviders) {
+    const inlineResult = getInlineProviderCredentials(slug, inlineProviders);
+    if (inlineResult) {
+      return inlineResult;
+    }
+  }
+
+  // Fall back to database lookup
+  if (db) {
+    return getProviderCredentialsBySlug(slug, db);
+  }
+
+  return null;
 }
 
 /**
