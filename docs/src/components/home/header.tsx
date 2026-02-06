@@ -1,5 +1,5 @@
 // @ts-expect-error // svgr import
-import Logo from '@/assets/llmops.svg?react';
+import Logo from "@/assets/llmops.svg?react";
 
 const Header = () => {
   return (

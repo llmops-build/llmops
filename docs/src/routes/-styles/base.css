@@ -1,4 +1,6 @@
 :root {
+  --sidebar-width: 0px;
+
   --accent1: #fbfdff;
   --accent2: #f5f9ff;
   --accent3: #e9f3ff;
@@ -190,4 +192,10 @@
   --gray-track: #6f6f6f;
 
   --background: #000;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --sidebar-width: 280px;
+  }
 }
