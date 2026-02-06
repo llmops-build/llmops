@@ -15,7 +15,7 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-    <div className="grid grid-cols-[var(--sidebar-width)_1fr] min-h-screen bg-background force-light">
+    <div className="grid grid-cols-1 md:grid-cols-[var(--sidebar-width)_1fr] min-h-screen bg-background force-light">
       {/* Sidebar — single row, full height */}
       <aside className="hidden md:block relative">
         <div className="border-r border-[var(--gray4)] sticky top-0 h-screen w-full flex flex-col">
