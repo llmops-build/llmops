@@ -25,4 +25,13 @@ export type {
   ProviderConfigMap,
   AnyProviderConfig,
   ProvidersConfig,
+  InlineProviderConfig,
+  InlineProvidersConfig,
 } from './provider-configs';
+
+// Export default provider utilities
+export {
+  getDefaultProviders,
+  mergeWithDefaultProviders,
+  DEFAULT_PROVIDER_ENV_VARS,
+} from './default-providers';

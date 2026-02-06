@@ -460,9 +460,16 @@ export function createCostTrackingMiddleware(
       return;
     }
 
+    // Skip cost tracking if no database (inline-only mode)
+    // Cost tracking requires database to store request logs
+    const db = c.get('db') as unknown as DbWithBatchInsert | null;
+    if (!db) {
+      log(`Skipping cost tracking - no database configured`);
+      return;
+    }
+
     // Initialize batch writer lazily
     // Cast db to include batchInsertRequests (added by createLLMRequestsDataLayer)
-    const db = c.get('db') as unknown as DbWithBatchInsert;
     const batchWriter = getGlobalBatchWriter(
       { batchInsertRequests: (requests) => db.batchInsertRequests(requests) },
       { flushIntervalMs, debug }

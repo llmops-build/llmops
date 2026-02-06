@@ -318,3 +318,44 @@ export type AnyProviderConfig = ProviderConfigMap[SupportedProviders];
 export type ProvidersConfig = {
   [K in SupportedProviders]?: ProviderConfigMap[K];
 };
+
+/**
+ * Inline provider configuration for array-based config.
+ * Each entry specifies the provider type and a unique slug for routing.
+ * Extends Partial<BaseProviderConfig> since some providers (Bedrock, Vertex) don't require API key.
+ */
+export interface InlineProviderConfig extends Partial<BaseProviderConfig> {
+  /** The provider type (e.g., 'openai', 'anthropic') */
+  provider: string;
+  /** Unique slug for routing (e.g., 'prod-openai'). Used as @slug/model */
+  slug: string;
+  // AWS credentials (for Bedrock/Sagemaker)
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsSessionToken?: string;
+  awsRegion?: string;
+  // Azure credentials
+  resourceName?: string;
+  deploymentId?: string;
+  apiVersion?: string;
+  azureAuthMode?: string;
+  azureAdToken?: string;
+  azureManagedClientId?: string;
+  azureWorkloadClientId?: string;
+  azureEntraClientId?: string;
+  azureEntraClientSecret?: string;
+  azureEntraTenantId?: string;
+  azureFoundryUrl?: string;
+  azureDeploymentName?: string;
+  azureApiVersion?: string;
+  // Google Vertex AI
+  vertexProjectId?: string;
+  vertexRegion?: string;
+  vertexServiceAccountJson?: Record<string, string>;
+  // OpenAI
+  openaiOrganization?: string;
+  openaiProject?: string;
+}
+
+/** Array of inline provider configurations */
+export type InlineProvidersConfig = InlineProviderConfig[];
