@@ -6,7 +6,7 @@ const Header = () => {
     <header className="h-14 flex-1 border-b border-b-gray-4 py-1 px-6 flex items-center">
       <div className="flex items-end gap-3">
         <div className="w-8 h-8">
-          <Logo className="invert-0 dark:invert" />
+          <Logo />
         </div>
         <a
           href="https://github.com/llmops-build/llmops"
