@@ -5,6 +5,7 @@ import FoldUI from '@/components/home/fold-4-ui';
 import FoldPrompts from '@/components/home/fold-5-prompts';
 import FoldEvals from '@/components/home/fold-6-evals';
 import Header from '@/components/home/header';
+import Hero from '@/components/home/hero';
 import LogoAnimation from '@/components/home/logo-animation';
 import './-styles/base.css';
 import { createFileRoute } from '@tanstack/react-router';
@@ -37,13 +38,14 @@ function Home() {
       {/* Main — header + body */}
       <div className="grid grid-rows-[auto_1fr]">
         <Header />
-        <main className="px-6 md:px-10">
-          <FoldInstall />
+        <main>
+          <Hero />
+          {/*<FoldInstall />
           <FoldProviders />
           <FoldObserve />
           <FoldUI />
           <FoldPrompts />
-          <FoldEvals />
+          <FoldEvals />*/}
         </main>
       </div>
     </div>
