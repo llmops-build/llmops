@@ -205,3 +205,12 @@
     --sidebar-width: 270px;
   }
 }
+
+@keyframes cycleWords {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-75%);
+  }
+}
