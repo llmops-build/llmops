@@ -40,8 +40,8 @@ function Home() {
         <Header />
         <main>
           <Hero />
-          {/*<FoldInstall />
-          <FoldProviders />
+          <FoldInstall />
+          {/*<FoldProviders />
           <FoldObserve />
           <FoldUI />
           <FoldPrompts />

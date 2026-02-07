@@ -1,25 +1,29 @@
 import CodeBlock from "./code-block";
 import Fold from "./fold";
 
-const installCode = `npm install @llmops/sdk pg`;
+const installCode = `npm i @llmops/sdk`;
 
-const clientCode = `import { llmops } from '@llmops/sdk';
-import { Pool } from 'pg';
+const envCode = `OPENAI_API_KEY=sk-...`;
 
-export default llmops({
-  basePath: '/llmops',
-  database: new Pool({
-    connectionString: process.env.POSTGRES_URL,
-  }),
-});`;
+const clientCode = `import OpenAI from 'openai';
 
-const serverCode = `import express from 'express';
-import { createLLMOpsMiddleware } from '@llmops/sdk/express';
-import client from './llmops';
+const openai = new OpenAI({
+  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+});
 
-const app = express();
-app.use('/llmops', createLLMOpsMiddleware(client));
-app.listen(3000);`;
+export default openai;`;
+
+const serverCode = `import { Hono } from 'hono';
+import { createLLMOpsMiddleware } from '@llmops/sdk/hono';
+import { llmops } from '@llmops/sdk';
+
+const app = new Hono();
+
+app.use('/llmops/*', createLLMOpsMiddleware(
+  llmops({ basePath: '/llmops' })
+));
+
+export default app;`;
 
 const FoldInstall = () => {
   return (
@@ -30,10 +34,11 @@ const FoldInstall = () => {
     >
       <div className="flex flex-col gap-4">
         <CodeBlock code={installCode} language="bash" />
+        <CodeBlock code={envCode} language="bash" filename=".env" />
         <CodeBlock
           code={clientCode}
           language="typescript"
-          filename="llmops.ts"
+          filename="client.ts"
         />
         <CodeBlock
           code={serverCode}
