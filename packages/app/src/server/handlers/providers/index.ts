@@ -11,13 +11,12 @@ import {
   invalidateProviderCredentialsByProviderId,
 } from '@server/services/credentialsCache';
 import { invalidateManifest } from '@server/services/manifest';
+import { getModelsDevCompatData } from '@llmops/models';
 
-const MODELS_DEV_API = 'https://models.dev/api.json';
 const MODELS_DEV_LOGOS = 'https://models.dev/logos';
 
 /**
- * Models.dev API response types
- * The API returns an object keyed by provider ID
+ * Models data types (matches @llmops/models generated format)
  */
 interface ModelsDevModel {
   id: string;
@@ -29,9 +28,9 @@ interface ModelsDevModel {
   structured_output?: boolean;
   temperature?: boolean;
   knowledge?: string;
-  release_date: string;
-  last_updated: string;
-  open_weights: boolean;
+  release_date?: string;
+  last_updated?: string;
+  open_weights?: boolean;
   status?: 'alpha' | 'beta' | 'deprecated';
   cost: {
     input: number;
@@ -47,7 +46,7 @@ interface ModelsDevModel {
     input?: number;
     output: number;
   };
-  modalities: {
+  modalities?: {
     input: string[];
     output: string[];
   };
@@ -57,49 +56,20 @@ interface ModelsDevModel {
 interface ModelsDevProvider {
   id: string;
   name: string;
-  npm: string;
-  env: string[];
-  doc: string;
+  npm?: string;
+  env?: string[];
+  doc?: string;
   api?: string;
   models: Record<string, ModelsDevModel>;
 }
 
-// API returns object keyed by provider ID
 type ModelsDevResponse = Record<string, ModelsDevProvider>;
-
-// Cache for models.dev data
-let modelsCache: ModelsDevResponse | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-async function fetchModelsDevData(): Promise<ModelsDevResponse> {
-  const now = Date.now();
-  if (modelsCache && now - cacheTimestamp < CACHE_TTL) {
-    return modelsCache;
-  }
-
-  const response = await fetch(MODELS_DEV_API);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch models.dev API: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  // Validate the response structure
-  if (!data || typeof data !== 'object') {
-    throw new Error('Invalid response from models.dev API: expected object');
-  }
-
-  modelsCache = data as ModelsDevResponse;
-  cacheTimestamp = now;
-  return modelsCache;
-}
 
 const app = new Hono()
   // Get all providers
   .get('/', async (c) => {
     try {
-      const data = await fetchModelsDevData();
+      const data = getModelsDevCompatData() as unknown as ModelsDevResponse;
       const providers = Object.values(data).map((provider) => ({
         id: provider.id,
         name: provider.name,
@@ -129,7 +99,7 @@ const app = new Hono()
       const { providerId } = c.req.valid('param');
 
       try {
-        const data = await fetchModelsDevData();
+        const data = getModelsDevCompatData() as unknown as ModelsDevResponse;
 
         // Check if provider exists
         const provider = data[providerId];
@@ -187,7 +157,7 @@ const app = new Hono()
   // Get all models from all providers
   .get('/models', async (c) => {
     try {
-      const data = await fetchModelsDevData();
+      const data = getModelsDevCompatData() as unknown as ModelsDevResponse;
 
       const allModels: Array<{
         id: string;
@@ -197,11 +167,11 @@ const app = new Hono()
         capabilities: Record<string, boolean | undefined>;
         pricing: Record<string, number | undefined>;
         limits: Record<string, number | undefined>;
-        modalities: { input: string[]; output: string[] };
+        modalities?: { input: string[]; output: string[] };
         knowledge?: string;
-        release_date: string;
-        last_updated: string;
-        open_weights: boolean;
+        release_date?: string;
+        last_updated?: string;
+        open_weights?: boolean;
         status?: string;
       }> = [];
 
@@ -255,7 +225,7 @@ const app = new Hono()
   .get('/models/grouped', async (c) => {
     try {
       const db = c.get('db');
-      const data = await fetchModelsDevData();
+      const data = getModelsDevCompatData() as unknown as ModelsDevResponse;
       const providerConfigs = await db.listProviderConfigs();
 
       const groupedProviders: Array<{

@@ -1,0 +1,33 @@
+{
+  "name": "@llmops/models",
+  "version": "0.5.0",
+  "description": "Model and provider metadata for LLMOps — based on Portkey-AI/models",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./generated/pricing.json": "./generated/pricing.json",
+    "./generated/models-dev-compat.json": "./generated/models-dev-compat.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "build": "pnpm run generate && tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist generated"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  },
+  "files": [
+    "dist",
+    "generated"
+  ]
+}

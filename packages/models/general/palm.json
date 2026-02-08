@@ -1,0 +1,20 @@
+{
+  "name": "palm",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "temperature", "defaultValue": 0.2, "minValue": 0, "maxValue": 1 },
+      { "key": "top_p", "defaultValue": 1, "minValue": 0, "maxValue": 1 },
+      { "key": "candidateCount", "defaultValue": 1, "minValue": 1, "maxValue": 8 }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+
+  "chat-bison-001": {
+    "type": { "primary": "chat" }
+  },
+  "text-bison-001": {
+    "type": { "primary": "text" }
+  }
+}

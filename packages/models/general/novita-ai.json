@@ -1,0 +1,69 @@
+{
+  "name": "novita-ai",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "max_tokens", "defaultValue": 256, "minValue": 1, "maxValue": 8192 },
+      { "key": "temperature", "defaultValue": 0.7, "minValue": 0, "maxValue": 2 },
+      { "key": "top_p", "defaultValue": 1, "minValue": 0, "maxValue": 1 },
+      { "key": "stop", "defaultValue": null, "type": "array-of-strings", "skipValues": [null, []] },
+      { "key": "n", "defaultValue": 1, "minValue": 1, "maxValue": 10 },
+      { "key": "stream", "defaultValue": true, "type": "boolean" }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+
+  "meta-llama/llama-3.3-70b-instruct": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "Nous-Hermes-2-Mixtral-8x7B-DPO": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "gryphe/mythomax-l2-13b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "lzlv_70b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "meta-llama/llama-3-70b-instruct": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "meta-llama/llama-3-8b-instruct": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "microsoft/wizardlm-2-8x22b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "nousresearch/nous-hermes-llama2-13b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "teknium/openhermes-2.5-mistral-7b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  }
+}

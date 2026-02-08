@@ -1,0 +1,724 @@
+{
+  "name": "groq",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "max_tokens", "defaultValue": 256, "minValue": 1, "maxValue": 4096 },
+      { "key": "temperature", "defaultValue": 0.7, "minValue": 0, "maxValue": 2 },
+      { "key": "top_p", "defaultValue": 1, "minValue": 0, "maxValue": 1 },
+      { "key": "stop", "defaultValue": null, "type": "array-of-strings", "skipValues": [null, []] },
+      { "key": "stream", "defaultValue": true, "type": "boolean" }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+
+  "llama2-70b-4096": {
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "mixtral-8x7b-32768": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["tools"] }
+  },
+  "llama-3.3-70b-versatile": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["tools"] }
+  },
+  "llama-3.3-70b-specdec": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "llama3-8b-8192": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "llama3-70b-8192": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "llama-3.1-8b-instant": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 8192 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["tools"] }
+  },
+  "gemma-7b-it": {
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "llama-3.2-1b-preview": {
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "llama-3.2-3b-preview": {
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "llama-3.2-11b-vision-preview": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 4096 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["image", "tools"] }
+  },
+  "llama-3.2-90b-vision-preview": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 8192 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["image", "tools"] }
+  },
+  "deepseek-r1-distill-llama-70b": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 131072 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["tools"] }
+  },
+  "deepseek-r1-distill-qwen-32b": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 8192 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat", "supported": ["tools"] }
+  },
+  "gemma2-9b-it": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "whisper-large-v3": {
+    "params": [],
+    "type": { "primary": "audio" },
+    "disablePlayground": true
+  },
+  "whisper-large-v3-turbo": {
+    "params": [],
+    "type": { "primary": "audio" },
+    "disablePlayground": true
+  },
+  "meta-llama/llama-guard-4-12b": {
+    "params": [{ "key": "max_tokens", "maxValue": 1024 }],
+    "type": { "primary": "chat" }
+  },
+  "meta-llama/llama-4-maverick-17b-128e-instruct": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "meta-llama/llama-4-scout-17b-16e-instruct": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "meta-llama/llama-prompt-guard-2-22m": {
+    "params": [{ "key": "max_tokens", "maxValue": 512 }],
+    "type": { "primary": "chat" }
+  },
+  "meta-llama/llama-prompt-guard-2-86m": {
+    "params": [{ "key": "max_tokens", "maxValue": 512 }],
+    "type": { "primary": "chat" }
+  },
+  "moonshotai/kimi-k2-instruct": {
+    "params": [{ "key": "max_tokens", "maxValue": 16384 }],
+    "type": { "primary": "chat" }
+  },
+  "playai-tts": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "audio" },
+    "disablePlayground": true
+
+  },
+  "playai-tts-arabic": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "audio" },
+    "disablePlayground": true
+
+  },
+  "qwen/qwen3-32b": {
+    "params": [{ "key": "max_tokens", "maxValue": 40960 }],
+    "type": { "primary": "chat" }
+  },
+  "compound-beta": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "compound-beta-mini": {
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "openai/gpt-oss-120b": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "openai/gpt-oss-20b": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      },
+      {
+        "key": "response_format",
+        "defaultValue": null,
+        "options": [
+          {
+            "value": null,
+            "name": "Text"
+          },
+          {
+            "value": "json_object",
+            "name": "JSON Object",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_object" }
+              }
+            }
+          },
+          {
+            "value": "json_schema",
+            "name": "JSON Schema",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "value": "json_schema" },
+                "json_schema": { "type": "object" }
+              }
+            },
+            "params": { "key": "json_schema", "defaultValue": null, "type": "json", "skipValues": [null] }
+          }
+        ],
+        "skipValues": [null],
+        "type": "string"
+      }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "llama-3.1-70b-versatile": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "llama-guard-3-8b": {
+    "type": {
+      "primary": "moderation"
+    }
+  },
+  "llama3-groq-70b-8192-tool-use-preview": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "llama3-groq-8b-8192-tool-use-preview": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "moonshotai/kimi-k2-instruct-0905": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "openai/gpt-oss-safeguard-20b": {
+    "type": {
+      "primary": "moderation"
+    },
+    "disablePlayground": true
+  }
+}

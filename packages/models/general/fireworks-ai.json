@@ -1,0 +1,388 @@
+{
+  "name": "fireworks",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "max_tokens", "defaultValue": 256, "minValue": 1, "maxValue": 4096 },
+      { "key": "temperature", "defaultValue": 0.7, "minValue": 0, "maxValue": 2 },
+      { "key": "top_p", "defaultValue": 1, "minValue": 0, "maxValue": 1 },
+      { "key": "n", "defaultValue": 1, "minValue": 1, "maxValue": 10 },
+      { "key": "stop", "defaultValue": null, "type": "array-of-strings", "skipValues": [null, []] },
+      { "key": "stream", "defaultValue": true, "type": "boolean" },
+      {
+        "key": "tool_choice",
+        "type": "non-view-manage-data",
+        "defaultValue": null,
+        "options": [
+          { "value": "none", "name": "None" },
+          { "value": "auto", "name": "Auto" },
+          { "value": "required", "name": "Required" },
+          {
+            "value": "custom",
+            "name": "Custom",
+            "schema": {
+              "type": "json"
+            }
+          }
+        ],
+        "skipValues": [null, []],
+        "rule": {
+          "default": {
+            "condition": "tools",
+            "then": "auto",
+            "else": null
+          }
+        }
+      }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+  "accounts/fireworks/models/deepseek-r1": {
+    "name": "deepseek-r1",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/deepseek-v3": {
+    "name": "deepseek-v3",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/firellava-13b": {
+    "name": "firellava-13b",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/firefunction-v1": {
+    "name": "firefunction-v1",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat", "supported": ["tools"] }
+  },
+  "accounts/fireworks/models/mixtral-8x7b-instruct": {
+    "name": "mixtral-8x7b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/mixtral-8x22b-instruct": {
+    "name": "mixtral-8x22b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3-70b-instruct": {
+    "name": "llama-v3-70b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/bleat-adapter": {
+    "name": "bleat-adapter",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/chinese-llama-2-lora-7b": {
+    "name": "chinese-llama-2-lora-7b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/dbrx-instruct": {
+    "name": "dbrx-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/gemma-7b-it": {
+    "name": "gemma-7b-it",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/hermes-2-pro-mistral-7b": {
+    "name": "hermes-2-pro-mistral-7b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/stability/models/japanese-stablelm-instruct-beta-70b": {
+    "name": "japanese-stablelm-instruct-beta-70b",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/stability/models/japanese-stablelm-instruct-gamma-7b": {
+    "name": "japanese-stablelm-instruct-gamma-7b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-2-13b-fp16-french": {
+    "name": "llama-2-13b-fp16-french",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/llama-2-13b-guanaco-peft": {
+    "name": "llama-2-13b-guanaco-peft",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/llama2-7b-summarize": {
+    "name": "llama2-7b-summarize",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/llama-v2-13b": {
+    "name": "llama-v2-13b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/llama-v2-13b-chat": {
+    "name": "llama-v2-13b-chat",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v2-70b-chat": {
+    "name": "llama-v2-70b-chat",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v2-7b": {
+    "name": "llama-v2-7b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/llama-v2-7b-chat": {
+    "name": "llama-v2-7b-chat",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3-70b-instruct-hf": {
+    "name": "llama-v3-70b-instruct-hf",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3-8b-hf": {
+    "name": "llama-v3-8b-hf",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/llama-v3-8b-instruct": {
+    "name": "llama-v3-8b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3-8b-instruct-hf": {
+    "name": "llama-v3-8b-instruct-hf",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llava-yi-34b": {
+    "name": "llava-yi-34b",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/mistral-7b": {
+    "name": "mistral-7b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/mistral-7b-instruct-4k": {
+    "name": "mistral-7b-instruct-4k",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/mistral-7b-instruct-v0p2": {
+    "name": "mistral-7b-instruct-v0p2",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/mistral-7b-instruct-v3": {
+    "name": "mistral-7b-instruct-v3",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/mixtral-8x22b-hf": {
+    "name": "mixtral-8x22b-hf",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/mixtral-8x22b-instruct-hf": {
+    "name": "mixtral-8x22b-instruct-hf",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/mixtral-8x7b": {
+    "name": "mixtral-8x7b",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/mixtral-8x7b-instruct-hf": {
+    "name": "mixtral-8x7b-instruct-hf",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/mythomax-l2-13b": {
+    "name": "mythomax-l2-13b",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/nous-hermes-2-mixtral-8x7b-dpo-fp8": {
+    "name": "nous-hermes-2-mixtral-8x7b-dpo-fp8",
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/phi-3-vision-128k-instruct": {
+    "name": "phi-3-vision-128k-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 128000 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/qwen1p5-72b-chat": {
+    "name": "qwen1p5-72b-chat",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/qwen2-72b-instruct": {
+    "name": "qwen2-72b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/stability/models/stablelm-2-zephyr-2b": {
+    "name": "stablelm-2-zephyr-2b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/stability/models/stablelm-zephyr-3b": {
+    "name": "stablelm-zephyr-3b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/starcoder-16b": {
+    "name": "starcoder-16b",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "text", "supported": ["code"] }
+  },
+  "accounts/fireworks/models/starcoder-7b": {
+    "name": "starcoder-7b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text", "supported": ["code"] }
+  },
+  "accounts/fireworks/models/traditional-chinese-qlora-llama2": {
+    "name": "traditional-chinese-qlora-llama2",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text" }
+  },
+  "accounts/fireworks/models/yi-34b-200k-capybara": {
+    "name": "yi-34b-200k-capybara",
+    "params": [{ "key": "max_tokens", "maxValue": 200000 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3p2-3b-instruct": {
+    "name": "llama-v3p2-3b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3p2-11b-vision-instruct": {
+    "name": "llama-v3p2-11b-vision-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/llama-v3p2-1b-instruct": {
+    "name": "llama-v3p2-1b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3p2-90b-vision-instruct": {
+    "name": "llama-v3p2-90b-vision-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/llama-v3p3-70b-instruct": {
+    "name": "llama-v3p3-70b-instruct",
+    "params": [{ "key": "max_tokens", "maxValue": 8192 }],
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/codegemma-2b": {
+    "name": "codegemma-2b",
+    "params": [{ "key": "max_tokens", "maxValue": 4096 }],
+    "type": { "primary": "text", "supported": ["code"] }
+  },
+  "accounts/fireworks/models/llama-v3p1-405b-instruct": {
+    "name": "llama-v3p1-405b-instruct",
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3p1-70b-instruct": {
+    "name": "llama-v3p1-70b-instruct",
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama-v3p1-8b-instruct": {
+    "name": "llama-v3p1-8b-instruct",
+    "type": { "primary": "chat" }
+  },
+  "accounts/fireworks/models/llama4-scout-instruct-basic": {
+    "name": "llama4-scout-instruct-basic",
+    "params": [{ "key": "max_tokens", "maxValue": 16384 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/llama4-maverick-instruct-basic": {
+    "name": "llama4-maverick-instruct-basic",
+    "params": [{ "key": "max_tokens", "maxValue": 16384 }],
+    "type": { "primary": "chat", "supported": ["image"] }
+  },
+  "accounts/fireworks/models/gpt-oss-120b": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "accounts/fireworks/models/gpt-oss-20b": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "accounts/fireworks/models/kimi-k2-instruct-0905": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "accounts/fireworks/models/kimi-k2-instruct": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "accounts/fireworks/models/kimi-k2-thinking": {
+    "params": [
+      { "key": "max_tokens", "maxValue": 32768 }
+    ],
+    "type": { "primary": "chat" },
+    "removeParams": ["stream"]
+  },
+  "WhereIsAI/UAE-Large-V1": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "nomic-ai/nomic-embed-text-v1": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "nomic-ai/nomic-embed-text-v1.5": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "thenlper/gte-base": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "thenlper/gte-large": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  }
+}

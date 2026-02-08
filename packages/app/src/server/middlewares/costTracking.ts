@@ -1,6 +1,10 @@
 import type { MiddlewareHandler } from 'hono';
 import { randomUUID } from 'node:crypto';
-import { logger } from '@llmops/core';
+import {
+  logger,
+  getDefaultPricingProvider,
+  calculateCost,
+} from '@llmops/core';
 import {
   wrapStreamingResponse,
   ensureStreamUsageEnabled,
@@ -10,115 +14,6 @@ import {
   type LLMRequestData,
   type GuardrailResults,
 } from '@server/services/batchWriter';
-
-/**
- * Model pricing information
- * All costs are in dollars per 1 million tokens
- */
-interface ModelPricing {
-  inputCostPer1M: number;
-  outputCostPer1M: number;
-}
-
-/**
- * Cost calculation result in micro-dollars
- */
-interface CostResult {
-  totalCost: number;
-  inputCost: number;
-  outputCost: number;
-}
-
-/**
- * Calculate cost in micro-dollars
- * 1 dollar = 1,000,000 micro-dollars
- */
-function calculateCost(
-  usage: { promptTokens: number; completionTokens: number },
-  pricing: ModelPricing
-): CostResult {
-  const inputCost = Math.round(usage.promptTokens * pricing.inputCostPer1M);
-  const outputCost = Math.round(
-    usage.completionTokens * pricing.outputCostPer1M
-  );
-  return {
-    inputCost,
-    outputCost,
-    totalCost: inputCost + outputCost,
-  };
-}
-
-/**
- * Simple pricing provider that fetches from models.dev
- */
-class PricingProvider {
-  private cache: Map<string, ModelPricing> = new Map();
-  private lastFetch = 0;
-  private cacheTTL = 5 * 60 * 1000; // 5 minutes
-  private fetchPromise: Promise<void> | null = null;
-
-  private getCacheKey(provider: string, model: string): string {
-    return `${provider.toLowerCase()}:${model.toLowerCase()}`;
-  }
-
-  private async fetchPricingData(): Promise<void> {
-    try {
-      const response = await fetch('https://models.dev/api.json');
-      if (!response.ok) return;
-
-      const data = await response.json();
-      this.cache.clear();
-
-      for (const [providerId, provider] of Object.entries(data)) {
-        const p = provider as {
-          models?: Record<
-            string,
-            { id: string; cost?: { input: number; output: number } }
-          >;
-        };
-        if (!p.models) continue;
-
-        for (const [, model] of Object.entries(p.models)) {
-          if (!model.cost) continue;
-
-          const cacheKey = this.getCacheKey(providerId, model.id);
-          this.cache.set(cacheKey, {
-            inputCostPer1M: model.cost.input ?? 0,
-            outputCostPer1M: model.cost.output ?? 0,
-          });
-        }
-      }
-
-      this.lastFetch = Date.now();
-    } catch {
-      // Keep existing cache on failure
-    }
-  }
-
-  private async ensureFreshCache(): Promise<void> {
-    if (Date.now() - this.lastFetch < this.cacheTTL && this.cache.size > 0) {
-      return;
-    }
-
-    if (!this.fetchPromise) {
-      this.fetchPromise = this.fetchPricingData().finally(() => {
-        this.fetchPromise = null;
-      });
-    }
-
-    await this.fetchPromise;
-  }
-
-  async getModelPricing(
-    provider: string,
-    model: string
-  ): Promise<ModelPricing | null> {
-    await this.ensureFreshCache();
-    return this.cache.get(this.getCacheKey(provider, model)) || null;
-  }
-}
-
-const pricingProvider = new PricingProvider();
 
 /**
  * OpenAI-compatible usage structure in response body
@@ -686,7 +581,8 @@ async function processUsageAndLog(params: {
 
   if (usage && usage.promptTokens + usage.completionTokens > 0) {
     try {
-      const pricing = await pricingProvider.getModelPricing(provider, model);
+      const corePricingProvider = getDefaultPricingProvider();
+      const pricing = await corePricingProvider.getModelPricing(provider, model);
 
       if (pricing) {
         const costResult = calculateCost(

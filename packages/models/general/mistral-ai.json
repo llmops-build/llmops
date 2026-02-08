@@ -1,0 +1,84 @@
+{
+  "name": "mistral-ai",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "max_tokens", "defaultValue": 256, "minValue": 1, "maxValue": 32768 },
+      { "key": "temperature", "defaultValue": 0.7, "minValue": 0, "maxValue": 2 },
+      { "key": "top_p", "defaultValue": 1, "minValue": 0, "maxValue": 1 },
+      {
+        "key": "seed",
+        "defaultValue": null,
+        "minValue": 0,
+        "maxValue": 1
+      },
+      { "key": "stop", "defaultValue": null, "type": "array-of-strings", "skipValues": [null, []] },
+      { "key": "safe_prompt", "defaultValue": true, "type": "boolean" },
+      { "key": "stream", "defaultValue": true, "type": "boolean" }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+
+  "mistral-tiny": {
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "mistral-small": {
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "mistral-medium": {
+    "params": [{ "key": "max_tokens", "maxValue": 32768 }],
+    "type": { "primary": "chat" }
+  },
+  "magistral-medium-latest": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "magistral-small-latest": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "mistral-embed": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "mistral-large-latest": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "mistral-medium-latest": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "mistral-small-latest": {
+    "type": {
+      "primary": "chat"
+    }
+  },
+  "open-mistral-7b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "open-mixtral-8x22b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "open-mixtral-8x7b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  }
+}

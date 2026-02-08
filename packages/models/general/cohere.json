@@ -1,0 +1,113 @@
+{
+  "name": "cohere",
+  "description": "",
+  "default": {
+    "params": [
+      { "key": "max_tokens", "defaultValue": 256, "minValue": 1, "maxValue": 4096 },
+      { "key": "temperature", "defaultValue": 0.7, "minValue": 0, "maxValue": 1 },
+      { "key": "stream", "defaultValue": true, "type": "boolean" }
+    ],
+    "messages": { "options": ["system", "user", "assistant"] },
+    "type": { "primary": "chat", "supported": [] }
+  },
+
+  "command": {
+    "type": { "primary": "chat" }
+  },
+  "command-light": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "command-light-nightly": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "command-nightly": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "command-r": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "command-r-plus": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "command-r7b": {
+    "type": {
+      "primary": "chat"
+    },
+    "disablePlayground": true
+  },
+  "embed-english-light-v2.0": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "embed-english-v2.0": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "embed-english-v3.0": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "embed-multilingual-v2.0": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "embed-multilingual-v3.0": {
+    "type": {
+      "primary": "embedding"
+    },
+    "disablePlayground": true
+  },
+  "rerank-english-v2.0": {
+    "type": {
+      "primary": "rerank"
+    },
+    "disablePlayground": true
+  },
+  "rerank-english-v3.0": {
+    "type": {
+      "primary": "rerank"
+    },
+    "disablePlayground": true
+  },
+  "rerank-multilingual-v2.0": {
+    "type": {
+      "primary": "rerank"
+    },
+    "disablePlayground": true
+  },
+  "rerank-multilingual-v3.0": {
+    "type": {
+      "primary": "rerank"
+    },
+    "disablePlayground": true
+  },
+  "rerank-v3.5": {
+    "type": {
+      "primary": "rerank"
+    },
+    "disablePlayground": true
+  }
+}

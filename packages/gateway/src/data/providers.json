@@ -3,13 +3,6 @@
   "version": "1.0.0",
   "data": [
     {
-      "id": "matterai",
-      "name": "MatterAI",
-      "object": "provider",
-      "description": "MatterAI provides access to advanced AI models including Axon series for various applications such as text generation, coding assistance, and more. Built for performance and scalability.",
-      "base_url": "https://api.matterai.so/v1"
-    },
-    {
       "id": "ai21",
       "name": "AI21",
       "object": "provider",
@@ -31,10 +24,10 @@
       "base_url": "https://api.endpoints.anyscale.com/v1"
     },
     {
-      "id": "bedrock",
-      "name": "AWS Bedrock",
+      "id": "azure-ai",
+      "name": "Azure",
       "object": "provider",
-      "description": "AWS Bedrock is a fully managed service that offers access to high-performing foundation models from leading AI companies. It allows users to customize these models with their own data while providing a secure environment for building generative AI applications. The platform streamlines experimentation and integration into existing workflows without requiring infrastructure management.",
+      "description": "",
       "base_url": ""
     },
     {
@@ -42,6 +35,13 @@
       "name": "Azure OpenAI",
       "object": "provider",
       "description": "Azure OpenAI Service integrates OpenAI's powerful models into Microsoft's cloud ecosystem, enabling businesses to leverage advanced AI capabilities securely. Users can access models like GPT-4 for various applications such as chatbots, content generation, and more. Azure's infrastructure ensures scalability and compliance with enterprise standards.",
+      "base_url": ""
+    },
+    {
+      "id": "bedrock",
+      "name": "AWS Bedrock",
+      "object": "provider",
+      "description": "AWS Bedrock is a fully managed service that offers access to high-performing foundation models from leading AI companies. It allows users to customize these models with their own data while providing a secure environment for building generative AI applications. The platform streamlines experimentation and integration into existing workflows without requiring infrastructure management.",
       "base_url": ""
     },
     {
@@ -59,25 +59,39 @@
       "base_url": "https://api.cohere.ai/v1"
     },
     {
+      "id": "dashscope",
+      "name": "DashScope",
+      "object": "provider",
+      "description": "Dashscope provides intelligent analytics solutions designed to help businesses visualize and interpret complex data effectively. Their platform integrates advanced machine learning algorithms to generate real-time insights from diverse datasets, enabling organizations to make informed decisions quickly. Dashscope focuses on enhancing data accessibility and usability, empowering teams to leverage analytics for strategic planning and operational efficiency.",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    {
       "id": "deepbricks",
-      "name": "Deepbricks",
+      "name": "DeepBricks",
       "object": "provider",
       "description": "Deepbricks offers a platform for building and deploying large language models tailored for specific business needs. They focus on providing customizable solutions that enhance productivity across various sectors. Deepbricks aims to simplify the integration of AI into existing workflows while ensuring high performance.",
       "base_url": "https://api.deepbricks.ai/v1"
     },
     {
       "id": "deepinfra",
-      "name": "Deepinfra",
+      "name": "DeepInfra",
       "object": "provider",
       "description": "Deepinfra specializes in optimizing the deployment of machine learning models at scale. Their platform provides tools for managing infrastructure requirements efficiently while ensuring low-latency access to AI capabilities. Deepinfra focuses on enhancing operational efficiency for businesses leveraging LLMs.",
       "base_url": "https://api.deepinfra.com/v1/openai"
     },
     {
       "id": "deepseek",
-      "name": "DeepSeek",
+      "name": "Deepseek",
       "object": "provider",
       "description": "DeepSeek develops advanced search technologies powered by large language models. Their solutions aim to improve information retrieval across various domains by enhancing search accuracy and relevance. DeepSeek focuses on integrating AI into existing search infrastructures to provide smarter results.",
       "base_url": "https://api.deepseek.com"
+    },
+    {
+      "id": "fireworks",
+      "name": "Fireworks",
+      "object": "provider",
+      "description": "",
+      "base_url": ""
     },
     {
       "id": "fireworks-ai",
@@ -87,25 +101,18 @@
       "base_url": "https://api.fireworks.ai/inference/v1"
     },
     {
+      "id": "github",
+      "name": "GitHub",
+      "object": "provider",
+      "description": "",
+      "base_url": ""
+    },
+    {
       "id": "google",
-      "name": "Google Gemini",
+      "name": "Google",
       "object": "provider",
       "description": "Google Gemini is part of Google's suite of AI tools designed for natural language understanding and generation. It focuses on providing robust solutions for developers looking to integrate conversational AI capabilities into their applications. Gemini emphasizes scalability and performance within Google's cloud ecosystem.",
       "base_url": "https://generativelanguage.googleapis.com/v1beta"
-    },
-    {
-      "id": "palm",
-      "name": "Google Palm",
-      "object": "provider",
-      "description": "Google's PaLM (Pathways Language Model) is designed for advanced natural language understanding tasks, supporting a wide range of applications from chatbots to content generation. PaLM utilizes cutting-edge architecture to improve efficiency and accuracy in processing language-based tasks.",
-      "base_url": "https://generativelanguage.googleapis.com/v1beta3"
-    },
-    {
-      "id": "vertex-ai",
-      "name": "Google Vertex AI",
-      "object": "provider",
-      "description": "Google Vertex AI offers a comprehensive suite of tools for building, deploying, and managing machine learning models at scale. It integrates seamlessly with other Google Cloud services, providing developers with robust resources for leveraging large language models in their applications.",
-      "base_url": ""
     },
     {
       "id": "groq",
@@ -115,39 +122,32 @@
       "base_url": "https://api.groq.com/openai/v1"
     },
     {
-      "id": "huggingface",
-      "name": "Hugging Face",
-      "object": "provider",
-      "description": "Hugging Face is a leading platform in the open-source machine learning community, known for its Transformers library that provides access to numerous pre-trained LLMs. The platform fosters collaboration among researchers and developers while offering tools for fine-tuning and deploying NLP models across various use cases.",
-      "base_url": ""
-    },
-    {
       "id": "inference-net",
-      "name": "Inference.net",
+      "name": "Inference Net",
       "object": "provider",
       "description": "Inference.net focuses on delivering scalable inference solutions tailored for large language models. Their platform aims to optimize the deployment of ML models in production environments, ensuring low latency and high throughput for real-time applications.",
       "base_url": "https://api.inference.net/v1"
     },
     {
       "id": "jina",
-      "name": "Jina AI",
+      "name": "Jina",
       "object": "provider",
       "description": "Jina AI specializes in neural search technologies powered by large language models. Their framework allows developers to build search engines that understand natural language queries effectively, enhancing information retrieval across diverse datasets.",
       "base_url": "https://api.jina.ai/v1"
     },
     {
-      "id": "lingyi",
-      "name": "Lingyi (01.ai)",
+      "id": "lambda",
+      "name": "Lambda",
       "object": "provider",
-      "description": "Lingyi (01.ai) develops cutting-edge natural language processing technologies aimed at improving human-computer interaction through conversational interfaces. They focus on creating user-friendly tools that enable businesses to integrate advanced NLP capabilities seamlessly.",
-      "base_url": "https://api.lingyiwanwu.com"
+      "description": "Lambda Labs specializes in AI infrastructure and tools, providing powerful solutions for machine learning and deep learning applications. They offer a range of products, including GPUs optimized for AI workloads, and a comprehensive suite of software tools that streamline the development and deployment of AI models. Their focus is on delivering high-performance computing resources to researchers and enterprises looking to harness the power of artificial intelligence effectively.",
+      "base_url": "https://api.lambdalabs.com/v1"
     },
     {
-      "id": "localai",
-      "name": "LocalAI",
+      "id": "lemonfox-ai",
+      "name": "Lemonfox AI",
       "object": "provider",
-      "description": "LocalAI provides solutions that enable organizations to run large language models locally rather than relying on cloud services. This approach enhances data privacy and control while allowing users to customize their LLM deployments according to specific needs.",
-      "base_url": ""
+      "description": "Lemonfox AI is a cost-effective platform that provides advanced capabilities in text generation, chat support, and image creation. It offers an OpenAI-compatible API, making it easy for developers to integrate its features into applications. With support for over 50 languages and tools like the Stable Diffusion XL model for image generation, Lemonfox aims to deliver high-quality results at a fraction of the cost of competitors, making it an attractive option for businesses looking to leverage AI technology.",
+      "base_url": "https://api.lemonfox.ai/v1"
     },
     {
       "id": "mistral-ai",
@@ -158,7 +158,7 @@
     },
     {
       "id": "monsterapi",
-      "name": "Monster API",
+      "name": "MonsterAPI",
       "object": "provider",
       "description": "Monster API offers an accessible interface for integrating various large language models into applications, focusing on ease of use and flexibility. The platform enables developers to leverage powerful NLP capabilities without extensive technical knowledge or infrastructure overhead.",
       "base_url": "https://llm.monsterapi.ai/v1"
@@ -169,6 +169,13 @@
       "object": "provider",
       "description": "Moonshot develops innovative solutions leveraging large language models aimed at enhancing creativity in content generation processes. Their tools are designed to assist creators by providing intelligent suggestions and automating repetitive tasks within creative workflows.",
       "base_url": "https://api.moonshot.cn"
+    },
+    {
+      "id": "nebius",
+      "name": "Nebius",
+      "object": "provider",
+      "description": "",
+      "base_url": ""
     },
     {
       "id": "nomic",
@@ -185,25 +192,18 @@
       "base_url": "https://api.novita.ai/v3/openai"
     },
     {
-      "id": "ollama",
-      "name": "Ollama",
+      "id": "open-ai",
+      "name": "Open Ai",
       "object": "provider",
-      "description": "Ollama offers a streamlined platform for deploying large language models with an emphasis on user-friendly interfaces and accessibility. They aim to simplify the integration of NLP capabilities into existing systems while providing robust support for developers.",
+      "description": "",
       "base_url": ""
     },
     {
       "id": "openai",
-      "name": "OpenAI",
+      "name": "Open Ai",
       "object": "provider",
       "description": "OpenAI is renowned for its development of advanced artificial intelligence technologies, including the GPT series of large language models. They focus on ensuring safe deployment practices while advancing the state-of-the-art in natural language understanding and generation across various domains.",
       "base_url": "https://api.openai.com/v1"
-    },
-    {
-      "id": "cometapi",
-      "name": "CometAPI",
-      "object": "provider",
-      "description": "CometAPI offers an OpenAI-compatible API that unifies access to 500+ foundation models across chat, reasoning, and multimodal workloads. It emphasizes straightforward migrations from OpenAI SDKs, competitive pricing, and additional tooling for multimodal generation spanning images, audio, and video.",
-      "base_url": "https://api.cometapi.com/v1"
     },
     {
       "id": "openrouter",
@@ -213,11 +213,18 @@
       "base_url": "https://openrouter.ai/api"
     },
     {
-      "id": "ovhcloud",
-      "name": "OVHcloud AI Endpoints",
+      "id": "oracle",
+      "name": "Oracle",
       "object": "provider",
-      "description": "OVHcloud AI Endpoints offers powerful, secure, and easy-to-integrate generative AI APIs to enhance your applications, in the Europe leader cloud infrastructure. Your data is neither reused nor kept.",
-      "base_url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
+      "description": "",
+      "base_url": ""
+    },
+    {
+      "id": "palm",
+      "name": "PaLM",
+      "object": "provider",
+      "description": "Google's PaLM (Pathways Language Model) is designed for advanced natural language understanding tasks, supporting a wide range of applications from chatbots to content generation. PaLM utilizes cutting-edge architecture to improve efficiency and accuracy in processing language-based tasks.",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta3"
     },
     {
       "id": "perplexity-ai",
@@ -234,32 +241,11 @@
       "base_url": "https://serving.app.predibase.com"
     },
     {
-      "id": "reka",
+      "id": "reka-ai",
       "name": "Reka AI",
       "object": "provider",
-      "description": "Reka AI develops specialized LLMs aimed at enhancing educational technologies through personalized learning experiences. Their focus lies in creating adaptive systems that respond intelligently to individual learner needs using natural language processing techniques.",
-      "base_url": "https://api.reka.ai"
-    },
-    {
-      "id": "sambanova",
-      "name": "SambaNova",
-      "object": "provider",
-      "description": "SambaNova Systems provides hardware-software integrated solutions optimized specifically for running large-scale machine learning workloads efficiently. Their technology aims at accelerating model training times while ensuring high performance during inference phases across diverse applications.",
-      "base_url": "https://api.sambanova.ai"
-    },
-    {
-      "id": "segmind",
-      "name": "Segmind",
-      "object": "provider",
-      "description": "Segmind focuses on simplifying the deployment of machine learning pipelines tailored towards specific business needs involving large language models. Their platform enables organizations to manage model lifecycles effectively while ensuring optimal performance metrics are achieved consistently.",
-      "base_url": "https://api.segmind.com/v1"
-    },
-    {
-      "id": "siliconflow",
-      "name": "SiliconFlow",
-      "object": "provider",
-      "description": "SiliconFlow develops infrastructure solutions designed specifically for optimizing the deployment of artificial intelligence workloads including LLMs at scale within enterprise environments focusing on reliability & performance enhancements throughout all stages from training through inference execution phases effectively minimizing downtime risks associated typically seen during transitions between these stages involved here too!",
-      "base_url": "https://api.siliconflow.cn/v1"
+      "description": "",
+      "base_url": ""
     },
     {
       "id": "stability-ai",
@@ -276,53 +262,25 @@
       "base_url": "https://api.together.xyz"
     },
     {
-      "id": "voyage",
-      "name": "Voyage AI",
+      "id": "vertex-ai",
+      "name": "Vertex AI",
       "object": "provider",
-      "description": "Voyage AI focuses on developing autonomous navigation systems powered by advanced artificial intelligence techniques including those found within recent iterations seen across various types involving deep reinforcement learning methodologies applied here too!",
-      "base_url": "https://api.voyageai.com/v1"
+      "description": "Google Vertex AI offers a comprehensive suite of tools for building, deploying, and managing machine learning models at scale. It integrates seamlessly with other Google Cloud services, providing developers with robust resources for leveraging large language models in their applications.",
+      "base_url": ""
     },
     {
-      "id": "workers-ai",
-      "name": "Workers AI",
+      "id": "x-ai",
+      "name": "xAI",
       "object": "provider",
-      "description": "Workers AI by Cloudflare is a platform that leverages Cloudflare's global network to provide developers and businesses with serverless AI infrastructure. It enables scalable, low-latency AI processing directly at the edge, allowing users to deploy machine learning models closer to their data and applications. With easy integration and powerful tools, Workers AI helps optimize workflows, enhance performance, and reduce operational complexity by harnessing the power of AI at a global scale.",
+      "description": "",
       "base_url": ""
     },
     {
       "id": "zhipu",
-      "name": "ZhipuAI",
+      "name": "Zhipu",
       "object": "provider",
       "description": "ZhipuAI specializes in creating conversational agents powered by advanced natural language processing techniques aimed at enhancing customer engagement experiences across diverse industries focusing primarily upon delivering personalized interactions tailored towards individual preferences expressed during engagements encountered here too!",
       "base_url": "https://open.bigmodel.cn/api/paas/v4"
-    },
-    {
-      "id": "lambda",
-      "name": "Lambda Labs",
-      "object": "provider",
-      "description": "Lambda Labs specializes in AI infrastructure and tools, providing powerful solutions for machine learning and deep learning applications. They offer a range of products, including GPUs optimized for AI workloads, and a comprehensive suite of software tools that streamline the development and deployment of AI models. Their focus is on delivering high-performance computing resources to researchers and enterprises looking to harness the power of artificial intelligence effectively.",
-      "base_url": "https://api.lambdalabs.com/v1"
-    },
-    {
-      "id": "lemonfox-ai",
-      "name": "Lemonfox AI",
-      "object": "provider",
-      "description": "Lemonfox AI is a cost-effective platform that provides advanced capabilities in text generation, chat support, and image creation. It offers an OpenAI-compatible API, making it easy for developers to integrate its features into applications. With support for over 50 languages and tools like the Stable Diffusion XL model for image generation, Lemonfox aims to deliver high-quality results at a fraction of the cost of competitors, making it an attractive option for businesses looking to leverage AI technology.",
-      "base_url": "https://api.lemonfox.ai/v1"
-    },
-    {
-      "id": "upstage",
-      "name": "Upstage",
-      "object": "provider",
-      "description": "Upstage is a South Korean AI company focused on developing innovative large language models (LLMs) and document processing solutions. Their flagship product, Solar LLM, utilizes advanced techniques to deliver high-performance AI capabilities across multiple languages. Upstage emphasizes automation and data-driven insights to enhance business operations, partnering with AWS to expand their generative AI solutions globally and cater to various industry needs.",
-      "base_url": "https://api.upstage.ai/v1/solar"
-    },
-    {
-      "id": "dashscope",
-      "name": "Dashscope",
-      "object": "provider",
-      "description": "Dashscope provides intelligent analytics solutions designed to help businesses visualize and interpret complex data effectively. Their platform integrates advanced machine learning algorithms to generate real-time insights from diverse datasets, enabling organizations to make informed decisions quickly. Dashscope focuses on enhancing data accessibility and usability, empowering teams to leverage analytics for strategic planning and operational efficiency.",
-      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
     }
   ]
 }

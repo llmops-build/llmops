@@ -45,6 +45,6 @@ export {
 
 // Providers
 export {
-  ModelsDevPricingProvider,
+  LocalPricingProvider,
   getDefaultPricingProvider,
 } from './provider';
