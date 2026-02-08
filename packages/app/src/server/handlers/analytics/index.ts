@@ -71,7 +71,14 @@ interface DbWithAnalytics {
     variantId?: string;
     environmentId?: string;
     tags?: Record<string, string[]>;
-    groupBy?: 'day' | 'hour' | 'model' | 'provider' | 'config';
+    groupBy?:
+      | 'day'
+      | 'hour'
+      | 'model'
+      | 'provider'
+      | 'config'
+      | 'endpoint'
+      | 'tags';
   }) => Promise<unknown[]>;
   getRequestStats: (params: {
     startDate: Date;
@@ -416,7 +423,15 @@ const app = new Hono()
       'query',
       dateRangeWithFiltersSchema.extend({
         groupBy: z
-          .enum(['day', 'hour', 'model', 'provider', 'config'])
+          .enum([
+            'day',
+            'hour',
+            'model',
+            'provider',
+            'config',
+            'endpoint',
+            'tags',
+          ])
           .optional(),
       })
     ),

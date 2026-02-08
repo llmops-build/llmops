@@ -627,3 +627,34 @@ export const costBreakdownDotInput = style({
 export const costBreakdownDotOutput = style({
   backgroundColor: '#f59e0b',
 });
+
+export const costBreakdownHeader = style({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+});
+
+export const costBreakdownSelect = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    padding: 'xs',
+    borderRadius: 'xs',
+  }),
+  {
+    backgroundColor: colors.gray2,
+    border: `1px solid ${colors.gray6}`,
+    color: colors.gray11,
+    cursor: 'pointer',
+    height: '28px',
+    outline: 'none',
+    transition: 'all 0.15s ease',
+    ':hover': {
+      backgroundColor: colors.gray3,
+      borderColor: colors.gray7,
+    },
+    ':focus': {
+      borderColor: colors.accent9,
+    },
+  },
+]);

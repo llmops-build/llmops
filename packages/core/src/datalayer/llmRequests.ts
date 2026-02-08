@@ -93,7 +93,9 @@ const costSummarySchema = z.object({
   variantId: z.string().uuid().optional(),
   environmentId: z.string().uuid().optional(),
   tags: z.record(z.string(), z.array(z.string())).optional(), // { key: [value1, value2] }
-  groupBy: z.enum(['day', 'hour', 'model', 'provider', 'config']).optional(),
+  groupBy: z
+    .enum(['day', 'hour', 'model', 'provider', 'config', 'endpoint', 'tags'])
+    .optional(),
 });
 
 /**
@@ -646,6 +648,66 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
             .groupBy('configId')
             .orderBy(sql`SUM(${col('cost')})`, 'desc')
             .execute();
+
+        case 'endpoint':
+          return baseQuery
+            .select([
+              sql<string>`COALESCE(${col('endpoint')}, 'unknown')`.as(
+                'groupKey'
+              ),
+              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
+              sql<number>`COUNT(*)`.as('requestCount'),
+            ])
+            .groupBy('endpoint')
+            .orderBy(sql`SUM(${col('cost')})`, 'desc')
+            .execute();
+
+        case 'tags': {
+          // Unnest JSONB tags to group by individual tag key:value pairs
+          // Uses raw SQL with jsonb_each_text for lateral expansion
+          const conditions = [
+            sql`${col('createdAt')} >= ${startDate.toISOString()}`,
+            sql`${col('createdAt')} <= ${endDate.toISOString()}`,
+          ];
+          if (configId)
+            conditions.push(sql`${col('configId')} = ${configId}`);
+          if (variantId)
+            conditions.push(sql`${col('variantId')} = ${variantId}`);
+          if (environmentId)
+            conditions.push(
+              sql`${col('environmentId')} = ${environmentId}`
+            );
+          if (tags && Object.keys(tags).length > 0) {
+            for (const [key, values] of Object.entries(tags)) {
+              if (values.length === 0) continue;
+              if (values.length === 1) {
+                conditions.push(
+                  sql`${col('tags')}->>${key} = ${values[0]}`
+                );
+              } else {
+                const valueList = sql.join(values.map((v) => sql`${v}`));
+                conditions.push(
+                  sql`${col('tags')}->>${key} IN (${valueList})`
+                );
+              }
+            }
+          }
+          const whereClause = sql.join(conditions, sql` AND `);
+          const result = await sql<{
+            groupKey: string;
+            totalCost: number;
+            requestCount: number;
+          }>`
+            SELECT t.key || ':' || t.value as "groupKey",
+                   COALESCE(SUM(${col('cost')}), 0) as "totalCost",
+                   COUNT(*) as "requestCount"
+            FROM "llm_requests", jsonb_each_text(${col('tags')}) t
+            WHERE ${whereClause}
+            GROUP BY t.key, t.value
+            ORDER BY SUM(${col('cost')}) DESC
+          `.execute(db);
+          return result.rows;
+        }
 
         default:
           // No grouping - return totals

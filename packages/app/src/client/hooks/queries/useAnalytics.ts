@@ -160,7 +160,14 @@ export const useDailyCosts = (dateRange: DateRange, enabled = true) => {
  */
 export const useCostSummary = (
   params: DateRangeWithFilters & {
-    groupBy?: 'day' | 'hour' | 'model' | 'provider' | 'config';
+    groupBy?:
+      | 'day'
+      | 'hour'
+      | 'model'
+      | 'provider'
+      | 'config'
+      | 'endpoint'
+      | 'tags';
   },
   enabled = true
 ) => {
