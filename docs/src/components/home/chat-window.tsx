@@ -28,7 +28,7 @@ const ChatWindow = () => {
   }, [displayedChars]);
 
   return (
-    <WindowChrome title="Claude 3.5 Sonnet">
+    <WindowChrome>
       <div className="p-4 flex flex-col gap-3">
         <div className="flex justify-end">
           <div className="bg-accent-3 text-gray-12 text-sm rounded-lg px-3 py-2 max-w-[80%]">

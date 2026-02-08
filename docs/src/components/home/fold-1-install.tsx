@@ -68,8 +68,8 @@ const FoldInstall = () => {
       title="Start small!"
       description="One package. That's all you require to get started."
     >
-      <div className="h-[500vh] relative">
-        <div className="h-[300vh] w-full absolute top-0 z-0">
+      <div className="h-[250vh] relative">
+        <div className="h-[250vh] w-full absolute top-0 z-0">
           <div className="sticky top-96 width-36 h-screen">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
               <IDEWindow tabs={[{ name: 'client.ts', content: clientCode }]} />
@@ -87,7 +87,7 @@ const FoldInstall = () => {
             />
           </div>
         </div>
-        <div className="h-36 absolute top-0 z-30 w-full max-w-sm">
+        <div className="h-36 absolute top-0 left-1/2 -translate-x-1/2 z-30 w-full max-w-sm">
           <div className="sticky top-0 w-full flex flex-col justify-start items-center">
             <div className="w-full max-w-sm mt-12">
               <TerminalWindow command="npm i @llmops/sdk" />
