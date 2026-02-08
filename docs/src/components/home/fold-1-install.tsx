@@ -69,15 +69,15 @@ const FoldInstall = () => {
       description="One package. That's all you require to get started."
     >
       <div className="h-[250vh] relative">
-        <div className="h-[250vh] w-full absolute top-0 z-0">
-          <div className="sticky top-96 width-36 h-screen">
+        <div className="h-[calc(250vh-var(--spacing)*80)] w-full absolute top-80 z-0 max-w-3xl md:right-1/3 md:translate-x-1/3">
+          <div className="sticky top-96 width-36 h-[calc(100vh-var(--spacing)*96)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
               <IDEWindow tabs={[{ name: 'client.ts', content: clientCode }]} />
               <ChatWindow />
             </div>
           </div>
         </div>
-        <div className="w-full max-w-lg absolute top-0 z-20 h-screen">
+        <div className="w-full max-w-lg absolute top-48 z-20 h-[calc(100vh-var(--spacing)*48)] md:left-1/3 md:-translate-x-1/2">
           <div className="sticky top-64">
             <IDEWindow
               tabs={[

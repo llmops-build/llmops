@@ -43,7 +43,7 @@ const TerminalWindow = ({ command }: TerminalWindowProps) => {
           {copied ? 'Copied!' : 'Click to copy'}
         </div>
       )}
-      <div className="rounded-lg border border-gray-10 bg-gray-12 overflow-hidden">
+      <div className="rounded-lg border border-gray-10 bg-gray-12 overflow-hidden shadow-md">
         <div className="p-4 font-mono text-sm text-gray-1">
           <span className="select-none text-gray-5">$ </span>
           <span>{command.slice(0, displayedChars)}</span>

@@ -7,7 +7,7 @@ interface WindowChromeProps {
 
 const WindowChrome = ({ tabs, children }: WindowChromeProps) => {
   return (
-    <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden">
+    <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden shadow-md">
       {tabs && (
         <div className="flex items-center gap-0.5 px-4 py-2 border-b border-gray-4 bg-gray-1">
           {tabs.map((tab) => (
