@@ -112,6 +112,15 @@
   --color-background: #fff;
 
   --shadow-glow: 0 0px 35px var(--color-gray-a8);
+  --animate-blink: blink 1s steps(2) infinite;
+  @keyframes blink {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
   @keyframes fade-out-scale {
     0% {
       opacity: 1;
