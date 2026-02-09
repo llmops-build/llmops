@@ -34,7 +34,7 @@ export const createLLMOps = (config: LLMOpsConfig): LLMOpsClient => {
     handler,
     config: Object.freeze(config),
     provider: () => ({
-      baseURL: `http://localhost${basePath}/api/genai`,
+      baseURL: `http://localhost${basePath}/api/genai/v1`,
       apiKey: 'llmops',
       fetch: internalFetch,
     }),
