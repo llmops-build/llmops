@@ -33,11 +33,12 @@ const llmopsConfigBaseSchema = z.object({
   database: z.any().optional(),
   basePath: z
     .string()
-    .min(1, 'Base path is required and cannot be empty')
+    .min(1, 'Base path cannot be empty')
     .refine(
       (path) => path.startsWith('/'),
       'Base path must start with a forward slash'
-    ),
+    )
+    .default('/llmops'),
   /**
    * Database schema name for PostgreSQL connections.
    * This sets the search_path on every connection.
@@ -98,13 +99,15 @@ export type ValidatedLLMOpsConfig = {
  */
 export type LLMOpsConfigInput = {
   database?: unknown;
-  basePath: string;
+  basePath?: string;
   schema?: string;
   providers?: InlineProvidersConfig;
 };
 
-export function validateLLMOpsConfig(config: unknown): ValidatedLLMOpsConfig {
-  const result = llmopsConfigSchema.safeParse(config);
+export function validateLLMOpsConfig(
+  config?: unknown
+): ValidatedLLMOpsConfig {
+  const result = llmopsConfigSchema.safeParse(config ?? {});
 
   if (!result.success) {
     const errorMessages = result.error.issues

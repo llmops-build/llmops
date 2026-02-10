@@ -1,4 +1,4 @@
-import { type LLMOpsConfig } from '@llmops/core';
+import { type LLMOpsConfig, type ValidatedLLMOpsConfig } from '@llmops/core';
 import { createApp } from '@llmops/app';
 
 type ProviderConfig = {
@@ -9,14 +9,14 @@ type ProviderConfig = {
 
 export type LLMOpsClient = {
   handler: (request: Request) => Promise<Response>;
-  config: LLMOpsConfig;
+  config: ValidatedLLMOpsConfig;
   provider: () => ProviderConfig;
 };
 
-export const createLLMOps = (config: LLMOpsConfig): LLMOpsClient => {
-  const { app } = createApp(config);
+export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
+  const { app, config: validatedConfig } = createApp(config);
   const handler = async (req: Request) => app.fetch(req, undefined, undefined);
-  const basePath = config.basePath;
+  const basePath = validatedConfig.basePath;
 
   const internalFetch: typeof globalThis.fetch = (input, init) => {
     const request = new Request(input, init);
@@ -32,7 +32,7 @@ export const createLLMOps = (config: LLMOpsConfig): LLMOpsClient => {
 
   return {
     handler,
-    config: Object.freeze(config),
+    config: Object.freeze(validatedConfig),
     provider: () => ({
       baseURL: `http://localhost${basePath}/api/genai/v1`,
       apiKey: 'llmops',

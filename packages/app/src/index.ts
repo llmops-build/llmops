@@ -77,7 +77,7 @@ const createDatabaseMiddleware = (
   };
 };
 
-export const createApp = (config: LLMOpsConfig) => {
+export const createApp = (config?: LLMOpsConfig) => {
   // Validate the config immediately, this will throw and panic if invalid
   const validatedConfig = validateLLMOpsConfig(config);
 
@@ -105,6 +105,7 @@ export const createApp = (config: LLMOpsConfig) => {
 
   return {
     app,
+    config: validatedConfig,
   };
 };
 
