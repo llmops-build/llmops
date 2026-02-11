@@ -48,7 +48,14 @@ export const Route = createFileRoute(
   },
 });
 
-type BreakdownBy = 'input-output' | 'model' | 'endpoint' | 'tags';
+const BREAKDOWN_OPTIONS = [
+  { value: 'input-output', label: 'Input / Output' },
+  { value: 'model', label: 'Model' },
+  { value: 'endpoint', label: 'Endpoint' },
+  { value: 'tags', label: 'Tags' },
+] as const;
+
+type BreakdownBy = (typeof BREAKDOWN_OPTIONS)[number]['value'];
 
 const SEGMENT_COLORS = [
   '#10b981',
@@ -220,14 +227,7 @@ function RouteComponent() {
                 sideOffset={4}
               >
                 <Select.Popup className={costBreakdownSelectPopup}>
-                  {(
-                    [
-                      { value: 'input-output', label: 'Input / Output' },
-                      { value: 'model', label: 'Model' },
-                      { value: 'endpoint', label: 'Endpoint' },
-                      { value: 'tags', label: 'Tags' },
-                    ] as const
-                  ).map((option) => (
+                  {BREAKDOWN_OPTIONS.map((option) => (
                     <Select.Item
                       key={option.value}
                       value={option.value}

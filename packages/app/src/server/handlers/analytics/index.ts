@@ -2,6 +2,7 @@ import { zv } from '@server/lib/zv';
 import { internalServerError, successResponse } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
+import { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from '@llmops/core';
 
 /**
  * Convert micro-dollars to formatted dollar string
@@ -71,14 +72,7 @@ interface DbWithAnalytics {
     variantId?: string;
     environmentId?: string;
     tags?: Record<string, string[]>;
-    groupBy?:
-      | 'day'
-      | 'hour'
-      | 'model'
-      | 'provider'
-      | 'config'
-      | 'endpoint'
-      | 'tags';
+    groupBy?: CostSummaryGroupBy;
   }) => Promise<unknown[]>;
   getRequestStats: (params: {
     startDate: Date;
@@ -422,17 +416,7 @@ const app = new Hono()
     zv(
       'query',
       dateRangeWithFiltersSchema.extend({
-        groupBy: z
-          .enum([
-            'day',
-            'hour',
-            'model',
-            'provider',
-            'config',
-            'endpoint',
-            'tags',
-          ])
-          .optional(),
+        groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
       })
     ),
     async (c) => {

@@ -84,6 +84,21 @@ const dateRangeSchema = z.object({
 });
 
 /**
+ * Valid groupBy values for cost summary queries
+ */
+export const COST_SUMMARY_GROUP_BY = [
+  'day',
+  'hour',
+  'model',
+  'provider',
+  'config',
+  'endpoint',
+  'tags',
+] as const;
+
+export type CostSummaryGroupBy = (typeof COST_SUMMARY_GROUP_BY)[number];
+
+/**
  * Schema for cost summary with grouping
  */
 const costSummarySchema = z.object({
@@ -93,9 +108,7 @@ const costSummarySchema = z.object({
   variantId: z.string().uuid().optional(),
   environmentId: z.string().uuid().optional(),
   tags: z.record(z.string(), z.array(z.string())).optional(), // { key: [value1, value2] }
-  groupBy: z
-    .enum(['day', 'hour', 'model', 'provider', 'config', 'endpoint', 'tags'])
-    .optional(),
+  groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
 });
 
 /**
