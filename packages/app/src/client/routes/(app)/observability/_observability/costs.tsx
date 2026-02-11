@@ -1,6 +1,7 @@
 import { Icon } from '@client/components/icons';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
-import { DollarSign, Loader2 } from 'lucide-react';
+import { Select } from '@base-ui/react/select';
+import { Check, ChevronDown, DollarSign, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   useTotalCost,
@@ -28,6 +29,11 @@ import {
   costBreakdownDotOutput,
   costBreakdownHeader,
   costBreakdownSelect,
+  costBreakdownSelectIcon,
+  costBreakdownSelectPositioner,
+  costBreakdownSelectPopup,
+  costBreakdownSelectOption,
+  costBreakdownSelectItemIndicator,
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
@@ -198,16 +204,47 @@ function RouteComponent() {
       <div className={costBreakdownContainer}>
         <div className={costBreakdownHeader}>
           <span className={costBreakdownLabel}>Cost Distribution</span>
-          <select
-            className={costBreakdownSelect}
+          <Select.Root
             value={breakdownBy}
-            onChange={(e) => setBreakdownBy(e.target.value as BreakdownBy)}
+            onValueChange={(value) => setBreakdownBy(value as BreakdownBy)}
           >
-            <option value="input-output">Input / Output</option>
-            <option value="model">Model</option>
-            <option value="endpoint">Endpoint</option>
-            <option value="tags">Tags</option>
-          </select>
+            <Select.Trigger className={costBreakdownSelect}>
+              <Select.Value />
+              <Select.Icon className={costBreakdownSelectIcon}>
+                <ChevronDown size={12} />
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Positioner
+                className={costBreakdownSelectPositioner}
+                sideOffset={4}
+              >
+                <Select.Popup className={costBreakdownSelectPopup}>
+                  {(
+                    [
+                      { value: 'input-output', label: 'Input / Output' },
+                      { value: 'model', label: 'Model' },
+                      { value: 'endpoint', label: 'Endpoint' },
+                      { value: 'tags', label: 'Tags' },
+                    ] as const
+                  ).map((option) => (
+                    <Select.Item
+                      key={option.value}
+                      value={option.value}
+                      className={costBreakdownSelectOption}
+                    >
+                      <Select.ItemIndicator
+                        className={costBreakdownSelectItemIndicator}
+                      >
+                        <Check size={14} />
+                      </Select.ItemIndicator>
+                      <Select.ItemText>{option.label}</Select.ItemText>
+                    </Select.Item>
+                  ))}
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          </Select.Root>
         </div>
 
         {breakdownBy === 'input-output' ? (

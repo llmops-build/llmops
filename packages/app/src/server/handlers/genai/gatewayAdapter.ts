@@ -450,7 +450,8 @@ function buildPortkeyConfig(
     portkeyConfig.azure_entra_client_id = credentials.azureEntraClientId;
   }
   if (credentials.azureEntraClientSecret) {
-    portkeyConfig.azure_entra_client_secret = credentials.azureEntraClientSecret;
+    portkeyConfig.azure_entra_client_secret =
+      credentials.azureEntraClientSecret;
   }
   if (credentials.azureEntraTenantId) {
     portkeyConfig.azure_entra_tenant_id = credentials.azureEntraTenantId;
@@ -507,7 +508,8 @@ async function handleDirectProviderRequest(
     return c.json(
       {
         error: {
-          message: `Provider config not found for slug: ${providerSlug}. ` +
+          message:
+            `Provider config not found for slug: ${providerSlug}. ` +
             `Configure it inline in your llmops config or add it to the database.`,
           type: 'invalid_request_error',
         },
@@ -555,9 +557,8 @@ async function handleDirectProviderRequest(
       portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
         guardrails.beforeRequestHook
       );
-      portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
-        guardrails.afterRequestHook
-      );
+      portkeyConfig.default_output_guardrails =
+        convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
     } catch (error) {
       logger.warn(`Failed to get guardrails from manifest: ${error}`);
       // Set empty arrays as fallback - gateway expects arrays, not undefined
@@ -622,6 +623,16 @@ async function handleDirectProviderRequest(
   // Store resolved data in context
   c.set('variantModel', modelName);
   c.set('providerId', providerId);
+
+  // Debug log the gateway request
+  const debugHeaders: Record<string, string> = {};
+  newHeaders.forEach((value, key) => {
+    debugHeaders[key] = key === 'x-llmops-config' ? '[REDACTED]' : value;
+  });
+  logger.debug(
+    { headers: debugHeaders, body: updatedBody },
+    'Gateway request [direct]'
+  );
 
   await next();
 }
@@ -852,9 +863,8 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
         guardrails.beforeRequestHook
       );
-      portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
-        guardrails.afterRequestHook
-      );
+      portkeyConfig.default_output_guardrails =
+        convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
       if (guardrails.beforeRequestHook.length > 0) {
         logger.info(
           `Added input guardrails: ${JSON.stringify(portkeyConfig.default_input_guardrails)}`
@@ -931,6 +941,16 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         // Clear Hono's internal body cache
         (c.req as unknown as { bodyCache: Record<string, unknown> }).bodyCache =
           {};
+
+        // Debug log the gateway request
+        const debugHeaders: Record<string, string> = {};
+        newHeaders.forEach((value, key) => {
+          debugHeaders[key] = key === 'x-llmops-config' ? '[REDACTED]' : value;
+        });
+        logger.debug(
+          { headers: debugHeaders, body: mergedBody },
+          'Gateway request [config]'
+        );
       } else {
         // For non-chat requests, set the gateway config header
         c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
@@ -947,6 +967,16 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
             JSON.stringify(portkeyConfig.default_output_guardrails)
           );
         }
+
+        // Debug log the gateway request (non-chat)
+        const nonChatHeaders: Record<string, string> = {};
+        c.req.raw.headers.forEach((value, key) => {
+          nonChatHeaders[key] = key === 'x-llmops-config' ? '[REDACTED]' : value;
+        });
+        logger.debug(
+          { headers: nonChatHeaders },
+          'Gateway request [config/non-chat]'
+        );
       }
 
       // Store resolved data in context

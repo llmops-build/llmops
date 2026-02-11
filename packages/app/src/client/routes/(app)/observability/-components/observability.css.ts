@@ -1,6 +1,11 @@
-import { style } from '@vanilla-extract/css';
+import { style, keyframes } from '@vanilla-extract/css';
 import { calc } from '@vanilla-extract/css-utils';
 import { colors, spacing, sprinkles } from '@ui';
+
+const selectFadeIn = keyframes({
+  from: { opacity: 0, transform: 'translateY(-4px)' },
+  to: { opacity: 1, transform: 'translateY(0)' },
+});
 
 export const overviewGrid = style({
   display: 'grid',
@@ -638,10 +643,13 @@ export const costBreakdownSelect = style([
   sprinkles({
     fontSize: 'xs',
     fontFamily: 'mono',
-    padding: 'xs',
     borderRadius: 'xs',
   }),
   {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: `0 ${spacing.sm}`,
     backgroundColor: colors.gray2,
     border: `1px solid ${colors.gray6}`,
     color: colors.gray11,
@@ -658,3 +666,65 @@ export const costBreakdownSelect = style([
     },
   },
 ]);
+
+export const costBreakdownSelectIcon = style({
+  display: 'inline-flex',
+  opacity: 0.7,
+});
+
+export const costBreakdownSelectPositioner = style({
+  zIndex: 1000,
+});
+
+export const costBreakdownSelectPopup = style({
+  minWidth: '160px',
+  maxHeight: '300px',
+  overflowY: 'auto',
+  backgroundColor: colors.gray1,
+  border: `1px solid ${colors.gray4}`,
+  borderRadius: spacing.xs,
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+  animation: `${selectFadeIn} 150ms ease-out`,
+  outline: 'none',
+  padding: `${spacing.xs} 0`,
+});
+
+export const costBreakdownSelectOption = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    color: 'gray11',
+  }),
+  {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    paddingLeft: spacing.xl,
+    paddingRight: spacing.sm,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'background-color 0.1s ease',
+    ':hover': {
+      backgroundColor: colors.gray3,
+    },
+    selectors: {
+      '&[data-highlighted]': {
+        backgroundColor: colors.gray3,
+      },
+      '&[data-selected]': {
+        backgroundColor: colors.accent3,
+        color: colors.accent11,
+      },
+    },
+  },
+]);
+
+export const costBreakdownSelectItemIndicator = style({
+  position: 'absolute',
+  left: spacing.sm,
+  color: colors.accent9,
+  display: 'inline-flex',
+  alignItems: 'center',
+});
