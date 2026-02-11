@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "setup": "pnpm install && ln -sf \"$CONDUCTOR_ROOT_PATH/packages/app/.env\" \"$CONDUCTOR_WORKSPACE_PATH/packages/app/.env\"",
+    "run": "pnpm run dev"
+  }
+}
