@@ -108,16 +108,16 @@ const FoldInstall = () => {
       <div className="min-w-0">
         {/* Mobile: stacked vertically */}
         <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
-          <FoldAnnotation text="Install LLMOps package." />
+          <FoldAnnotation text="Install the LLMOps package." />
           <TerminalWindow command="npm i @llmops/sdk" />
-          <FoldAnnotation text="Initialize Client and envs" />
+          <FoldAnnotation text="Initialize the client and providers through the environment variables." />
           <IDEWindow
             tabs={[
               { name: 'server.ts', content: serverCode },
               { name: '.env', content: envCode },
             ]}
           />
-          <FoldAnnotation text="Use the model from any provider you wish to use." />
+          <FoldAnnotation text="Use the model from the providers you have configured using the environment variables." />
           <BrowserWindow />
           <p className="text-sm text-gray-2/80 leading-relaxed text-center">
             Any provider, any model — one SDK.
@@ -159,7 +159,7 @@ const FoldInstall = () => {
           <div className="absolute top-0 right-8 z-40 w-48 h-36">
             <div className="sticky top-4">
               <FoldAnnotation
-                text="Install LLMOps package."
+                text="Install the LLMOps package."
                 target="terminal"
               />
             </div>
@@ -167,11 +167,11 @@ const FoldInstall = () => {
           <div className="absolute top-48 right-8 z-40 w-48 h-[calc(100vh-var(--spacing)*48)]">
             <div className="sticky top-72 flex flex-col gap-6">
               <FoldAnnotation
-                text="Initialize Client and envs"
+                text="Initialize the client and providers through the environment variables."
                 target="ide-client"
               />
               <FoldAnnotation
-                text="Use the model from any provider you wish to use."
+                text="Use the model from the providers you have configured using the environment variables."
                 target="ide-model"
               />
             </div>
