@@ -13,6 +13,7 @@ import type { createProviderGuardrailOverridesDataLayer } from './providerGuardr
 import type { createTargetingRulesDataLayer } from './targetingRules';
 import type { createVariantDataLayer } from './variants';
 import type { createVariantVersionsDataLayer } from './variantVersions';
+import type { createTracesDataLayer } from './traces';
 import type { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 // Infer types from existing implementations
@@ -47,6 +48,7 @@ export type VariantsDataLayer = ReturnType<typeof createVariantDataLayer>;
 export type VariantVersionsDataLayer = ReturnType<
   typeof createVariantVersionsDataLayer
 >;
+export type TracesDataLayer = ReturnType<typeof createTracesDataLayer>;
 export type WorkspaceSettingsDataLayer = ReturnType<
   typeof createWorkspaceSettingsDataLayer
 >;
@@ -65,6 +67,7 @@ export type DataLayer = ConfigsDataLayer &
   ProviderConfigsDataLayer &
   ProviderGuardrailOverridesDataLayer &
   TargetingRulesDataLayer &
+  TracesDataLayer &
   VariantsDataLayer &
   VariantVersionsDataLayer &
   WorkspaceSettingsDataLayer;

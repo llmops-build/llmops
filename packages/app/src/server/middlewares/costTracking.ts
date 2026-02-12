@@ -10,6 +10,13 @@ import {
   type LLMRequestData,
   type GuardrailResults,
 } from '@server/services/batchWriter';
+import {
+  resolveTraceContext,
+  formatTraceparent,
+  type TraceContext,
+} from '@server/lib/traceContext';
+import { getGlobalTraceBatchWriter } from '@server/services/traceBatchWriter';
+import type { SpanInsert, TraceUpsert } from '@llmops/core';
 
 /**
  * Model pricing information
@@ -180,6 +187,8 @@ interface GatewayHookResults {
 interface OpenAIResponse {
   usage?: OpenAIUsage;
   hook_results?: GatewayHookResults;
+  choices?: Array<{ message?: unknown; text?: string }>;
+  output?: unknown;
 }
 
 /**
@@ -274,6 +283,7 @@ declare module 'hono' {
     environmentId?: string;
     providerConfigId?: string;
     __costTrackingContext?: RequestContext;
+    __traceContext?: TraceContext;
   }
 }
 
@@ -298,6 +308,11 @@ export interface CostTrackingConfig {
 interface DbWithBatchInsert {
   batchInsertRequests: (
     requests: LLMRequestData[]
+  ) => Promise<{ count: number }>;
+  upsertTrace: (data: TraceUpsert) => Promise<void>;
+  batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
+  batchInsertSpanEvents: (
+    events: SpanEventInsert[]
   ) => Promise<{ count: number }>;
 }
 
@@ -406,6 +421,18 @@ export function createCostTrackingMiddleware(
       log('Failed to parse request body');
     }
 
+    // Resolve trace context from headers
+    const traceContext = resolveTraceContext(c.req);
+    c.set('__traceContext', traceContext);
+
+    // Set trace response headers
+    c.header('x-llmops-trace-id', traceContext.traceId);
+    c.header('x-llmops-span-id', traceContext.spanId);
+    c.header(
+      'traceparent',
+      formatTraceparent(traceContext.traceId, traceContext.spanId)
+    );
+
     // Create request context
     const context: RequestContext = {
       requestId,
@@ -443,6 +470,10 @@ export function createCostTrackingMiddleware(
       }
     }
 
+    // Extract input from request body (messages for chat, prompt for completions, input for embeddings)
+    const requestInput: unknown =
+      body.messages ?? body.prompt ?? body.input ?? null;
+
     // Extract metadata from request body for custom tags
     // OpenAI SDK supports metadata: Record<string, string> (up to 16 key-value pairs)
     let customTags: Record<string, string> = {};
@@ -468,10 +499,19 @@ export function createCostTrackingMiddleware(
       return;
     }
 
-    // Initialize batch writer lazily
+    // Initialize batch writers lazily
     // Cast db to include batchInsertRequests (added by createLLMRequestsDataLayer)
     const batchWriter = getGlobalBatchWriter(
       { batchInsertRequests: (requests) => db.batchInsertRequests(requests) },
+      { flushIntervalMs, debug }
+    );
+
+    const traceBatchWriter = getGlobalTraceBatchWriter(
+      {
+        upsertTrace: (data) => db.upsertTrace(data),
+        batchInsertSpans: (spans) => db.batchInsertSpans(spans),
+        batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
+      },
       { flushIntervalMs, debug }
     );
 
@@ -518,7 +558,11 @@ export function createCostTrackingMiddleware(
               : null,
             guardrailResults,
             tags: customTags,
+            input: requestInput,
+            output: null, // Streaming: output captured incrementally, not available here
+            traceContext,
             batchWriter,
+            traceBatchWriter,
             trackErrors,
             log,
           });
@@ -537,10 +581,18 @@ export function createCostTrackingMiddleware(
         cachedTokens?: number;
       } | null = null;
       let guardrailResults: GuardrailResults | null = null;
+      let responseOutput: unknown = null;
 
       try {
         const clonedResponse = response.clone();
         const responseBody: OpenAIResponse = await clonedResponse.json();
+
+        // Extract output content from response
+        if (responseBody.choices?.[0]?.message) {
+          responseOutput = responseBody.choices[0].message;
+        } else if (responseBody.output) {
+          responseOutput = responseBody.output;
+        }
 
         logger.debug(
           {
@@ -618,7 +670,11 @@ export function createCostTrackingMiddleware(
         usage,
         guardrailResults,
         tags: customTags,
+        input: requestInput,
+        output: responseOutput,
+        traceContext,
         batchWriter,
+        traceBatchWriter,
         trackErrors,
         log,
       });
@@ -649,7 +705,11 @@ async function processUsageAndLog(params: {
   } | null;
   guardrailResults?: GuardrailResults | null;
   tags?: Record<string, string>;
+  input?: unknown;
+  output?: unknown;
+  traceContext?: TraceContext;
   batchWriter: ReturnType<typeof getGlobalBatchWriter>;
+  traceBatchWriter?: ReturnType<typeof getGlobalTraceBatchWriter>;
   trackErrors: boolean;
   log: (msg: string) => void;
 }): Promise<void> {
@@ -668,7 +728,11 @@ async function processUsageAndLog(params: {
     usage,
     guardrailResults,
     tags = {},
+    input,
+    output,
+    traceContext,
     batchWriter,
+    traceBatchWriter,
     trackErrors,
     log,
   } = params;
@@ -724,16 +788,21 @@ async function processUsageAndLog(params: {
     return value;
   };
 
+  const validConfigId = validateUUID(configId || null, 'configId');
+  const validVariantId = validateUUID(variantId || null, 'variantId');
+  const validEnvironmentId = validateUUID(environmentId || null, 'environmentId');
+  const validProviderConfigId = validateUUID(
+    providerConfigId || null,
+    'providerConfigId'
+  );
+
   // Build request data for logging
   const requestData: LLMRequestData = {
     requestId,
-    configId: validateUUID(configId || null, 'configId'),
-    variantId: validateUUID(variantId || null, 'variantId'),
-    environmentId: validateUUID(environmentId || null, 'environmentId'),
-    providerConfigId: validateUUID(
-      providerConfigId || null,
-      'providerConfigId'
-    ),
+    configId: validConfigId,
+    variantId: validVariantId,
+    environmentId: validEnvironmentId,
+    providerConfigId: validProviderConfigId,
     provider,
     model,
     promptTokens: usage?.promptTokens || 0,
@@ -749,9 +818,108 @@ async function processUsageAndLog(params: {
     isStreaming,
     tags,
     guardrailResults: guardrailResults || null,
+    traceId: traceContext?.traceId ?? null,
+    spanId: traceContext?.spanId ?? null,
+    parentSpanId: traceContext?.parentSpanId ?? null,
+    sessionId: traceContext?.sessionId ?? null,
   };
 
   // Enqueue for batch insert
   batchWriter.enqueue(requestData);
   log(`Enqueued request ${requestId} for logging`);
+
+  // Enqueue trace data if trace batch writer is available
+  if (traceBatchWriter && traceContext) {
+    const now = new Date();
+    const startTimeDate = new Date(now.getTime() - latencyMs);
+
+    const spanStatus = statusCode >= 400 ? 2 : 1; // ERROR=2, OK=1
+    const traceStatus = statusCode >= 400 ? 'error' : 'ok';
+
+    const spanData: SpanInsert = {
+      traceId: traceContext.traceId,
+      spanId: traceContext.spanId,
+      parentSpanId: traceContext.parentSpanId,
+      name:
+        traceContext.spanName ||
+        `${provider}/${model} ${endpoint.split('/').pop()}`,
+      kind: 2, // SERVER
+      status: spanStatus,
+      statusMessage: statusCode >= 400 ? `HTTP ${statusCode}` : null,
+      startTime: startTimeDate,
+      endTime: now,
+      durationMs: latencyMs,
+      provider,
+      model,
+      promptTokens: usage?.promptTokens || 0,
+      completionTokens: usage?.completionTokens || 0,
+      totalTokens: usage?.totalTokens || 0,
+      cost,
+      configId: validConfigId,
+      variantId: validVariantId,
+      environmentId: validEnvironmentId,
+      providerConfigId: validProviderConfigId,
+      requestId,
+      source: 'gateway',
+      input: input ?? null,
+      output: output ?? null,
+      attributes: {
+        'gen_ai.operation.name': endpoint.includes('chat')
+          ? 'chat'
+          : endpoint.includes('embeddings')
+            ? 'embeddings'
+            : 'text_completion',
+        'gen_ai.provider.name': provider,
+        'gen_ai.request.model': model,
+        'gen_ai.usage.input_tokens': usage?.promptTokens || 0,
+        'gen_ai.usage.output_tokens': usage?.completionTokens || 0,
+        'llmops.request.id': requestId,
+        'llmops.cost.total': cost,
+        'llmops.cost.input': inputCost,
+        'llmops.cost.output': outputCost,
+        'llmops.is_streaming': isStreaming,
+        ...(validConfigId ? { 'llmops.config.id': validConfigId } : {}),
+        ...(validVariantId ? { 'llmops.variant.id': validVariantId } : {}),
+        ...(validEnvironmentId
+          ? { 'llmops.environment.id': validEnvironmentId }
+          : {}),
+        ...(validProviderConfigId
+          ? { 'llmops.provider_config.id': validProviderConfigId }
+          : {}),
+        ...(usage?.cachedTokens
+          ? { 'llmops.cached_tokens': usage.cachedTokens }
+          : {}),
+        ...(guardrailResults
+          ? {
+              'llmops.guardrail.action': guardrailResults.action,
+              'llmops.guardrail.latency_ms': guardrailResults.totalLatencyMs,
+            }
+          : {}),
+      },
+    };
+
+    const traceData: TraceUpsert = {
+      traceId: traceContext.traceId,
+      name: traceContext.traceName,
+      sessionId: traceContext.sessionId,
+      userId: traceContext.userId,
+      status: traceStatus as 'unset' | 'ok' | 'error',
+      startTime: startTimeDate,
+      endTime: now,
+      durationMs: latencyMs,
+      spanCount: 1,
+      totalInputTokens: usage?.promptTokens || 0,
+      totalOutputTokens: usage?.completionTokens || 0,
+      totalTokens: usage?.totalTokens || 0,
+      totalCost: cost,
+      tags,
+      metadata: {},
+    };
+
+    traceBatchWriter.enqueue({
+      span: spanData,
+      trace: traceData,
+    });
+    log(`Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`);
+  }
 }

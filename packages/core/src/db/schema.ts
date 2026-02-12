@@ -265,6 +265,73 @@ export const llmRequestsSchema = z.object({
 
   // Guardrail telemetry (nullable for seamless migration)
   guardrailResults: guardrailResultsSchema.nullable().optional(), // Guardrail execution results
+
+  // Trace context (nullable for backward compatibility)
+  traceId: z.string().nullable().optional(), // W3C 32-hex trace ID
+  spanId: z.string().nullable().optional(), // 16-hex span ID
+  parentSpanId: z.string().nullable().optional(), // Parent span ID
+  sessionId: z.string().nullable().optional(), // Session grouping
+});
+
+// Traces table schema - one row per trace, denormalized aggregates
+export const tracesSchema = z.object({
+  ...baseSchema,
+  traceId: z.string(), // W3C 32-hex or UUID
+  name: z.string().nullable().optional(), // From x-llmops-trace-name header or first span name
+  sessionId: z.string().nullable().optional(), // Session grouping
+  userId: z.string().nullable().optional(), // User identifier
+  status: z.string().default('unset'), // unset / ok / error (OTel StatusCode as string)
+  startTime: z.date(), // Earliest span start
+  endTime: z.date().nullable().optional(), // Latest span end
+  durationMs: z.number().int().nullable().optional(), // endTime - startTime
+  spanCount: z.number().int().default(0),
+  totalInputTokens: z.number().int().default(0),
+  totalOutputTokens: z.number().int().default(0),
+  totalTokens: z.number().int().default(0),
+  totalCost: z.number().int().default(0), // micro-dollars
+  tags: z.record(z.string(), z.string()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+});
+
+// Spans table schema - individual operations within a trace
+export const spansSchema = z.object({
+  ...baseSchema,
+  traceId: z.string(), // Links to traces.traceId
+  spanId: z.string(), // 16-hex unique span ID
+  parentSpanId: z.string().nullable().optional(), // Parent span (enables waterfall)
+  name: z.string(), // OTel span name (e.g., "ai.generateText", "chat gpt-4o")
+  kind: z.number().int().default(1), // OTel SpanKind (1=INTERNAL, 2=SERVER, 3=CLIENT)
+  status: z.number().int().default(0), // OTel StatusCode (0=UNSET, 1=OK, 2=ERROR)
+  statusMessage: z.string().nullable().optional(), // Error message
+  startTime: z.date(),
+  endTime: z.date().nullable().optional(),
+  durationMs: z.number().int().nullable().optional(),
+  provider: z.string().nullable().optional(), // From gen_ai.provider.name / ai.model.provider
+  model: z.string().nullable().optional(), // From gen_ai.request.model / ai.model.id
+  promptTokens: z.number().int().default(0),
+  completionTokens: z.number().int().default(0),
+  totalTokens: z.number().int().default(0),
+  cost: z.number().int().default(0), // micro-dollars
+  configId: z.string().uuid().nullable().optional(),
+  variantId: z.string().uuid().nullable().optional(),
+  environmentId: z.string().uuid().nullable().optional(),
+  providerConfigId: z.string().uuid().nullable().optional(),
+  requestId: z.string().uuid().nullable().optional(), // FK to llm_requests.requestId
+  source: z.string().default('gateway'), // 'gateway' or 'otlp'
+  input: z.unknown().nullable().optional(), // Request messages/prompt
+  output: z.unknown().nullable().optional(), // Response completion/choices
+  attributes: z.record(z.string(), z.unknown()).default({}), // Full OTel attributes
+});
+
+// Span events table schema - streaming milestones, tool calls, input/output messages
+export const spanEventsSchema = z.object({
+  id: z.string().uuid(),
+  traceId: z.string(),
+  spanId: z.string(), // Links to spans.spanId
+  name: z.string(), // Event name (e.g., "ai.stream.firstChunk", "gen_ai.tool.call")
+  timestamp: z.date(),
+  attributes: z.record(z.string(), z.unknown()).default({}),
+  createdAt: z.date(),
 });
 
 /**
@@ -294,6 +361,9 @@ export type DatasetVersion = z.infer<typeof datasetVersionsSchema>;
 export type DatasetRecord = z.infer<typeof datasetRecordsSchema>;
 export type DatasetVersionRecord = z.infer<typeof datasetVersionRecordsSchema>;
 export type LLMRequest = z.infer<typeof llmRequestsSchema>;
+export type Trace = z.infer<typeof tracesSchema>;
+export type Span = z.infer<typeof spansSchema>;
+export type SpanEvent = z.infer<typeof spanEventsSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -502,6 +572,69 @@ export interface LLMRequestsTable extends BaseTable {
     string | null,
     string | null
   >;
+  traceId: string | null;
+  spanId: string | null;
+  parentSpanId: string | null;
+  sessionId: string | null;
+}
+
+// Traces table - one row per trace with denormalized aggregates
+export interface TracesTable extends BaseTable {
+  traceId: string;
+  name: string | null;
+  sessionId: string | null;
+  userId: string | null;
+  status: ColumnType<string, string | undefined, string | undefined>;
+  startTime: ColumnType<Date, string, string>;
+  endTime: ColumnType<Date | null, string | null, string | null>;
+  durationMs: number | null;
+  spanCount: ColumnType<number, number | undefined, number | undefined>;
+  totalInputTokens: ColumnType<number, number | undefined, number | undefined>;
+  totalOutputTokens: ColumnType<number, number | undefined, number | undefined>;
+  totalTokens: ColumnType<number, number | undefined, number | undefined>;
+  totalCost: ColumnType<number, number | undefined, number | undefined>;
+  tags: ColumnType<Record<string, string>, string, string>;
+  metadata: ColumnType<Record<string, unknown>, string, string>;
+}
+
+// Spans table - individual operations within a trace
+export interface SpansTable extends BaseTable {
+  traceId: string;
+  spanId: string;
+  parentSpanId: string | null;
+  name: string;
+  kind: ColumnType<number, number | undefined, number | undefined>;
+  status: ColumnType<number, number | undefined, number | undefined>;
+  statusMessage: string | null;
+  startTime: ColumnType<Date, string, string>;
+  endTime: ColumnType<Date | null, string | null, string | null>;
+  durationMs: number | null;
+  provider: string | null;
+  model: string | null;
+  promptTokens: ColumnType<number, number | undefined, number | undefined>;
+  completionTokens: ColumnType<number, number | undefined, number | undefined>;
+  totalTokens: ColumnType<number, number | undefined, number | undefined>;
+  cost: ColumnType<number, number | undefined, number | undefined>;
+  configId: string | null;
+  variantId: string | null;
+  environmentId: string | null;
+  providerConfigId: string | null;
+  requestId: string | null;
+  source: ColumnType<string, string | undefined, string | undefined>;
+  input: ColumnType<unknown | null, string | null, string | null>;
+  output: ColumnType<unknown | null, string | null, string | null>;
+  attributes: ColumnType<Record<string, unknown>, string, string>;
+}
+
+// Span events table - streaming milestones, tool calls, input/output
+export interface SpanEventsTable {
+  id: Generated<string>;
+  traceId: string;
+  spanId: string;
+  name: string;
+  timestamp: ColumnType<Date, string, string>;
+  attributes: ColumnType<Record<string, unknown>, string, string>;
+  createdAt: ColumnType<Date, string | undefined, string | undefined>;
 }
 
 /**
@@ -527,6 +660,9 @@ export interface Database {
   dataset_records: DatasetRecordsTable;
   dataset_version_records: DatasetVersionRecordsTable;
   llm_requests: LLMRequestsTable;
+  traces: TracesTable;
+  spans: SpansTable;
+  span_events: SpanEventsTable;
 }
 
 /**
@@ -938,8 +1074,83 @@ export const SCHEMA_METADATA = {
         userId: { type: 'text', nullable: true },
         tags: { type: 'jsonb', default: '{}' },
         guardrailResults: { type: 'jsonb', nullable: true },
+        traceId: { type: 'text', nullable: true },
+        spanId: { type: 'text', nullable: true },
+        parentSpanId: { type: 'text', nullable: true },
+        sessionId: { type: 'text', nullable: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    traces: {
+      order: 30,
+      schema: tracesSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        traceId: { type: 'text', unique: true },
+        name: { type: 'text', nullable: true },
+        sessionId: { type: 'text', nullable: true },
+        userId: { type: 'text', nullable: true },
+        status: { type: 'text', default: 'unset' },
+        startTime: { type: 'timestamp' },
+        endTime: { type: 'timestamp', nullable: true },
+        durationMs: { type: 'integer', nullable: true },
+        spanCount: { type: 'integer', default: 0 },
+        totalInputTokens: { type: 'integer', default: 0 },
+        totalOutputTokens: { type: 'integer', default: 0 },
+        totalTokens: { type: 'integer', default: 0 },
+        totalCost: { type: 'integer', default: 0 },
+        tags: { type: 'jsonb', default: '{}' },
+        metadata: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    spans: {
+      order: 31,
+      schema: spansSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        traceId: { type: 'text' },
+        spanId: { type: 'text', unique: true },
+        parentSpanId: { type: 'text', nullable: true },
+        name: { type: 'text' },
+        kind: { type: 'integer', default: 1 },
+        status: { type: 'integer', default: 0 },
+        statusMessage: { type: 'text', nullable: true },
+        startTime: { type: 'timestamp' },
+        endTime: { type: 'timestamp', nullable: true },
+        durationMs: { type: 'integer', nullable: true },
+        provider: { type: 'text', nullable: true },
+        model: { type: 'text', nullable: true },
+        promptTokens: { type: 'integer', default: 0 },
+        completionTokens: { type: 'integer', default: 0 },
+        totalTokens: { type: 'integer', default: 0 },
+        cost: { type: 'integer', default: 0 },
+        configId: { type: 'uuid', nullable: true },
+        variantId: { type: 'uuid', nullable: true },
+        environmentId: { type: 'uuid', nullable: true },
+        providerConfigId: { type: 'uuid', nullable: true },
+        requestId: { type: 'uuid', nullable: true },
+        source: { type: 'text', default: 'gateway' },
+        input: { type: 'jsonb', nullable: true },
+        output: { type: 'jsonb', nullable: true },
+        attributes: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
+    span_events: {
+      order: 32,
+      schema: spanEventsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        traceId: { type: 'text' },
+        spanId: { type: 'text' },
+        name: { type: 'text' },
+        timestamp: { type: 'timestamp' },
+        attributes: { type: 'jsonb', default: '{}' },
+        createdAt: { type: 'timestamp', default: 'now()' },
       },
     },
   },
@@ -969,4 +1180,7 @@ export const schemas = {
   dataset_records: datasetRecordsSchema,
   dataset_version_records: datasetVersionRecordsSchema,
   llm_requests: llmRequestsSchema,
+  traces: tracesSchema,
+  spans: spansSchema,
+  span_events: spanEventsSchema,
 } as const;

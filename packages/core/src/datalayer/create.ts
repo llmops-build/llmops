@@ -15,6 +15,7 @@ import { createPlaygroundRunsDataLayer } from './playgroundRuns';
 import { createProviderConfigsDataLayer } from './providerConfigs';
 import { createProviderGuardrailOverridesDataLayer } from './providerGuardrailOverrides';
 import { createTargetingRulesDataLayer } from './targetingRules';
+import { createTracesDataLayer } from './traces';
 import { createVariantDataLayer } from './variants';
 import { createVariantVersionsDataLayer } from './variantVersions';
 import { createWorkspaceSettingsDataLayer } from './workspaceSettings';
@@ -38,6 +39,7 @@ export function createDataLayer(db: Kysely<Database>): DataLayer {
     ...createProviderConfigsDataLayer(db),
     ...createProviderGuardrailOverridesDataLayer(db),
     ...createTargetingRulesDataLayer(db),
+    ...createTracesDataLayer(db),
     ...createVariantDataLayer(db),
     ...createVariantVersionsDataLayer(db),
     ...createWorkspaceSettingsDataLayer(db),

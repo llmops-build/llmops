@@ -50,6 +50,10 @@ const insertLLMRequestSchema = z.object({
   userId: z.string().nullable().optional(),
   tags: z.record(z.string(), z.string()).default({}),
   guardrailResults: guardrailResultsSchema.nullable().optional(),
+  traceId: z.string().nullable().optional(),
+  spanId: z.string().nullable().optional(),
+  parentSpanId: z.string().nullable().optional(),
+  sessionId: z.string().nullable().optional(),
 });
 
 export type LLMRequestInsert = z.infer<typeof insertLLMRequestSchema>;
@@ -166,6 +170,10 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         guardrailResults: req.guardrailResults
           ? JSON.stringify(req.guardrailResults)
           : null,
+        traceId: req.traceId ?? null,
+        spanId: req.spanId ?? null,
+        parentSpanId: req.parentSpanId ?? null,
+        sessionId: req.sessionId ?? null,
         createdAt: now,
         updatedAt: now,
       }));
@@ -214,6 +222,10 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           guardrailResults: req.guardrailResults
             ? JSON.stringify(req.guardrailResults)
             : null,
+          traceId: req.traceId ?? null,
+          spanId: req.spanId ?? null,
+          parentSpanId: req.parentSpanId ?? null,
+          sessionId: req.sessionId ?? null,
           createdAt: now,
           updatedAt: now,
         })
