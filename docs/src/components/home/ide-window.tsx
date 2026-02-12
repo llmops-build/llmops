@@ -23,7 +23,7 @@ const IDEWindow = ({ tabs }: IDEWindowProps) => {
 
   return (
     <WindowChrome tabs={chromeTabs}>
-      <pre className="p-4 overflow-x-auto text-sm leading-relaxed font-mono text-gray-12">
+      <pre className="p-3 md:p-4 overflow-x-auto text-xs md:text-sm leading-relaxed font-mono text-gray-12">
         {tabs[activeIndex].content}
       </pre>
     </WindowChrome>

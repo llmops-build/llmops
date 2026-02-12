@@ -44,7 +44,7 @@ const TerminalWindow = ({ command }: TerminalWindowProps) => {
         </div>
       )}
       <div className="rounded-lg border border-gray-10 bg-gray-12 overflow-hidden shadow-md">
-        <div className="p-4 font-mono text-sm text-gray-1">
+        <div className="p-4 font-mono text-xs md:text-sm text-gray-1 overflow-x-auto">
           <span className="select-none text-gray-5">$ </span>
           <span>{command.slice(0, displayedChars)}</span>
           <span

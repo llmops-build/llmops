@@ -230,16 +230,16 @@ const Product = () => {
 const Hero = () => {
   return (
     <section className="py-20 border-b border-b-gray-4">
-      <h1 className="text-4xl md:text-5xl font-pixel font-medium tracking-tight text-gray-12 p-10">
+      <h1 className="text-3xl md:text-5xl font-pixel font-medium tracking-tight text-gray-12 p-6 md:p-10">
         <LLM /> <Infrastructure /> <span>that</span> <br />
         <Grows /> with your <Product />
       </h1>
-      <p className="text-sm md:text-base text-gray-11 px-10 pb-10 max-w-2xl leading-relaxed">
+      <p className="text-sm md:text-base text-gray-11 px-6 md:px-10 pb-6 md:pb-10 max-w-2xl leading-relaxed">
         One SDK that gives you observability, prompt management, and evals for
         every LLM call. Install it with your first provider. The rest shows up
         when you need it.
       </p>
-      <div className="px-10 pb-10">
+      <div className="px-6 md:px-10 pb-6 md:pb-10">
         <a
           href="https://github.com/llmops-build/llmops"
           target="_blank"

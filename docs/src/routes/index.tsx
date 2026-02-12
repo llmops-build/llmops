@@ -36,13 +36,13 @@ function Home() {
       </aside>
 
       {/* Main — header + body */}
-      <div className="grid grid-rows-[auto_1fr]">
+      <div className="grid grid-rows-[auto_1fr] min-w-0">
         <Header />
-        <main>
+        <main className="min-w-0">
           <Hero />
           <FoldInstall />
-          {/*<FoldProviders />
-          <FoldObserve />
+          <FoldProviders />
+          {/*<FoldObserve />
           <FoldUI />
           <FoldPrompts />
           <FoldEvals />*/}
