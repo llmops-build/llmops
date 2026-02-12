@@ -173,6 +173,7 @@ const FoldInstall = () => {
               <FoldAnnotation
                 text="Route to any model through a unified interface."
                 target="ide-model"
+                delay={0.8}
               />
             </div>
           </div>

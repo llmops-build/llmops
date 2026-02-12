@@ -9,12 +9,14 @@ gsap.registerPlugin(ScrollTrigger);
 interface FoldAnnotationProps {
   text: string;
   target?: string;
+  delay?: number;
   className?: string;
 }
 
 const FoldAnnotation = ({
   text,
   target,
+  delay = 0,
   className = '',
 }: FoldAnnotationProps) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -32,7 +34,7 @@ const FoldAnnotation = ({
       trigger: el,
       start: 'top 80%',
       onEnter: () => {
-        gsap.to(el, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+        gsap.to(el, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', delay });
       },
       onLeaveBack: () => {
         gsap.to(el, { opacity: 0, y: 16, duration: 0.3 });
