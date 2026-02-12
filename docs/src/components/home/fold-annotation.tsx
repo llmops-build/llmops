@@ -19,6 +19,8 @@ const FoldAnnotation = ({
 }: FoldAnnotationProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const lineRef = useRef<SVGLineElement>(null);
+  const dotStartRef = useRef<SVGCircleElement>(null);
+  const dotEndRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -67,6 +69,15 @@ const FoldAnnotation = ({
       line.setAttribute('y1', String(cy));
       line.setAttribute('x2', String(x2));
       line.setAttribute('y2', String(y2));
+
+      if (dotStartRef.current) {
+        dotStartRef.current.setAttribute('cx', '0');
+        dotStartRef.current.setAttribute('cy', String(cy));
+      }
+      if (dotEndRef.current) {
+        dotEndRef.current.setAttribute('cx', String(x2));
+        dotEndRef.current.setAttribute('cy', String(y2));
+      }
     };
 
     window.addEventListener('scroll', update, { passive: true });
@@ -90,6 +101,8 @@ const FoldAnnotation = ({
           overflow="visible"
         >
           <line ref={lineRef} stroke="currentColor" strokeWidth="1" />
+          <circle ref={dotStartRef} r="3" fill="currentColor" />
+          <circle ref={dotEndRef} r="3" fill="currentColor" />
         </svg>
       )}
       <p className="text-sm text-gray-1/80 max-w-xs leading-relaxed font-mono">
