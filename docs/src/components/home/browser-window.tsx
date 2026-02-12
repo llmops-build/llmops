@@ -64,7 +64,7 @@ const BrowserWindow = () => {
           http://localhost:3001
         </div>
       </div>
-      <div className="p-3 md:p-4 font-mono text-xs md:text-sm text-gray-12 leading-relaxed">
+      <div className="p-3 md:p-4 font-mono text-xs md:text-sm text-gray-12 leading-relaxed min-h-32">
         <p>
           <span className="font-semibold">Prompt:</span> {PROMPT}
         </p>
