@@ -93,7 +93,7 @@ const envCode = (
 
 const FoldInstall = () => {
   return (
-    <section className="border-b border-gray-4 bg-accent-4 overflow-x-clip">
+    <section id="install" className="border-b border-gray-4 bg-accent-4 overflow-x-clip">
       <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
         <span className="font-mono text-sm text-gray-9 block mb-2">
           {String(1).padStart(2, '0')}

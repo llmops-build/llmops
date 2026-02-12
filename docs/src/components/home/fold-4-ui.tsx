@@ -2,7 +2,7 @@
 
 const FoldObserve = () => {
   return (
-    <section className="border-b border-gray-4">
+    <section id="observability" className="border-b border-gray-4">
       <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
         <span className="font-mono text-sm text-gray-9 block mb-2">
           {String(4).padStart(2, '0')}
@@ -17,8 +17,8 @@ const FoldObserve = () => {
       <div className="min-w-0">
         {/* Mobile */}
         <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
-          {/* Screenshot placeholder — 16:9 */}
-          <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden aspect-video">
+          {/* Screenshot — 7:4 aspect ratio */}
+          <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden aspect-[7/4]">
             <img
               src="/screenshots/observe.png"
               alt="Observability dashboard"
@@ -32,8 +32,8 @@ const FoldObserve = () => {
 
         {/* Desktop */}
         <div className="hidden md:block pb-8 px-10">
-          {/* Screenshot placeholder — 16:9 */}
-          <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden aspect-video max-w-3xl mx-auto">
+          {/* Screenshot — 7:4 aspect ratio */}
+          <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden aspect-[7/4] max-w-3xl mx-auto">
             <img
               src="/screenshots/observe.png"
               alt="Observability dashboard"

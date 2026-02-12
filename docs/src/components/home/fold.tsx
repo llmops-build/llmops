@@ -2,12 +2,13 @@ interface FoldProps {
   number: number;
   title: string;
   description?: string;
+  id?: string;
   children: React.ReactNode;
 }
 
-const Fold = ({ number, title, description, children }: FoldProps) => {
+const Fold = ({ number, title, description, id, children }: FoldProps) => {
   return (
-    <section className="border-b border-gray-4">
+    <section id={id} className="border-b border-gray-4">
       <div className="mb-8 py-8 md:py-12 px-10">
         <span className="font-mono text-sm text-gray-9 block mb-2">
           {String(number).padStart(2, '0')}

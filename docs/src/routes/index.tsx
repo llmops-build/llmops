@@ -21,7 +21,24 @@ function Home() {
       <aside className="hidden md:block relative">
         <div className="border-r border-[var(--gray4)] sticky top-0 h-screen w-full flex flex-col">
           <LogoAnimation />
-          <div className="mt-auto p-4">
+          <nav className="mt-auto flex flex-col gap-0.5 px-4 py-3">
+            {[
+              { href: '#install', label: 'Start small' },
+              { href: '#providers', label: 'Providers' },
+              { href: '#dashboard', label: 'Dashboard' },
+              { href: '#observability', label: 'Observability' },
+              { href: '#prompts', label: 'Prompts' },
+            ].map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                className="text-xs font-mono text-[var(--gray9)] hover:text-[var(--gray12)] transition-colors px-2 py-1.5 rounded hover:bg-[var(--gray3)]"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="p-4 pt-2">
             <button
               type="button"
               className="w-full text-xs font-mono text-[var(--gray9)] hover:text-[var(--gray12)] transition-colors cursor-pointer"
@@ -44,8 +61,8 @@ function Home() {
           <FoldProviders />
           <FoldObserve />
           <FoldUI />
-          {/*<FoldPrompts />
-          <FoldEvals />*/}
+          <FoldPrompts />
+          {/*<FoldEvals />*/}
         </main>
       </div>
     </div>

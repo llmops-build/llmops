@@ -1,7 +1,12 @@
 'use client';
 
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useEffect, useRef } from 'react';
 import FoldAnnotation from './fold-annotation';
 import IDEWindow from './ide-window';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const hl = 'block -mx-4 px-4 bg-green-500/10 border-l-2 border-green-500/40';
 
@@ -60,8 +65,36 @@ const middlewareCode = (
 );
 
 const FoldUI = () => {
+  const browserRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = browserRef.current;
+    if (!el) return;
+
+    gsap.set(el, { opacity: 0, y: 20, scale: 0.98 });
+
+    const trigger = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 85%',
+      onEnter: () => {
+        gsap.to(el, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.45,
+          ease: 'power2.out',
+        });
+      },
+      onLeaveBack: () => {
+        gsap.to(el, { opacity: 0, y: 20, scale: 0.98, duration: 0.2 });
+      },
+    });
+
+    return () => trigger.kill();
+  }, []);
+
   return (
-    <section className="border-b border-gray-4 overflow-x-clip">
+    <section id="dashboard" className="border-b border-gray-4 overflow-x-clip">
       <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
         <span className="font-mono text-sm text-gray-9 block mb-2">
           {String(3).padStart(2, '0')}
@@ -98,8 +131,7 @@ const FoldUI = () => {
                 http://localhost:3000/llmops
               </div>
             </div>
-            {/* Screenshot placeholder — 16:9 */}
-            <div className="aspect-video">
+            <div className="aspect-[7/4]">
               <img
                 src="/screenshots/dashboard.png"
                 alt="LLMOps dashboard"
@@ -107,15 +139,12 @@ const FoldUI = () => {
               />
             </div>
           </div>
-          <p className="text-sm text-gray-11/80 leading-relaxed text-center">
-            Browse requests, manage providers, and configure prompts — all in
-            one place.
-          </p>
         </div>
 
         {/* Desktop */}
         <div className="hidden md:block pb-8 px-10">
-          <div className="flex gap-8 items-stretch max-w-3xl mx-auto">
+          {/* Stacked IDEs + annotations */}
+          <div className="flex gap-8 items-stretch">
             <div className="flex-1 max-w-lg">
               <IDEWindow
                 tabs={[{ name: 'llmops.ts', content: configCode }]}
@@ -142,8 +171,11 @@ const FoldUI = () => {
               </div>
             </div>
           </div>
+
+          {/* Browser window — full width reveal */}
           <div
-            className="rounded-lg border border-gray-4 bg-gray-1 overflow-hidden shadow-md max-w-3xl mx-auto mt-8"
+            ref={browserRef}
+            className="rounded-lg border border-gray-4 bg-gray-1 overflow-hidden shadow-md mt-10"
             data-annotation-id="dashboard-url"
           >
             <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-4 bg-gray-2">
@@ -156,8 +188,7 @@ const FoldUI = () => {
                 http://localhost:3000/llmops
               </div>
             </div>
-            {/* Screenshot placeholder — 16:9 */}
-            <div className="aspect-video">
+            <div className="aspect-[7/4]">
               <img
                 src="/screenshots/dashboard.png"
                 alt="LLMOps dashboard"
@@ -165,10 +196,6 @@ const FoldUI = () => {
               />
             </div>
           </div>
-          <p className="text-sm text-gray-11/80 leading-relaxed text-center py-8 px-6">
-            Browse requests, manage providers, and configure prompts — all in
-            one place.
-          </p>
         </div>
       </div>
     </section>

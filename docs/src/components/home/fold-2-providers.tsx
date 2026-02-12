@@ -1,8 +1,12 @@
 'use client';
 
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useEffect, useRef } from 'react';
 import FoldAnnotation from './fold-annotation';
 import IDEWindow from './ide-window';
-import TerminalWindow from './terminal-window';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const hl = 'block -mx-4 px-4 bg-green-500/10 border-l-2 border-green-500/40';
 
@@ -51,11 +55,39 @@ const providers = [
   { name: 'DeepSeek', logo: '/logos/deepseek.svg' },
 ];
 
-const curlCommand = `curl localhost:3000/llmops/v1/chat/completions -d '{"model":"@openai-prod/gpt-4o"}'`;
 
 const FoldProviders = () => {
+  const chipsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = chipsRef.current;
+    if (!el) return;
+
+    const chips = el.querySelectorAll('[data-chip]');
+    gsap.set(chips, { opacity: 0, x: 24 });
+
+    const trigger = ScrollTrigger.create({
+      trigger: el,
+      start: 'top 80%',
+      onEnter: () => {
+        gsap.to(chips, {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          stagger: 0.08,
+        });
+      },
+      onLeaveBack: () => {
+        gsap.to(chips, { opacity: 0, x: 24, duration: 0.3 });
+      },
+    });
+
+    return () => trigger.kill();
+  }, []);
+
   return (
-    <section className="border-b border-gray-4 overflow-x-clip">
+    <section id="providers" className="border-b border-gray-4 overflow-x-clip">
       <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
         <span className="font-mono text-sm text-gray-9 block mb-2">
           {String(2).padStart(2, '0')}
@@ -75,8 +107,6 @@ const FoldProviders = () => {
           <IDEWindow
             tabs={[{ name: 'providers.ts', content: providerCode }]}
           />
-          <FoldAnnotation text="Use slugs to route requests." variant="light" />
-          <TerminalWindow command={curlCommand} />
           <div className="flex flex-wrap gap-2 justify-center mt-4">
             {providers.map(({ name, logo }) => (
               <span
@@ -96,48 +126,51 @@ const FoldProviders = () => {
           </p>
         </div>
 
-        {/* Desktop: side-by-side with annotations */}
+        {/* Desktop: IDE+annotations left, provider chips right */}
         <div className="hidden md:block pb-8 px-10">
-          <div className="flex gap-8 items-start max-w-3xl mx-auto">
-            <div className="flex-1 max-w-lg">
-              <IDEWindow
-                tabs={[{ name: 'providers.ts', content: providerCode }]}
-              />
-              <div className="mt-6">
-                <TerminalWindow command={curlCommand} />
+          <div className="flex gap-10 items-start">
+            {/* Left: IDE + annotations */}
+            <div className="flex gap-8 items-start flex-1 min-w-0">
+              <div className="flex-1 max-w-lg">
+                <IDEWindow
+                  tabs={[{ name: 'providers.ts', content: providerCode }]}
+                />
+              </div>
+              <div className="w-48 shrink-0 flex flex-col gap-6 pt-8">
+                <FoldAnnotation
+                  text="Name your providers with custom slugs."
+                  target="provider-slug"
+                  variant="light"
+                />
+                <FoldAnnotation
+                  text="Separate credentials per environment."
+                  target="provider-env"
+                  delay={0.8}
+                  variant="light"
+                />
               </div>
             </div>
-            <div className="w-48 shrink-0 flex flex-col gap-6 pt-8">
-              <FoldAnnotation
-                text="Name your providers with custom slugs."
-                target="provider-slug"
-                variant="light"
-              />
-              <FoldAnnotation
-                text="Separate credentials per environment."
-                target="provider-env"
-                delay={0.8}
-                variant="light"
-              />
+
+            {/* Right: stacked provider chips */}
+            <div ref={chipsRef} className="w-52 shrink-0 flex flex-col gap-3 pt-4">
+              {providers.map(({ name, logo }) => (
+                <span
+                  key={name}
+                  data-chip
+                  className="inline-flex items-center gap-2.5 px-4 py-2 rounded-lg bg-gray-3 text-gray-11 text-sm font-mono border border-gray-4"
+                >
+                  <img src={logo} alt="" className="w-5 h-5 dark:invert" />
+                  {name}
+                </span>
+              ))}
+              <span
+                data-chip
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-accent-3 text-accent-11 text-sm font-mono border border-accent-4"
+              >
+                +68 more
+              </span>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 justify-center mt-8 max-w-2xl mx-auto">
-            {providers.map(({ name, logo }) => (
-              <span
-                key={name}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-3 text-gray-11 text-xs font-mono border border-gray-4"
-              >
-                <img src={logo} alt="" className="w-4 h-4 dark:invert" />
-                {name}
-              </span>
-            ))}
-            <span className="px-3 py-1 rounded-full bg-accent-3 text-accent-11 text-xs font-mono border border-accent-4">
-              +68 more
-            </span>
-          </div>
-          <p className="text-sm text-gray-11/80 leading-relaxed text-center py-8 px-6">
-            One config. Any model. Any provider.
-          </p>
         </div>
       </div>
     </section>

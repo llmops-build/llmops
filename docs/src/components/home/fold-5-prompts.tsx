@@ -16,6 +16,7 @@ const FoldPrompts = () => {
   return (
     <Fold
       number={5}
+      id="prompts"
       title="Version Your Prompts"
       description="Manage prompts from the UI and reference them by name in your API calls."
     >
