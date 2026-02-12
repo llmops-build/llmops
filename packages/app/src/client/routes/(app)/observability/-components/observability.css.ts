@@ -603,7 +603,8 @@ export const costBreakdownBarWrapper = style({
 
 export const costBreakdownLegend = style({
   display: 'flex',
-  gap: spacing.lg,
+  flexDirection: 'column',
+  gap: spacing.sm,
   marginTop: spacing.sm,
 });
 
