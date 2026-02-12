@@ -11,6 +11,7 @@ interface FoldAnnotationProps {
   target?: string;
   delay?: number;
   className?: string;
+  variant?: 'dark' | 'light';
 }
 
 const FoldAnnotation = ({
@@ -18,6 +19,7 @@ const FoldAnnotation = ({
   target,
   delay = 0,
   className = '',
+  variant = 'dark',
 }: FoldAnnotationProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const lineRef = useRef<SVGLineElement>(null);
@@ -107,7 +109,9 @@ const FoldAnnotation = ({
           <circle ref={dotEndRef} r="3" fill="currentColor" />
         </svg>
       )}
-      <p className="text-sm text-gray-1/80 max-w-xs leading-relaxed font-mono">
+      <p className={`text-sm max-w-xs leading-relaxed font-mono ${
+        variant === 'light' ? 'text-gray-12/80' : 'text-gray-1/80'
+      }`}>
         {text}
       </p>
     </div>
