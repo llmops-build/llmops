@@ -1,45 +1,178 @@
-import Fold from "./fold";
+'use client';
 
-const FoldObserve = () => {
+import FoldAnnotation from './fold-annotation';
+import IDEWindow from './ide-window';
+
+const hl = 'block -mx-4 px-4 bg-green-500/10 border-l-2 border-green-500/40';
+
+const configCode = (
+  <>
+    <span className="text-accent-11">import</span>
+    {' { llmops } '}
+    <span className="text-accent-11">from</span>
+    {" '@llmops/sdk';\n"}
+    <span className="text-accent-11">import</span>
+    {' { Pool } '}
+    <span className="text-accent-11">from</span>
+    {" 'pg';\n\n"}
+    <span className="text-accent-11">export default</span>
+    {' llmops({\n'}
+    <span className={hl} data-annotation-id="ui-db">
+      {'  database: '}
+      <span className="text-accent-11">new</span>
+      {' Pool({\n'}
+    </span>
+    <span className={hl}>
+      {'    connectionString: process.env.DATABASE_URL,'}
+    </span>
+    <span className={hl}>{'  }),'}</span>
+    {'\n'}
+    <span className="text-gray-9">{'  // ...'}</span>
+    {'\n});'}
+  </>
+);
+
+const middlewareCode = (
+  <>
+    <span className="text-accent-11">import</span>
+    {' { Hono } '}
+    <span className="text-accent-11">from</span>
+    {" 'hono';\n"}
+    <span className="text-accent-11">import</span>
+    {' { createLLMOpsMiddleware } '}
+    <span className="text-accent-11">from</span>
+    {" '@llmops/sdk/hono';\n"}
+    <span className="text-accent-11">import</span>
+    {' ops '}
+    <span className="text-accent-11">from</span>
+    {" './llmops';\n\n"}
+    <span className="text-accent-11">const</span>
+    {' app = '}
+    <span className="text-accent-11">new</span>
+    {' Hono();\n\n'}
+    <span className={hl} data-annotation-id="ui-middleware">
+      {"app.use('/llmops/*', createLLMOpsMiddleware(ops));"}
+    </span>
+    {'\n\n'}
+    <span className="text-accent-11">export default</span>
+    {' app;'}
+  </>
+);
+
+const FoldUI = () => {
   return (
-    <Fold
-      number={3}
-      title="See Everything"
-      description="Observability is automatic. No extra code required."
-    >
-      <div className="flex flex-col gap-6">
-        <p className="text-sm text-[var(--gray11)] leading-relaxed">
-          Already configured. Your database stores every request, token count,
-          and latency metric. Every call through the gateway is logged
-          automatically.
+    <section className="border-b border-gray-4 overflow-x-clip">
+      <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
+        <span className="font-mono text-sm text-gray-9 block mb-2">
+          {String(3).padStart(2, '0')}
+        </span>
+        <h2 className="text-3xl font-pixel font-semibold text-gray-12 tracking-tight">
+          Explore Visually
+        </h2>
+        <p className="mt-3 text-gray-11 text-sm leading-relaxed max-w-xl">
+          Connect a database, mount the middleware, and a full dashboard appears
+          at /llmops.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-lg border border-[var(--gray4)] bg-[var(--gray2)] p-4">
-            <p className="font-mono text-xs text-[var(--gray9)] mb-1">
-              Requests
-            </p>
-            <p className="text-sm text-[var(--gray12)]">
-              Full request/response logging
-            </p>
+      </div>
+      <div className="min-w-0">
+        {/* Mobile */}
+        <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
+          <FoldAnnotation
+            text="Connect a Postgres database to store everything."
+            variant="light"
+          />
+          <IDEWindow tabs={[{ name: 'llmops.ts', content: configCode }]} />
+          <FoldAnnotation
+            text="Mount the middleware — the dashboard is served automatically."
+            variant="light"
+          />
+          <IDEWindow tabs={[{ name: 'server.ts', content: middlewareCode }]} />
+          <div className="rounded-lg border border-gray-4 bg-gray-1 overflow-hidden shadow-md">
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-4 bg-gray-2">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-6" />
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-6" />
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-6" />
+              </div>
+              <div className="flex-1 bg-gray-3 rounded px-3 py-1 text-xs font-mono text-gray-9">
+                http://localhost:3000/llmops
+              </div>
+            </div>
+            {/* Screenshot placeholder — 16:9 */}
+            <div className="aspect-video">
+              <img
+                src="/screenshots/dashboard.png"
+                alt="LLMOps dashboard"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
-          <div className="rounded-lg border border-[var(--gray4)] bg-[var(--gray2)] p-4">
-            <p className="font-mono text-xs text-[var(--gray9)] mb-1">Tokens</p>
-            <p className="text-sm text-[var(--gray12)]">
-              Input, output, and total counts
-            </p>
+          <p className="text-sm text-gray-11/80 leading-relaxed text-center">
+            Browse requests, manage providers, and configure prompts — all in
+            one place.
+          </p>
+        </div>
+
+        {/* Desktop */}
+        <div className="hidden md:block pb-8 px-10">
+          <div className="flex gap-8 items-stretch max-w-3xl mx-auto">
+            <div className="flex-1 max-w-lg">
+              <IDEWindow
+                tabs={[{ name: 'llmops.ts', content: configCode }]}
+              />
+              <div className="mt-6">
+                <IDEWindow
+                  tabs={[{ name: 'server.ts', content: middlewareCode }]}
+                />
+              </div>
+            </div>
+            <div className="w-48 shrink-0 flex flex-col pt-8">
+              <FoldAnnotation
+                text="Connect a Postgres database to store everything."
+                target="ui-db"
+                variant="light"
+              />
+              <div className="mt-auto">
+                <FoldAnnotation
+                  text="Mount the middleware — the dashboard is served automatically."
+                  target="ui-middleware"
+                  delay={0.8}
+                  variant="light"
+                />
+              </div>
+            </div>
           </div>
-          <div className="rounded-lg border border-[var(--gray4)] bg-[var(--gray2)] p-4">
-            <p className="font-mono text-xs text-[var(--gray9)] mb-1">
-              Latency
-            </p>
-            <p className="text-sm text-[var(--gray12)]">
-              End-to-end timing per request
-            </p>
+          <div
+            className="rounded-lg border border-gray-4 bg-gray-1 overflow-hidden shadow-md max-w-3xl mx-auto mt-8"
+            data-annotation-id="dashboard-url"
+          >
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-4 bg-gray-2">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-6" />
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-6" />
+                <div className="w-2.5 h-2.5 rounded-full bg-gray-6" />
+              </div>
+              <div className="flex-1 bg-gray-3 rounded px-3 py-1 text-xs font-mono text-gray-9">
+                http://localhost:3000/llmops
+              </div>
+            </div>
+            {/* Screenshot placeholder — 16:9 */}
+            <div className="aspect-video">
+              <img
+                src="/screenshots/dashboard.png"
+                alt="LLMOps dashboard"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
+          <p className="text-sm text-gray-11/80 leading-relaxed text-center py-8 px-6">
+            Browse requests, manage providers, and configure prompts — all in
+            one place.
+          </p>
         </div>
       </div>
-    </Fold>
+    </section>
   );
 };
 
-export default FoldObserve;
+export default FoldUI;

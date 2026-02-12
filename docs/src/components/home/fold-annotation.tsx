@@ -25,6 +25,7 @@ const FoldAnnotation = ({
   const lineRef = useRef<SVGLineElement>(null);
   const dotStartRef = useRef<SVGCircleElement>(null);
   const dotEndRef = useRef<SVGCircleElement>(null);
+  const updateLineRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     const el = ref.current;
@@ -32,14 +33,16 @@ const FoldAnnotation = ({
 
     gsap.set(el, { opacity: 0, y: 16 });
 
+    const onUpdate = () => updateLineRef.current();
+
     const trigger = ScrollTrigger.create({
       trigger: el,
       start: 'top 80%',
       onEnter: () => {
-        gsap.to(el, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', delay });
+        gsap.to(el, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', delay, onUpdate });
       },
       onLeaveBack: () => {
-        gsap.to(el, { opacity: 0, y: 16, duration: 0.3 });
+        gsap.to(el, { opacity: 0, y: 16, duration: 0.3, onUpdate });
       },
     });
 
@@ -84,6 +87,7 @@ const FoldAnnotation = ({
       }
     };
 
+    updateLineRef.current = update;
     window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     update();

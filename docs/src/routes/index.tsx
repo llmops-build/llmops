@@ -42,9 +42,9 @@ function Home() {
           <Hero />
           <FoldInstall />
           <FoldProviders />
-          {/*<FoldObserve />
+          <FoldObserve />
           <FoldUI />
-          <FoldPrompts />
+          {/*<FoldPrompts />
           <FoldEvals />*/}
         </main>
       </div>

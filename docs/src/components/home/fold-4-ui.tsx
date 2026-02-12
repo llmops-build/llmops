@@ -1,30 +1,52 @@
-import Fold from "./fold";
+'use client';
 
-const FoldUI = () => {
+const FoldObserve = () => {
   return (
-    <Fold
-      number={4}
-      title="Explore Visually"
-      description="A built-in dashboard ships with the SDK. No separate install."
-    >
-      <div className="flex flex-col gap-6">
-        <div className="rounded-lg border border-[var(--gray4)] bg-[var(--gray2)] p-6">
-          <p className="font-mono text-sm text-[var(--gray12)]">
-            Visit{" "}
-            <code className="bg-[var(--gray3)] px-1.5 py-0.5 rounded">
-              http://localhost:3000/llmops
-            </code>{" "}
-            in your browser.
-          </p>
-        </div>
-        <p className="text-sm text-[var(--gray11)] leading-relaxed">
-          The UI is served directly from your Express or Hono server. Browse
-          requests, inspect traces, manage providers, and configure prompts —
-          all from a single interface.
+    <section className="border-b border-gray-4">
+      <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
+        <span className="font-mono text-sm text-gray-9 block mb-2">
+          {String(4).padStart(2, '0')}
+        </span>
+        <h2 className="text-3xl font-pixel font-semibold text-gray-12 tracking-tight">
+          See Everything
+        </h2>
+        <p className="mt-3 text-gray-11 text-sm leading-relaxed max-w-xl">
+          Observability is automatic. No extra code required.
         </p>
       </div>
-    </Fold>
+      <div className="min-w-0">
+        {/* Mobile */}
+        <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
+          {/* Screenshot placeholder — 16:9 */}
+          <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden aspect-video">
+            <img
+              src="/screenshots/observe.png"
+              alt="Observability dashboard"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <p className="text-sm text-gray-11/80 leading-relaxed text-center">
+            Every call through the gateway is logged. Zero setup.
+          </p>
+        </div>
+
+        {/* Desktop */}
+        <div className="hidden md:block pb-8 px-10">
+          {/* Screenshot placeholder — 16:9 */}
+          <div className="rounded-lg border border-gray-4 bg-gray-2 overflow-hidden aspect-video max-w-3xl mx-auto">
+            <img
+              src="/screenshots/observe.png"
+              alt="Observability dashboard"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <p className="text-sm text-gray-11/80 leading-relaxed text-center py-8 px-6">
+            Every call through the gateway is logged. Zero setup.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 };
 
-export default FoldUI;
+export default FoldObserve;

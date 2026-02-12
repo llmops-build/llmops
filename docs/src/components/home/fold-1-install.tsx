@@ -93,31 +93,37 @@ const envCode = (
 
 const FoldInstall = () => {
   return (
-    <section className="border-b border-gray-4 bg-accent-8 overflow-x-clip">
+    <section className="border-b border-gray-4 bg-accent-4 overflow-x-clip">
       <div className="mb-8 py-8 md:py-12 px-6 md:px-10">
-        <span className="font-mono text-sm text-gray-5 block mb-2">
+        <span className="font-mono text-sm text-gray-9 block mb-2">
           {String(1).padStart(2, '0')}
         </span>
-        <h2 className="text-3xl font-pixel font-semibold text-gray-1 tracking-tight">
+        <h2 className="text-3xl font-pixel font-semibold text-gray-12 tracking-tight">
           Start small!
         </h2>
-        <p className="mt-3 text-gray-2 text-sm leading-relaxed max-w-xl">
+        <p className="mt-3 text-gray-11 text-sm leading-relaxed max-w-xl">
           One package. That's all you require to get started.
         </p>
       </div>
       <div className="min-w-0">
         {/* Mobile: stacked vertically */}
         <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
-          <FoldAnnotation text="Add the SDK to your project." />
+          <FoldAnnotation variant="light" text="Add the SDK to your project." />
           <TerminalWindow command="npm i @llmops/sdk" />
-          <FoldAnnotation text="Create a client — zero config needed." />
+          <FoldAnnotation
+            variant="light"
+            text="Create a client — zero config needed."
+          />
           <IDEWindow
             tabs={[
               { name: 'server.ts', content: serverCode },
               { name: '.env', content: envCode },
             ]}
           />
-          <FoldAnnotation text="Route to any model through a unified interface." />
+          <FoldAnnotation
+            variant="light"
+            text="Route to any model through a unified interface."
+          />
           <BrowserWindow />
           <p className="text-sm text-gray-2/80 leading-relaxed text-center">
             Any provider, any model — one SDK.
@@ -161,6 +167,7 @@ const FoldInstall = () => {
               <FoldAnnotation
                 text="Add the SDK to your project."
                 target="terminal"
+                variant="light"
               />
             </div>
           </div>
@@ -169,16 +176,18 @@ const FoldInstall = () => {
               <FoldAnnotation
                 text="Create a client — zero config needed."
                 target="ide-client"
+                variant="light"
               />
               <FoldAnnotation
                 text="Route to any model through a unified interface."
                 target="ide-model"
+                variant="light"
                 delay={0.8}
               />
             </div>
           </div>
         </div>
-        <p className="hidden md:block text-sm text-gray-2/80 leading-relaxed text-center py-8 px-6">
+        <p className="hidden md:block text-sm text-gray-9 leading-relaxed text-center py-8 px-6">
           Any provider, any model — one SDK.
         </p>
       </div>
