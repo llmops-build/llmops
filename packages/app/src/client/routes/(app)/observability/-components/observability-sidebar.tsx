@@ -1,6 +1,6 @@
 import { Link, useSearch } from '@tanstack/react-router';
 import { Icon } from '@client/components/icons';
-import { BarChart3, DollarSign, List } from 'lucide-react';
+import { BarChart3, DollarSign, List, Route } from 'lucide-react';
 import {
   observabilitySidebar,
   observabilitySidebarItem,
@@ -41,6 +41,14 @@ export function ObservabilitySidebar() {
         >
           <Icon icon={List} />
           Requests
+        </Link>
+        <Link
+          to="/observability/traces"
+          search={search}
+          className={observabilitySidebarItem}
+        >
+          <Icon icon={Route} />
+          Traces
         </Link>
       </div>
     </nav>
