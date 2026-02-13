@@ -1,4 +1,10 @@
-import { type LLMOpsConfig, type ValidatedLLMOpsConfig } from '@llmops/core';
+import {
+  type LLMOpsConfig,
+  type ValidatedLLMOpsConfig,
+  LLMOPS_TRACE_ID_HEADER,
+  LLMOPS_TRACE_NAME_HEADER,
+  LLMOPS_SPAN_NAME_HEADER,
+} from '@llmops/core';
 import { createApp } from '@llmops/app';
 
 type ProviderConfig = {
@@ -46,13 +52,13 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
         if (ctx) {
           const headers = new Headers(request.headers);
           if (ctx.traceId) {
-            headers.set('x-llmops-trace-id', ctx.traceId);
+            headers.set(LLMOPS_TRACE_ID_HEADER, ctx.traceId);
           }
           if (ctx.traceName) {
-            headers.set('x-llmops-trace-name', ctx.traceName);
+            headers.set(LLMOPS_TRACE_NAME_HEADER, ctx.traceName);
           }
           if (ctx.spanName) {
-            headers.set('x-llmops-span-name', ctx.spanName);
+            headers.set(LLMOPS_SPAN_NAME_HEADER, ctx.spanName);
           }
           return handler(
             new Request(url.toString(), {

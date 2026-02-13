@@ -1,4 +1,11 @@
 import { randomBytes } from 'node:crypto';
+import {
+  LLMOPS_TRACE_ID_HEADER,
+  LLMOPS_TRACE_NAME_HEADER,
+  LLMOPS_SPAN_NAME_HEADER,
+  LLMOPS_SESSION_ID_HEADER,
+  LLMOPS_USER_ID_HEADER,
+} from '@llmops/core';
 
 /**
  * Resolved trace context from request headers
@@ -89,7 +96,7 @@ export function resolveTraceContext(req: {
 
   // 2. Fall back to x-llmops-trace-id
   if (!traceId) {
-    const customTraceId = req.header('x-llmops-trace-id');
+    const customTraceId = req.header(LLMOPS_TRACE_ID_HEADER);
     if (customTraceId && /^[0-9a-f]{32}$/.test(customTraceId)) {
       traceId = customTraceId;
     }
@@ -107,9 +114,9 @@ export function resolveTraceContext(req: {
     traceId,
     spanId,
     parentSpanId,
-    sessionId: req.header('x-llmops-session-id') ?? null,
-    traceName: req.header('x-llmops-trace-name') ?? null,
-    spanName: req.header('x-llmops-span-name') ?? null,
-    userId: req.header('x-llmops-user-id') ?? null,
+    sessionId: req.header(LLMOPS_SESSION_ID_HEADER) ?? null,
+    traceName: req.header(LLMOPS_TRACE_NAME_HEADER) ?? null,
+    spanName: req.header(LLMOPS_SPAN_NAME_HEADER) ?? null,
+    userId: req.header(LLMOPS_USER_ID_HEADER) ?? null,
   };
 }

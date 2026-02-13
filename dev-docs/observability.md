@@ -1,16 +1,16 @@
-# Observability: LLM Request Logging & Cost Tracking
+# Observability: Request Logging, Cost Tracking & Distributed Tracing
 
-Internal documentation for how request logging, cost tracking, and guardrail telemetry work end-to-end.
+Internal documentation for how request logging, cost tracking, distributed tracing, and guardrail telemetry work end-to-end.
 
 ---
 
 ## Architecture Overview
 
 ```
-CLIENT REQUEST
+CLIENT REQUEST (with optional traceparent / x-llmops-trace-id headers)
     │
     ▼
-costTracking middleware (generates requestId, detects streaming)
+costTracking middleware (resolves trace context, generates requestId + spanId)
     │
     ▼
 gatewayAdapter middleware (resolves config → provider credentials → Portkey config)
@@ -25,10 +25,24 @@ POST-RESPONSE: extract usage + guardrail results
 Calculate cost via models.dev pricing
     │
     ▼
-Enqueue to BatchWriter (in-memory queue)
+Enqueue to BatchWriter (llm_requests) + TraceBatchWriter (traces/spans/span_events)
     │
     ▼
-Periodic flush → batchInsertRequests() → llm_requests table
+Periodic flush → DB tables
+```
+
+**OTLP Ingestion (separate path):**
+```
+OTLP Client (Vercel AI SDK, OpenLLMetry, etc.)
+    │
+    ▼
+POST /api/otlp/v1/traces (OTLP JSON format)
+    │
+    ▼
+Parse spans, extract attributes, enqueue to TraceBatchWriter
+    │
+    ▼
+Periodic flush → traces/spans/span_events tables
 ```
 
 ---
@@ -37,13 +51,117 @@ Periodic flush → batchInsertRequests() → llm_requests table
 
 | File | Purpose |
 |------|---------|
-| `packages/app/src/server/middlewares/costTracking.ts` | Main middleware that orchestrates request tracking |
+| `packages/app/src/server/middlewares/costTracking.ts` | Main middleware: request tracking + trace context |
 | `packages/app/src/server/handlers/genai/gatewayAdapter.ts` | Resolves config/provider and sets gateway headers |
-| `packages/app/src/server/services/batchWriter.ts` | Batches DB writes for performance |
+| `packages/app/src/server/services/batchWriter.ts` | Batches `llm_requests` DB writes |
+| `packages/app/src/server/services/traceBatchWriter.ts` | Batches `traces`/`spans`/`span_events` DB writes |
+| `packages/app/src/server/lib/traceContext.ts` | Resolves trace context from W3C/custom headers |
 | `packages/app/src/server/lib/streamingCostExtractor.ts` | Extracts usage from SSE streaming responses |
-| `packages/app/src/server/services/credentialsCache.ts` | Caches provider credentials (5-min TTL) |
-| `packages/app/src/server/services/manifest.ts` | Caches gateway manifest with configs/guardrails (5-min TTL) |
+| `packages/app/src/server/handlers/otlp/index.ts` | OTLP ingestion endpoint |
+| `packages/app/src/server/handlers/traces/index.ts` | Traces query API (list, detail, stats) |
+| `packages/core/src/constants/headers.ts` | Shared header name constants |
+| `packages/core/src/datalayer/traces.ts` | Database operations for traces/spans/span_events |
 | `packages/core/src/datalayer/llmRequests.ts` | Database operations for `llm_requests` table |
+| `packages/sdk/src/client/index.ts` | SDK client with `provider()` trace context support |
+| `packages/sdk/src/telemetry/exporter.ts` | OTel SpanExporter for OTLP ingestion |
+
+---
+
+## Distributed Tracing
+
+### Trace Context Propagation
+
+The gateway resolves trace context from incoming request headers (in `traceContext.ts`):
+
+1. **W3C `traceparent`** header (highest priority) — extracts traceId + parentSpanId
+2. **`x-llmops-trace-id`** header — custom 32-hex trace ID
+3. **Auto-generate** — if neither header is present, a new traceId is created
+
+Additional headers read:
+- `x-llmops-trace-name` — human-readable trace name
+- `x-llmops-span-name` — span name (e.g., agent name)
+- `x-llmops-session-id` — session grouping
+- `x-llmops-user-id` — user attribution
+
+All header names are defined as constants in `packages/core/src/constants/headers.ts`.
+
+Response headers set by the gateway:
+- `x-llmops-trace-id` — resolved trace ID
+- `x-llmops-span-id` — generated span ID for this hop
+- `traceparent` — W3C format for downstream propagation
+
+### Database Tables
+
+**`traces`** — One row per trace, with denormalized aggregates:
+- `traceId` (unique, 32-hex), `name`, `sessionId`, `userId`
+- `status` (unset/ok/error), `startTime`, `endTime`, `durationMs`
+- `spanCount`, `totalInputTokens`, `totalOutputTokens`, `totalTokens`, `totalCost`
+- `tags` (JSONB), `metadata` (JSONB)
+
+**`spans`** — Individual spans (gateway or OTLP):
+- `traceId`, `spanId` (unique), `parentSpanId` (enables waterfall)
+- `name`, `kind` (OTel SpanKind), `status` (OTel StatusCode), `statusMessage`
+- `provider`, `model`, `promptTokens`, `completionTokens`, `totalTokens`, `cost`
+- `source` ('gateway' or 'otlp'), `input`/`output` (JSONB), `attributes` (JSONB)
+
+**`span_events`** — OTel span events:
+- `traceId`, `spanId`, `name`, `timestamp`, `attributes` (JSONB)
+
+### TraceBatchWriter (`traceBatchWriter.ts`)
+
+Same pattern as `batchWriter.ts`. On flush:
+1. Groups queued spans by traceId
+2. Upserts each trace with aggregated stats (ON CONFLICT merge)
+3. Batch inserts all spans
+4. Batch inserts all span events
+
+### OTLP Ingestion (`POST /api/otlp/v1/traces`)
+
+Accepts standard OTLP JSON (`ExportTraceServiceRequest` format). Processing:
+1. Parse `resourceSpans → scopeSpans → spans`
+2. Extract typed fields from attributes (provider, model, tokens, input/output)
+3. Convert nanosecond timestamps to Date objects
+4. Set `source: 'otlp'` to distinguish from gateway spans
+5. Enqueue to TraceBatchWriter
+
+Attribute extraction supports both OTel GenAI conventions (`gen_ai.*`) and Vercel AI SDK conventions (`ai.*`).
+
+### Traces Query API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/traces` | GET | List traces with filters (sessionId, userId, status, dateRange, tags) |
+| `/v1/traces/:traceId` | GET | Single trace with all spans + span events (waterfall data) |
+
+### SDK Integration
+
+The `provider()` method accepts a `traceContext` callback for automatic header injection:
+
+```typescript
+import { llmops } from '@llmops/sdk';
+
+const client = llmops();
+const provider = client.provider({
+  traceContext: () => ({
+    traceId: '...32-hex...',
+    traceName: 'My workflow',
+    spanName: 'AgentName',
+  }),
+});
+// Pass to OpenAI client: new OpenAI(provider)
+```
+
+For standard OTel clients, use the OTLP exporter:
+
+```typescript
+import { createLLMOpsSpanExporter } from '@llmops/sdk';
+
+const exporter = createLLMOpsSpanExporter({
+  baseURL: 'http://localhost:5177',
+  apiKey: 'env-secret',
+});
+// Use with NodeTracerProvider + SimpleSpanProcessor
+```
 
 ---
 
@@ -311,3 +429,4 @@ Set by the middleware chain and consumed by cost tracking:
 | `providerConfigId` | gatewayAdapter | Provider config FK |
 | `envSec` | upstream middleware | Environment secret from header |
 | `__costTrackingContext` | costTracking | Internal request context |
+| `__traceContext` | costTracking | Resolved trace context (traceId, spanId, parentSpanId, etc.) |

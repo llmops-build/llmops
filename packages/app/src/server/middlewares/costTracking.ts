@@ -1,6 +1,10 @@
 import type { MiddlewareHandler } from 'hono';
 import { randomUUID } from 'node:crypto';
-import { logger } from '@llmops/core';
+import {
+  logger,
+  LLMOPS_REQUEST_ID_HEADER,
+  LLMOPS_TRACE_ID_HEADER,
+} from '@llmops/core';
 import {
   wrapStreamingResponse,
   ensureStreamUsageEnabled,
@@ -375,7 +379,7 @@ export function createCostTrackingMiddleware(
     const startTime = Date.now();
 
     // Set request ID header early
-    c.header('x-llmops-request-id', requestId);
+    c.header(LLMOPS_REQUEST_ID_HEADER, requestId);
 
     // Parse request body to detect streaming and ensure usage is included
     let body: Record<string, unknown> = {};
@@ -426,7 +430,7 @@ export function createCostTrackingMiddleware(
     c.set('__traceContext', traceContext);
 
     // Set trace response headers
-    c.header('x-llmops-trace-id', traceContext.traceId);
+    c.header(LLMOPS_TRACE_ID_HEADER, traceContext.traceId);
     c.header('x-llmops-span-id', traceContext.spanId);
     c.header(
       'traceparent',
