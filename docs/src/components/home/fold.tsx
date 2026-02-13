@@ -1,0 +1,30 @@
+interface FoldProps {
+  number: number;
+  title: string;
+  description?: string;
+  id?: string;
+  children: React.ReactNode;
+}
+
+const Fold = ({ number, title, description, id, children }: FoldProps) => {
+  return (
+    <section id={id} className="border-b border-gray-4">
+      <div className="mb-8 py-8 md:py-12 px-10">
+        <span className="font-mono text-sm text-gray-9 block mb-2">
+          {String(number).padStart(2, '0')}
+        </span>
+        <h2 className="text-3xl font-pixel font-semibold text-gray-12 tracking-tight">
+          {title}
+        </h2>
+        {description && (
+          <p className="mt-3 text-gray-11 text-sm leading-relaxed max-w-xl">
+            {description}
+          </p>
+        )}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+};
+
+export default Fold;

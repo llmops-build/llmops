@@ -1,11 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap');
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'Geist Pixel Square';
+  src: url('../assets/fonts/GeistPixel-Square.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
 @theme {
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --font-pixel: 'Geist Pixel Square', 'Geist Mono', ui-monospace, monospace;
 
   --color-accent-1: #fbfdff;
   --color-accent-2: #f5f9ff;
@@ -103,6 +112,15 @@
   --color-background: #fff;
 
   --shadow-glow: 0 0px 35px var(--color-gray-a8);
+  --animate-blink: blink 1s steps(2) infinite;
+  @keyframes blink {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
   @keyframes fade-out-scale {
     0% {
       opacity: 1;

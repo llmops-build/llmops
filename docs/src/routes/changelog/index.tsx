@@ -31,11 +31,7 @@ function ChangelogPage() {
   );
 }
 
-function ReleaseEntry({
-  release,
-}: {
-  release: (typeof releases)[number];
-}) {
+function ReleaseEntry({ release }: { release: (typeof releases)[number] }) {
   const groupedCommits = groupCommitsByType(release.commits);
 
   const sections = [

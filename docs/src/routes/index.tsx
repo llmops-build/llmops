@@ -1,61 +1,99 @@
-import Features from "@/components/home/features";
-import "./-styles/base.css";
-import { createFileRoute } from "@tanstack/react-router";
-import { HomeLayout } from "fumadocs-ui/layouts/home";
-// @ts-expect-error // svgr import
-import Logo from "@/assets/llmops.svg?react";
-import Hero from "@/components/home/hero";
-import { baseOptions } from "@/lib/layout.shared";
+import FoldInstall from '@/components/home/fold-1-install';
+import FoldProviders from '@/components/home/fold-2-providers';
+import FoldObserve from '@/components/home/fold-3-observe';
+import FoldCosts from '@/components/home/fold-4-costs';
+import FoldPrompts from '@/components/home/fold-5-prompts';
+import Header from '@/components/home/header';
+import Hero from '@/components/home/hero';
+import LogoAnimation from '@/components/home/logo-animation';
+import './-styles/base.css';
+import { Link, createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute('/')({
   component: Home,
 });
 
 function Home() {
   return (
-    <HomeLayout
-      {...baseOptions({
-        noTitle: true,
-      })}
-      nav={{ enabled: false }}
-    >
-      <Hero />
-      <Features />
-      <footer className="border-t border-gray-4 py-8 px-4 lg:px-8 relative">
-        <div className="absolute w-20 aspect-square -top-20">
-          <Logo className="w-full h-full dark:invert" />
-        </div>
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-10">
-          <p>
-            &copy; {new Date().getFullYear()} ByteByByte Ventures LLP. All
-            rights reserved.
-          </p>
-          <div className="flex items-center gap-6">
-            <a
-              href="https://github.com/llmops-build/llmops"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-12 transition-colors"
+    <div className="grid grid-cols-1 md:grid-cols-[var(--sidebar-width)_1fr] min-h-screen bg-background force-light">
+      {/* Sidebar — single row, full height */}
+      <aside className="hidden md:block relative">
+        <div className="border-r border-[var(--gray4)] sticky top-0 h-screen w-full flex flex-col">
+          <LogoAnimation />
+          <nav className="mt-auto flex flex-col gap-0.5 px-4 py-3">
+            {[
+              { href: '#install', label: 'Start small' },
+              { href: '#providers', label: 'Providers' },
+              { href: '#dashboard', label: 'Dashboard' },
+              { href: '#observability', label: 'Observability' },
+              { href: '#prompts', label: 'Prompts' },
+            ].map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                className="text-xs font-mono text-[var(--gray9)] hover:text-[var(--gray12)] transition-colors px-2 py-1.5 rounded hover:bg-[var(--gray3)]"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="p-4 pt-2">
+            <button
+              type="button"
+              className="w-full text-xs font-mono text-[var(--gray9)] hover:text-[var(--gray12)] transition-colors cursor-pointer"
+              onClick={() => {
+                document.documentElement.classList.toggle('dark');
+              }}
             >
-              GitHub
-            </a>
-            <a
-              href="https://discord.gg/8teSTfmEKU"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-12 transition-colors"
-            >
-              Discord
-            </a>
-            <a
-              href="/docs/getting-started/installation"
-              className="hover:text-gray-12 transition-colors"
-            >
-              Documentation
-            </a>
+              toggle theme
+            </button>
           </div>
         </div>
-      </footer>
-    </HomeLayout>
+      </aside>
+
+      {/* Main — header + body */}
+      <div className="grid grid-rows-[auto_1fr] min-w-0">
+        <Header />
+        <main className="min-w-0">
+          <Hero />
+          <FoldInstall />
+          <FoldProviders />
+          <FoldObserve />
+          <FoldCosts />
+          <FoldPrompts />
+          {/*<FoldEvals />*/}
+
+          {/* Footer */}
+          <footer className="py-16 px-6 md:px-10 border-t border-gray-4">
+            <div className="max-w-xl">
+              <p className="text-2xl font-pixel font-semibold text-gray-12 tracking-tight">
+                Open source LLMOps for TypeScript teams.
+              </p>
+              <p className="mt-3 text-sm text-gray-11 leading-relaxed">
+                One SDK. Any provider. Full observability. Start building in
+                minutes.
+              </p>
+              <div className="flex gap-4 mt-6">
+                <a
+                  href="https://github.com/nicepkg/llmops"
+                  className="text-xs font-mono text-gray-9 hover:text-gray-12 transition-colors"
+                >
+                  GitHub
+                </a>
+                <Link
+                  to="/docs"
+                  className="text-xs font-mono text-gray-9 hover:text-gray-12 transition-colors"
+                >
+                  Docs
+                </Link>
+              </div>
+            </div>
+            <p className="mt-12 text-[11px] font-mono text-gray-8">
+              Apache License 2.0
+            </p>
+          </footer>
+        </main>
+      </div>
+    </div>
   );
 }
