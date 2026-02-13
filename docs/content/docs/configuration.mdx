@@ -26,7 +26,7 @@ export default llmops({
 
 ### basePath
 
-The URL path where LLMOps routes will be mounted. Must start with `/`.
+**Required** — The URL path where LLMOps routes will be mounted. Must be a non-empty string starting with `/`.
 
 ```typescript
 basePath: '/llmops';
@@ -41,7 +41,7 @@ This determines where the dashboard and API endpoints are accessible:
 
 ### database
 
-A PostgreSQL connection pool instance.
+**Required** — A PostgreSQL connection pool instance. Accepts any `pg.Pool`-compatible object.
 
 ```typescript
 import { Pool } from 'pg';
@@ -67,7 +67,7 @@ database: new Pool({
 
 ### schema
 
-The PostgreSQL schema name where LLMOps tables will be created. Defaults to `'llmops'`.
+**Optional** — The PostgreSQL schema name where LLMOps tables will be created. Defaults to `'llmops'`.
 
 ```typescript
 schema: 'llmops'; // default
@@ -92,40 +92,6 @@ schema: 'public';
 // Use a custom schema
 schema: 'my_llmops_schema';
 ```
-
-Using a dedicated schema keeps LLMOps tables separate from your application tables, making it easier to manage and backup.
-
----
-
-## Provider Configuration
-
-LLM providers are configured through the LLMOps dashboard, not in the configuration file. This allows you to:
-
-- Add, update, or remove providers without code changes
-- Securely store API keys in the database
-- Change providers at runtime
-
-### Setting Up Providers
-
-1. Open the LLMOps dashboard
-2. Navigate to **Settings** → **Workspace Providers**
-3. Click **Add Provider** and select your provider
-4. Enter your API credentials and save
-
-### Supported Providers
-
-LLMOps supports 70+ AI providers including:
-
-- **OpenAI** - GPT-4, GPT-3.5, etc.
-- **Anthropic** - Claude 3, Claude 2, etc.
-- **Google** - Gemini, Vertex AI
-- **AWS Bedrock** - Claude, Llama, etc.
-- **Azure OpenAI** - Azure-hosted OpenAI models
-- **OpenRouter** - Access to 100+ models via single API
-- **Groq** - Fast inference for open models
-- **Together AI**, **Fireworks AI**, **DeepSeek**, and many more
-
-See the [Providers](/docs/providers) page for the complete list and provider-specific configuration options.
 
 ---
 
@@ -158,5 +124,3 @@ We recommend storing sensitive values in environment variables:
 # Database
 DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
 ```
-
-Provider API keys are stored securely in the database after being configured through the dashboard.
