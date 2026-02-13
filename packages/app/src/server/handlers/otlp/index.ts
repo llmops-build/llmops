@@ -169,8 +169,9 @@ const app = new Hono()
       return c.json({ error: 'Invalid Authorization format' }, 401);
     }
 
-    // Validate env secret exists
     const envSec = match[1].trim();
+    // TODO: Validate envSec against environment_secrets via manifest router
+    // Currently auth is implicitly validated when resolving environment context
     c.set('envSec', envSec);
 
     // Parse body

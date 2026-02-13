@@ -272,6 +272,9 @@ export const collapsibleHeader = style([
     textTransform: 'uppercase',
     fontWeight: 500,
     userSelect: 'none',
+    background: 'none',
+    border: 'none',
+    width: '100%',
     ':hover': {
       color: colors.gray12,
     },

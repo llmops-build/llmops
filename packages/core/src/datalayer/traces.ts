@@ -143,9 +143,15 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
             ELSE "traces"."status"
           END,
           "startTime" = LEAST("traces"."startTime", EXCLUDED."startTime"),
-          "endTime" = GREATEST("traces"."endTime", EXCLUDED."endTime"),
+          "endTime" = GREATEST(
+            COALESCE("traces"."endTime", EXCLUDED."endTime"),
+            COALESCE(EXCLUDED."endTime", "traces"."endTime")
+          ),
           "durationMs" = EXTRACT(EPOCH FROM (
-            GREATEST("traces"."endTime", EXCLUDED."endTime") -
+            GREATEST(
+              COALESCE("traces"."endTime", EXCLUDED."endTime"),
+              COALESCE(EXCLUDED."endTime", "traces"."endTime")
+            ) -
             LEAST("traces"."startTime", EXCLUDED."startTime")
           ))::integer * 1000,
           "spanCount" = "traces"."spanCount" + EXCLUDED."spanCount",
@@ -209,7 +215,11 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
         updatedAt: now,
       }));
 
-      await db.insertInto('spans').values(values).execute();
+      await db
+        .insertInto('spans')
+        .values(values)
+        .onConflict((oc) => oc.column('spanId').doNothing())
+        .execute();
 
       return { count: values.length };
     },

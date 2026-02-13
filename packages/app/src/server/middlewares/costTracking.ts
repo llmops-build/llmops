@@ -4,6 +4,7 @@ import {
   logger,
   LLMOPS_REQUEST_ID_HEADER,
   LLMOPS_TRACE_ID_HEADER,
+  LLMOPS_SPAN_ID_HEADER,
 } from '@llmops/core';
 import {
   wrapStreamingResponse,
@@ -431,7 +432,7 @@ export function createCostTrackingMiddleware(
 
     // Set trace response headers
     c.header(LLMOPS_TRACE_ID_HEADER, traceContext.traceId);
-    c.header('x-llmops-span-id', traceContext.spanId);
+    c.header(LLMOPS_SPAN_ID_HEADER, traceContext.spanId);
     c.header(
       'traceparent',
       formatTraceparent(traceContext.traceId, traceContext.spanId)

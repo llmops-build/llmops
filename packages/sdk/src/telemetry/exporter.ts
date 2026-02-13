@@ -94,7 +94,7 @@ function toOtlpValue(value: unknown): Record<string, unknown> {
   if (typeof value === 'string') return { stringValue: value };
   if (typeof value === 'number') {
     return Number.isInteger(value)
-      ? { intValue: value }
+      ? { intValue: String(value) }
       : { doubleValue: value };
   }
   if (typeof value === 'boolean') return { boolValue: value };
@@ -104,6 +104,13 @@ function toOtlpValue(value: unknown): Record<string, unknown> {
         values: value.map((v) => toOtlpValue(v)),
       },
     };
+  }
+  if (typeof value === 'object' && value !== null) {
+    try {
+      return { stringValue: JSON.stringify(value) };
+    } catch {
+      return { stringValue: String(value) };
+    }
   }
   return { stringValue: String(value) };
 }

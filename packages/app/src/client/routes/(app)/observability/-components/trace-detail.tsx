@@ -256,10 +256,15 @@ function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen ?? false);
   return (
     <div>
-      <div className={collapsibleHeader} onClick={() => setOpen(!open)}>
+      <button
+        type="button"
+        className={collapsibleHeader}
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+      >
         <Icon icon={open ? ChevronDown : ChevronRight} size="sm" />
         {title}
-      </div>
+      </button>
       {open && children}
     </div>
   );

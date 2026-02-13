@@ -51,7 +51,7 @@ function RouteComponent() {
     } else {
       setTileWidth('100%');
     }
-  }, [traceId]);
+  }, [traceId, setTileWidth]);
 
   const breadcrumbItems = matches
     .filter(
