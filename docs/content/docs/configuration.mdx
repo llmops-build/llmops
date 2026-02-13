@@ -4,21 +4,31 @@ description: Learn about all configuration options for LLMOps.
 icon: Settings
 ---
 
-The `llmops()` function accepts a configuration object that controls how LLMOps behaves. This page documents all available options.
+The `llmops()` function accepts an optional configuration object that controls how LLMOps behaves. All fields are optional — providers are auto-detected from environment variables by default.
 
-## Basic Example
+## Zero-Config
+
+```typescript
+import { llmops } from '@llmops/sdk';
+
+// Auto-detects providers from env vars (OPENAI_API_KEY, etc.)
+const client = llmops();
+```
+
+## With Database
 
 ```typescript title="llmops.ts"
 import { llmops } from '@llmops/sdk';
 import { Pool } from 'pg';
 
 export default llmops({
-  basePath: '/llmops',
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
   }),
 });
 ```
+
+> Either `database` or `providers` must be configured. If neither is provided explicitly, LLMOps auto-detects providers from API key environment variables (e.g. `OPENAI_API_KEY`).
 
 ---
 
@@ -26,10 +36,10 @@ export default llmops({
 
 ### basePath
 
-**Required** — The URL path where LLMOps routes will be mounted. Must be a non-empty string starting with `/`.
+**Optional** — The URL path where LLMOps routes will be mounted. Must be a non-empty string starting with `/`. Defaults to `'/llmops'`.
 
 ```typescript
-basePath: '/llmops';
+basePath: '/llmops'; // default
 ```
 
 This determines where the dashboard and API endpoints are accessible:
@@ -41,7 +51,7 @@ This determines where the dashboard and API endpoints are accessible:
 
 ### database
 
-**Required** — A PostgreSQL connection pool instance. Accepts any `pg.Pool`-compatible object.
+**Optional** — A PostgreSQL connection pool instance for storing configs, variants, and enabling the dashboard UI.
 
 ```typescript
 import { Pool } from 'pg';
@@ -85,13 +95,68 @@ This option:
 | `'public'` | Uses the default PostgreSQL public schema |
 | `'custom'` | Uses a custom schema name of your choice  |
 
-```typescript
-// Use public schema (not recommended for production)
-schema: 'public';
+---
 
-// Use a custom schema
-schema: 'my_llmops_schema';
+### providers
+
+**Optional** — An array of inline provider configurations. Each provider has a unique `slug` used for routing via the `@slug/model` format.
+
+Code-configured providers take precedence over auto-detected defaults.
+
+```typescript
+providers: [
+  {
+    provider: 'openai',
+    slug: 'openai-prod',
+    apiKey: process.env.OPENAI_API_KEY,
+  },
+  {
+    provider: 'anthropic',
+    slug: 'anthropic-dev',
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  },
+]
 ```
+
+Each provider config accepts:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `provider` | Yes | Provider type (e.g. `'openai'`, `'anthropic'`, `'google'`) |
+| `slug` | Yes | Unique slug for routing (`@slug/model`) |
+| `apiKey` | No | API key for the provider |
+| `customHost` | No | Custom API host URL |
+| `requestTimeout` | No | Request timeout in milliseconds |
+| `forwardHeaders` | No | Headers to forward to the provider |
+
+---
+
+## Auto-Detected Providers
+
+When `providers` is not specified, LLMOps scans for API key environment variables and auto-configures providers:
+
+| Environment Variable | Slug | Provider |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | `@openai` | OpenAI |
+| `ANTHROPIC_API_KEY` | `@anthropic` | Anthropic |
+| `GOOGLE_API_KEY` | `@google` | Google |
+| `MISTRAL_API_KEY` | `@mistral` | Mistral |
+| `GROQ_API_KEY` | `@groq` | Groq |
+| `COHERE_API_KEY` | `@cohere` | Cohere |
+| `TOGETHER_API_KEY` | `@together` | Together AI |
+| `PERPLEXITY_API_KEY` | `@perplexity` | Perplexity |
+| `DEEPSEEK_API_KEY` | `@deepseek` | DeepSeek |
+| `FIREWORKS_API_KEY` | `@fireworks` | Fireworks AI |
+| `OPENROUTER_API_KEY` | `@openrouter` | OpenRouter |
+| `XAI_API_KEY` | `@xai` | xAI |
+| `CEREBRAS_API_KEY` | `@cerebras` | Cerebras |
+| `SAMBANOVA_API_KEY` | `@sambanova` | SambaNova |
+| `HUGGINGFACE_API_KEY` | `@huggingface` | Hugging Face |
+| `REPLICATE_API_TOKEN` | `@replicate` | Replicate |
+| `AI21_API_KEY` | `@ai21` | AI21 |
+| `DEEPINFRA_API_KEY` | `@deepinfra` | DeepInfra |
+
+When you provide explicit `providers`, auto-detected defaults are still added for any slug not already defined.
 
 ---
 
@@ -109,8 +174,13 @@ export default llmops({
     connectionString: process.env.DATABASE_URL!,
   }),
 
-  // PostgreSQL schema (defaults to 'llmops')
-  schema: 'llmops',
+  providers: [
+    {
+      provider: 'openai',
+      slug: 'openai-prod',
+      apiKey: process.env.OPENAI_API_KEY,
+    },
+  ],
 });
 ```
 
@@ -118,9 +188,11 @@ export default llmops({
 
 ## Environment Variables
 
-We recommend storing sensitive values in environment variables:
-
 ```bash title=".env"
-# Database
+# Database (optional — enables dashboard)
 DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+
+# Provider API keys (auto-detected when set)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
 ```
