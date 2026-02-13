@@ -31,14 +31,34 @@ const LogoAnimation = () => {
     });
 
     let sketch: import('p5').default | null = null;
+    let cancelled = false;
+
+    let mouseNx = 0;
+    let mouseNy = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      mouseNx = Math.max(
+        -1,
+        Math.min(1, (e.clientX - centerX) / (window.innerWidth / 2))
+      );
+      mouseNy = Math.max(
+        -1,
+        Math.min(1, (e.clientY - centerY) / (window.innerHeight / 2))
+      );
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
 
     import('p5').then(({ default: p5 }) => {
+      if (cancelled) return;
+
       let blink = 0;
       let blinkDir = 0;
       const blinkSpeed = 0.25;
 
-      let mouseNx = 0;
-      let mouseNy = 0;
       let rotY = 0;
       let eyeOffsetX = 0;
       let eyeOffsetY = 0;
@@ -46,20 +66,6 @@ const LogoAnimation = () => {
       const maxRotation = 0.5;
       const maxEyeShift = 80;
       const easing = 0.08;
-
-      window.addEventListener('mousemove', (e) => {
-        const rect = container.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        mouseNx = Math.max(
-          -1,
-          Math.min(1, (e.clientX - centerX) / (window.innerWidth / 2))
-        );
-        mouseNy = Math.max(
-          -1,
-          Math.min(1, (e.clientY - centerY) / (window.innerHeight / 2))
-        );
-      });
 
       sketch = new p5((p: import('p5').default) => {
         p.setup = () => {
@@ -159,6 +165,8 @@ const LogoAnimation = () => {
     });
 
     return () => {
+      cancelled = true;
+      window.removeEventListener('mousemove', onMouseMove);
       observer.disconnect();
       sketch?.remove();
     };

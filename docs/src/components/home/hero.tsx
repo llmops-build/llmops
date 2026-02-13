@@ -1,5 +1,6 @@
 'use client';
 
+import { Link } from '@tanstack/react-router';
 import gsap from 'gsap';
 import { useEffect, useRef, useState } from 'react';
 
@@ -239,7 +240,7 @@ const Hero = () => {
         every LLM call. Install it with your first provider. The rest shows up
         when you need it.
       </p>
-      <div className="px-6 md:px-10 pb-6 md:pb-10">
+      <div className="px-6 md:px-10 pb-6 md:pb-10 flex gap-3">
         <a
           href="https://github.com/llmops-build/llmops"
           target="_blank"
@@ -251,6 +252,12 @@ const Hero = () => {
           </svg>
           Star on GitHub
         </a>
+        <Link
+          to="/docs"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-12 border border-gray-6 rounded-md hover:bg-gray-3 transition-colors"
+        >
+          Docs
+        </Link>
       </div>
     </section>
   );

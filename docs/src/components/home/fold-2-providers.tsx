@@ -55,7 +55,6 @@ const providers = [
   { name: 'DeepSeek', logo: '/logos/deepseek.svg' },
 ];
 
-
 const FoldProviders = () => {
   const chipsRef = useRef<HTMLDivElement>(null);
 
@@ -103,11 +102,12 @@ const FoldProviders = () => {
       <div className="min-w-0">
         {/* Mobile: stacked vertically */}
         <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
-          <FoldAnnotation text="Register providers with custom slugs." variant="light" />
-          <IDEWindow
-            tabs={[{ name: 'providers.ts', content: providerCode }]}
+          <FoldAnnotation
+            text="Register providers with custom slugs."
+            variant="light"
           />
-          <div className="flex flex-wrap gap-2 justify-center mt-4">
+          <IDEWindow tabs={[{ name: 'providers.ts', content: providerCode }]} />
+          <div className="flex flex-wrap gap-2 justify-center mt-4 md:mt-0">
             {providers.map(({ name, logo }) => (
               <span
                 key={name}
@@ -152,7 +152,10 @@ const FoldProviders = () => {
             </div>
 
             {/* Right: stacked provider chips */}
-            <div ref={chipsRef} className="w-52 shrink-0 flex flex-col gap-3 pt-4">
+            <div
+              ref={chipsRef}
+              className="w-52 shrink-0 flex flex-col gap-3 pt-4"
+            >
               {providers.map(({ name, logo }) => (
                 <span
                   key={name}
