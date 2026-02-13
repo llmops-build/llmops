@@ -117,12 +117,12 @@ export const waterfallSectionTitle = style([
 
 export const spanRow = style({
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'stretch',
   gap: spacing.sm,
-  padding: `4px 0`,
   cursor: 'pointer',
   borderRadius: '4px',
   transition: 'background-color 0.1s ease',
+  minHeight: '28px',
   ':hover': {
     backgroundColor: colors.gray3,
   },
@@ -143,26 +143,48 @@ export const spanNameColumn = style([
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+    display: 'flex',
+    alignItems: 'center',
   },
 ]);
 
 export const spanBarColumn = style({
   flex: 1,
-  height: '20px',
   position: 'relative',
   minWidth: 0,
 });
 
 export const spanBar = style({
   position: 'absolute',
-  height: '100%',
-  borderRadius: '3px',
+  top: '2px',
+  bottom: '2px',
   minWidth: '2px',
   transition: 'opacity 0.1s ease',
 });
 
+// Span type colors
+export const spanBarGeneration = style({
+  backgroundColor: '#3b82f6',
+});
+
+export const spanBarAgent = style({
+  backgroundColor: '#a78bfa',
+});
+
+export const spanBarTool = style({
+  backgroundColor: '#34d399',
+});
+
+export const spanBarGuardrail = style({
+  backgroundColor: '#fb923c',
+});
+
+export const spanBarEmbedding = style({
+  backgroundColor: '#22d3ee',
+});
+
 export const spanBarDefault = style({
-  backgroundColor: colors.accent9,
+  backgroundColor: colors.gray8,
 });
 
 export const spanBarError = style({
@@ -179,6 +201,9 @@ export const spanDuration = style([
     flexShrink: 0,
     width: '60px',
     textAlign: 'right',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
 ]);
 

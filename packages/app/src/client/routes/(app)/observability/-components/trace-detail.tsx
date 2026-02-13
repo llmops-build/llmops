@@ -29,6 +29,11 @@ import {
   spanNameColumn,
   spanBarColumn,
   spanBar,
+  spanBarGeneration,
+  spanBarAgent,
+  spanBarTool,
+  spanBarGuardrail,
+  spanBarEmbedding,
   spanBarDefault,
   spanBarError,
   spanDuration,
@@ -126,6 +131,57 @@ const SPAN_KIND_MAP: Record<number, string> = {
   5: 'consumer',
 };
 
+type SpanType = 'generation' | 'agent' | 'tool' | 'guardrail' | 'embedding' | 'default';
+
+function getSpanType(span: SpanRow): SpanType {
+  const attrs = span.attributes;
+  const nameLower = span.name.toLowerCase();
+
+  // Tool spans
+  if (
+    attrs['gen_ai.tool.name'] ||
+    attrs['ai.toolCall.name'] ||
+    nameLower.includes('toolcall') ||
+    nameLower.includes('execute_tool')
+  ) {
+    return 'tool';
+  }
+
+  // Guardrail spans
+  if (attrs['llmops.guardrail.action'] || nameLower.includes('guardrail')) {
+    return 'guardrail';
+  }
+
+  // Embedding spans
+  if (
+    nameLower.includes('embed') ||
+    attrs['gen_ai.operation.name'] === 'embeddings'
+  ) {
+    return 'embedding';
+  }
+
+  // LLM generation spans (has model or generation operation)
+  if (span.model || attrs['gen_ai.operation.name'] || attrs['ai.operationId']) {
+    return 'generation';
+  }
+
+  // Agent/orchestration spans (internal kind, no model — typically parent spans)
+  if (span.kind <= 1 && !span.model) {
+    return 'agent';
+  }
+
+  return 'default';
+}
+
+const SPAN_TYPE_STYLES: Record<SpanType, string> = {
+  generation: spanBarGeneration,
+  agent: spanBarAgent,
+  tool: spanBarTool,
+  guardrail: spanBarGuardrail,
+  embedding: spanBarEmbedding,
+  default: spanBarDefault,
+};
+
 function formatJson(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'string') {
@@ -162,6 +218,8 @@ function SpanWaterfallRow({
       : 1;
 
   const isError = span.status === 2;
+  const spanType = getSpanType(span);
+  const barStyle = isError ? spanBarError : SPAN_TYPE_STYLES[spanType];
 
   return (
     <div
@@ -174,7 +232,7 @@ function SpanWaterfallRow({
       </span>
       <div className={spanBarColumn}>
         <div
-          className={clsx(spanBar, isError ? spanBarError : spanBarDefault)}
+          className={clsx(spanBar, barStyle)}
           style={{
             left: `${Math.max(0, leftPct)}%`,
             width: `${Math.max(0.5, Math.min(widthPct, 100 - leftPct))}%`,
