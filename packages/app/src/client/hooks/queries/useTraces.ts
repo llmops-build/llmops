@@ -32,6 +32,64 @@ export type PaginatedTracesResponse = {
 /**
  * List traces with filtering and pagination
  */
+export type SpanRow = {
+  id: string;
+  traceId: string;
+  spanId: string;
+  parentSpanId: string | null;
+  name: string;
+  kind: number;
+  status: number;
+  statusMessage: string | null;
+  startTime: string;
+  endTime: string | null;
+  durationMs: number | null;
+  provider: string | null;
+  model: string | null;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  cost: number;
+  source: string;
+  input: unknown | null;
+  output: unknown | null;
+  attributes: Record<string, unknown>;
+};
+
+export type SpanEventRow = {
+  id: string;
+  traceId: string;
+  spanId: string;
+  name: string;
+  timestamp: string;
+  attributes: Record<string, unknown>;
+};
+
+export type TraceDetailResponse = {
+  trace: TraceRow;
+  spans: SpanRow[];
+  events: SpanEventRow[];
+};
+
+/**
+ * Fetch a single trace with all spans and events
+ */
+export const useTraceDetail = (traceId: string) => {
+  return useQuery({
+    queryKey: ['traces', 'detail', traceId],
+    queryFn: async () => {
+      const response = await hc.v1.traces[':traceId'].$get({
+        param: { traceId },
+      });
+      const result = await response.json();
+      return ('data' in result ? result.data : undefined) as
+        | TraceDetailResponse
+        | undefined;
+    },
+    enabled: !!traceId,
+  });
+};
+
 export const useTraceList = (
   params: {
     limit?: number;
