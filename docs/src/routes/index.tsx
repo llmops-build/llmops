@@ -3,7 +3,6 @@ import FoldProviders from '@/components/home/fold-2-providers';
 import FoldObserve from '@/components/home/fold-3-observe';
 import FoldCosts from '@/components/home/fold-4-costs';
 import FoldPrompts from '@/components/home/fold-5-prompts';
-import FoldEvals from '@/components/home/fold-6-evals';
 import Header from '@/components/home/header';
 import Hero from '@/components/home/hero';
 import LogoAnimation from '@/components/home/logo-animation';
@@ -71,7 +70,8 @@ function Home() {
                 Open source LLMOps for TypeScript teams.
               </p>
               <p className="mt-3 text-sm text-gray-11 leading-relaxed">
-                One SDK. Any provider. Full observability. Start building in minutes.
+                One SDK. Any provider. Full observability. Start building in
+                minutes.
               </p>
               <div className="flex gap-4 mt-6">
                 <a
