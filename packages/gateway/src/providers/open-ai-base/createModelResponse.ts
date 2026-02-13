@@ -114,10 +114,10 @@ export const OpenAICreateModelResponseConfig: ProviderConfig = {
     param: 'stream',
     required: false,
   },
-  stream_options: {
-    param: 'stream_options',
-    required: false,
-  },
+  // Note: stream_options is intentionally NOT included here.
+  // The Responses API does not support stream_options.include_usage.
+  // SDKs like @openai/agents may send this parameter, so we
+  // exclude it from the config to strip it from outgoing requests.
   temperature: {
     param: 'temperature',
     required: false,

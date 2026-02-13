@@ -34,6 +34,13 @@ import {
   AzureAIInferenceMessagesConfig,
   AzureAIInferenceMessagesResponseTransform,
 } from './messages';
+import {
+  createModelResponseParams,
+  OpenAICreateModelResponseTransformer,
+  OpenAIGetModelResponseTransformer,
+  OpenAIDeleteModelResponseTransformer,
+  OpenAIListInputItemsResponseTransformer,
+} from '../open-ai-base';
 
 const AzureAIInferenceAPIConfig: ProviderConfigs = {
   api: AzureAIInferenceAPI,
@@ -61,6 +68,10 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
       cancelBatch: {},
       createBatch: AzureOpenAICreateBatchConfig,
       cancelFinetune: {},
+      createModelResponse: createModelResponseParams([]),
+      getModelResponse: {},
+      deleteModelResponse: {},
+      listModelsResponse: {},
       requestHandlers: {
         getBatchOutput: AzureAIInferenceGetBatchOutputRequestHandler,
       },
@@ -91,6 +102,13 @@ const AzureAIInferenceAPIConfig: ProviderConfigs = {
         retrieveFile: AzureAIInferenceResponseTransform,
         deleteFile: AzureAIInferenceResponseTransform,
         retrieveFileContent: AzureAIInferenceResponseTransform,
+        createModelResponse:
+          OpenAICreateModelResponseTransformer(AZURE_AI_INFERENCE),
+        getModelResponse: OpenAIGetModelResponseTransformer(AZURE_AI_INFERENCE),
+        deleteModelResponse:
+          OpenAIDeleteModelResponseTransformer(AZURE_AI_INFERENCE),
+        listModelsResponse:
+          OpenAIListInputItemsResponseTransformer(AZURE_AI_INFERENCE),
       },
     };
   },

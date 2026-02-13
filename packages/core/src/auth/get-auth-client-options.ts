@@ -45,6 +45,9 @@ export const getAuthClientOptions = (
     emailAndPassword: {
       enabled: true,
     },
+    advanced: {
+      cookiePrefix: 'llmops',
+    },
     databaseHooks: onUserCreated
       ? {
           user: {

@@ -13,6 +13,23 @@ app
   .get('/health', (c) => c.json({ status: 'ok' }))
   .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
+      // Check if running in inline-only mode (no database)
+      const db = c.var.db;
+      if (!db) {
+        // UI is disabled in inline-only mode
+        return c.json(
+          {
+            error: {
+              message:
+                'Dashboard UI is not available in inline-only mode. ' +
+                'Configure a database to enable the dashboard.',
+              type: 'configuration_error',
+            },
+          },
+          503
+        );
+      }
+
       const basePath = c.var.llmopsConfig?.basePath || '';
       // Auth type is always 'better-auth' now
       const authType = 'better-auth';

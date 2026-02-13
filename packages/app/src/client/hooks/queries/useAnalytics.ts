@@ -1,5 +1,6 @@
 import { hc } from '@client/lib/hc';
 import { useQuery } from '@tanstack/react-query';
+import type { CostSummaryGroupBy } from '@llmops/core';
 
 export interface DateRange {
   startDate: string;
@@ -160,7 +161,7 @@ export const useDailyCosts = (dateRange: DateRange, enabled = true) => {
  */
 export const useCostSummary = (
   params: DateRangeWithFilters & {
-    groupBy?: 'day' | 'hour' | 'model' | 'provider' | 'config';
+    groupBy?: CostSummaryGroupBy;
   },
   enabled = true
 ) => {

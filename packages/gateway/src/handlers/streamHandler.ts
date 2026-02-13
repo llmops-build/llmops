@@ -1,5 +1,6 @@
 import {
   AZURE_OPEN_AI,
+  AZURE_AI_INFERENCE,
   BEDROCK,
   CONTENT_TYPES,
   COHERE,
@@ -321,7 +322,8 @@ export function handleStreamingMode(
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const reader = response.body.getReader();
-  const isSleepTimeRequired = proxyProvider === AZURE_OPEN_AI ? true : false;
+  const isSleepTimeRequired =
+    proxyProvider === AZURE_OPEN_AI || proxyProvider === AZURE_AI_INFERENCE;
   const encoder = new TextEncoder();
 
   if (proxyProvider === BEDROCK) {

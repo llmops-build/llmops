@@ -73,8 +73,9 @@ export const codeElement = style({
 
 export const codeLine = style({
   display: 'block',
-  whiteSpace: 'pre',
-  height: '2.2rem',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-all',
+  minHeight: '2.2rem',
   lineHeight: '2.2rem',
   borderTop: `1px dashed ${colors.gray4}`,
 });

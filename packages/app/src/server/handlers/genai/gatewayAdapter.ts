@@ -12,7 +12,7 @@ import { getManifestService } from '@server/services/manifest';
 import {
   getProviderCredentials,
   getProviderCredentialsByProviderId,
-  getProviderCredentialsBySlug,
+  getProviderCredentialsWithFallback,
   type ProviderCredentials,
 } from '@server/services/credentialsCache';
 import { renderTemplate } from '@server/lib/template-utils';
@@ -450,7 +450,8 @@ function buildPortkeyConfig(
     portkeyConfig.azure_entra_client_id = credentials.azureEntraClientId;
   }
   if (credentials.azureEntraClientSecret) {
-    portkeyConfig.azure_entra_client_secret = credentials.azureEntraClientSecret;
+    portkeyConfig.azure_entra_client_secret =
+      credentials.azureEntraClientSecret;
   }
   if (credentials.azureEntraTenantId) {
     portkeyConfig.azure_entra_tenant_id = credentials.azureEntraTenantId;
@@ -494,15 +495,22 @@ async function handleDirectProviderRequest(
 ) {
   const db = c.var.db;
   const kyselyDb = c.var.kyselyDb;
+  const inlineProviders = c.var.inlineProviders;
 
-  // Look up provider credentials by slug
-  const result = await getProviderCredentialsBySlug(providerSlug, db);
+  // Look up provider credentials - inline config takes precedence over database
+  const result = await getProviderCredentialsWithFallback(
+    providerSlug,
+    inlineProviders,
+    db
+  );
 
   if (!result) {
     return c.json(
       {
         error: {
-          message: `Provider config not found for slug: ${providerSlug}`,
+          message:
+            `Provider config not found for slug: ${providerSlug}. ` +
+            `Configure it inline in your llmops config or add it to the database.`,
           type: 'invalid_request_error',
         },
       },
@@ -539,20 +547,26 @@ async function handleDirectProviderRequest(
 
   // Get guardrails from manifest (pre-loaded and cached)
   // Always set both arrays (even if empty) - gateway expects arrays, not undefined
-  try {
-    const manifestService = getManifestService(kyselyDb);
-    const manifest = await manifestService.getManifest();
-    const { guardrails } = manifest;
+  // Note: Guardrails require database, skip if running in inline-only mode
+  if (kyselyDb) {
+    try {
+      const manifestService = getManifestService(kyselyDb);
+      const manifest = await manifestService.getManifest();
+      const { guardrails } = manifest;
 
-    portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
-      guardrails.beforeRequestHook
-    );
-    portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
-      guardrails.afterRequestHook
-    );
-  } catch (error) {
-    logger.warn(`Failed to get guardrails from manifest: ${error}`);
-    // Set empty arrays as fallback - gateway expects arrays, not undefined
+      portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
+        guardrails.beforeRequestHook
+      );
+      portkeyConfig.default_output_guardrails =
+        convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
+    } catch (error) {
+      logger.warn(`Failed to get guardrails from manifest: ${error}`);
+      // Set empty arrays as fallback - gateway expects arrays, not undefined
+      portkeyConfig.default_input_guardrails = [];
+      portkeyConfig.default_output_guardrails = [];
+    }
+  } else {
+    // No database - no manifest-based guardrails available
     portkeyConfig.default_input_guardrails = [];
     portkeyConfig.default_output_guardrails = [];
   }
@@ -609,6 +623,16 @@ async function handleDirectProviderRequest(
   // Store resolved data in context
   c.set('variantModel', modelName);
   c.set('providerId', providerId);
+
+  // Debug log the gateway request
+  const debugHeaders: Record<string, string> = {};
+  newHeaders.forEach((value, key) => {
+    debugHeaders[key] = key === 'x-llmops-config' ? '[REDACTED]' : value;
+  });
+  logger.debug(
+    { headers: debugHeaders, body: updatedBody },
+    'Gateway request [direct]'
+  );
 
   await next();
 }
@@ -697,6 +721,21 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
           },
         },
         400
+      );
+    }
+
+    // Config-based routing requires database
+    if (!db || !kyselyDb) {
+      return c.json(
+        {
+          error: {
+            message:
+              'Config-based routing requires a database. ' +
+              'Either configure a database or use @provider-slug/model format for inline providers.',
+            type: 'configuration_error',
+          },
+        },
+        503
       );
     }
 
@@ -824,9 +863,8 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
         guardrails.beforeRequestHook
       );
-      portkeyConfig.default_output_guardrails = convertGuardrailsToGatewayFormat(
-        guardrails.afterRequestHook
-      );
+      portkeyConfig.default_output_guardrails =
+        convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
       if (guardrails.beforeRequestHook.length > 0) {
         logger.info(
           `Added input guardrails: ${JSON.stringify(portkeyConfig.default_input_guardrails)}`
@@ -903,6 +941,16 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         // Clear Hono's internal body cache
         (c.req as unknown as { bodyCache: Record<string, unknown> }).bodyCache =
           {};
+
+        // Debug log the gateway request
+        const debugHeaders: Record<string, string> = {};
+        newHeaders.forEach((value, key) => {
+          debugHeaders[key] = key === 'x-llmops-config' ? '[REDACTED]' : value;
+        });
+        logger.debug(
+          { headers: debugHeaders, body: mergedBody },
+          'Gateway request [config]'
+        );
       } else {
         // For non-chat requests, set the gateway config header
         c.req.raw.headers.set('x-llmops-config', JSON.stringify(portkeyConfig));
@@ -919,6 +967,16 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
             JSON.stringify(portkeyConfig.default_output_guardrails)
           );
         }
+
+        // Debug log the gateway request (non-chat)
+        const nonChatHeaders: Record<string, string> = {};
+        c.req.raw.headers.forEach((value, key) => {
+          nonChatHeaders[key] = key === 'x-llmops-config' ? '[REDACTED]' : value;
+        });
+        logger.debug(
+          { headers: nonChatHeaders },
+          'Gateway request [config/non-chat]'
+        );
       }
 
       // Store resolved data in context

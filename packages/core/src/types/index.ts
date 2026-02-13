@@ -5,6 +5,12 @@ import type {
 
 export type { ValidatedLLMOpsConfig, LLMOpsConfigInput };
 
+// Re-export inline provider types for convenience
+export type {
+  InlineProviderConfig,
+  InlineProvidersConfig,
+} from '../providers';
+
 /**
  * LLMOpsConfig is the user-facing config type (allows optional fields)
  */

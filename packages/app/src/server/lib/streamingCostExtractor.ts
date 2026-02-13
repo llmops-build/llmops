@@ -8,6 +8,8 @@
  * is passed in the request. The final chunk before `data: [DONE]` contains the usage.
  */
 
+import { logger } from '@llmops/core';
+
 /**
  * Gateway hook result structure (from SSE events)
  */
@@ -152,6 +154,11 @@ export function createStreamingCostExtractor(): {
     try {
       const parsed = JSON.parse(dataLine);
 
+      logger.debug(
+        { eventType, hasUsage: !!parsed.usage, keys: Object.keys(parsed) },
+        'Streaming cost extractor: parsed SSE chunk'
+      );
+
       // Check for hook_results event (Anthropic messages format)
       if (eventType === 'hook_results' || parsed.hook_results) {
         const hookData = parsed.hook_results || parsed;
@@ -165,24 +172,34 @@ export function createStreamingCostExtractor(): {
 
       // Check for usage in this chunk (OpenAI format)
       // Handle both chat completions format and responses API format
+      // For responses API streaming, usage is nested in parsed.response.usage (response.done event)
       const usageData = parsed as StreamChunkUsage;
-      if (usageData.usage) {
+      const usage = usageData.usage || (parsed.response as StreamChunkUsage | undefined)?.usage;
+      if (usage) {
+        logger.debug(
+          { rawUsage: usage, fromResponseObject: !usageData.usage },
+          'Streaming cost extractor: found usage in chunk'
+        );
         const promptTokens =
-          usageData.usage.prompt_tokens ?? usageData.usage.input_tokens ?? 0;
+          usage.prompt_tokens ?? usage.input_tokens ?? 0;
         const completionTokens =
-          usageData.usage.completion_tokens ??
-          usageData.usage.output_tokens ??
+          usage.completion_tokens ??
+          usage.output_tokens ??
           0;
         extractedUsage = {
           promptTokens,
           completionTokens,
           totalTokens:
-            usageData.usage.total_tokens ?? promptTokens + completionTokens,
+            usage.total_tokens ?? promptTokens + completionTokens,
           cachedTokens:
-            usageData.usage.prompt_tokens_details?.cached_tokens ??
-            usageData.usage.input_tokens_details?.cached_tokens,
+            usage.prompt_tokens_details?.cached_tokens ??
+            usage.input_tokens_details?.cached_tokens,
           hookResults: extractedHookResults,
         };
+        logger.debug(
+          { extractedUsage },
+          'Streaming cost extractor: extracted usage'
+        );
       }
     } catch {
       // Ignore parse errors - not all chunks are JSON
@@ -226,6 +243,11 @@ export function createStreamingCostExtractor(): {
           hookResults: extractedHookResults,
         };
       }
+
+      logger.debug(
+        { hasUsage: !!extractedUsage, extractedUsage },
+        'Streaming cost extractor: stream flush complete'
+      );
 
       // Resolve the usage promise
       resolveUsage(extractedUsage);
