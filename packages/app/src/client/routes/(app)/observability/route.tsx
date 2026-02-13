@@ -56,7 +56,6 @@ export type ObservabilitySearchParams = {
   configId?: string;
   variantId?: string;
   tags?: string; // JSON string of key-value pairs
-  traceId?: string;
 };
 
 export const Route = createFileRoute('/(app)/observability')({
@@ -95,8 +94,6 @@ export const Route = createFileRoute('/(app)/observability')({
     const variantId = search.variantId as string | undefined;
     const tags = search.tags as string | undefined;
 
-    const traceId = search.traceId as string | undefined;
-
     return {
       range: range,
       from,
@@ -105,7 +102,6 @@ export const Route = createFileRoute('/(app)/observability')({
       ...(configId && { configId }),
       ...(variantId && { variantId }),
       ...(tags && { tags }),
-      ...(traceId && { traceId }),
     };
   },
   staticData: {

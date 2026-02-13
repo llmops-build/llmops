@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { Icon } from '@client/components/icons';
 import { X } from 'lucide-react';
 import { Button } from '@ui';
@@ -6,14 +6,9 @@ import { sectionTitle } from './observability.css';
 
 export function TraceDetail({ traceId }: { traceId: string }) {
   const navigate = useNavigate();
-  const search = useSearch({ from: '/(app)/observability' });
 
   const handleClose = () => {
-    const { traceId: _, ...rest } = search;
-    navigate({
-      to: '/observability/traces',
-      search: rest,
-    });
+    navigate({ to: '/observability/traces' });
   };
 
   return (

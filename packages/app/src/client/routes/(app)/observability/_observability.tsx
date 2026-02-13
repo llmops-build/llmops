@@ -3,7 +3,7 @@ import {
   Link,
   Outlet,
   useMatches,
-  useSearch,
+  useParams,
 } from '@tanstack/react-router';
 import {
   breadcrumbLink,
@@ -40,16 +40,18 @@ export const Route = createFileRoute('/(app)/observability/_observability')({
 function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
-  const search = useSearch({ from: '/(app)/observability' });
+  const params = useParams({ strict: false });
   const { containerRef, setTileWidth } = useTileWidth();
 
+  const traceId = (params as { traceId?: string }).traceId;
+
   useEffect(() => {
-    if (search.traceId) {
+    if (traceId) {
       setTileWidth('40%');
     } else {
       setTileWidth('100%');
     }
-  }, [search.traceId]);
+  }, [traceId]);
 
   const breadcrumbItems = matches
     .filter(
@@ -107,7 +109,7 @@ function RouteComponent() {
             </div>
           </div>
           <div className={clsx(workingArea, rightTile)}>
-            {search.traceId && <TraceDetail traceId={search.traceId} />}
+            {traceId && <TraceDetail traceId={traceId} />}
           </div>
         </div>
       </div>

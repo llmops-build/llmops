@@ -1,5 +1,5 @@
 import { Icon } from '@client/components/icons';
-import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { createFileRoute, Outlet, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import {
   Route as RouteIcon,
   Loader2,
@@ -93,6 +93,8 @@ function RouteComponent() {
   const [offset, setOffset] = useState(0);
   const navigate = useNavigate();
   const search = useSearch({ from: '/(app)/observability' });
+  const params = useParams({ strict: false });
+  const selectedTraceId = (params as { traceId?: string }).traceId;
 
   const parsedTags = useMemo(() => {
     if (!search.tags) return undefined;
@@ -208,8 +210,9 @@ function RouteComponent() {
 
   const handleRowClick = (row: TraceRow) => {
     navigate({
-      to: '/observability/traces',
-      search: { ...search, traceId: row.traceId },
+      to: '/observability/traces/$traceId',
+      params: { traceId: row.traceId },
+      search,
     });
   };
 
@@ -231,6 +234,7 @@ function RouteComponent() {
   }
 
   return (
+  <>
     <div className={requestsPageWrapper}>
       <div className={requestsHeader}>
         <h3 className={sectionTitle}>Traces</h3>
@@ -258,7 +262,7 @@ function RouteComponent() {
               <TableRow
                 key={row.id}
                 interactive
-                selected={row.original.traceId === search.traceId}
+                selected={row.original.traceId === selectedTraceId}
                 onClick={() => handleRowClick(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
@@ -308,5 +312,7 @@ function RouteComponent() {
         </div>
       )}
     </div>
+    <Outlet />
+  </>
   );
 }
