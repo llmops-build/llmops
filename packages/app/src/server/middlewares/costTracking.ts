@@ -16,7 +16,7 @@ import {
   type TraceContext,
 } from '@server/lib/traceContext';
 import { getGlobalTraceBatchWriter } from '@server/services/traceBatchWriter';
-import type { SpanInsert, TraceUpsert } from '@llmops/core';
+import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
 
 /**
  * Model pricing information

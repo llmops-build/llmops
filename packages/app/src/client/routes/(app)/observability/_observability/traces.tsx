@@ -1,5 +1,5 @@
 import { Icon } from '@client/components/icons';
-import { createFileRoute, useSearch } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
 import {
   Route as RouteIcon,
   Loader2,
@@ -91,6 +91,7 @@ const statusUnset = statusBadge;
 
 function RouteComponent() {
   const [offset, setOffset] = useState(0);
+  const navigate = useNavigate();
   const search = useSearch({ from: '/(app)/observability' });
 
   const parsedTags = useMemo(() => {
@@ -205,6 +206,13 @@ function RouteComponent() {
     setOffset(offset + PAGE_SIZE);
   };
 
+  const handleRowClick = (row: TraceRow) => {
+    navigate({
+      to: '/observability/traces',
+      search: { ...search, traceId: row.traceId },
+    });
+  };
+
   if (isLoading) {
     return (
       <div className={loadingSpinner}>
@@ -247,10 +255,18 @@ function RouteComponent() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                interactive
+                selected={row.original.traceId === search.traceId}
+                onClick={() => handleRowClick(row.original)}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
                   </TableCell>
                 ))}
               </TableRow>

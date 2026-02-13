@@ -3,6 +3,7 @@ import {
   Link,
   Outlet,
   useMatches,
+  useSearch,
 } from '@tanstack/react-router';
 import {
   breadcrumbLink,
@@ -14,6 +15,11 @@ import { Breadcrumbs, Button, Header } from '@client/components/ui';
 import { Icon } from '@client/components/icons';
 import { ChevronRight, Columns2 } from 'lucide-react';
 import { gridElement, workingArea } from '../-components/area.css';
+import {
+  leftTile,
+  rightTile,
+  twinSplitContainer,
+} from '../-components/twin-split.css';
 import clsx from 'clsx';
 import {
   observabilityContent,
@@ -23,6 +29,9 @@ import { ObservabilitySidebar } from './-components/observability-sidebar';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { DateRangePicker } from './-components/date-range-picker';
 import { ObservabilityFilters } from './-components/observability-filters';
+import { useTileWidth } from '@client/hooks/ui/useTileWidth';
+import { useEffect } from 'react';
+import { TraceDetail } from './-components/trace-detail';
 
 export const Route = createFileRoute('/(app)/observability/_observability')({
   component: RouteComponent,
@@ -31,6 +40,16 @@ export const Route = createFileRoute('/(app)/observability/_observability')({
 function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
+  const search = useSearch({ from: '/(app)/observability' });
+  const { containerRef, setTileWidth } = useTileWidth();
+
+  useEffect(() => {
+    if (search.traceId) {
+      setTileWidth('40%');
+    } else {
+      setTileWidth('100%');
+    }
+  }, [search.traceId]);
 
   const breadcrumbItems = matches
     .filter(
@@ -78,10 +97,17 @@ function RouteComponent() {
         </div>
       </Header>
       <div className={gridElement}>
-        <div className={clsx(workingArea, observabilityLayout)}>
-          <ObservabilitySidebar />
-          <div className={observabilityContent}>
-            <Outlet />
+        <div ref={containerRef} className={twinSplitContainer}>
+          <div className={clsx(workingArea, leftTile)}>
+            <div className={observabilityLayout}>
+              <ObservabilitySidebar />
+              <div className={observabilityContent}>
+                <Outlet />
+              </div>
+            </div>
+          </div>
+          <div className={clsx(workingArea, rightTile)}>
+            {search.traceId && <TraceDetail traceId={search.traceId} />}
           </div>
         </div>
       </div>
