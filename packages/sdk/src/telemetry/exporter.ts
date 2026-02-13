@@ -32,7 +32,7 @@
  * We don't depend on @opentelemetry/sdk-trace-base — just implement the interface
  */
 export interface SpanExporter {
-  export(
+  export( // eslint-disable-line @typescript-eslint/no-unused-vars
     spans: ReadonlyArray<ReadableSpan>,
     resultCallback: (result: ExportResult) => void
   ): void;
@@ -125,7 +125,7 @@ export function createLLMOpsSpanExporter(
   const url = `${config.baseURL.replace(/\/$/, '')}/api/otlp/v1/traces`;
 
   return {
-    export(
+    export( // eslint-disable-line @typescript-eslint/no-unused-vars
       spans: ReadonlyArray<ReadableSpan>,
       resultCallback: (result: ExportResult) => void
     ): void {

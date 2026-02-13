@@ -145,9 +145,9 @@ function extractTypedFields(attrs: Record<string, unknown>) {
  * Database interface with trace methods
  */
 interface DbWithTraces {
-  upsertTrace: (data: TraceUpsert) => Promise<void>;
-  batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
-  batchInsertSpanEvents: (
+  upsertTrace: (data: TraceUpsert) => Promise<void>; // eslint-disable-line @typescript-eslint/no-unused-vars
+  batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>; // eslint-disable-line @typescript-eslint/no-unused-vars
+  batchInsertSpanEvents: ( // eslint-disable-line @typescript-eslint/no-unused-vars
     events: SpanEventInsert[]
   ) => Promise<{ count: number }>;
 }
@@ -198,8 +198,6 @@ const app = new Hono()
         batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
       },
     );
-
-    let spanCount = 0;
 
     try {
       for (const resourceSpan of body.resourceSpans) {
@@ -292,7 +290,6 @@ const app = new Hono()
             };
 
             traceBatchWriter.enqueue(item);
-            spanCount++;
           }
         }
       }

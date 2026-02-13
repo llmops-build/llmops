@@ -7,7 +7,7 @@ import z from 'zod';
  * Database interface with trace query methods
  */
 interface DbWithTraces {
-  listTraces: (params: {
+  listTraces: (params: { // eslint-disable-line @typescript-eslint/no-unused-vars
     limit?: number;
     offset?: number;
     sessionId?: string;
@@ -23,12 +23,12 @@ interface DbWithTraces {
     limit: number;
     offset: number;
   }>;
-  getTraceWithSpans: (
+  getTraceWithSpans: ( // eslint-disable-line @typescript-eslint/no-unused-vars
     traceId: string
   ) => Promise<
     { trace: unknown; spans: unknown[]; events: unknown[] } | undefined
   >;
-  getTraceStats: (params: {
+  getTraceStats: (params: { // eslint-disable-line @typescript-eslint/no-unused-vars
     startDate: Date;
     endDate: Date;
     sessionId?: string;

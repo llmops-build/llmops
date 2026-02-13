@@ -34,12 +34,13 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
   const handler = async (req: Request) => app.fetch(req, undefined, undefined);
   const basePath = validatedConfig.basePath;
 
-  const createInternalFetch = (
+  const createInternalFetch = ( // eslint-disable-line @typescript-eslint/no-unused-vars
     getTraceContext?: () => TraceContext | null
   ): typeof globalThis.fetch => {
-    return (input, init) => {
-      const request = new Request(input, init);
-      const url = new URL(request.url);
+    return (input, init) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+      const url = new URL(
+        input instanceof Request ? input.url : input.toString()
+      );
 
       // Strip basePath — same as what all middleware adapters do
       if (basePath && basePath !== '/' && url.pathname.startsWith(basePath)) {
@@ -50,6 +51,7 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
       if (getTraceContext) {
         const ctx = getTraceContext();
         if (ctx) {
+          const request = new Request(input, init);
           const headers = new Headers(request.headers);
           if (ctx.traceId) {
             headers.set(LLMOPS_TRACE_ID_HEADER, ctx.traceId);
@@ -66,12 +68,12 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
               headers,
               body: request.body,
               duplex: 'half',
-            } as RequestInit)
+            } as never)
           );
         }
       }
 
-      return handler(new Request(url.toString(), request));
+      return handler(new Request(url.toString(), new Request(input, init)));
     };
   };
 

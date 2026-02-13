@@ -11,9 +11,9 @@ export interface TraceQueueItem {
 }
 
 export interface TraceBatchWriterDeps {
-  upsertTrace: (data: TraceUpsert) => Promise<void>;
-  batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
-  batchInsertSpanEvents: (
+  upsertTrace: (data: TraceUpsert) => Promise<void>; // eslint-disable-line @typescript-eslint/no-unused-vars
+  batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>; // eslint-disable-line @typescript-eslint/no-unused-vars
+  batchInsertSpanEvents: ( // eslint-disable-line @typescript-eslint/no-unused-vars
     events: SpanEventInsert[]
   ) => Promise<{ count: number }>;
 }
@@ -25,7 +25,7 @@ export interface TraceBatchWriterConfig {
 }
 
 export interface TraceBatchWriter {
-  enqueue(item: TraceQueueItem): void;
+  enqueue(item: TraceQueueItem): void; // eslint-disable-line @typescript-eslint/no-unused-vars
   flush(): Promise<void>;
   stop(): Promise<void>;
   queueLength(): number;

@@ -78,7 +78,7 @@ function parseTraceparent(
  *
  * Always generates a new spanId for this hop.
  */
-export function resolveTraceContext(req: {
+export function resolveTraceContext(req: { // eslint-disable-line @typescript-eslint/no-unused-vars
   header: (name: string) => string | undefined;
 }): TraceContext {
   let traceId: string | null = null;
