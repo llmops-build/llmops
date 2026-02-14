@@ -11,3 +11,8 @@ export {
   type LLMOpsExporterConfig,
   type SpanExporter,
 } from './telemetry/exporter';
+export {
+  createLLMOpsAgentsExporter,
+  type LLMOpsAgentsExporterConfig,
+  type AgentsTracingExporter,
+} from './telemetry/agents-exporter';
