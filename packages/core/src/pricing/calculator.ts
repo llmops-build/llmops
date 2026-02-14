@@ -45,6 +45,99 @@ export function calculateCost(
 }
 
 /**
+ * Get default cache read rate as a fraction of input cost per provider.
+ * Used when models.dev doesn't provide cache pricing.
+ */
+function getDefaultCacheReadRate(
+  provider: string | undefined,
+  inputCostPer1M: number
+): number {
+  switch (provider?.toLowerCase()) {
+    case 'anthropic':
+      return inputCostPer1M * 0.1; // 10% of input price
+    case 'openai':
+    case 'azure-openai':
+      return inputCostPer1M * 0.5; // 50% of input price
+    case 'google':
+    case 'gemini':
+    case 'vertex_ai':
+      return inputCostPer1M * 0.25; // 25% of input price
+    default:
+      return inputCostPer1M * 0.5; // Conservative default
+  }
+}
+
+/**
+ * Get default cache write/creation rate as a fraction of input cost per provider.
+ * Used when models.dev doesn't provide cache pricing.
+ */
+function getDefaultCacheWriteRate(
+  provider: string | undefined,
+  inputCostPer1M: number
+): number {
+  switch (provider?.toLowerCase()) {
+    case 'anthropic':
+      return inputCostPer1M * 1.25; // 125% of input price
+    default:
+      return inputCostPer1M; // Same as input (no write premium)
+  }
+}
+
+/**
+ * Calculate cache-aware cost of an LLM request in micro-dollars.
+ *
+ * Splits input tokens into uncached, cache-read, and cache-creation buckets,
+ * each priced at different rates. Falls back to provider-specific multipliers
+ * when models.dev doesn't provide cache pricing.
+ *
+ * @param usage - Token usage data (with cachedTokens and cacheCreationTokens)
+ * @param pricing - Model pricing (may include cacheReadCostPer1M / cacheWriteCostPer1M)
+ * @param provider - Provider name for fallback rate selection
+ * @returns Cost breakdown in micro-dollars
+ */
+export function calculateCacheAwareCost(
+  usage: UsageData,
+  pricing: ModelPricing,
+  provider?: string
+): CostResult {
+  const cachedTokens = usage.cachedTokens ?? 0;
+  const cacheCreationTokens = usage.cacheCreationTokens ?? 0;
+
+  // If no cache tokens, use the simple calculation
+  if (cachedTokens === 0 && cacheCreationTokens === 0) {
+    return calculateCost(usage, pricing);
+  }
+
+  // Determine cache pricing rates
+  const cacheReadRate =
+    pricing.cacheReadCostPer1M ??
+    getDefaultCacheReadRate(provider, pricing.inputCostPer1M);
+  const cacheWriteRate =
+    pricing.cacheWriteCostPer1M ??
+    getDefaultCacheWriteRate(provider, pricing.inputCostPer1M);
+
+  // Uncached input = total prompt minus cached and creation tokens
+  const uncachedInputTokens = Math.max(
+    0,
+    usage.promptTokens - cachedTokens - cacheCreationTokens
+  );
+
+  const regularInputCost = Math.round(
+    uncachedInputTokens * pricing.inputCostPer1M
+  );
+  const cacheReadCost = Math.round(cachedTokens * cacheReadRate);
+  const cacheWriteCost = Math.round(cacheCreationTokens * cacheWriteRate);
+  const outputCost = Math.round(
+    usage.completionTokens * pricing.outputCostPer1M
+  );
+
+  const inputCost = regularInputCost + cacheReadCost + cacheWriteCost;
+  const totalCost = inputCost + outputCost;
+
+  return { inputCost, outputCost, totalCost };
+}
+
+/**
  * Convert micro-dollars to dollars
  *
  * @param microDollars - Amount in micro-dollars

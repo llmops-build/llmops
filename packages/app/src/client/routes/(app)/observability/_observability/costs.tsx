@@ -200,6 +200,14 @@ function RouteComponent() {
         </div>
 
         <div className={costMetricItem}>
+          <span className={costMetricLabel}>Cached Input</span>
+          <p className={costMetricValue}>
+            {Number(totalCost?.totalCachedTokens ?? 0).toLocaleString()}
+          </p>
+          <span className={costMetricSubvalue}>tokens</span>
+        </div>
+
+        <div className={costMetricItem}>
           <span className={costMetricLabel}>Requests</span>
           <p className={costMetricValue}>
             {totalCost?.requestCount.toLocaleString()}

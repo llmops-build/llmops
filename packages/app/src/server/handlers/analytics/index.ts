@@ -45,6 +45,7 @@ interface DbWithAnalytics {
         totalPromptTokens: number;
         totalCompletionTokens: number;
         totalTokens: number;
+        totalCachedTokens: number;
         requestCount: number;
       }
     | undefined
@@ -300,6 +301,7 @@ const app = new Hono()
               totalPromptTokens: 0,
               totalCompletionTokens: 0,
               totalTokens: 0,
+              totalCachedTokens: 0,
               requestCount: 0,
             },
             200

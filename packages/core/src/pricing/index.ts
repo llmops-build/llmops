@@ -38,6 +38,7 @@ export type {
 // Calculator
 export {
   calculateCost,
+  calculateCacheAwareCost,
   microDollarsToDollars,
   dollarsToMicroDollars,
   formatCost,

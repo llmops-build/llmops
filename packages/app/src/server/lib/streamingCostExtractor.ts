@@ -52,6 +52,7 @@ export interface StreamingUsage {
   completionTokens: number;
   totalTokens: number;
   cachedTokens?: number;
+  cacheCreationTokens?: number;
   hookResults?: GatewayHookResults;
 }
 
@@ -77,6 +78,9 @@ interface StreamChunkUsage {
     output_tokens_details?: {
       reasoning_tokens?: number;
     };
+    // Anthropic format
+    cache_creation_input_tokens?: number;
+    cache_read_input_tokens?: number;
   };
 }
 
@@ -193,7 +197,9 @@ export function createStreamingCostExtractor(): {
             usage.total_tokens ?? promptTokens + completionTokens,
           cachedTokens:
             usage.prompt_tokens_details?.cached_tokens ??
-            usage.input_tokens_details?.cached_tokens,
+            usage.input_tokens_details?.cached_tokens ??
+            usage.cache_read_input_tokens,
+          cacheCreationTokens: usage.cache_creation_input_tokens,
           hookResults: extractedHookResults,
         };
         logger.debug(

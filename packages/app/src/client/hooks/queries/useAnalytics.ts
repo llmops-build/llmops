@@ -48,6 +48,7 @@ export const useTotalCost = (params: DateRangeWithFilters, enabled = true) => {
         totalPromptTokens: number;
         totalCompletionTokens: number;
         totalTokens: number;
+        totalCachedTokens: number;
         requestCount: number;
       } | null;
     },

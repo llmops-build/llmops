@@ -246,7 +246,8 @@ export const llmRequestsSchema = z.object({
   promptTokens: z.number().int().default(0),
   completionTokens: z.number().int().default(0),
   totalTokens: z.number().int().default(0),
-  cachedTokens: z.number().int().default(0), // For cache-aware pricing
+  cachedTokens: z.number().int().default(0), // Cache read tokens (OpenAI cached_tokens / Anthropic cache_read_input_tokens)
+  cacheCreationTokens: z.number().int().default(0), // Anthropic cache_creation_input_tokens
 
   // Cost (stored in micro-dollars for precision: $0.001 = 1000)
   cost: z.number().int().default(0), // Total cost in micro-dollars
@@ -558,6 +559,7 @@ export interface LLMRequestsTable extends BaseTable {
   completionTokens: ColumnType<number, number | undefined, number | undefined>;
   totalTokens: ColumnType<number, number | undefined, number | undefined>;
   cachedTokens: ColumnType<number, number | undefined, number | undefined>;
+  cacheCreationTokens: ColumnType<number, number | undefined, number | undefined>;
   cost: ColumnType<number, number | undefined, number | undefined>;
   inputCost: ColumnType<number, number | undefined, number | undefined>;
   outputCost: ColumnType<number, number | undefined, number | undefined>;
@@ -1064,6 +1066,7 @@ export const SCHEMA_METADATA = {
         completionTokens: { type: 'integer', default: 0 },
         totalTokens: { type: 'integer', default: 0 },
         cachedTokens: { type: 'integer', default: 0 },
+        cacheCreationTokens: { type: 'integer', default: 0 },
         cost: { type: 'integer', default: 0 },
         inputCost: { type: 'integer', default: 0 },
         outputCost: { type: 'integer', default: 0 },
