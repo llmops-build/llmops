@@ -4,7 +4,7 @@
  * This module provides:
  * - Types for model pricing and cost calculation
  * - Cost calculator with micro-dollar precision
- * - Pricing provider abstraction with models.dev implementation
+ * - Pricing provider abstraction with LLMOps Models API implementation
  *
  * @example
  * ```typescript
@@ -46,6 +46,6 @@ export {
 
 // Providers
 export {
-  ModelsDevPricingProvider,
+  LLMOpsPricingProvider,
   getDefaultPricingProvider,
 } from './provider';

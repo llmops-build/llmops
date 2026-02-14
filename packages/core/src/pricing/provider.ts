@@ -1,137 +1,145 @@
 import type { ModelPricing, PricingProvider } from './types';
 import { logger } from '../utils/logger';
 
-const MODELS_DEV_API = 'https://models.dev/api.json';
+const LLMOPS_MODELS_API = 'https://models.llmops.build';
 
 /**
- * Models.dev API response types
+ * LLMOps Models API response types
  */
-interface ModelsDevModel {
-  id: string;
-  name: string;
-  cost: {
-    input: number; // Cost per 1M input tokens
-    output: number; // Cost per 1M output tokens
-    reasoning?: number;
-    cache_read?: number;
-    cache_write?: number;
-  };
+interface PricingTokenConfig {
+  price: number; // USD cents per token
 }
 
-interface ModelsDevProvider {
-  id: string;
-  name: string;
-  models: Record<string, ModelsDevModel>;
+interface PayAsYouGoPricing {
+  request_token?: PricingTokenConfig;
+  response_token?: PricingTokenConfig;
+  cache_write_input_token?: PricingTokenConfig;
+  cache_read_input_token?: PricingTokenConfig;
 }
 
-type ModelsDevResponse = Record<string, ModelsDevProvider>;
+interface PricingResponse {
+  pay_as_you_go: PayAsYouGoPricing | null;
+  currency?: string;
+}
+
+interface CacheEntry {
+  pricing: ModelPricing | null;
+  fetchedAt: number;
+}
 
 /**
- * Pricing provider that fetches data from models.dev API
+ * Convert price from USD cents per token to dollars per 1M tokens.
+ *
+ * API returns cents/token. Our system uses dollars/1M tokens.
+ * Formula: (centsPerToken / 100) * 1_000_000 = centsPerToken * 10_000
+ */
+function centsPerTokenToCostPer1M(centsPerToken: number): number {
+  return centsPerToken * 10_000;
+}
+
+/**
+ * Pricing provider that fetches per-model data from the LLMOps Models API.
  *
  * Features:
- * - Caches pricing data with configurable TTL (default 5 minutes)
- * - Supports fallback to local cache on fetch failure
- * - Thread-safe cache refresh
+ * - Per-model in-memory cache with configurable TTL (default 5 minutes)
+ * - Deduplicates concurrent fetches for the same model
+ * - Caches null results (404s) to avoid repeated lookups
+ * - Falls back to stale cache on fetch errors
  */
-export class ModelsDevPricingProvider implements PricingProvider {
-  private cache: Map<string, ModelPricing> = new Map();
-  private lastFetch: number = 0;
+export class LLMOpsPricingProvider implements PricingProvider {
+  private cache: Map<string, CacheEntry> = new Map();
+  private pendingFetches: Map<string, Promise<ModelPricing | null>> = new Map();
   private cacheTTL: number;
-  private fetchPromise: Promise<void> | null = null;
-  private ready: boolean = false;
+  private baseUrl: string;
 
-  /**
-   * Create a new ModelsDevPricingProvider
-   *
-   * @param cacheTTL - Cache TTL in milliseconds (default: 5 minutes)
-   */
-  constructor(cacheTTL: number = 5 * 60 * 1000) {
-    this.cacheTTL = cacheTTL;
+  constructor(options?: { cacheTTL?: number; baseUrl?: string }) {
+    this.cacheTTL = options?.cacheTTL ?? 5 * 60 * 1000; // 5 minutes
+    this.baseUrl = options?.baseUrl ?? LLMOPS_MODELS_API;
   }
 
-  /**
-   * Generate a cache key for a provider/model combination
-   */
   private getCacheKey(provider: string, model: string): string {
     return `${provider.toLowerCase()}:${model.toLowerCase()}`;
   }
 
   /**
-   * Fetch pricing data from models.dev API
+   * Fetch pricing for a single model from the API
    */
-  private async fetchPricingData(): Promise<void> {
+  private async fetchModelPricing(
+    provider: string,
+    model: string
+  ): Promise<ModelPricing | null> {
+    // Model names can contain slashes (e.g. meta-llama/Llama-3.3-70B-Instruct)
+    // The API routing captures them correctly, so don't encode the model
+    const url = `${this.baseUrl}/model-configs/pricing/${encodeURIComponent(provider)}/${model}`;
+
     try {
-      logger.debug('[Pricing] Fetching pricing data from models.dev');
-      const response = await fetch(MODELS_DEV_API);
+      logger.debug(
+        `[Pricing] GET ${url}`
+      );
+      const startTime = Date.now();
+      const response = await fetch(url);
+      const elapsed = Date.now() - startTime;
+      logger.debug(
+        `[Pricing] GET ${url} -> ${response.status} (${elapsed}ms)`
+      );
+
+      if (response.status === 404) {
+        logger.debug(`[Pricing] No pricing found for ${provider}/${model}`);
+        return null;
+      }
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch models.dev API: ${response.status}`);
+        throw new Error(`API returned ${response.status}`);
       }
 
-      const data = (await response.json()) as ModelsDevResponse;
+      const data = (await response.json()) as PricingResponse;
 
-      // Clear and rebuild cache
-      this.cache.clear();
-
-      for (const [providerId, provider] of Object.entries(data)) {
-        if (!provider.models) continue;
-
-        for (const [_modelId, model] of Object.entries(provider.models)) {
-          if (!model.cost) continue;
-
-          const cacheKey = this.getCacheKey(providerId, model.id);
-          this.cache.set(cacheKey, {
-            inputCostPer1M: model.cost.input ?? 0,
-            outputCostPer1M: model.cost.output ?? 0,
-            cacheReadCostPer1M: model.cost.cache_read,
-            cacheWriteCostPer1M: model.cost.cache_write,
-            reasoningCostPer1M: model.cost.reasoning,
-          });
-
-          // Also store with model name as key for flexibility
-          const nameKey = this.getCacheKey(providerId, model.name);
-          if (nameKey !== cacheKey) {
-            this.cache.set(nameKey, this.cache.get(cacheKey)!);
-          }
-        }
+      if (!data.pay_as_you_go) {
+        // null pay_as_you_go means deprecated or free model
+        return null;
       }
 
-      this.lastFetch = Date.now();
-      this.ready = true;
+      const payg = data.pay_as_you_go;
+
+      const pricing: ModelPricing = {
+        inputCostPer1M: centsPerTokenToCostPer1M(
+          payg.request_token?.price ?? 0
+        ),
+        outputCostPer1M: centsPerTokenToCostPer1M(
+          payg.response_token?.price ?? 0
+        ),
+        cacheReadCostPer1M:
+          payg.cache_read_input_token?.price != null
+            ? centsPerTokenToCostPer1M(payg.cache_read_input_token.price)
+            : undefined,
+        cacheWriteCostPer1M:
+          payg.cache_write_input_token?.price != null
+            ? centsPerTokenToCostPer1M(payg.cache_write_input_token.price)
+            : undefined,
+      };
+
       logger.debug(
-        `[Pricing] Cached pricing for ${this.cache.size} models from models.dev`
+        `[Pricing] Cached pricing for ${provider}/${model}: input=$${pricing.inputCostPer1M}/1M, output=$${pricing.outputCostPer1M}/1M`
       );
+
+      return pricing;
     } catch (error) {
       logger.error(
-        `[Pricing] Failed to fetch pricing data: ${error instanceof Error ? error.message : String(error)}`
+        `[Pricing] Failed to fetch pricing for ${provider}/${model}: ${error instanceof Error ? error.message : String(error)}`
       );
-      // Keep existing cache on failure
-      if (this.cache.size === 0) {
-        throw error;
+
+      // Return stale cache if available
+      const cacheKey = this.getCacheKey(provider, model);
+      const stale = this.cache.get(cacheKey);
+      if (stale) {
+        logger.debug(
+          `[Pricing] Using stale cache for ${provider}/${model}`
+        );
+        return stale.pricing;
       }
+
+      return null;
     }
-  }
-
-  /**
-   * Ensure cache is fresh, fetching if necessary
-   */
-  private async ensureFreshCache(): Promise<void> {
-    const now = Date.now();
-    const isStale = now - this.lastFetch > this.cacheTTL;
-
-    if (!isStale && this.cache.size > 0) {
-      return;
-    }
-
-    // Use a single promise to prevent concurrent fetches
-    if (!this.fetchPromise) {
-      this.fetchPromise = this.fetchPricingData().finally(() => {
-        this.fetchPromise = null;
-      });
-    }
-
-    await this.fetchPromise;
   }
 
   /**
@@ -141,46 +149,43 @@ export class ModelsDevPricingProvider implements PricingProvider {
     provider: string,
     model: string
   ): Promise<ModelPricing | null> {
-    await this.ensureFreshCache();
-
     const cacheKey = this.getCacheKey(provider, model);
-    const pricing = this.cache.get(cacheKey);
 
-    if (!pricing) {
-      logger.debug(
-        `[Pricing] No pricing found for ${provider}/${model}, trying partial match`
-      );
-
-      // Try partial match - some models have version suffixes
-      for (const [key, value] of this.cache.entries()) {
-        if (key.startsWith(`${provider.toLowerCase()}:`)) {
-          const modelPart = key.split(':')[1];
-          if (model.toLowerCase().includes(modelPart)) {
-            logger.debug(`[Pricing] Found partial match: ${key}`);
-            return value;
-          }
-        }
-      }
-
-      return null;
+    // Check fresh cache
+    const cached = this.cache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < this.cacheTTL) {
+      return cached.pricing;
     }
 
-    return pricing;
+    // Deduplicate concurrent fetches for the same model
+    let pending = this.pendingFetches.get(cacheKey);
+    if (!pending) {
+      pending = this.fetchModelPricing(provider, model)
+        .then((pricing) => {
+          this.cache.set(cacheKey, { pricing, fetchedAt: Date.now() });
+          return pricing;
+        })
+        .finally(() => {
+          this.pendingFetches.delete(cacheKey);
+        });
+      this.pendingFetches.set(cacheKey, pending);
+    }
+
+    return pending;
   }
 
   /**
-   * Force refresh the pricing cache
+   * Force refresh the pricing cache (clears all cached entries)
    */
   async refreshCache(): Promise<void> {
-    this.lastFetch = 0; // Force stale
-    await this.ensureFreshCache();
+    this.cache.clear();
   }
 
   /**
-   * Check if the provider is ready
+   * Always ready — no bulk pre-fetch needed
    */
   isReady(): boolean {
-    return this.ready;
+    return true;
   }
 
   /**
@@ -191,15 +196,15 @@ export class ModelsDevPricingProvider implements PricingProvider {
   }
 }
 
-// Singleton instance for convenience
-let defaultProvider: ModelsDevPricingProvider | null = null;
+// Singleton instance
+let defaultProvider: LLMOpsPricingProvider | null = null;
 
 /**
  * Get the default pricing provider instance
  */
-export function getDefaultPricingProvider(): ModelsDevPricingProvider {
+export function getDefaultPricingProvider(): LLMOpsPricingProvider {
   if (!defaultProvider) {
-    defaultProvider = new ModelsDevPricingProvider();
+    defaultProvider = new LLMOpsPricingProvider();
   }
   return defaultProvider;
 }
