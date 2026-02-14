@@ -215,7 +215,7 @@ function RouteComponent() {
         header: 'Cached Tokens',
         cell: (info) => (
           <span className={timestampCell}>
-            {info.getValue().toLocaleString()}
+            {(info.getValue() ?? 0).toLocaleString()}
           </span>
         ),
       }),
@@ -224,7 +224,7 @@ function RouteComponent() {
         header: 'Cache Creation Tokens',
         cell: (info) => (
           <span className={timestampCell}>
-            {info.getValue().toLocaleString()}
+            {(info.getValue() ?? 0).toLocaleString()}
           </span>
         ),
       }),
