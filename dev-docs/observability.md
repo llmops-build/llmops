@@ -22,7 +22,7 @@ Gateway / LLM Provider execution
 POST-RESPONSE: extract usage + guardrail results
     │
     ▼
-Calculate cost via models.dev pricing
+Calculate cost via LLMOps Models API pricing
     │
     ▼
 Enqueue to BatchWriter (llm_requests) + TraceBatchWriter (traces/spans/span_events)
@@ -182,7 +182,7 @@ const exporter = createLLMOpsSpanExporter({
 3. **For streaming**: Calls `ensureStreamUsageEnabled()` to inject `stream_options.include_usage: true` into the request body so the provider returns token usage in the final SSE chunk
 4. **Executes handler** via `await next()`
 5. **Post-response processing** (differs by streaming vs non-streaming, see below)
-6. **Cost calculation**: Fetches pricing from `models.dev/api.json` (cached 5 min), calculates in micro-dollars
+6. **Cost calculation**: Fetches per-model pricing from `models.llmops.build` (cached 5 min), calculates in micro-dollars
 7. **Enqueues** `LLMRequestData` to the global `BatchWriter`
 
 ### Non-Streaming Response Processing
@@ -336,7 +336,7 @@ Located in `packages/core/src/datalayer/llmRequests.ts`:
 
 ### Pricing Source
 
-External API: `https://models.dev/api.json` — cached in-memory for 5 minutes by `PricingProvider` class.
+Per-model API: `https://models.llmops.build/model-configs/pricing/{provider}/{model}` — cached in-memory per model for 5 minutes by `LLMOpsPricingProvider` class.
 
 ### Formula
 
@@ -348,11 +348,11 @@ outputCost = round(completionTokens * outputCostPer1M)
 totalCost  = inputCost + outputCost
 ```
 
-Where `inputCostPer1M` and `outputCostPer1M` come from models.dev pricing data (cost per 1M tokens).
+Where `inputCostPer1M` and `outputCostPer1M` come from LLMOps Models API pricing data (cost per 1M tokens). The API returns prices in USD cents per token; converted via `centsPerToken * 10_000`.
 
 ### Provider ID Mapping
 
-Some providers use different IDs between models.dev and the Portkey gateway:
+Some providers use different IDs between the LLMOps Models API and the Portkey gateway:
 
 ```
 reka → reka-ai
