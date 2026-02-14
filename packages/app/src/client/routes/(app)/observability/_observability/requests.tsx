@@ -74,7 +74,7 @@ type RequestRow = {
   promptTokens: number;
   completionTokens: number;
   cachedTokens: number;
-  cacheCreationTokens: number;
+  cacheSavings: number;
   cost: number;
   latencyMs: number;
 };
@@ -98,7 +98,7 @@ function RouteComponent() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     provider: false,
     cachedTokens: false,
-    cacheCreationTokens: false,
+    cacheSavings: false,
   });
 
   // Parse tags from URL search params
@@ -219,12 +219,12 @@ function RouteComponent() {
           </span>
         ),
       }),
-      columnHelper.accessor('cacheCreationTokens', {
-        id: 'cacheCreationTokens',
-        header: 'Cache Creation Tokens',
+      columnHelper.accessor('cacheSavings', {
+        id: 'cacheSavings',
+        header: 'Cache Savings',
         cell: (info) => (
           <span className={timestampCell}>
-            {(info.getValue() ?? 0).toLocaleString()}
+            {formatCost(info.getValue() ?? 0)}
           </span>
         ),
       }),

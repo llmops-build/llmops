@@ -41,6 +41,7 @@ export function calculateCost(
     inputCost,
     outputCost,
     totalCost,
+    cacheSavings: 0,
   };
 }
 
@@ -134,7 +135,13 @@ export function calculateCacheAwareCost(
   const inputCost = regularInputCost + cacheReadCost + cacheWriteCost;
   const totalCost = inputCost + outputCost;
 
-  return { inputCost, outputCost, totalCost };
+  // Cache savings = what cached tokens would have cost at full input rate minus what they actually cost
+  const fullPriceForCachedTokens = Math.round(
+    (cachedTokens + cacheCreationTokens) * pricing.inputCostPer1M
+  );
+  const cacheSavings = fullPriceForCachedTokens - cacheReadCost - cacheWriteCost;
+
+  return { inputCost, outputCost, totalCost, cacheSavings };
 }
 
 /**

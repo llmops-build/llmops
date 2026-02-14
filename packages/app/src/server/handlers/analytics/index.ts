@@ -46,6 +46,7 @@ interface DbWithAnalytics {
         totalCompletionTokens: number;
         totalTokens: number;
         totalCachedTokens: number;
+        totalCacheSavings: number;
         requestCount: number;
       }
     | undefined
@@ -302,6 +303,7 @@ const app = new Hono()
               totalCompletionTokens: 0,
               totalTokens: 0,
               totalCachedTokens: 0,
+              totalCacheSavings: 0,
               requestCount: 0,
             },
             200
@@ -316,6 +318,7 @@ const app = new Hono()
             totalCostFormatted: formatCost(data.totalCost),
             totalInputCostFormatted: formatCost(data.totalInputCost),
             totalOutputCostFormatted: formatCost(data.totalOutputCost),
+            totalCacheSavingsFormatted: formatCost(data.totalCacheSavings),
           },
           200
         )

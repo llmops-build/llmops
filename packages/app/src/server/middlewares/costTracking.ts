@@ -667,6 +667,7 @@ async function processUsageAndLog(params: {
   let cost = 0;
   let inputCost = 0;
   let outputCost = 0;
+  let cacheSavings = 0;
 
   if (usage && usage.promptTokens + usage.completionTokens > 0) {
     try {
@@ -686,6 +687,7 @@ async function processUsageAndLog(params: {
         cost = costResult.totalCost;
         inputCost = costResult.inputCost;
         outputCost = costResult.outputCost;
+        cacheSavings = costResult.cacheSavings;
         log(`Calculated cost: ${cost} micro-dollars for ${provider}/${model}`);
       } else {
         log(`No pricing found for ${provider}/${model}`);
@@ -734,6 +736,7 @@ async function processUsageAndLog(params: {
     cachedTokens: usage?.cachedTokens || 0,
     cacheCreationTokens: usage?.cacheCreationTokens || 0,
     cost,
+    cacheSavings,
     inputCost,
     outputCost,
     endpoint,

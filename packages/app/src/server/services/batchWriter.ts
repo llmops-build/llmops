@@ -38,6 +38,7 @@ export interface LLMRequestData {
   cachedTokens?: number;
   cacheCreationTokens?: number;
   cost?: number;
+  cacheSavings?: number;
   inputCost?: number;
   outputCost?: number;
   endpoint: string;

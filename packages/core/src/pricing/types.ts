@@ -49,6 +49,8 @@ export interface CostResult {
   inputCost: number;
   /** Output/completion cost in micro-dollars */
   outputCost: number;
+  /** Cost saved by cache hits in micro-dollars (negative means cache write premium exceeded savings) */
+  cacheSavings: number;
 }
 
 /**

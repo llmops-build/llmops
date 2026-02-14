@@ -42,6 +42,7 @@ const insertLLMRequestSchema = z.object({
   cachedTokens: z.number().int().default(0),
   cacheCreationTokens: z.number().int().default(0),
   cost: z.number().int().default(0),
+  cacheSavings: z.number().int().default(0),
   inputCost: z.number().int().default(0),
   outputCost: z.number().int().default(0),
   endpoint: z.string(),
@@ -161,6 +162,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         cachedTokens: req.cachedTokens,
         cacheCreationTokens: req.cacheCreationTokens,
         cost: req.cost,
+        cacheSavings: req.cacheSavings,
         inputCost: req.inputCost,
         outputCost: req.outputCost,
         endpoint: req.endpoint,
@@ -214,6 +216,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           cachedTokens: req.cachedTokens,
           cacheCreationTokens: req.cacheCreationTokens,
           cost: req.cost,
+          cacheSavings: req.cacheSavings,
           inputCost: req.inputCost,
           outputCost: req.outputCost,
           endpoint: req.endpoint,
@@ -374,6 +377,9 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           ),
           sql<number>`COALESCE(SUM(${col('cachedTokens')}), 0)`.as(
             'totalCachedTokens'
+          ),
+          sql<number>`COALESCE(SUM(${col('cacheSavings')}), 0)`.as(
+            'totalCacheSavings'
           ),
           sql<number>`COUNT(*)`.as('requestCount'),
         ])

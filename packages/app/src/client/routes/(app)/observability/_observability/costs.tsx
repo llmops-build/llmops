@@ -200,11 +200,14 @@ function RouteComponent() {
         </div>
 
         <div className={costMetricItem}>
-          <span className={costMetricLabel}>Cached Input</span>
+          <span className={costMetricLabel}>Cache Savings</span>
           <p className={costMetricValue}>
-            {Number(totalCost?.totalCachedTokens ?? 0).toLocaleString()}
+            {totalCost?.totalCacheSavingsFormatted ?? '$0.000000'}
           </p>
-          <span className={costMetricSubvalue}>tokens</span>
+          <span className={costMetricSubvalue}>
+            {Number(totalCost?.totalCachedTokens ?? 0).toLocaleString()} cached
+            tokens
+          </span>
         </div>
 
         <div className={costMetricItem}>

@@ -19,6 +19,7 @@ describe('calculateCost', () => {
     expect(result.inputCost).toBe(2500);
     expect(result.outputCost).toBe(5000);
     expect(result.totalCost).toBe(7500);
+    expect(result.cacheSavings).toBe(0);
   });
 
   test('handles zero tokens', () => {
@@ -31,6 +32,7 @@ describe('calculateCost', () => {
     expect(result.inputCost).toBe(0);
     expect(result.outputCost).toBe(0);
     expect(result.totalCost).toBe(0);
+    expect(result.cacheSavings).toBe(0);
   });
 
   test('rounds to nearest integer', () => {
@@ -45,6 +47,7 @@ describe('calculateCost', () => {
     expect(result.inputCost).toBe(0);
     expect(result.outputCost).toBe(1);
     expect(result.totalCost).toBe(1);
+    expect(result.cacheSavings).toBe(0);
   });
 });
 
@@ -59,6 +62,7 @@ describe('calculateCacheAwareCost', () => {
     const result = calculateCacheAwareCost(usage, basePricing);
     const basicResult = calculateCost(usage, basePricing);
     expect(result).toEqual(basicResult);
+    expect(result.cacheSavings).toBe(0);
   });
 
   test('falls back to calculateCost when cache tokens are zero', () => {
@@ -71,6 +75,7 @@ describe('calculateCacheAwareCost', () => {
     const result = calculateCacheAwareCost(usage, basePricing);
     const basicResult = calculateCost(usage, basePricing);
     expect(result).toEqual(basicResult);
+    expect(result.cacheSavings).toBe(0);
   });
 
   test('OpenAI cache: cached tokens at 50% of input rate', () => {
@@ -83,10 +88,12 @@ describe('calculateCacheAwareCost', () => {
     // regularInputCost = 400 * 3.0 = 1200
     // cacheReadCost = 600 * (3.0 * 0.5) = 900
     // outputCost = 200 * 15.0 = 3000
+    // cacheSavings = 600 * 3.0 - 900 = 1800 - 900 = 900
     const result = calculateCacheAwareCost(usage, basePricing, 'openai');
     expect(result.inputCost).toBe(1200 + 900); // 2100
     expect(result.outputCost).toBe(3000);
     expect(result.totalCost).toBe(5100);
+    expect(result.cacheSavings).toBe(900);
   });
 
   test('Anthropic cache: read at 10%, creation at 125%', () => {
@@ -101,10 +108,12 @@ describe('calculateCacheAwareCost', () => {
     // cacheReadCost = 400 * (3.0 * 0.1) = 120
     // cacheWriteCost = 300 * (3.0 * 1.25) = 1125
     // outputCost = 200 * 15.0 = 3000
+    // cacheSavings = (400 + 300) * 3.0 - 120 - 1125 = 2100 - 1245 = 855
     const result = calculateCacheAwareCost(usage, basePricing, 'anthropic');
     expect(result.inputCost).toBe(900 + 120 + 1125); // 2145
     expect(result.outputCost).toBe(3000);
     expect(result.totalCost).toBe(5145);
+    expect(result.cacheSavings).toBe(855);
   });
 
   test('uses explicit cache pricing from models.dev when available', () => {
@@ -125,10 +134,12 @@ describe('calculateCacheAwareCost', () => {
     // cacheReadCost = 400 * 0.5 = 200
     // cacheWriteCost = 200 * 4.0 = 800
     // outputCost = 200 * 15.0 = 3000
+    // cacheSavings = (400 + 200) * 3.0 - 200 - 800 = 1800 - 1000 = 800
     const result = calculateCacheAwareCost(usage, pricingWithCache, 'anthropic');
     expect(result.inputCost).toBe(1200 + 200 + 800); // 2200
     expect(result.outputCost).toBe(3000);
     expect(result.totalCost).toBe(5200);
+    expect(result.cacheSavings).toBe(800);
   });
 
   test('all input tokens are cached', () => {
@@ -141,10 +152,12 @@ describe('calculateCacheAwareCost', () => {
     // regularInputCost = 0
     // cacheReadCost = 1000 * (3.0 * 0.5) = 1500 (default provider)
     // outputCost = 100 * 15.0 = 1500
+    // cacheSavings = 1000 * 3.0 - 1500 = 3000 - 1500 = 1500
     const result = calculateCacheAwareCost(usage, basePricing);
     expect(result.inputCost).toBe(1500);
     expect(result.outputCost).toBe(1500);
     expect(result.totalCost).toBe(3000);
+    expect(result.cacheSavings).toBe(1500);
   });
 
   test('Google/Gemini cache: read at 25%', () => {
@@ -155,10 +168,12 @@ describe('calculateCacheAwareCost', () => {
     };
     // All cached at 25% of input rate
     // cacheReadCost = 1000 * (3.0 * 0.25) = 750
+    // cacheSavings = 1000 * 3.0 - 750 = 3000 - 750 = 2250
     const result = calculateCacheAwareCost(usage, basePricing, 'google');
     expect(result.inputCost).toBe(750);
     expect(result.outputCost).toBe(0);
     expect(result.totalCost).toBe(750);
+    expect(result.cacheSavings).toBe(2250);
   });
 
   test('uncachedInput never goes negative', () => {
@@ -172,6 +187,20 @@ describe('calculateCacheAwareCost', () => {
     const result = calculateCacheAwareCost(usage, basePricing, 'openai');
     expect(result.inputCost).toBeGreaterThanOrEqual(0);
     expect(result.totalCost).toBeGreaterThanOrEqual(0);
+  });
+
+  test('cache creation premium results in negative savings for Anthropic', () => {
+    const usage: UsageData = {
+      promptTokens: 1000,
+      completionTokens: 0,
+      cachedTokens: 0,
+      cacheCreationTokens: 1000, // All tokens are cache creation
+    };
+    // cacheWriteCost = 1000 * (3.0 * 1.25) = 3750
+    // fullPrice = 1000 * 3.0 = 3000
+    // cacheSavings = 3000 - 3750 = -750 (negative = cache write premium)
+    const result = calculateCacheAwareCost(usage, basePricing, 'anthropic');
+    expect(result.cacheSavings).toBe(-750);
   });
 });
 

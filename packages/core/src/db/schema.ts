@@ -251,6 +251,7 @@ export const llmRequestsSchema = z.object({
 
   // Cost (stored in micro-dollars for precision: $0.001 = 1000)
   cost: z.number().int().default(0), // Total cost in micro-dollars
+  cacheSavings: z.number().int().default(0), // Cost saved by cache hits in micro-dollars
   inputCost: z.number().int().default(0), // Input/prompt cost in micro-dollars
   outputCost: z.number().int().default(0), // Output/completion cost in micro-dollars
 
@@ -561,6 +562,7 @@ export interface LLMRequestsTable extends BaseTable {
   cachedTokens: ColumnType<number, number | undefined, number | undefined>;
   cacheCreationTokens: ColumnType<number, number | undefined, number | undefined>;
   cost: ColumnType<number, number | undefined, number | undefined>;
+  cacheSavings: ColumnType<number, number | undefined, number | undefined>;
   inputCost: ColumnType<number, number | undefined, number | undefined>;
   outputCost: ColumnType<number, number | undefined, number | undefined>;
   endpoint: string;
@@ -1068,6 +1070,7 @@ export const SCHEMA_METADATA = {
         cachedTokens: { type: 'integer', default: 0 },
         cacheCreationTokens: { type: 'integer', default: 0 },
         cost: { type: 'integer', default: 0 },
+        cacheSavings: { type: 'integer', default: 0 },
         inputCost: { type: 'integer', default: 0 },
         outputCost: { type: 'integer', default: 0 },
         endpoint: { type: 'text' },
