@@ -6,6 +6,10 @@ import {
   LLMOPS_SPAN_NAME_HEADER,
 } from '@llmops/core';
 import { createApp } from '@llmops/app';
+import {
+  createLLMOpsAgentsExporter,
+  type AgentsTracingExporter,
+} from '../telemetry/agents-exporter';
 
 type ProviderConfig = {
   baseURL: string;
@@ -27,6 +31,7 @@ export type LLMOpsClient = {
   handler: (request: Request) => Promise<Response>;
   config: ValidatedLLMOpsConfig;
   provider: (options?: ProviderOptions) => ProviderConfig;
+  agentsExporter: () => AgentsTracingExporter;
 };
 
 export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
@@ -83,5 +88,11 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
       apiKey: 'llmops',
       fetch: createInternalFetch(options?.traceContext),
     }),
+    agentsExporter: () =>
+      createLLMOpsAgentsExporter({
+        baseURL: `http://localhost${basePath}`,
+        apiKey: 'llmops',
+        fetch: createInternalFetch(),
+      }),
   };
 };

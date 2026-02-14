@@ -451,6 +451,8 @@ export interface LLMOpsAgentsExporterConfig {
   apiKey: string;
   /** Custom headers to include in requests */
   headers?: Record<string, string>;
+  /** Custom fetch implementation (used internally by client.agentsExporter()) */
+  fetch?: typeof globalThis.fetch;
 }
 
 /**
@@ -473,6 +475,7 @@ export function createLLMOpsAgentsExporter(
   config: LLMOpsAgentsExporterConfig
 ): AgentsTracingExporter {
   const url = `${config.baseURL.replace(/\/$/, '')}/api/otlp/v1/traces`;
+  const fetchFn = config.fetch ?? globalThis.fetch;
 
   return {
     async export(
@@ -517,7 +520,7 @@ export function createLLMOpsAgentsExporter(
 
       if (resourceSpans.length === 0) return;
 
-      await fetch(url, {
+      await fetchFn(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
