@@ -1,4 +1,6 @@
 :root {
+  --sidebar-width: 0px;
+
   --accent1: #fbfdff;
   --accent2: #f5f9ff;
   --accent3: #e9f3ff;
@@ -93,6 +95,9 @@
   --gray-track: #8c8c8c;
 
   --background: #fff;
+
+  --ghost-body: #000;
+  --ghost-eyes: #fff;
 }
 
 .dark {
@@ -190,8 +195,22 @@
   --gray-track: #6f6f6f;
 
   --background: #000;
+
+  --ghost-body: #fff;
+  --ghost-eyes: #000;
 }
 
-body {
-  background-color: var(--background);
+@media (min-width: 768px) {
+  :root {
+    --sidebar-width: 270px;
+  }
+}
+
+@keyframes cycleWords {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-75%);
+  }
 }

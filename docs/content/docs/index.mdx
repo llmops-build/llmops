@@ -26,44 +26,42 @@ LLMOps aims to be the most comprehensive LLMOps toolkit. It provides a wide rang
 ### 1. Install
 
 ```package-install
-@llmops/sdk pg
+@llmops/sdk
 ```
 
-### 2. Configure
+### 2. Add your provider keys
 
-```typescript title="llmops.ts"
-import { llmops } from '@llmops/sdk';
-import { Pool } from 'pg';
-
-export default llmops({
-  basePath: '/llmops',
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-});
+```bash title=".env"
+# Add your provider keys
+OPENAI_API_KEY=sk-...
 ```
 
-### 3. Mount Middleware
+### 3. Use with the AI SDK
 
-```typescript tab="Express" title="server.ts"
-import express from 'express';
-import { createLLMOpsMiddleware } from '@llmops/sdk/express';
-import llmopsClient from './llmops';
-
-const app = express();
-app.use('/llmops', createLLMOpsMiddleware(llmopsClient));
-app.listen(3000);
-```
-
-```typescript tab="Hono" title="server.ts"
+```typescript title="server.ts"
 import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
-import { createLLMOpsMiddleware } from '@llmops/sdk/hono';
-import llmopsClient from './llmops';
+import { stream } from 'hono/streaming';
+import { streamText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { llmops } from '@llmops/sdk';
+
+const llmopsClient = llmops();
+const openai = createOpenAI(llmopsClient.provider());
 
 const app = new Hono();
-app.use('/llmops/*', createLLMOpsMiddleware(llmopsClient));
-serve({ fetch: app.fetch, port: 3000 });
+
+app.get('/', async (c) => {
+  const result = streamText({
+    model: openai.chat('@google/gemini-2.5-flash'),
+    prompt: 'What model are you?',
+  });
+
+  return stream(c, async (stream) => {
+    for await (const part of result.textStream) {
+      await stream.write(part);
+    }
+  });
+});
 ```
 
 ---

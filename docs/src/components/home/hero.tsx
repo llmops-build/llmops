@@ -1,159 +1,265 @@
-import { Link } from "@tanstack/react-router";
-import { clsx } from "clsx";
-import { useEffect, useState } from "react";
-// @ts-expect-error // svgr import
-import GitHubLogo from "@/assets/github.svg?react";
-import styles from "./home.module.css";
-import LogoAnimation from "./logo-animation";
+'use client';
 
-const formatStars = (count: number): string => {
-  if (count >= 1000) {
-    const formatted = (count / 1000).toFixed(1);
-    return formatted.endsWith(".0")
-      ? `${Math.floor(count / 1000)}k`
-      : `${formatted}k`;
-  }
-  return count.toString();
-};
+import { Link } from '@tanstack/react-router';
+import gsap from 'gsap';
+import { useEffect, useRef, useState } from 'react';
 
-const useGitHubStars = () => {
-  const [stars, setStars] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+const RAINBOW = [
+  '#ff0000',
+  '#ff9900',
+  '#ffff00',
+  '#33ff00',
+  '#0099ff',
+  '#6633ff',
+];
+
+const LLM = () => {
+  const trailRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/llmops-build/llmops")
-      .then((res) => res.json())
-      .then((data) => {
-        setStars(data.stargazers_count);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+    const trail = trailRef.current;
+    if (!trail) return;
+
+    const bars = trail.children;
+
+    // Animate each bar with a staggered wave (width oscillation)
+    const tl = gsap.timeline({ repeat: -1 });
+    tl.to(bars, {
+      scaleX: 0.4,
+      duration: 0.3,
+      ease: 'power1.inOut',
+      stagger: {
+        each: 0.05,
+        yoyo: true,
+        repeat: -1,
+      },
+    });
+
+    return () => {
+      tl.kill();
+    };
   }, []);
 
-  return { stars, loading };
+  return (
+    <span className="relative inline-block">
+      <span
+        ref={trailRef}
+        className="absolute right-full top-1/2 -translate-y-1/2 h-[60%] w-6 flex flex-col gap-[2px] [mask-image:linear-gradient(to_right,transparent,black)]"
+      >
+        {RAINBOW.map((color) => (
+          <span
+            key={color}
+            className="flex-1 origin-right"
+            style={{ backgroundColor: color }}
+          />
+        ))}
+      </span>
+      <span className="relative">LLM</span>
+    </span>
+  );
 };
 
-const StarsSkeleton = () => (
-  <span className="inline-block w-[3ch] h-4 bg-gray-6 rounded animate-pulse" />
-);
+const Infrastructure = () => {
+  const containerRef = useRef<HTMLSpanElement>(null);
 
-const CopyIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-  </svg>
-);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-const CheckIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M20 6 9 17l-5-5" />
-  </svg>
-);
+    const animate = () => {
+      const visibleSpans = container.querySelectorAll('.text-visible span');
+      const hiddenSpans = container.querySelectorAll('.text-hidden span');
+      const letterCount = visibleSpans.length;
+      const startIndex = Math.floor(Math.random() * letterCount);
 
-const AI_PROMPT = `Read https://llmops.build/llms.txt/runbook.md and integrate LLMOps in this application.
-Use a separate branch for the changes.`;
+      gsap.to(visibleSpans, {
+        yPercent: 100,
+        ease: 'back.out(2)',
+        duration: 0.6,
+        stagger: {
+          each: 0.023,
+          from: startIndex,
+        },
+      });
 
-const Hero = () => {
-  const [copied, setCopied] = useState(false);
-  const { stars, loading } = useGitHubStars();
+      gsap.to(hiddenSpans, {
+        yPercent: 100,
+        ease: 'back.out(2)',
+        duration: 0.6,
+        stagger: {
+          each: 0.023,
+          from: startIndex,
+        },
+        onComplete: () => {
+          gsap.set(visibleSpans, { clearProps: 'all' });
+          gsap.set(hiddenSpans, { clearProps: 'all' });
+        },
+      });
+    };
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(AI_PROMPT);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    const interval = setInterval(animate, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const text = 'infrastructure';
+  const letters = text.split('').map((char, i) =>
+    char === ' ' ? (
+      <span key={i} className="inline-block will-change-transform">
+        {' '}
+      </span>
+    ) : (
+      <span key={i} className="inline-block will-change-transform">
+        {char}
+      </span>
+    )
+  );
 
   return (
-    <div
-      className={clsx(
-        "max-w-4xl mx-auto flex w-full items-center justify-stretch h-full px-4 lg:px-8",
-        styles.hero,
-      )}
+    <span
+      ref={containerRef}
+      className="relative overflow-hidden inline-block leading-[inherit] align-bottom"
     >
-      <div className="grid grid-cols-1 w-full h-full place-items-center gap-8">
-        <div className="flex flex-col items-center gap-6 w-full max-w-md justify-center">
-          <LogoAnimation />
-          <h1 className="text-2xl text-center text-gray-11 text-pretty font-normal">
-            A pluggable <span className="text-gray-12">LLMOps</span> toolkit for
-            TypeScript applications
-          </h1>
-          <div className="w-full border border-solid border-gray-4 rounded-md">
-            <div className="w-full px-3 py-2 flex gap-3 items-start border-b border-solid border-gray-4">
-              <pre className="text-gray-11 text-sm flex-1 font-mono whitespace-pre-wrap break-all leading-5">
-                {AI_PROMPT}
-              </pre>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="text-gray-8 hover:text-gray-12 transition-colors cursor-pointer bg-transparent border-none p-1 shrink-0"
-                aria-label="Copy prompt to clipboard"
-              >
-                {copied ? <CheckIcon /> : <CopyIcon />}
-              </button>
-            </div>
-            <Link
-              to="/docs/$"
-              params={{
-                // @ts-expect-error Expected
-                "*": "getting-started/installation",
-              }}
-              className="w-full px-3 py-2 flex gap-2 items-center text-gray-8 hover:text-gray-12 hover:bg-gray-2 transition-colors rounded-b-md"
-            >
-              <span className="text-sm">View Docs &rarr;</span>
-            </Link>
-          </div>
-          <div className="dark flex gap-3">
-            <a
-              href="https://github.com/llmops-build/llmops"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-gray-12 text-gray-1 hover:bg-gray-11 h-8 px-3 text-sm font-medium rounded flex items-center justify-center gap-2 transition-colors"
-            >
-              <GitHubLogo className="w-4 h-4 fill-current" />
-              Star on Github
-              <span className="font-mono">
-                {loading ? <StarsSkeleton /> : stars && formatStars(stars)}
-              </span>
-            </a>
-            <a
-              href="https://railway.com/deploy/llmops?referralCode=RgsWj1&utm_medium=integration&utm_source=template&utm_campaign=generic"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img
-                src="https://railway.com/button.svg"
-                alt="Deploy on Railway"
-                className="h-8"
-              />
-            </a>
-          </div>
-        </div>
+      <span className="text-visible inline-block">{letters}</span>
+      <span className="text-hidden absolute bottom-full left-0 pointer-events-none">
+        {letters}
+      </span>
+    </span>
+  );
+};
+
+const Grows = () => {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 2 });
+
+    // Phase 1: Grow weight, tighten letter-spacing
+    tl.fromTo(
+      el,
+      { fontWeight: 100, letterSpacing: '0em' },
+      {
+        fontWeight: 800,
+        letterSpacing: '-0.12em',
+        duration: 0.8,
+        ease: 'power2.in',
+      }
+    );
+
+    // Phase 2: Release — snap back to thin, expand letter-spacing
+    tl.to(el, {
+      fontWeight: 100,
+      letterSpacing: '0.1em',
+      duration: 0.4,
+      ease: 'power3.out',
+    });
+
+    // Phase 3: Settle back to default
+    tl.to(el, {
+      fontWeight: 100,
+      letterSpacing: '0em',
+      duration: 0.6,
+      ease: 'power2.inOut',
+    });
+
+    return () => {
+      tl.kill();
+    };
+  }, []);
+
+  return (
+    <span ref={ref} className="italic font-thin inline-block">
+      grows
+    </span>
+  );
+};
+
+const WORDS = ['product', 'Agents', 'Chatbots', 'APIs'];
+
+const Product = () => {
+  const [display, setDisplay] = useState('');
+  const wordIndex = useRef(0);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    let charIndex = 0;
+    let deleting = false;
+
+    const tick = () => {
+      const word = WORDS[wordIndex.current];
+
+      if (!deleting) {
+        charIndex++;
+        setDisplay(word.slice(0, charIndex));
+        if (charIndex === word.length) {
+          // Pause before deleting
+          timeout = setTimeout(() => {
+            deleting = true;
+            tick();
+          }, 1500);
+          return;
+        }
+      } else {
+        charIndex--;
+        setDisplay(word.slice(0, charIndex));
+        if (charIndex === 0) {
+          deleting = false;
+          wordIndex.current = (wordIndex.current + 1) % WORDS.length;
+          // Small pause before typing next word
+          timeout = setTimeout(tick, 300);
+          return;
+        }
+      }
+
+      timeout = setTimeout(tick, deleting ? 50 : 100);
+    };
+
+    tick();
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <span className="text-accent-9">
+      {display}
+      <span className="inline-block w-[2px] h-[0.9em] bg-accent-9 align-middle ml-[1px] animate-pulse" />
+    </span>
+  );
+};
+
+const Hero = () => {
+  return (
+    <section className="py-20 border-b border-b-gray-4">
+      <h1 className="text-3xl md:text-5xl font-pixel font-medium tracking-tight text-gray-12 p-6 md:p-10">
+        <LLM /> <Infrastructure /> <span>that</span> <br />
+        <Grows /> with your <Product />
+      </h1>
+      <p className="text-sm md:text-base text-gray-11 px-6 md:px-10 pb-6 md:pb-10 max-w-2xl leading-relaxed">
+        One SDK that gives you observability, prompt management, and evals for
+        every LLM call. Install it with your first provider. The rest shows up
+        when you need it.
+      </p>
+      <div className="px-6 md:px-10 pb-6 md:pb-10 flex gap-3">
+        <a
+          href="https://github.com/llmops-build/llmops"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-12 text-gray-1 rounded-md hover:bg-gray-11 transition-colors"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+            <path d="M8 .2C3.6.2 0 3.8 0 8.2c0 3.5 2.3 6.5 5.5 7.6.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1.1-2.7-1.1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.8-3.6 4 .3.3.5.8.5 1.6v2.4c0 .2.1.5.6.4C13.7 14.7 16 11.7 16 8.2 16 3.8 12.4.2 8 .2z" />
+          </svg>
+          Star on GitHub
+        </a>
+        <Link
+          to="/docs"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-12 border border-gray-6 rounded-md hover:bg-gray-3 transition-colors"
+        >
+          Docs
+        </Link>
       </div>
-    </div>
+    </section>
   );
 };
 
