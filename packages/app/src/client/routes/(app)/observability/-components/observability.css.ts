@@ -435,7 +435,7 @@ export const paginationContainer = style({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: `${spacing.md} ${spacing.md}`,
+  padding: `${spacing.sm} ${spacing.md}`,
   borderTop: `1px solid ${colors.gray4}`,
   backgroundColor: colors.gray1,
   marginLeft: calc.negate(spacing.md),
@@ -444,6 +444,8 @@ export const paginationContainer = style({
   width: calc.add('100%', calc.multiply(2, spacing.md)),
   marginTop: 'auto',
   flexShrink: 0,
+  flexWrap: 'wrap',
+  gap: spacing.sm,
 });
 
 export const paginationInfo = style([
@@ -452,6 +454,9 @@ export const paginationInfo = style([
     fontFamily: 'mono',
     color: 'gray10',
   }),
+  {
+    whiteSpace: 'nowrap',
+  },
 ]);
 
 export const paginationControls = style({

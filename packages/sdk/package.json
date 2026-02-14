@@ -38,6 +38,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./agents": {
+      "import": {
+        "types": "./dist/agents.d.mts",
+        "default": "./dist/agents.mjs"
+      },
+      "require": {
+        "types": "./dist/agents.d.cts",
+        "default": "./dist/agents.cjs"
+      }
+    },
     "./express": {
       "import": {
         "types": "./dist/express.d.mts",

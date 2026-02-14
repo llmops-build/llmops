@@ -3,6 +3,7 @@ import { defineConfig } from 'tsdown';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    agents: 'src/telemetry/agents-exporter.ts',
     express: 'src/lib/express/index.ts',
     hono: 'src/lib/hono/index.ts',
     nextjs: 'src/lib/nextjs/index.ts',

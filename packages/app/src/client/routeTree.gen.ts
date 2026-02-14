@@ -38,6 +38,7 @@ import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './route
 import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
 import { Route as appPromptsIdVariantsRouteImport } from './routes/(app)/prompts/$id/_variants'
 import { Route as appPromptsIdTabsRouteImport } from './routes/(app)/prompts/$id/_tabs'
+import { Route as appObservabilityObservabilityTracesRouteImport } from './routes/(app)/observability/_observability/traces'
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
 import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
 import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
@@ -49,6 +50,7 @@ import { Route as appPromptsIdTabsVariantsRouteImport } from './routes/(app)/pro
 import { Route as appPromptsIdTabsTargetingRouteImport } from './routes/(app)/prompts/$id/_tabs/targeting'
 import { Route as appPromptsIdTabsSettingsRouteImport } from './routes/(app)/prompts/$id/_tabs/settings'
 import { Route as appPlaygroundsIdRowRowIdRouteImport } from './routes/(app)/playgrounds/$id/row/$rowId'
+import { Route as appObservabilityObservabilityTracesTraceIdRouteImport } from './routes/(app)/observability/_observability/traces/$traceId'
 import { Route as appEnvironmentsEnvironmentTabsSettingsRouteImport } from './routes/(app)/environments/$environment/_tabs/settings'
 import { Route as appEnvironmentsEnvironmentTabsSecretsRouteImport } from './routes/(app)/environments/$environment/_tabs/secrets'
 import { Route as appDatasetsIdRecordsRecordIdRouteImport } from './routes/(app)/datasets/$id/records/$recordId'
@@ -199,6 +201,12 @@ const appPromptsIdTabsRoute = appPromptsIdTabsRouteImport.update({
   id: '/_tabs',
   getParentRoute: () => appPromptsIdRouteRoute,
 } as any)
+const appObservabilityObservabilityTracesRoute =
+  appObservabilityObservabilityTracesRouteImport.update({
+    id: '/traces',
+    path: '/traces',
+    getParentRoute: () => appObservabilityObservabilityRoute,
+  } as any)
 const appObservabilityObservabilityRequestsRoute =
   appObservabilityObservabilityRequestsRouteImport.update({
     id: '/requests',
@@ -263,6 +271,12 @@ const appPlaygroundsIdRowRowIdRoute =
     path: '/row/$rowId',
     getParentRoute: () => appPlaygroundsIdRouteRoute,
   } as any)
+const appObservabilityObservabilityTracesTraceIdRoute =
+  appObservabilityObservabilityTracesTraceIdRouteImport.update({
+    id: '/$traceId',
+    path: '/$traceId',
+    getParentRoute: () => appObservabilityObservabilityTracesRoute,
+  } as any)
 const appEnvironmentsEnvironmentTabsSettingsRoute =
   appEnvironmentsEnvironmentTabsSettingsRouteImport.update({
     id: '/settings',
@@ -318,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/datasets/$id/': typeof appDatasetsIdIndexRoute
@@ -327,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
+  '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
   '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
   '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
   '/prompts/$id/targeting': typeof appPromptsIdTabsTargetingRoute
@@ -352,6 +368,7 @@ export interface FileRoutesByTo {
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
   '/prompts/$id': typeof appPromptsIdIndexRoute
   '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
   '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
@@ -360,6 +377,7 @@ export interface FileRoutesByTo {
   '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/environments/$environment/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/environments/$environment/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
+  '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
   '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
   '/prompts/$id/settings': typeof appPromptsIdTabsSettingsRoute
   '/prompts/$id/targeting': typeof appPromptsIdTabsTargetingRoute
@@ -397,6 +415,7 @@ export interface FileRoutesById {
   '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/(app)/observability/_observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
   '/(app)/prompts/$id/_tabs': typeof appPromptsIdTabsRouteWithChildren
   '/(app)/prompts/$id/_variants': typeof appPromptsIdVariantsRouteWithChildren
   '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
@@ -408,6 +427,7 @@ export interface FileRoutesById {
   '/(app)/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/(app)/environments/$environment/_tabs/secrets': typeof appEnvironmentsEnvironmentTabsSecretsRoute
   '/(app)/environments/$environment/_tabs/settings': typeof appEnvironmentsEnvironmentTabsSettingsRoute
+  '/(app)/observability/_observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
   '/(app)/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
   '/(app)/prompts/$id/_tabs/settings': typeof appPromptsIdTabsSettingsRoute
   '/(app)/prompts/$id/_tabs/targeting': typeof appPromptsIdTabsTargetingRoute
@@ -441,6 +461,7 @@ export interface FileRouteTypes {
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
+    | '/observability/traces'
     | '/settings/user-profile'
     | '/settings/workspace-general'
     | '/datasets/$id/'
@@ -450,6 +471,7 @@ export interface FileRouteTypes {
     | '/datasets/$id/records/$recordId'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
+    | '/observability/traces/$traceId'
     | '/playgrounds/$id/row/$rowId'
     | '/prompts/$id/settings'
     | '/prompts/$id/targeting'
@@ -475,6 +497,7 @@ export interface FileRouteTypes {
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
+    | '/observability/traces'
     | '/prompts/$id'
     | '/settings/user-profile'
     | '/settings/workspace-general'
@@ -483,6 +506,7 @@ export interface FileRouteTypes {
     | '/datasets/$id/records/$recordId'
     | '/environments/$environment/secrets'
     | '/environments/$environment/settings'
+    | '/observability/traces/$traceId'
     | '/playgrounds/$id/row/$rowId'
     | '/prompts/$id/settings'
     | '/prompts/$id/targeting'
@@ -519,6 +543,7 @@ export interface FileRouteTypes {
     | '/(app)/observability/_observability/costs'
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
+    | '/(app)/observability/_observability/traces'
     | '/(app)/prompts/$id/_tabs'
     | '/(app)/prompts/$id/_variants'
     | '/(app)/settings/_settings/user-profile'
@@ -530,6 +555,7 @@ export interface FileRouteTypes {
     | '/(app)/datasets/$id/records/$recordId'
     | '/(app)/environments/$environment/_tabs/secrets'
     | '/(app)/environments/$environment/_tabs/settings'
+    | '/(app)/observability/_observability/traces/$traceId'
     | '/(app)/playgrounds/$id/row/$rowId'
     | '/(app)/prompts/$id/_tabs/settings'
     | '/(app)/prompts/$id/_tabs/targeting'
@@ -749,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appPromptsIdTabsRouteImport
       parentRoute: typeof appPromptsIdRouteRoute
     }
+    '/(app)/observability/_observability/traces': {
+      id: '/(app)/observability/_observability/traces'
+      path: '/traces'
+      fullPath: '/observability/traces'
+      preLoaderRoute: typeof appObservabilityObservabilityTracesRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
     '/(app)/observability/_observability/requests': {
       id: '/(app)/observability/_observability/requests'
       path: '/requests'
@@ -826,6 +859,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appPlaygroundsIdRowRowIdRouteImport
       parentRoute: typeof appPlaygroundsIdRouteRoute
     }
+    '/(app)/observability/_observability/traces/$traceId': {
+      id: '/(app)/observability/_observability/traces/$traceId'
+      path: '/$traceId'
+      fullPath: '/observability/traces/$traceId'
+      preLoaderRoute: typeof appObservabilityObservabilityTracesTraceIdRouteImport
+      parentRoute: typeof appObservabilityObservabilityTracesRoute
+    }
     '/(app)/environments/$environment/_tabs/settings': {
       id: '/(app)/environments/$environment/_tabs/settings'
       path: '/settings'
@@ -893,10 +933,26 @@ const appGatewayRouteRouteWithChildren = appGatewayRouteRoute._addFileChildren(
   appGatewayRouteRouteChildren,
 )
 
+interface appObservabilityObservabilityTracesRouteChildren {
+  appObservabilityObservabilityTracesTraceIdRoute: typeof appObservabilityObservabilityTracesTraceIdRoute
+}
+
+const appObservabilityObservabilityTracesRouteChildren: appObservabilityObservabilityTracesRouteChildren =
+  {
+    appObservabilityObservabilityTracesTraceIdRoute:
+      appObservabilityObservabilityTracesTraceIdRoute,
+  }
+
+const appObservabilityObservabilityTracesRouteWithChildren =
+  appObservabilityObservabilityTracesRoute._addFileChildren(
+    appObservabilityObservabilityTracesRouteChildren,
+  )
+
 interface appObservabilityObservabilityRouteChildren {
   appObservabilityObservabilityCostsRoute: typeof appObservabilityObservabilityCostsRoute
   appObservabilityObservabilityOverviewRoute: typeof appObservabilityObservabilityOverviewRoute
   appObservabilityObservabilityRequestsRoute: typeof appObservabilityObservabilityRequestsRoute
+  appObservabilityObservabilityTracesRoute: typeof appObservabilityObservabilityTracesRouteWithChildren
 }
 
 const appObservabilityObservabilityRouteChildren: appObservabilityObservabilityRouteChildren =
@@ -907,6 +963,8 @@ const appObservabilityObservabilityRouteChildren: appObservabilityObservabilityR
       appObservabilityObservabilityOverviewRoute,
     appObservabilityObservabilityRequestsRoute:
       appObservabilityObservabilityRequestsRoute,
+    appObservabilityObservabilityTracesRoute:
+      appObservabilityObservabilityTracesRouteWithChildren,
   }
 
 const appObservabilityObservabilityRouteWithChildren =

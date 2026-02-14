@@ -13,6 +13,8 @@ export { createPlaygroundRunsDataLayer } from './playgroundRuns';
 export { createProviderConfigsDataLayer } from './providerConfigs';
 export { createProviderGuardrailOverridesDataLayer } from './providerGuardrailOverrides';
 export { createTargetingRulesDataLayer } from './targetingRules';
+export { createTracesDataLayer } from './traces';
+export type { TraceUpsert, SpanInsert, SpanEventInsert } from './traces';
 export { createVariantDataLayer } from './variants';
 export { createVariantVersionsDataLayer } from './variantVersions';
 export { createWorkspaceSettingsDataLayer } from './workspaceSettings';
@@ -34,6 +36,7 @@ export type {
   ProviderConfigsDataLayer,
   ProviderGuardrailOverridesDataLayer,
   TargetingRulesDataLayer,
+  TracesDataLayer,
   VariantsDataLayer,
   VariantVersionsDataLayer,
   WorkspaceSettingsDataLayer,

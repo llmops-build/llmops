@@ -46,6 +46,10 @@ export interface LLMRequestData {
   userId?: string | null;
   tags?: Record<string, string>;
   guardrailResults?: GuardrailResults | null;
+  traceId?: string | null;
+  spanId?: string | null;
+  parentSpanId?: string | null;
+  sessionId?: string | null;
 }
 
 /**
