@@ -73,6 +73,8 @@ type RequestRow = {
   statusCode: number;
   promptTokens: number;
   completionTokens: number;
+  cachedTokens: number;
+  cacheCreationTokens: number;
   cost: number;
   latencyMs: number;
 };
@@ -95,6 +97,8 @@ function RouteComponent() {
   const search = useSearch({ from: '/(app)/observability' });
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     provider: false,
+    cachedTokens: false,
+    cacheCreationTokens: false,
   });
 
   // Parse tags from URL search params
@@ -203,6 +207,24 @@ function RouteComponent() {
           <span className={timestampCell}>
             {info.row.original.promptTokens.toLocaleString()} →{' '}
             {info.row.original.completionTokens.toLocaleString()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('cachedTokens', {
+        id: 'cachedTokens',
+        header: 'Cached Tokens',
+        cell: (info) => (
+          <span className={timestampCell}>
+            {info.getValue().toLocaleString()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('cacheCreationTokens', {
+        id: 'cacheCreationTokens',
+        header: 'Cache Creation Tokens',
+        cell: (info) => (
+          <span className={timestampCell}>
+            {info.getValue().toLocaleString()}
           </span>
         ),
       }),
