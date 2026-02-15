@@ -100,6 +100,10 @@ type GenerationSpanData = {
 type ResponseSpanData = {
   type: 'response';
   response_id?: string;
+  /** Input messages — provided by @openai/agents for non-OpenAI tracing providers */
+  _input?: unknown;
+  /** Full API response object (includes usage, model, output) */
+  _response?: Record<string, unknown>;
   [key: string]: unknown;
 };
 
@@ -222,8 +226,10 @@ function deriveSpanName(data: AgentsSpanData): string {
       return `Tool: ${data.name}`;
     case 'generation':
       return data.model ? `Generation: ${data.model}` : 'Generation';
-    case 'response':
-      return 'Response';
+    case 'response': {
+      const model = data._response?.model;
+      return typeof model === 'string' ? `Response: ${model}` : 'Response';
+    }
     case 'handoff':
       return `Handoff: ${data.from_agent ?? '?'} → ${data.to_agent ?? '?'}`;
     case 'guardrail':
@@ -324,12 +330,37 @@ function convertSpanDataToAttributes(
       attrs.push(kv('openai.agents.guardrail.name', data.name));
       break;
 
-    case 'response':
+    case 'response': {
       attrs.push(kv('gen_ai.operation.name', 'chat'));
       if (data.response_id) {
         attrs.push(kv('openai.agents.response.id', data.response_id));
       }
+      // Extract model, usage, input, and output from the full response object
+      // provided by @openai/agents for non-OpenAI tracing providers.
+      const resp = data._response;
+      if (resp) {
+        if (typeof resp.model === 'string') {
+          attrs.push(kv('gen_ai.request.model', resp.model));
+          attrs.push(kv('gen_ai.system', 'openai'));
+        }
+        const usage = resp.usage as
+          | { input_tokens?: number; output_tokens?: number }
+          | undefined;
+        if (usage?.input_tokens != null) {
+          attrs.push(kv('gen_ai.usage.input_tokens', usage.input_tokens));
+        }
+        if (usage?.output_tokens != null) {
+          attrs.push(kv('gen_ai.usage.output_tokens', usage.output_tokens));
+        }
+        if (resp.output != null) {
+          attrs.push(kv('gen_ai.completion', JSON.stringify(resp.output)));
+        }
+      }
+      if (data._input != null) {
+        attrs.push(kv('ai.prompt.messages', JSON.stringify(data._input)));
+      }
       break;
+    }
 
     case 'custom':
       attrs.push(kv('openai.agents.custom.name', data.name));
