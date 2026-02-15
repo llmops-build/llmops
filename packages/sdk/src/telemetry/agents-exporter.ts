@@ -353,11 +353,15 @@ function convertSpanDataToAttributes(
           attrs.push(kv('gen_ai.usage.output_tokens', usage.output_tokens));
         }
         if (resp.output != null) {
-          attrs.push(kv('gen_ai.completion', JSON.stringify(resp.output)));
+          try {
+            attrs.push(kv('gen_ai.completion', JSON.stringify(resp.output)));
+          } catch { /* skip non-serializable output */ }
         }
       }
       if (data._input != null) {
-        attrs.push(kv('ai.prompt.messages', JSON.stringify(data._input)));
+        try {
+          attrs.push(kv('ai.prompt.messages', JSON.stringify(data._input)));
+        } catch { /* skip non-serializable input */ }
       }
       break;
     }
