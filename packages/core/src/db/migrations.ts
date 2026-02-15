@@ -371,6 +371,12 @@ export async function getMigrations(
           } else {
             c = c.defaultTo(sql`CURRENT_TIMESTAMP`);
           }
+        } else if (
+          fieldConfig.default !== undefined &&
+          fieldConfig.default !== 'now()' &&
+          fieldName !== 'id'
+        ) {
+          c = c.defaultTo(fieldConfig.default);
         }
 
         return c;
@@ -417,6 +423,11 @@ export async function getMigrations(
             } else {
               c = c.defaultTo(sql`CURRENT_TIMESTAMP`);
             }
+          } else if (
+            fieldConfig.default !== undefined &&
+            fieldConfig.default !== 'now()'
+          ) {
+            c = c.defaultTo(fieldConfig.default);
           }
 
           return c;

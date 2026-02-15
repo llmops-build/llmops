@@ -29,8 +29,10 @@ export interface UsageData {
   completionTokens: number;
   /** Total tokens (prompt + completion) */
   totalTokens?: number;
-  /** Number of cached tokens (optional) */
+  /** Number of cache read tokens (OpenAI cached_tokens / Anthropic cache_read_input_tokens) */
   cachedTokens?: number;
+  /** Number of cache creation tokens (Anthropic cache_creation_input_tokens) */
+  cacheCreationTokens?: number;
   /** Number of reasoning tokens (optional, for models like o1) */
   reasoningTokens?: number;
 }
@@ -47,6 +49,8 @@ export interface CostResult {
   inputCost: number;
   /** Output/completion cost in micro-dollars */
   outputCost: number;
+  /** Cost saved by cache hits in micro-dollars (negative means cache write premium exceeded savings) */
+  cacheSavings: number;
 }
 
 /**

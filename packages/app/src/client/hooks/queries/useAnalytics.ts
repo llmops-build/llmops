@@ -48,6 +48,9 @@ export const useTotalCost = (params: DateRangeWithFilters, enabled = true) => {
         totalPromptTokens: number;
         totalCompletionTokens: number;
         totalTokens: number;
+        totalCachedTokens: number;
+        totalCacheSavings: number;
+        totalCacheSavingsFormatted: string;
         requestCount: number;
       } | null;
     },
@@ -247,6 +250,7 @@ export type LLMRequest = {
   completionTokens: number;
   totalTokens: number;
   cachedTokens: number;
+  cacheSavings: number;
   cost: number;
   inputCost: number;
   outputCost: number;
