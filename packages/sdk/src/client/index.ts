@@ -4,6 +4,7 @@ import {
   LLMOPS_TRACE_ID_HEADER,
   LLMOPS_TRACE_NAME_HEADER,
   LLMOPS_SPAN_NAME_HEADER,
+  LLMOPS_INTERNAL_HEADER,
 } from '@llmops/core';
 import { createApp } from '@llmops/app';
 import {
@@ -51,11 +52,14 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
         url.pathname = url.pathname.slice(basePath.length) || '/';
       }
 
+      // Mark as internal request so the gateway skips duplicate trace creation
+      const headers = new Headers(request.headers);
+      headers.set(LLMOPS_INTERNAL_HEADER, '1');
+
       // Inject trace context headers if a provider is configured
       if (getTraceContext) {
         const ctx = getTraceContext();
         if (ctx) {
-          const headers = new Headers(request.headers);
           if (ctx.traceId) {
             headers.set(LLMOPS_TRACE_ID_HEADER, ctx.traceId);
           }
@@ -65,18 +69,17 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
           if (ctx.spanName) {
             headers.set(LLMOPS_SPAN_NAME_HEADER, ctx.spanName);
           }
-          return handler(
-            new Request(url.toString(), {
-              method: request.method,
-              headers,
-              body: request.body,
-              duplex: 'half',
-            } as RequestInit)
-          );
         }
       }
 
-      return handler(new Request(url.toString(), request));
+      return handler(
+        new Request(url.toString(), {
+          method: request.method,
+          headers,
+          body: request.body,
+          duplex: 'half',
+        } as RequestInit)
+      );
     };
   };
 
