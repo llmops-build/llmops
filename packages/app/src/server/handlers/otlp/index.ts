@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
-import { logger } from '@llmops/core';
+import {
+  logger,
+  getDefaultPricingProvider,
+  calculateCacheAwareCost,
+} from '@llmops/core';
 import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
 import {
   getGlobalTraceBatchWriter,
@@ -152,6 +156,8 @@ interface DbWithTraces {
   ) => Promise<{ count: number }>;
 }
 
+const pricingProvider = getDefaultPricingProvider();
+
 /**
  * OTLP ingestion endpoint
  * Accepts OTLP JSON (ExportTraceServiceRequest) format
@@ -232,6 +238,27 @@ const app = new Hono()
                   ? 'ok'
                   : 'unset';
 
+            // Calculate cost from pricing if provider and model are available
+            let cost = 0;
+            if (typed.provider && typed.model && (typed.promptTokens > 0 || typed.completionTokens > 0)) {
+              try {
+                const pricing = await pricingProvider.getModelPricing(typed.provider, typed.model);
+                if (pricing) {
+                  const costResult = calculateCacheAwareCost(
+                    {
+                      promptTokens: typed.promptTokens,
+                      completionTokens: typed.completionTokens,
+                    },
+                    pricing,
+                    typed.provider
+                  );
+                  cost = costResult.totalCost;
+                }
+              } catch (e) {
+                logger.debug(`[OTLP] Failed to calculate cost for ${typed.provider}/${typed.model}: ${e instanceof Error ? e.message : String(e)}`);
+              }
+            }
+
             const spanData: SpanInsert = {
               traceId: otlpSpan.traceId,
               spanId: otlpSpan.spanId,
@@ -248,7 +275,7 @@ const app = new Hono()
               promptTokens: typed.promptTokens,
               completionTokens: typed.completionTokens,
               totalTokens: typed.totalTokens,
-              cost: 0, // OTLP spans don't include cost — could be enriched later
+              cost,
               source: 'otlp',
               input: typed.input,
               output: typed.output,
@@ -281,7 +308,7 @@ const app = new Hono()
               totalInputTokens: typed.promptTokens,
               totalOutputTokens: typed.completionTokens,
               totalTokens: typed.totalTokens,
-              totalCost: 0,
+              totalCost: cost,
               tags: {},
               metadata: {},
             };
