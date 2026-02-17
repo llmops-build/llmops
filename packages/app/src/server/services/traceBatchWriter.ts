@@ -53,6 +53,7 @@ export function createTraceBatchWriter(
     queue = [];
 
     try {
+      logger.info(`[TraceBatchWriter] Flushing ${batch.length} items`);
       log(`[TraceBatchWriter] Flushing ${batch.length} items`);
 
       // Group by traceId and upsert each trace
@@ -126,6 +127,9 @@ export function createTraceBatchWriter(
         await deps.batchInsertSpanEvents(allEvents);
       }
 
+      logger.info(
+        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`
+      );
       log(
         `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`
       );
