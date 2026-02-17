@@ -81,6 +81,7 @@
     "motion": "^12.23.25",
     "nunjucks": "^3.2.4",
     "openai": "^6.10.0",
+    "protobufjs": "^8.0.0",
     "react-aria-components": "^1.13.0",
     "react-hook-form": "^7.68.0",
     "recharts": "^3.6.0",
