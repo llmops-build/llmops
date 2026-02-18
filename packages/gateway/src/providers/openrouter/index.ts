@@ -7,6 +7,10 @@ import {
 } from './chatComplete';
 import { OpenrouterCreateModelResponseConfig } from './createModelResponse';
 import {
+  OpenrouterEmbedConfig,
+  OpenrouterEmbedResponseTransform,
+} from './embed';
+import {
   OpenAICreateModelResponseTransformer,
   OpenAIGetModelResponseTransformer,
   OpenAIDeleteModelResponseTransformer,
@@ -16,6 +20,7 @@ import { OPENROUTER } from '../../globals';
 
 const OpenrouterConfig: ProviderConfigs = {
   chatComplete: OpenrouterChatCompleteConfig,
+  embed: OpenrouterEmbedConfig,
   api: OpenrouterAPIConfig,
   createModelResponse: OpenrouterCreateModelResponseConfig,
   getModelResponse: {},
@@ -24,6 +29,7 @@ const OpenrouterConfig: ProviderConfigs = {
   responseTransforms: {
     chatComplete: OpenrouterChatCompleteResponseTransform,
     'stream-chatComplete': OpenrouterChatCompleteStreamChunkTransform,
+    embed: OpenrouterEmbedResponseTransform,
     createModelResponse: OpenAICreateModelResponseTransformer(OPENROUTER),
     getModelResponse: OpenAIGetModelResponseTransformer(OPENROUTER),
     deleteModelResponse: OpenAIDeleteModelResponseTransformer(OPENROUTER),
