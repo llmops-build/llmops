@@ -1,9 +1,10 @@
 import type {
   ValidatedLLMOpsConfig,
   LLMOpsConfigInput,
+  OtlpConfig,
 } from '../schemas/config';
 
-export type { ValidatedLLMOpsConfig, LLMOpsConfigInput };
+export type { ValidatedLLMOpsConfig, LLMOpsConfigInput, OtlpConfig };
 
 // Re-export inline provider types for convenience
 export type {
