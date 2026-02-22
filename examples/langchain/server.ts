@@ -16,16 +16,10 @@ app.use(express.json());
 app.use('/llmops', llmops);
 
 // Create a LangChain LLM pointing at the LLMOps gateway
-function createLLM(configId?: string) {
+function createLLM() {
   return new ChatOpenAI({
-    configuration: {
-      baseURL: `http://localhost:${port}/llmops/api/genai/v1`,
-      defaultHeaders: configId
-        ? { 'x-llmops-config': configId }
-        : undefined,
-    },
-    apiKey: process.env.LLMOPS_ENV_SECRET || 'your-environment-secret',
-    model: process.env.MODEL || '@my-openai/gpt-4o-mini',
+    configuration: llmopsClient.provider(),
+    model: process.env.MODEL || '@openai/gpt-4o-mini',
   });
 }
 
@@ -89,9 +83,7 @@ app.post('/api/embeddings', async (req, res) => {
     const embeddings = new OpenAIEmbeddings({
       configuration: {
         baseURL: `http://localhost:${port}/llmops/api/genai/v1`,
-        defaultHeaders: configId
-          ? { 'x-llmops-config': configId }
-          : undefined,
+        defaultHeaders: configId ? { 'x-llmops-config': configId } : undefined,
       },
       apiKey: process.env.LLMOPS_ENV_SECRET || 'your-environment-secret',
       model: 'text-embedding-3-small',
