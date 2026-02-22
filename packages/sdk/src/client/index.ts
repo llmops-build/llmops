@@ -11,6 +11,10 @@ import {
   createLLMOpsAgentsExporter,
   type AgentsTracingExporter,
 } from '../telemetry/agents-exporter';
+import {
+  createLLMOpsLangChainClient,
+  type LangChainTracingClient,
+} from '../telemetry/langchain-client';
 
 type ProviderConfig = {
   baseURL: string;
@@ -33,6 +37,7 @@ export type LLMOpsClient = {
   config: ValidatedLLMOpsConfig;
   provider: (options?: ProviderOptions) => ProviderConfig;
   agentsExporter: () => AgentsTracingExporter;
+  langchainTracer: () => LangChainTracingClient;
 };
 
 export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
@@ -93,6 +98,12 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
     }),
     agentsExporter: () =>
       createLLMOpsAgentsExporter({
+        baseURL: `http://localhost${basePath}`,
+        apiKey: 'llmops',
+        fetch: createInternalFetch(),
+      }),
+    langchainTracer: () =>
+      createLLMOpsLangChainClient({
         baseURL: `http://localhost${basePath}`,
         apiKey: 'llmops',
         fetch: createInternalFetch(),

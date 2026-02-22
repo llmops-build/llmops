@@ -37,12 +37,30 @@ pip install langchain-openai
 
 ### Setup
 
-<Steps>
-<Step>
+There are two ways to connect LangChain to LLMOps depending on your architecture:
 
-### Point LangChain at your LLMOps instance
+#### Using `provider()` (embedded)
 
-Configure `ChatOpenAI` to use your LLMOps gateway URL as the base URL:
+If LLMOps is running inside your application (e.g., as Express middleware), use `llmopsClient.provider()`. This routes requests in-process without an extra HTTP hop:
+
+```typescript title="chat.ts"
+import { ChatOpenAI } from '@langchain/openai';
+import llmopsClient from './llmops';
+
+const { baseURL, apiKey, fetch } = llmopsClient.provider();
+
+const llm = new ChatOpenAI({
+  configuration: { baseURL, fetch },
+  apiKey,
+  model: '@openai/gpt-4o-mini',
+});
+```
+
+Since `provider()` bypasses the HTTP gateway, traces are not automatically created. Use [`langchainTracer()`](#typescript-sdk) or an [OTLP exporter](#opentelemetry) to send traces to LLMOps.
+
+#### Using explicit `baseURL` (proxy)
+
+If LLMOps is running as a standalone proxy, or you want the gateway to automatically create traces, point LangChain at the gateway URL directly:
 
 ```typescript title="chat.ts"
 import { ChatOpenAI } from '@langchain/openai';
@@ -50,46 +68,40 @@ import { ChatOpenAI } from '@langchain/openai';
 const llm = new ChatOpenAI({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
-    defaultHeaders: {
-      'x-llmops-config': 'your-config-id',
-    },
   },
-  apiKey: 'your-environment-secret',
-  model: 'gpt-4o-mini',
+  apiKey: process.env.LLMOPS_ENV_SECRET,
+  model: '@openai/gpt-4o-mini',
 });
 ```
 
-</Step>
+This makes real HTTP requests to the gateway, which automatically creates traces for every call.
 
-<Step>
-
-### Set environment variables
-
-You can also configure via environment variables:
+#### Environment variables
 
 ```bash title=".env"
-OPENAI_API_KEY=your-environment-secret
-OPENAI_BASE_URL=http://localhost:3000/llmops/api/genai/v1
+LLMOPS_ENV_SECRET=your-environment-secret
 ```
 
-</Step>
-</Steps>
+### Provider Routing
 
-### Direct Provider Routing
+The `@slug/model` format routes requests through a specific provider configured in your LLMOps dashboard. The `@openai/` prefix routes through the provider with slug `openai`. You can use any provider slug configured in your environment (e.g., `@anthropic/claude-sonnet-4-20250514`, `@openrouter/google/gemini-2.0-flash`).
 
-Instead of using an `x-llmops-config` header, you can route to a specific provider using the `@slug/model` format:
+### Config-based Routing
+
+Instead of `@slug/model`, you can route via a config ID. Configs let you define model, provider, and guardrails in the LLMOps dashboard:
 
 ```typescript
 const llm = new ChatOpenAI({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+    defaultHeaders: {
+      'x-llmops-config': 'your-config-id',
+    },
   },
-  apiKey: 'your-environment-secret',
-  model: '@my-openai/gpt-4o-mini',
+  apiKey: process.env.LLMOPS_ENV_SECRET,
+  model: 'gpt-4o-mini',
 });
 ```
-
-This routes the request through the provider configured with slug `my-openai` in your LLMOps dashboard.
 
 ### Chat Completions
 
@@ -99,12 +111,9 @@ import { ChatOpenAI } from '@langchain/openai';
 const llm = new ChatOpenAI({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
-    defaultHeaders: {
-      'x-llmops-config': 'your-config-id',
-    },
   },
-  apiKey: 'your-environment-secret',
-  model: 'gpt-4o-mini',
+  apiKey: process.env.LLMOPS_ENV_SECRET,
+  model: '@openai/gpt-4o-mini',
 });
 
 const response = await llm.invoke('What is LLMOps?');
@@ -130,8 +139,8 @@ const embeddings = new OpenAIEmbeddings({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
   },
-  apiKey: 'your-environment-secret',
-  model: 'text-embedding-3-small',
+  apiKey: process.env.LLMOPS_ENV_SECRET,
+  model: '@openai/text-embedding-3-small',
 });
 
 const vectors = await embeddings.embedQuery('Hello world');
@@ -163,26 +172,113 @@ const response = await llmWithTools.invoke('What is the weather in San Francisco
 
 ## Tracing
 
-LangChain supports native OpenTelemetry export. Since LLMOps has a built-in OTLP trace endpoint, you can send all LangChain execution traces — chains, LLM calls, tool invocations, retriever lookups — directly to LLMOps.
+LLMOps captures the full LangChain execution hierarchy — agents, chains, LLM calls, tool invocations, and retrievers — as nested spans in a single trace.
 
-### Python (OpenTelemetry)
+### TypeScript (SDK)
+
+The recommended approach for TypeScript. Uses LangChain's built-in `LangChainTracer` with an LLMOps-compatible client — no environment variables, no extra dependencies.
 
 <Steps>
 <Step>
 
 ### Install dependencies
 
-```bash
-pip install langchain-openai opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+```bash tab="npm"
+npm install @langchain/core @langchain/openai @langchain/langgraph
+```
+
+```bash tab="pnpm"
+pnpm add @langchain/core @langchain/openai @langchain/langgraph
 ```
 
 </Step>
 
 <Step>
 
-### Configure the OTel exporter
+### Create the tracer
 
-Set up OpenTelemetry to export traces to your LLMOps instance:
+Use `llmopsClient.langchainTracer()` to create a client, then pass it to LangChain's `LangChainTracer`:
+
+```typescript title="agent.ts"
+import { ChatOpenAI } from '@langchain/openai';
+import { LangChainTracer } from '@langchain/core/tracers/tracer_langchain';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import llmopsClient from './llmops';
+
+const tracer = new LangChainTracer({
+  client: llmopsClient.langchainTracer(),
+});
+```
+
+</Step>
+
+<Step>
+
+### Use `provider()` for the LLM
+
+Since the tracer captures all runs, use `provider()` for the LLM to avoid double-tracing:
+
+```typescript title="agent.ts"
+const { baseURL, apiKey, fetch } = llmopsClient.provider();
+
+const llm = new ChatOpenAI({
+  configuration: { baseURL, fetch },
+  apiKey,
+  model: '@openai/gpt-4o-mini',
+});
+```
+
+</Step>
+
+<Step>
+
+### Pass the tracer to your agent or chain
+
+Add the tracer to the `callbacks` array when invoking:
+
+```typescript title="agent.ts"
+const agent = createReactAgent({ llm, tools });
+
+const result = await agent.invoke(
+  { messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }] },
+  { callbacks: [tracer] }
+);
+```
+
+Every step — the agent loop, each LLM call, each tool invocation — appears as a nested span under a single trace.
+
+</Step>
+</Steps>
+
+### Python (Environment Variables)
+
+LLMOps exposes a LangSmith-compatible endpoint. Set the standard LangChain tracing environment variables to point at your LLMOps instance:
+
+```bash title=".env"
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_ENDPOINT=http://localhost:3000/llmops/api/langsmith
+LANGCHAIN_API_KEY=your-environment-secret
+```
+
+Then use LangChain as usual — all runs are automatically traced:
+
+```python title="app.py"
+import os
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    base_url="http://localhost:3000/llmops/api/genai/v1",
+    api_key=os.environ["LLMOPS_ENV_SECRET"],
+    model="@openai/gpt-4o-mini",
+)
+
+# This call is traced end-to-end in LLMOps
+response = llm.invoke("What is LLMOps?")
+```
+
+### OpenTelemetry
+
+LangChain also supports native OpenTelemetry export. Use the OTLP endpoint if you prefer OTel-based tracing:
 
 ```python title="tracing.py"
 from opentelemetry.sdk.trace import TracerProvider
@@ -192,81 +288,31 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 exporter = OTLPSpanExporter(
     endpoint="http://localhost:3000/llmops/api/otlp/v1/traces",
     headers={
-        "Authorization": "Bearer your-environment-secret",
+        "Authorization": f"Bearer {os.environ['LLMOPS_ENV_SECRET']}",
     },
 )
 
 provider = TracerProvider()
 provider.add_span_processor(BatchSpanProcessor(exporter))
 
-# Register as the global tracer provider
 from opentelemetry import trace
 trace.set_tracer_provider(provider)
-```
-
-</Step>
-
-<Step>
-
-### Use LangChain as usual
-
-All LangChain operations are automatically traced and sent to LLMOps:
-
-```python title="app.py"
-import tracing  # noqa: F401 — initializes OTel on import
-
-from langchain_openai import ChatOpenAI
-
-llm = ChatOpenAI(
-    base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key="your-environment-secret",
-    model="gpt-4o-mini",
-)
-
-# This call is traced end-to-end in LLMOps
-response = llm.invoke("What is LLMOps?")
-```
-
-</Step>
-</Steps>
-
-LLMOps automatically extracts `gen_ai.*` semantic convention attributes from the traces, including provider, model, token usage, and cost.
-
-### TypeScript (OpenTelemetry)
-
-```typescript title="tracing.ts"
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-
-const exporter = new OTLPTraceExporter({
-  url: 'http://localhost:3000/llmops/api/otlp/v1/traces',
-  headers: {
-    Authorization: 'Bearer your-environment-secret',
-  },
-});
-
-const provider = new NodeTracerProvider();
-provider.addSpanProcessor(new BatchSpanProcessor(exporter));
-provider.register();
 ```
 
 ---
 
 ## Python (Full Example)
 
-A complete Python setup using LLMOps for both LLM routing and tracing:
+A complete Python setup using LLMOps as a proxy for both LLM routing and tracing:
 
 ```python
+import os
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 llm = ChatOpenAI(
     base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key="your-environment-secret",
-    model="gpt-4o-mini",
-    default_headers={
-        "x-llmops-config": "your-config-id",
-    },
+    api_key=os.environ["LLMOPS_ENV_SECRET"],
+    model="@openai/gpt-4o-mini",
 )
 
 # Chat
@@ -280,15 +326,8 @@ for chunk in llm.stream("Tell me a joke"):
 # Embeddings
 embeddings = OpenAIEmbeddings(
     base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key="your-environment-secret",
-    model="text-embedding-3-small",
+    api_key=os.environ["LLMOPS_ENV_SECRET"],
+    model="@openai/text-embedding-3-small",
 )
 vectors = embeddings.embed_query("Hello world")
-
-# Direct provider routing
-llm_direct = ChatOpenAI(
-    base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key="your-environment-secret",
-    model="@my-openai/gpt-4o-mini",
-)
 ```

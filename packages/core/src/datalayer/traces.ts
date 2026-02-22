@@ -55,7 +55,7 @@ const insertSpanSchema = z.object({
   environmentId: z.string().uuid().nullable().optional(),
   providerConfigId: z.string().uuid().nullable().optional(),
   requestId: z.string().uuid().nullable().optional(),
-  source: z.enum(['gateway', 'otlp']).default('gateway'),
+  source: z.enum(['gateway', 'otlp', 'langsmith']).default('gateway'),
   input: z.unknown().nullable().optional(),
   output: z.unknown().nullable().optional(),
   attributes: z.record(z.string(), z.unknown()).default({}),

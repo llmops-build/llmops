@@ -22,12 +22,15 @@
     "dev": "NODE_ENV=development tsx server.ts"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.27",
+    "@langchain/langgraph": "^0.2.0",
     "@langchain/openai": "^0.5.10",
     "@llmops/sdk": "workspace:^",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "langchain": "^0.3.23",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
