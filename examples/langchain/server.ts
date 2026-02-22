@@ -15,10 +15,16 @@ app.use(express.json());
 // Mount LLMOps middleware
 app.use('/llmops', llmops);
 
-// Create a LangChain LLM pointing at the LLMOps gateway
+// Create a LangChain LLM pointing at the LLMOps gateway.
+// Uses an explicit baseURL (not provider()) so the gateway creates traces.
+// provider() sets x-llmops-internal which skips trace creation,
+// expecting a separate OTLP exporter to handle tracing instead.
 function createLLM() {
   return new ChatOpenAI({
-    configuration: llmopsClient.provider(),
+    configuration: {
+      baseURL: `http://localhost:${port}/llmops/api/genai/v1`,
+    },
+    apiKey: process.env.LLMOPS_ENV_SECRET || 'llmops',
     model: process.env.MODEL || '@openai/gpt-4o-mini',
   });
 }
