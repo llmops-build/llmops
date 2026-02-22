@@ -19,7 +19,7 @@ app.use('/llmops', llmops);
 function createLLM(configId?: string) {
   return new ChatOpenAI({
     configuration: {
-      baseURL: `http://localhost:${port}/llmops/api/genai`,
+      baseURL: `http://localhost:${port}/llmops/api/genai/v1`,
       defaultHeaders: configId
         ? { 'x-llmops-config': configId }
         : undefined,
@@ -88,7 +88,7 @@ app.post('/api/embeddings', async (req, res) => {
 
     const embeddings = new OpenAIEmbeddings({
       configuration: {
-        baseURL: `http://localhost:${port}/llmops/api/genai`,
+        baseURL: `http://localhost:${port}/llmops/api/genai/v1`,
         defaultHeaders: configId
           ? { 'x-llmops-config': configId }
           : undefined,
