@@ -122,7 +122,7 @@ const pricingProvider = getDefaultPricingProvider();
  */
 const app = new Hono()
   .post('/v1/traces', async (c) => {
-    logger.info(`[OTLP] POST /v1/traces hit — url: ${c.req.url}`);
+    logger.debug(`[OTLP] POST /v1/traces hit — url: ${c.req.url}`);
 
     // Auth: Bearer token = environment secret
     const authHeader = c.req.header('authorization');
@@ -143,14 +143,14 @@ const app = new Hono()
     // Parse body — route by Content-Type (protobuf vs JSON)
     let body: ExportTraceServiceRequest;
     const contentType = c.req.header('content-type') ?? '';
-    logger.info(`[OTLP] Received request — Content-Type: ${contentType}`);
+    logger.debug(`[OTLP] Received request — Content-Type: ${contentType}`);
     try {
       if (
         contentType.includes('application/x-protobuf') ||
         contentType.includes('application/protobuf')
       ) {
         const buffer = await c.req.arrayBuffer();
-        logger.info(`[OTLP] Protobuf body size: ${buffer.byteLength} bytes`);
+        logger.debug(`[OTLP] Protobuf body size: ${buffer.byteLength} bytes`);
         body = decodeOtlpProtobuf(new Uint8Array(buffer));
       } else {
         body = await c.req.json();
@@ -161,7 +161,7 @@ const app = new Hono()
       return c.json({ error: 'Invalid request body' }, 400);
     }
 
-    logger.info(`[OTLP] Parsed body — resourceSpans count: ${body.resourceSpans?.length ?? 0}`);
+    logger.debug(`[OTLP] Parsed body — resourceSpans count: ${body.resourceSpans?.length ?? 0}`);
 
     if (!body.resourceSpans || !Array.isArray(body.resourceSpans)) {
       return c.json({ error: 'Missing resourceSpans' }, 400);
@@ -189,13 +189,13 @@ const app = new Hono()
           resourceSpan.resource?.attributes
         );
 
-        logger.info(`[OTLP] resourceSpan — scopeSpans count: ${resourceSpan.scopeSpans?.length ?? 0}, resource attrs: ${JSON.stringify(resourceAttrs)}`);
+        logger.debug(`[OTLP] resourceSpan — scopeSpans count: ${resourceSpan.scopeSpans?.length ?? 0}, resource attrs: ${JSON.stringify(resourceAttrs)}`);
 
         for (const scopeSpan of resourceSpan.scopeSpans) {
-          logger.info(`[OTLP]   scopeSpan — scope: ${scopeSpan.scope?.name ?? '<none>'}, spans count: ${scopeSpan.spans?.length ?? 0}`);
+          logger.debug(`[OTLP]   scopeSpan — scope: ${scopeSpan.scope?.name ?? '<none>'}, spans count: ${scopeSpan.spans?.length ?? 0}`);
 
           for (const otlpSpan of scopeSpan.spans) {
-            logger.info(`[OTLP]     raw span — traceId: ${otlpSpan.traceId}, spanId: ${otlpSpan.spanId}, parentSpanId: ${otlpSpan.parentSpanId ?? 'null'}, name: ${otlpSpan.name}, startTimeUnixNano: ${otlpSpan.startTimeUnixNano}, endTimeUnixNano: ${otlpSpan.endTimeUnixNano ?? 'null'}`);
+            logger.debug(`[OTLP]     raw span — traceId: ${otlpSpan.traceId}, spanId: ${otlpSpan.spanId}, parentSpanId: ${otlpSpan.parentSpanId ?? 'null'}, name: ${otlpSpan.name}, startTimeUnixNano: ${otlpSpan.startTimeUnixNano}, endTimeUnixNano: ${otlpSpan.endTimeUnixNano ?? 'null'}`);
 
             const allAttrs = {
               ...resourceAttrs,
@@ -236,7 +236,7 @@ const app = new Hono()
                   cost = costResult.totalCost;
                 }
               } catch (e) {
-                logger.info(`[OTLP] Failed to calculate cost for ${typed.provider}/${typed.model}: ${e instanceof Error ? e.message : String(e)}`);
+                logger.debug(`[OTLP] Failed to calculate cost for ${typed.provider}/${typed.model}: ${e instanceof Error ? e.message : String(e)}`);
               }
             }
 
@@ -294,8 +294,8 @@ const app = new Hono()
               metadata: {},
             };
 
-            logger.info(`[OTLP]     spanData — traceId: ${spanData.traceId}, spanId: ${spanData.spanId}, parentSpanId: ${spanData.parentSpanId ?? 'null'}, name: ${spanData.name}, source: ${spanData.source}, startTime: ${spanData.startTime.toISOString()}, endTime: ${spanData.endTime?.toISOString() ?? 'null'}, durationMs: ${spanData.durationMs}`);
-            logger.info(`[OTLP]     traceData — traceId: ${traceData.traceId}, name: ${traceData.name ?? 'null'}, status: ${traceData.status}, spanCount: ${traceData.spanCount}`);
+            logger.debug(`[OTLP]     spanData — traceId: ${spanData.traceId}, spanId: ${spanData.spanId}, parentSpanId: ${spanData.parentSpanId ?? 'null'}, name: ${spanData.name}, source: ${spanData.source}, startTime: ${spanData.startTime.toISOString()}, endTime: ${spanData.endTime?.toISOString() ?? 'null'}, durationMs: ${spanData.durationMs}`);
+            logger.debug(`[OTLP]     traceData — traceId: ${traceData.traceId}, name: ${traceData.name ?? 'null'}, status: ${traceData.status}, spanCount: ${traceData.spanCount}`);
 
             const item: TraceQueueItem = {
               span: spanData,
@@ -309,7 +309,7 @@ const app = new Hono()
         }
       }
 
-      logger.info(`[OTLP] Enqueued ${spanCount} spans total`);
+      logger.debug(`[OTLP] Enqueued ${spanCount} spans total`);
       return c.json({ partialSuccess: {} });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);

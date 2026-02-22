@@ -857,7 +857,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       // Add guardrails from manifest (already fetched and cached)
       // Always set both arrays (even if empty) - gateway expects arrays, not undefined
       const { guardrails } = manifest;
-      logger.info(
+      logger.debug(
         `Manifest guardrails: before=${guardrails.beforeRequestHook.length}, after=${guardrails.afterRequestHook.length}`
       );
       portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
@@ -866,7 +866,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       portkeyConfig.default_output_guardrails =
         convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
       if (guardrails.beforeRequestHook.length > 0) {
-        logger.info(
+        logger.debug(
           `Added input guardrails: ${JSON.stringify(portkeyConfig.default_input_guardrails)}`
         );
       }
