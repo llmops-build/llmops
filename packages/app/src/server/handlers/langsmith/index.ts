@@ -62,14 +62,9 @@ interface RunUpdate {
 // ID conversion utilities
 // ---------------------------------------------------------------------------
 
-/** Strip dashes from UUID → 32-char hex (matches LLMOps traceId format) */
-function uuidToTraceId(uuid: string): string {
+/** Strip dashes from UUID → 32-char hex */
+function uuidToHex(uuid: string): string {
   return uuid.replace(/-/g, '');
-}
-
-/** UUID → first 16 hex chars for spanId */
-function uuidToSpanId(uuid: string): string {
-  return uuid.replace(/-/g, '').slice(0, 16);
 }
 
 // ---------------------------------------------------------------------------
@@ -127,12 +122,12 @@ const pricingProvider = getDefaultPricingProvider();
 
 async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
   const traceId = run.trace_id
-    ? uuidToTraceId(run.trace_id)
-    : uuidToTraceId(run.id);
+    ? uuidToHex(run.trace_id)
+    : uuidToHex(run.id);
 
-  const spanId = uuidToSpanId(run.id);
+  const spanId = uuidToHex(run.id);
   const parentSpanId = run.parent_run_id
-    ? uuidToSpanId(run.parent_run_id)
+    ? uuidToHex(run.parent_run_id)
     : null;
 
   const startTime = parseTimestamp(run.start_time) ?? new Date();
@@ -258,10 +253,10 @@ function runUpdateToQueueItem(
   update: RunUpdate & { id: string }
 ): TraceQueueItem | null {
   const traceId = update.trace_id
-    ? uuidToTraceId(update.trace_id)
-    : uuidToTraceId(update.id);
+    ? uuidToHex(update.trace_id)
+    : uuidToHex(update.id);
 
-  const spanId = uuidToSpanId(update.id);
+  const spanId = uuidToHex(update.id);
   const endTime = parseTimestamp(update.end_time);
   const hasError = !!update.error;
   const traceStatus = hasError ? 'error' : endTime ? 'ok' : 'unset';

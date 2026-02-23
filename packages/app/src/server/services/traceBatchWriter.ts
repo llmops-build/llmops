@@ -110,21 +110,22 @@ export function createTraceBatchWriter(
         }
       }
 
-      // Upsert all traces
-      for (const trace of traceMap.values()) {
-        await deps.upsertTrace(trace);
-      }
-
-      // Batch insert all spans
+      // Insert spans and events BEFORE upserting traces.
+      // This prevents spanCount inflation on re-queue: if span insert fails
+      // the trace is never upserted, so re-queued items won't double-count.
       const allSpans = batch.map((item) => item.span);
       if (allSpans.length > 0) {
         await deps.batchInsertSpans(allSpans);
       }
 
-      // Batch insert all events
       const allEvents = batch.flatMap((item) => item.events ?? []);
       if (allEvents.length > 0) {
         await deps.batchInsertSpanEvents(allEvents);
+      }
+
+      // Upsert traces last — only runs if spans succeeded
+      for (const trace of traceMap.values()) {
+        await deps.upsertTrace(trace);
       }
 
       logger.debug(

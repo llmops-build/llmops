@@ -102,7 +102,7 @@ export function createLLMOpsLangChainClient(
     post: CreateRunParams[],
     patch: RunUpdate[]
   ): Promise<void> {
-    await fetchFn(url, {
+    const response = await fetchFn(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,6 +110,11 @@ export function createLLMOpsLangChainClient(
       },
       body: JSON.stringify({ post, patch }),
     });
+    if (!response.ok) {
+      console.warn(
+        `[LLMOps LangChain] POST /runs/batch failed: ${response.status} ${response.statusText}`
+      );
+    }
   }
 
   return {

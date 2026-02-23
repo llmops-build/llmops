@@ -137,6 +137,24 @@ function getSpanType(span: SpanRow): SpanType {
   const attrs = span.attributes;
   const nameLower = span.name.toLowerCase();
 
+  // LangSmith run_type — direct classification from LangChain tracing
+  const runType = attrs['langsmith.run_type'] as string | undefined;
+  if (runType) {
+    switch (runType) {
+      case 'llm':
+        return 'generation';
+      case 'tool':
+      case 'retriever':
+        return 'tool';
+      case 'embedding':
+        return 'embedding';
+      case 'chain':
+      case 'prompt':
+      case 'parser':
+        return 'agent';
+    }
+  }
+
   // Tool spans
   if (
     attrs['gen_ai.tool.name'] ||
