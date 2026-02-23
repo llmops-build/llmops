@@ -17,6 +17,7 @@ export { createTracesDataLayer } from './traces';
 export type { TraceUpsert, SpanInsert, SpanEventInsert } from './traces';
 export { createVariantDataLayer } from './variants';
 export { createVariantVersionsDataLayer } from './variantVersions';
+export { createSpanAnnotationsDataLayer } from './spanAnnotations';
 export { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 // New exports
@@ -39,5 +40,6 @@ export type {
   TracesDataLayer,
   VariantsDataLayer,
   VariantVersionsDataLayer,
+  SpanAnnotationsDataLayer,
   WorkspaceSettingsDataLayer,
 } from './interface';

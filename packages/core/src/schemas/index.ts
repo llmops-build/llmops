@@ -37,6 +37,7 @@ export type {
   DatasetRecord,
   DatasetVersionRecord,
   LLMRequest,
+  SpanAnnotation,
 } from '../db/schema';
 
 // Re-export Zod schemas for runtime validation

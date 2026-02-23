@@ -18,6 +18,7 @@ import { createTargetingRulesDataLayer } from './targetingRules';
 import { createTracesDataLayer } from './traces';
 import { createVariantDataLayer } from './variants';
 import { createVariantVersionsDataLayer } from './variantVersions';
+import { createSpanAnnotationsDataLayer } from './spanAnnotations';
 import { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 /**
@@ -42,6 +43,7 @@ export function createDataLayer(db: Kysely<Database>): DataLayer {
     ...createTracesDataLayer(db),
     ...createVariantDataLayer(db),
     ...createVariantVersionsDataLayer(db),
+    ...createSpanAnnotationsDataLayer(db),
     ...createWorkspaceSettingsDataLayer(db),
   };
 }

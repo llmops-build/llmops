@@ -14,6 +14,7 @@ import type { createTargetingRulesDataLayer } from './targetingRules';
 import type { createVariantDataLayer } from './variants';
 import type { createVariantVersionsDataLayer } from './variantVersions';
 import type { createTracesDataLayer } from './traces';
+import type { createSpanAnnotationsDataLayer } from './spanAnnotations';
 import type { createWorkspaceSettingsDataLayer } from './workspaceSettings';
 
 // Infer types from existing implementations
@@ -49,6 +50,9 @@ export type VariantVersionsDataLayer = ReturnType<
   typeof createVariantVersionsDataLayer
 >;
 export type TracesDataLayer = ReturnType<typeof createTracesDataLayer>;
+export type SpanAnnotationsDataLayer = ReturnType<
+  typeof createSpanAnnotationsDataLayer
+>;
 export type WorkspaceSettingsDataLayer = ReturnType<
   typeof createWorkspaceSettingsDataLayer
 >;
@@ -70,4 +74,5 @@ export type DataLayer = ConfigsDataLayer &
   TracesDataLayer &
   VariantsDataLayer &
   VariantVersionsDataLayer &
+  SpanAnnotationsDataLayer &
   WorkspaceSettingsDataLayer;

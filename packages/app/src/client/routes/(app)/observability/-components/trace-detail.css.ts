@@ -391,3 +391,104 @@ export const loadingContainer = style({
   justifyContent: 'center',
   height: '100%',
 });
+
+// Annotations
+export const annotationsContainer = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: spacing.xs,
+  margin: `${spacing.xs} 0 ${spacing.sm}`,
+});
+
+export const annotationItem = style([
+  sprinkles({
+    fontFamily: 'mono',
+    fontSize: 'xs',
+  }),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: `${spacing.xs} ${spacing.sm}`,
+    backgroundColor: colors.gray2,
+    borderRadius: '4px',
+    border: `1px solid ${colors.gray4}`,
+  },
+]);
+
+export const annotationTypeBadge = style([
+  sprinkles({
+    fontFamily: 'mono',
+    fontSize: 'xs',
+    color: 'gray9',
+  }),
+  {
+    flexShrink: 0,
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em',
+    minWidth: '56px',
+  },
+]);
+
+export const annotationContent = style([
+  sprinkles({ color: 'gray11' }),
+  {
+    flex: 1,
+    fontWeight: 500,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+]);
+
+export const annotationDeleteBtn = style({
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  padding: '2px',
+  color: colors.gray8,
+  flexShrink: 0,
+  ':hover': {
+    color: colors.error9,
+  },
+});
+
+export const annotationForm = style({
+  display: 'flex',
+  gap: spacing.xs,
+  margin: `${spacing.xs} 0`,
+});
+
+export const annotationSelect = style([
+  sprinkles({
+    fontFamily: 'mono',
+    fontSize: 'xs',
+    color: 'gray11',
+  }),
+  {
+    background: colors.gray2,
+    border: `1px solid ${colors.gray4}`,
+    borderRadius: '4px',
+    padding: `${spacing.xs} ${spacing.sm}`,
+    outline: 'none',
+  },
+]);
+
+export const annotationInput = style([
+  sprinkles({
+    fontFamily: 'mono',
+    fontSize: 'xs',
+    color: 'gray11',
+  }),
+  {
+    flex: 1,
+    background: colors.gray2,
+    border: `1px solid ${colors.gray4}`,
+    borderRadius: '4px',
+    padding: `${spacing.xs} ${spacing.sm}`,
+    outline: 'none',
+    '::placeholder': {
+      color: colors.gray8,
+    },
+  },
+]);

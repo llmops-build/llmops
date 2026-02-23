@@ -336,6 +336,15 @@ export const spanEventsSchema = z.object({
   createdAt: z.date(),
 });
 
+// Span annotations table schema - human feedback on spans (scores, labels, comments)
+export const spanAnnotationsSchema = z.object({
+  ...baseSchema,
+  traceId: z.string(),
+  spanId: z.string(),
+  type: z.enum(['score', 'label', 'comment']),
+  value: z.record(z.string(), z.unknown()), // { score: 5 } | { label: "hallucination" } | { comment: "..." }
+});
+
 /**
  * Zod inferred types (for runtime validation)
  */
@@ -366,6 +375,7 @@ export type LLMRequest = z.infer<typeof llmRequestsSchema>;
 export type Trace = z.infer<typeof tracesSchema>;
 export type Span = z.infer<typeof spansSchema>;
 export type SpanEvent = z.infer<typeof spanEventsSchema>;
+export type SpanAnnotation = z.infer<typeof spanAnnotationsSchema>;
 
 /**
  * Kysely Table Interfaces
@@ -641,6 +651,14 @@ export interface SpanEventsTable {
   createdAt: ColumnType<Date, string | undefined, string | undefined>;
 }
 
+// Span annotations table - human feedback on spans
+export interface SpanAnnotationsTable extends BaseTable {
+  traceId: string;
+  spanId: string;
+  type: string;
+  value: ColumnType<Record<string, unknown>, string, string>;
+}
+
 /**
  * Main Kysely Database interface
  */
@@ -667,6 +685,7 @@ export interface Database {
   traces: TracesTable;
   spans: SpansTable;
   span_events: SpanEventsTable;
+  span_annotations: SpanAnnotationsTable;
 }
 
 /**
@@ -1159,6 +1178,19 @@ export const SCHEMA_METADATA = {
         createdAt: { type: 'timestamp', default: 'now()' },
       },
     },
+    span_annotations: {
+      order: 33,
+      schema: spanAnnotationsSchema,
+      fields: {
+        id: { type: 'uuid', primaryKey: true },
+        traceId: { type: 'text' },
+        spanId: { type: 'text' },
+        type: { type: 'text' },
+        value: { type: 'jsonb' },
+        createdAt: { type: 'timestamp', default: 'now()' },
+        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
+      },
+    },
   },
 } as const;
 
@@ -1189,4 +1221,5 @@ export const schemas = {
   traces: tracesSchema,
   spans: spansSchema,
   span_events: spanEventsSchema,
+  span_annotations: spanAnnotationsSchema,
 } as const;
