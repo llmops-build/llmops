@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import v1 from '@server/handlers/v1';
 import genaiV1 from '@server/handlers/genai';
 import otlp from '@server/handlers/otlp';
+import langsmith from '@server/handlers/langsmith';
 import authHandlers from '@server/handlers/auth';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,6 +85,7 @@ export const routes = app
   })
   .route('/genai', genaiV1)
   .route('/otlp', otlp)
+  .route('/langsmith', langsmith)
   .route('/v1', v1);
 
 export default app;

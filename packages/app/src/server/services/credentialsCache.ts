@@ -1,4 +1,5 @@
 import { cacheService } from './cache';
+import { logger } from '@llmops/core';
 import type { InlineProvidersConfig } from '@llmops/core';
 
 const CREDENTIALS_NAMESPACE = 'provider-credentials';
@@ -126,16 +127,16 @@ export async function getProviderCredentialsBySlug(
   db: any
 ): Promise<ProviderCredentialsWithProvider | null> {
   if (!db.getProviderConfigBySlug) {
-    console.log('[credentialsCache] db.getProviderConfigBySlug not found');
+    logger.debug('[credentialsCache] db.getProviderConfigBySlug not found');
     return null;
   }
 
   return cacheService.getOrSet(
     `credentials-by-slug:${slug}`,
     async () => {
-      console.log('[credentialsCache] Looking up provider config by slug:', slug);
+      logger.debug('[credentialsCache] Looking up provider config by slug: %s', slug);
       const config = await db.getProviderConfigBySlug({ slug });
-      console.log('[credentialsCache] Found config:', config ? config.id : 'null');
+      logger.debug('[credentialsCache] Found config: %s', config ? config.id : 'null');
       if (!config) return null;
 
       const configData =

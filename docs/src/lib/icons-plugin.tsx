@@ -17,6 +17,7 @@ type SimpleIcon = {
 const simpleIconsMap: Record<string, string> = {
   Express: "siExpress",
   Hono: "siHono",
+  Langchain: "siLangchain",
 };
 
 function SimpleIconComponent({ icon }: { icon: SimpleIcon }) {

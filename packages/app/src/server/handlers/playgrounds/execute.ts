@@ -274,7 +274,7 @@ const app = new Hono()
       const gatewayPath = basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
       const gatewayBaseURL = `${baseURL}${gatewayPath}`;
 
-      logger.info({
+      logger.debug({
         msg: 'Playground execute: constructing gateway URL',
         forwardedProto,
         forwardedHost,

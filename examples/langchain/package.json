@@ -1,0 +1,42 @@
+{
+  "name": "@llmops/langchain-example",
+  "version": "1.0.0",
+  "description": "Minimal LangChain application using @llmops/sdk",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://llmops.build",
+  "bugs": {
+    "url": "https://github.com/llmops-build/llmops/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llmops-build/llmops.git",
+    "directory": "examples/langchain"
+  },
+  "author": "chtushar",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "NODE_ENV=development tsx server.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.27",
+    "@langchain/langgraph": "^0.2.0",
+    "@langchain/openai": "^0.5.10",
+    "@llmops/sdk": "workspace:^",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "langchain": "^0.3.23",
+    "pg": "^8.16.3",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "@types/pg": "^8.15.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

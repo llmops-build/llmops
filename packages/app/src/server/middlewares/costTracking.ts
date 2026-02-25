@@ -474,7 +474,7 @@ export function createCostTrackingMiddleware(
             guardrailResults,
             tags: customTags,
             input: requestInput,
-            output: null, // Streaming: output captured incrementally, not available here
+            output: usage?.output ?? null,
             traceContext,
             batchWriter,
             traceBatchWriter,
