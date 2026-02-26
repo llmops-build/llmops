@@ -16,3 +16,8 @@ export {
   type LLMOpsAgentsExporterConfig,
   type AgentsTracingExporter,
 } from './telemetry/agents-exporter';
+export {
+  createLLMOpsLangChainClient,
+  type LLMOpsLangChainClientConfig,
+  type LangChainTracingClient,
+} from './telemetry/langchain-client';

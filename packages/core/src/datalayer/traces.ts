@@ -1,4 +1,5 @@
 import { LLMOpsError } from '@/error';
+import { logger } from '../utils/logger';
 import type { Database } from '@/schemas';
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
@@ -55,7 +56,7 @@ const insertSpanSchema = z.object({
   environmentId: z.string().uuid().nullable().optional(),
   providerConfigId: z.string().uuid().nullable().optional(),
   requestId: z.string().uuid().nullable().optional(),
-  source: z.enum(['gateway', 'otlp']).default('gateway'),
+  source: z.enum(['gateway', 'otlp', 'langsmith']).default('gateway'),
   input: z.unknown().nullable().optional(),
   output: z.unknown().nullable().optional(),
   attributes: z.record(z.string(), z.unknown()).default({}),
@@ -171,17 +172,19 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
     batchInsertSpans: async (spans: SpanInsert[]) => {
       if (spans.length === 0) return { count: 0 };
 
-      const validatedSpans = await Promise.all(
-        spans.map(async (span) => {
-          const result = await insertSpanSchema.safeParseAsync(span);
-          if (!result.success) {
-            throw new LLMOpsError(
-              `Invalid span data: ${result.error.message}`
-            );
-          }
-          return result.data;
-        })
-      );
+      const validatedSpans: z.infer<typeof insertSpanSchema>[] = [];
+      for (const span of spans) {
+        const result = await insertSpanSchema.safeParseAsync(span);
+        if (!result.success) {
+          logger.warn(
+            `[batchInsertSpans] Skipping invalid span ${span.spanId}: ${result.error.message}`
+          );
+          continue;
+        }
+        validatedSpans.push(result.data);
+      }
+
+      if (validatedSpans.length === 0) return { count: 0 };
 
       const now = new Date().toISOString();
       const values = validatedSpans.map((span) => ({
@@ -230,17 +233,19 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
     batchInsertSpanEvents: async (events: SpanEventInsert[]) => {
       if (events.length === 0) return { count: 0 };
 
-      const validatedEvents = await Promise.all(
-        events.map(async (event) => {
-          const result = await insertSpanEventSchema.safeParseAsync(event);
-          if (!result.success) {
-            throw new LLMOpsError(
-              `Invalid span event data: ${result.error.message}`
-            );
-          }
-          return result.data;
-        })
-      );
+      const validatedEvents: z.infer<typeof insertSpanEventSchema>[] = [];
+      for (const event of events) {
+        const result = await insertSpanEventSchema.safeParseAsync(event);
+        if (!result.success) {
+          logger.warn(
+            `[batchInsertSpanEvents] Skipping invalid event: ${result.error.message}`
+          );
+          continue;
+        }
+        validatedEvents.push(result.data);
+      }
+
+      if (validatedEvents.length === 0) return { count: 0 };
 
       const now = new Date().toISOString();
       const values = validatedEvents.map((event) => ({

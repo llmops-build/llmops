@@ -54,6 +54,7 @@ export interface StreamingUsage {
   cachedTokens?: number;
   cacheCreationTokens?: number;
   hookResults?: GatewayHookResults;
+  output?: { role: string; content: string };
 }
 
 /**
@@ -123,6 +124,8 @@ export function createStreamingCostExtractor(): {
   let extractedUsage: StreamingUsage | null = null;
   let extractedHookResults: GatewayHookResults | undefined = undefined;
   let buffer = '';
+  let outputRole = '';
+  let outputContent = '';
   let resolveUsage: (usage: StreamingUsage | null) => void;
 
   const usagePromise = new Promise<StreamingUsage | null>((resolve) => {
@@ -172,6 +175,13 @@ export function createStreamingCostExtractor(): {
             after_request_hooks: hookData.after_request_hooks,
           };
         }
+      }
+
+      // Accumulate output content from streaming deltas
+      const delta = parsed.choices?.[0]?.delta;
+      if (delta) {
+        if (delta.role) outputRole = delta.role;
+        if (delta.content) outputContent += delta.content;
       }
 
       // Check for usage in this chunk (OpenAI format)
@@ -247,6 +257,14 @@ export function createStreamingCostExtractor(): {
           completionTokens: 0,
           totalTokens: 0,
           hookResults: extractedHookResults,
+        };
+      }
+
+      // Attach accumulated output content
+      if (extractedUsage && outputContent) {
+        extractedUsage.output = {
+          role: outputRole || 'assistant',
+          content: outputContent,
         };
       }
 
