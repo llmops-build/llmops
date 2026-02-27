@@ -2,10 +2,11 @@ import { Icon } from '@client/components/icons';
 import { createFileRoute, useSearch } from '@tanstack/react-router';
 import { Select } from '@base-ui/react/select';
 import { Check, ChevronDown, DollarSign, Loader2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useTotalCost,
   useCostSummary,
+  useDistinctTags,
 } from '@client/hooks/queries/useAnalytics';
 import {
   emptyState,
@@ -34,6 +35,9 @@ import {
   costBreakdownSelectPopup,
   costBreakdownSelectOption,
   costBreakdownSelectItemIndicator,
+  tagKeyChipsContainer,
+  tagKeyChip,
+  tagKeyChipActive,
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
@@ -76,6 +80,7 @@ function formatCost(microdollars: number): string {
 function RouteComponent() {
   const search = useSearch({ from: '/(app)/observability' });
   const [breakdownBy, setBreakdownBy] = useState<BreakdownBy>('input-output');
+  const [selectedTagKeys, setSelectedTagKeys] = useState<string[]>([]);
   const dateRange = {
     startDate: search.from ?? '',
     endDate: search.to ?? '',
@@ -100,12 +105,38 @@ function RouteComponent() {
     tags: parsedTags,
   };
 
+  const { data: distinctTags } = useDistinctTags(breakdownBy === 'tags');
+  const availableTagKeys = useMemo(
+    () => [...new Set(distinctTags?.map((t) => t.key))],
+    [distinctTags]
+  );
+  // Stable string for dependency tracking to avoid re-running on same data
+  const availableTagKeysKey = availableTagKeys.join('\0');
+
+  // Auto-select first tag key when switching to tags breakdown
+  // Reset selection when switching back so it picks up any new keys
+  useEffect(() => {
+    if (breakdownBy === 'tags' && availableTagKeys.length > 0) {
+      setSelectedTagKeys((prev) =>
+        prev.length === 0 ? [availableTagKeys[0]] : prev
+      );
+    } else if (breakdownBy !== 'tags') {
+      setSelectedTagKeys([]);
+    }
+  }, [breakdownBy, availableTagKeysKey, availableTagKeys]);
+
   const { data: totalCost, isLoading } = useTotalCost(analyticsParams);
 
   const groupBy =
     breakdownBy !== 'input-output' ? breakdownBy : undefined;
   const { data: summaryData } = useCostSummary(
-    { ...analyticsParams, groupBy },
+    {
+      ...analyticsParams,
+      groupBy,
+      ...(breakdownBy === 'tags' && selectedTagKeys.length > 0
+        ? { tagKeys: selectedTagKeys }
+        : {}),
+    },
     breakdownBy !== 'input-output'
   );
 
@@ -149,13 +180,17 @@ function RouteComponent() {
       0
     );
     if (total === 0) return null;
+    const stripPrefix =
+      breakdownBy === 'tags' && selectedTagKeys.length === 1;
     return summaryData.map((item, i) => ({
-      label: item.groupKey,
+      label: stripPrefix
+        ? item.groupKey.replace(/^[^:]+:/, '')
+        : item.groupKey,
       cost: Number(item.totalCost),
       percentage: (Number(item.totalCost) / total) * 100,
       color: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
     }));
-  }, [breakdownBy, summaryData]);
+  }, [breakdownBy, summaryData, selectedTagKeys]);
 
   return (
     <div className={costMetricsContainer}>
@@ -257,6 +292,31 @@ function RouteComponent() {
             </Select.Portal>
           </Select.Root>
         </div>
+
+        {breakdownBy === 'tags' && availableTagKeys.length > 0 && (
+          <div className={tagKeyChipsContainer}>
+            {availableTagKeys.map((key) => {
+              const isActive = selectedTagKeys.includes(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={`${tagKeyChip}${isActive ? ` ${tagKeyChipActive}` : ''}`}
+                  onClick={() => {
+                    if (isActive && selectedTagKeys.length === 1) return;
+                    setSelectedTagKeys((prev) =>
+                      isActive
+                        ? prev.filter((k) => k !== key)
+                        : [...prev, key]
+                    );
+                  }}
+                >
+                  {key}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {breakdownBy === 'input-output' ? (
           <>

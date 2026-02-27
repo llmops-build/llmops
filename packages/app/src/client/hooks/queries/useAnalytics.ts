@@ -165,6 +165,7 @@ export const useDailyCosts = (dateRange: DateRange, enabled = true) => {
 export const useCostSummary = (
   params: DateRangeWithFilters & {
     groupBy?: CostSummaryGroupBy;
+    tagKeys?: string[];
   },
   enabled = true
 ) => {
@@ -181,6 +182,10 @@ export const useCostSummary = (
         ...(params.tags &&
           Object.keys(params.tags).length > 0 && {
             tags: JSON.stringify(params.tags),
+          }),
+        ...(params.tagKeys &&
+          params.tagKeys.length > 0 && {
+            tagKeys: JSON.stringify(params.tagKeys),
           }),
       };
       const response = await hc.v1.analytics.costs.summary.$get({
