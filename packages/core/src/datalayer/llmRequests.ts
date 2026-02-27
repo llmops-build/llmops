@@ -115,6 +115,7 @@ const costSummarySchema = z.object({
   environmentId: z.string().uuid().optional(),
   tags: z.record(z.string(), z.array(z.string())).optional(), // { key: [value1, value2] }
   groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
+  tagKeys: z.array(z.string()).optional(),
 });
 
 /**
@@ -582,6 +583,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         variantId,
         environmentId,
         tags,
+        tagKeys,
       } = result.data;
 
       // Base query with date filter
@@ -728,6 +730,14 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
                 );
               }
             }
+          }
+          // Filter to only selected tag keys when provided
+          if (tagKeys && tagKeys.length > 0) {
+            const tagKeyList = sql.join(
+              tagKeys.map((k) => sql`${k}`),
+              sql`, `
+            );
+            conditions.push(sql`t.key IN (${tagKeyList})`);
           }
           const whereClause = sql.join(conditions, sql` AND `);
           const result = await sql<{

@@ -734,3 +734,44 @@ export const costBreakdownSelectItemIndicator = style({
   display: 'inline-flex',
   alignItems: 'center',
 });
+
+export const tagKeyChipsContainer = style({
+  display: 'flex',
+  gap: '6px',
+  flexWrap: 'wrap',
+});
+
+export const tagKeyChip = style([
+  sprinkles({
+    fontSize: 'xs',
+    fontFamily: 'mono',
+    borderRadius: 'sm',
+  }),
+  {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: `2px ${spacing.sm}`,
+    backgroundColor: colors.gray3,
+    color: colors.gray11,
+    border: `1px solid ${colors.gray6}`,
+    cursor: 'pointer',
+    height: '24px',
+    transition: 'all 0.15s ease',
+    ':hover': {
+      backgroundColor: colors.gray4,
+      borderColor: colors.gray7,
+    },
+  },
+]);
+
+export const tagKeyChipActive = style({
+  backgroundColor: colors.accent9,
+  color: 'white',
+  borderColor: colors.accent9,
+  selectors: {
+    [`${tagKeyChip}&:hover`]: {
+      backgroundColor: colors.accent10,
+      borderColor: colors.accent10,
+    },
+  },
+});

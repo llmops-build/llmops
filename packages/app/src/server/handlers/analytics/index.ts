@@ -75,6 +75,7 @@ interface DbWithAnalytics {
     environmentId?: string;
     tags?: Record<string, string[]>;
     groupBy?: CostSummaryGroupBy;
+    tagKeys?: string[];
   }) => Promise<unknown[]>;
   getRequestStats: (params: {
     startDate: Date;
@@ -422,6 +423,7 @@ const app = new Hono()
       'query',
       dateRangeWithFiltersSchema.extend({
         groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
+        tagKeys: z.string().optional(),
       })
     ),
     async (c) => {
@@ -434,9 +436,19 @@ const app = new Hono()
         variantId,
         environmentId,
         tags,
+        tagKeys,
       } = c.req.valid('query');
 
       try {
+        let parsedTagKeys: string[] | undefined;
+        if (tagKeys) {
+          try {
+            const arr = JSON.parse(tagKeys);
+            if (Array.isArray(arr)) parsedTagKeys = arr.filter(Boolean);
+          } catch {
+            // ignore invalid JSON
+          }
+        }
         const data = await db.getCostSummary({
           startDate,
           endDate,
@@ -445,6 +457,7 @@ const app = new Hono()
           variantId,
           environmentId,
           tags: parseTags(tags),
+          tagKeys: parsedTagKeys,
         });
         return c.json(successResponse(data, 200));
       } catch (error) {
