@@ -5,7 +5,7 @@ import { requestValidator } from './requestValidator';
 import { createRequestGuardMiddleware } from './requestGuard';
 import { createGatewayAdapterMiddleware } from './gatewayAdapter';
 import { createCostTrackingMiddleware } from '@server/middlewares/costTracking';
-import gateway from '@llmops/gateway';
+import { proxyRequest } from '@llmops/gateway';
 
 const app = new Hono();
 
@@ -22,10 +22,19 @@ app
   .use('*', createRequestGuardMiddleware())
   // Cost tracking middleware (captures usage and costs from responses)
   .use('*', createCostTrackingMiddleware())
-  // Adapter: translates LLMOps config to Portkey gateway format
+  // Adapter: resolves provider config and merges variant body
   .use('*', createGatewayAdapterMiddleware())
-  // Mount the gateway at root - gateway routes already have /v1 prefix
-  .route('/', gateway)
+  // Proxy to upstream provider
+  .all('/v1/*', async (c) => {
+    const providerConfig = c.get('providerConfig');
+    if (!providerConfig) {
+      return c.json(
+        { error: { message: 'Provider config not resolved', type: 'server_error' } },
+        500
+      );
+    }
+    return proxyRequest(providerConfig, c.req.raw);
+  })
   // Error handling
   .notFound((c) =>
     c.json(

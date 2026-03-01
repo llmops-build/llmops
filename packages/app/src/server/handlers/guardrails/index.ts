@@ -7,9 +7,9 @@ import {
 import { invalidateManifest } from '@server/services/manifest';
 import { Hono } from 'hono';
 import z from 'zod';
-// Import manifest directly - works in both dev and production builds
-// Note: 'with { type: "json" }' is required for Node.js v24+ compatibility
-import defaultManifest from '@llmops/gateway/plugins/default/manifest.json' with { type: 'json' };
+// TODO: Guardrails manifest will be provided by the new gateway plugin system.
+// For now, use an empty placeholder since the old gateway plugins were removed.
+const defaultManifest = {} as Record<string, unknown>;
 
 // Type for the manifest structure
 interface ManifestFunction {
@@ -34,7 +34,7 @@ interface Manifest {
 }
 
 function getDefaultManifest(): Manifest {
-  return defaultManifest as Manifest;
+  return defaultManifest as unknown as Manifest;
 }
 
 const app = new Hono()

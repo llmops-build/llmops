@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
+import type { ProviderConfig } from '@llmops/gateway';
 import { randomUUID } from 'node:crypto';
 import {
   logger,
@@ -186,6 +187,8 @@ declare module 'hono' {
     variantId?: string;
     environmentId?: string;
     providerConfigId?: string;
+    providerId?: string;
+    providerConfig?: ProviderConfig;
     __costTrackingContext?: RequestContext;
     __traceContext?: TraceContext;
   }
@@ -367,18 +370,8 @@ export function createCostTrackingMiddleware(
     // Get provider and model from context (set by gateway adapter)
     const variantModel = c.get('variantModel') || context.model;
 
-    // Try to determine provider from llmops config header
-    let provider = 'unknown';
-    const llmopsConfigHeader =
-      c.req.header('x-llmops-config') || c.req.header('x-llmops-prompt');
-    if (llmopsConfigHeader) {
-      try {
-        const llmopsConfig = JSON.parse(llmopsConfigHeader);
-        provider = llmopsConfig.provider || provider;
-      } catch {
-        // Ignore parse errors
-      }
-    }
+    // Get provider from context (set by gateway adapter)
+    const provider = c.get('providerId') || 'unknown';
 
     // Extract input from request body (messages for chat, prompt for completions, input for embeddings)
     const requestInput: unknown =
