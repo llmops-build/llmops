@@ -43,5 +43,7 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {}
+  "dependencies": {
+    "neverthrow": "^8.2.0"
+  }
 }
