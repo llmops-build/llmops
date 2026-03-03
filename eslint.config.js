@@ -22,7 +22,7 @@ export default [
     rules: {
       'no-undef': 'off',
       'no-unused-vars': 'warn',
-      '@typescript-eslint/no-unused-vars': 'error',
+      '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
   {

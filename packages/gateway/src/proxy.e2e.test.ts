@@ -438,3 +438,274 @@ describe('Content-type preservation', () => {
     expect(response.headers.get('content-type')).toBe('audio/mpeg');
   });
 });
+
+// ---------------------------------------------------------------------------
+// 7. Azure AI Inference Provider
+// ---------------------------------------------------------------------------
+
+describe('Azure AI Inference (azure-ai)', () => {
+  const FOUNDRY_URL =
+    'https://my-project.services.ai.azure.com/models/deployments/gpt-4o';
+
+  test('routes chat completions with deployment prefix and api-version', async () => {
+    mockFetch.mockResolvedValueOnce(
+      Response.json({ id: 'chatcmpl-azure' }, { status: 200 })
+    );
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+      azureDeploymentName: 'gpt-4o',
+      azureApiVersion: '2024-12-01-preview',
+    };
+
+    const response = await proxyRequest(
+      config,
+      makeRequest('/v1/chat/completions')
+    );
+
+    expect(response.status).toBe(200);
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe(
+      `${FOUNDRY_URL}/deployments/gpt-4o/chat/completions?api-version=2024-12-01-preview`
+    );
+    expect(init.headers['Authorization']).toBe('Bearer az-key');
+    expect(init.headers['extra-parameters']).toBe('drop');
+    expect(init.headers['azureml-model-deployment']).toBe('gpt-4o');
+  });
+
+  test('routes embeddings with deployment prefix', async () => {
+    mockFetch.mockResolvedValueOnce(
+      Response.json({ data: [] }, { status: 200 })
+    );
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+      azureDeploymentId: 'text-embedding-ada',
+      azureApiVersion: '2024-12-01-preview',
+    };
+
+    const response = await proxyRequest(
+      config,
+      makeRequest('/v1/embeddings')
+    );
+
+    expect(response.status).toBe(200);
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toBe(
+      `${FOUNDRY_URL}/deployments/text-embedding-ada/embeddings?api-version=2024-12-01-preview`
+    );
+  });
+
+  test('direct endpoints (images, audio, responses) have no deployment prefix', async () => {
+    mockFetch.mockResolvedValueOnce(
+      Response.json({ data: [] }, { status: 200 })
+    );
+
+    const foundryUrl = 'https://my-project.services.ai.azure.com/models';
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: foundryUrl,
+      azureDeploymentName: 'dall-e-3',
+      azureApiVersion: '2024-12-01-preview',
+    };
+
+    await proxyRequest(config, makeRequest('/v1/images/generations'));
+
+    const [url] = mockFetch.mock.calls[0];
+    // Direct endpoints append path directly to foundryUrl, no /deployments/ prefix
+    expect(url).toBe(
+      `${foundryUrl}/images/generations?api-version=2024-12-01-preview`
+    );
+  });
+
+  test('no deployment name → no deployment prefix in URL', async () => {
+    mockFetch.mockResolvedValueOnce(
+      Response.json({ id: 'chatcmpl-1' }, { status: 200 })
+    );
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+      azureApiVersion: '2024-12-01-preview',
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe(
+      `${FOUNDRY_URL}/chat/completions?api-version=2024-12-01-preview`
+    );
+    expect(init.headers['azureml-model-deployment']).toBeUndefined();
+  });
+
+  test('no azureApiVersion → no query param', async () => {
+    mockFetch.mockResolvedValueOnce(
+      Response.json({ id: 'chatcmpl-1' }, { status: 200 })
+    );
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toBe(`${FOUNDRY_URL}/chat/completions`);
+    expect(url).not.toContain('api-version');
+  });
+
+  test('azureAdToken takes precedence over apiKey', async () => {
+    mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureAdToken: 'Bearer entra-token-123',
+      azureFoundryUrl: FOUNDRY_URL,
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [, init] = mockFetch.mock.calls[0];
+    // Should strip "Bearer " prefix and re-add it
+    expect(init.headers['Authorization']).toBe('Bearer entra-token-123');
+  });
+
+  test('no apiKey and no azureAdToken → no Authorization header', async () => {
+    mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      azureFoundryUrl: FOUNDRY_URL,
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.headers['Authorization']).toBeUndefined();
+  });
+
+  test('custom azureExtraParameters header value', async () => {
+    mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+      azureExtraParameters: 'pass-through',
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.headers['extra-parameters']).toBe('pass-through');
+  });
+
+  test('baseURL overrides azureFoundryUrl', async () => {
+    mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      baseURL: 'https://custom-proxy.example.com',
+      azureFoundryUrl: FOUNDRY_URL,
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toContain('https://custom-proxy.example.com');
+    expect(url).not.toContain(FOUNDRY_URL);
+  });
+
+  test('transforms developer role to system in chat completions', async () => {
+    mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+    };
+
+    const body = {
+      model: 'gpt-4o',
+      messages: [
+        { role: 'developer', content: 'You are a helpful assistant' },
+        { role: 'user', content: 'Hello' },
+      ],
+    };
+
+    await proxyRequest(
+      config,
+      makeRequest('/v1/chat/completions', {
+        body: JSON.stringify(body),
+      })
+    );
+
+    const [, init] = mockFetch.mock.calls[0];
+    // Body was transformed (parsed + stringified), so it's a string
+    const sentBody = JSON.parse(init.body);
+    expect(sentBody.messages[0].role).toBe('system');
+    expect(sentBody.messages[0].content).toBe('You are a helpful assistant');
+    expect(sentBody.messages[1].role).toBe('user');
+  });
+
+  test('azureDeploymentId takes precedence over azureDeploymentName', async () => {
+    mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+    const config: ProviderConfig = {
+      provider: 'azure-ai',
+      apiKey: 'az-key',
+      azureFoundryUrl: FOUNDRY_URL,
+      azureDeploymentId: 'dep-id',
+      azureDeploymentName: 'dep-name',
+    };
+
+    await proxyRequest(config, makeRequest('/v1/chat/completions'));
+
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toContain('/deployments/dep-id/');
+    expect(init.headers['azureml-model-deployment']).toBe('dep-id');
+  });
+
+  const supportedEndpoints: [string, string][] = [
+    ['/chat/completions', '/chat/completions'],
+    ['/completions', '/completions'],
+    ['/embeddings', '/embeddings'],
+    ['/responses', '/responses'],
+    ['/images/generations', '/images/generations'],
+    ['/images/edits', '/images/edits'],
+    ['/audio/speech', '/audio/speech'],
+    ['/audio/transcriptions', '/audio/transcriptions'],
+    ['/audio/translations', '/audio/translations'],
+  ];
+
+  test.each(supportedEndpoints)(
+    'supports %s endpoint',
+    async (requestPath) => {
+      mockFetch.mockResolvedValueOnce(Response.json({}, { status: 200 }));
+
+      const config: ProviderConfig = {
+        provider: 'azure-ai',
+        apiKey: 'az-key',
+        azureFoundryUrl: FOUNDRY_URL,
+      };
+
+      const response = await proxyRequest(
+        config,
+        makeRequest(`/v1${requestPath}`)
+      );
+
+      expect(response.status).toBe(200);
+      expect(mockFetch).toHaveBeenCalledOnce();
+    }
+  );
+});

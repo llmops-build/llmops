@@ -1,9 +1,11 @@
 import type { ProviderAdapter } from './types';
+import { azureAi } from './azure-ai';
 import { openai } from './openai';
 import { openaiCompatible } from './openai-compatible';
 
 const registry: Record<string, ProviderAdapter> = {
   openai,
+  'azure-ai': azureAi,
   // OpenAI-compatible providers
   groq: openaiCompatible('Groq', 'https://api.groq.com/openai/v1'),
   together: openaiCompatible('Together', 'https://api.together.xyz/v1'),
