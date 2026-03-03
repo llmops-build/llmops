@@ -78,8 +78,13 @@ export async function executeRequest(
       duplex: body instanceof ReadableStream ? 'half' : undefined,
     });
   } catch (e) {
+    const cause =
+      e instanceof Error && e.cause instanceof Error
+        ? e.cause.message
+        : undefined;
     const message = e instanceof Error ? e.message : String(e);
-    return serverError(`Upstream request failed: ${message}`);
+    const detail = cause ? `${message}: ${cause}` : message;
+    return serverError(`Upstream request failed: ${detail}`);
   }
 
   // 6. Handle error responses from upstream
