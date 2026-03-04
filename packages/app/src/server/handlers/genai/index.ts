@@ -14,7 +14,7 @@ app
   .use('*', prettyJSON())
   // Health check endpoint
   .get('/health', async (c) => {
-    return c.json({ status: 'healthy' });
+    return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
   })
   // LLMOps request validation (x-llmops-config, Authorization)
   .use('*', requestValidator)
