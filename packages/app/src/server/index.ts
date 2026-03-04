@@ -10,7 +10,7 @@ const app = new Hono();
 // before the database/auth middlewares to avoid heavy initialization for asset requests
 
 app
-  .get('/health', (c) => c.json({ status: 'ok' }))
+  .get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }))
   .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
       // Check if running in inline-only mode (no database)

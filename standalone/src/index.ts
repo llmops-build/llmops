@@ -25,7 +25,7 @@ app.get('/', (c) => {
 
 // API routes
 app.get('/api/health', (c) => {
-  return c.json({ status: 'healthy' });
+  return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // Start server
