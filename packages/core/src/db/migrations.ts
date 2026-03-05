@@ -1,6 +1,5 @@
 import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
-import { getMigrations as getAuthMigrations } from 'better-auth/db';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
@@ -452,17 +451,33 @@ export async function getMigrations(
     }
   }
 
-  const authOptions = getAuthClientOptions({
-    database: {
-      db: db,
-      type: dbType === 'neon' ? 'postgres' : dbType,
-    },
-  });
-  const {
-    toBeAdded: authChangesToBeAdded,
-    toBeCreated: authChangesToBeCreated,
-    runMigrations: runAuthMigrations,
-  } = await getAuthMigrations(authOptions);
+  // Detect edge runtimes (Cloudflare Workers, Vercel Edge, etc.) which lack Node.js APIs
+  const isEdgeRuntime =
+    typeof (globalThis as any).EdgeRuntime !== 'undefined' ||
+    typeof process === 'undefined' ||
+    process.versions?.node == null;
+
+  let authChangesToBeAdded: any[] = [];
+  let authChangesToBeCreated: any[] = [];
+  let runAuthMigrations: () => Promise<void> = async () => {};
+
+  if (!isEdgeRuntime) {
+    try {
+      const { getMigrations: getAuthMigrations } = await import('better-auth/db');
+      const authOptions = getAuthClientOptions({
+        database: {
+          db: db,
+          type: dbType === 'neon' ? 'postgres' : dbType,
+        },
+      });
+      const authResult = await getAuthMigrations(authOptions);
+      authChangesToBeAdded = authResult.toBeAdded;
+      authChangesToBeCreated = authResult.toBeCreated;
+      runAuthMigrations = authResult.runMigrations;
+    } catch {
+      logger.debug('Auth migrations not available in this runtime');
+    }
+  }
 
   async function runMigrations() {
     for (const migration of migrations) {

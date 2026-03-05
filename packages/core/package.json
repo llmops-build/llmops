@@ -22,6 +22,14 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": {
+      "workerd": {
+        "types": "./dist/index.edge.d.mts",
+        "default": "./dist/index.edge.mjs"
+      },
+      "edge-light": {
+        "types": "./dist/index.edge.d.mts",
+        "default": "./dist/index.edge.mjs"
+      },
       "import": {
         "types": "./dist/index.d.mts",
         "default": "./dist/index.mjs"
@@ -29,6 +37,16 @@
       "require": {
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
+      }
+    },
+    "./edge": {
+      "import": {
+        "types": "./dist/index.edge.d.mts",
+        "default": "./dist/index.edge.mjs"
+      },
+      "require": {
+        "types": "./dist/index.edge.d.cts",
+        "default": "./dist/index.edge.cjs"
       }
     },
     "./db": {
