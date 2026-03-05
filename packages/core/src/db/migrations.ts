@@ -1,6 +1,5 @@
 import type { Kysely, ColumnDataType, RawBuilder } from 'kysely';
 import { sql } from 'kysely';
-import { getMigrations as getAuthMigrations } from 'better-auth/db';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
@@ -452,6 +451,7 @@ export async function getMigrations(
     }
   }
 
+  const { getMigrations: getAuthMigrations } = await import('better-auth/db');
   const authOptions = getAuthClientOptions({
     database: {
       db: db,

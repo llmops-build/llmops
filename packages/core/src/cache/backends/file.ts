@@ -3,7 +3,6 @@
  * File-based cache backend implementation
  */
 
-import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type {
   CacheBackend,
@@ -57,9 +56,10 @@ export class FileCacheBackend implements CacheBackend {
   }
 
   private async ensureDataDir(): Promise<void> {
+    const { mkdir } = await import('node:fs/promises');
     const dir = path.dirname(this.cacheFile);
     try {
-      await fs.mkdir(dir, { recursive: true });
+      await mkdir(dir, { recursive: true });
     } catch {
       // Directory may already exist
     }
@@ -67,12 +67,13 @@ export class FileCacheBackend implements CacheBackend {
 
   private async loadCache(): Promise<void> {
     try {
-      const content = await fs.readFile(this.cacheFile, 'utf-8');
+      const { readFile } = await import('node:fs/promises');
+      const content = await readFile(this.cacheFile, 'utf-8');
       this.data = JSON.parse(content);
       this.updateStats();
       this.loaded = true;
     } catch {
-      // File doesn't exist or is invalid, start with empty cache
+      // File doesn't exist, is invalid, or fs is unavailable (edge runtime)
       this.data = {};
       this.loaded = true;
     }
@@ -81,9 +82,10 @@ export class FileCacheBackend implements CacheBackend {
   private async saveCache(): Promise<void> {
     try {
       await this.ensureDataDir();
-      await fs.writeFile(this.cacheFile, JSON.stringify(this.data, null, 2));
+      const { writeFile } = await import('node:fs/promises');
+      await writeFile(this.cacheFile, JSON.stringify(this.data, null, 2));
     } catch {
-      // Failed to save cache
+      // Failed to save cache (or fs is unavailable in edge runtime)
     }
   }
 
