@@ -451,7 +451,30 @@ export async function getMigrations(
     }
   }
 
-  const { getMigrations: getAuthMigrations } = await import('better-auth/db');
+  let getAuthMigrations: typeof import('better-auth/db').getMigrations;
+  try {
+    ({ getMigrations: getAuthMigrations } = await import('better-auth/db'));
+  } catch (error) {
+    logger.warn(
+      { error },
+      'Failed to import better-auth/db; skipping auth migrations'
+    );
+    return {
+      toBeCreated,
+      toBeAdded,
+      runMigrations: async () => {
+        for (const migration of migrations) {
+          await migration.execute();
+        }
+      },
+      compileMigrations: async () => {
+        const compiled = migrations.map((m) => m.compile().sql);
+        return compiled.join(';\n\n') + ';';
+      },
+      migrations,
+      needsMigration: toBeCreated.length > 0 || toBeAdded.length > 0,
+    };
+  }
   const authOptions = getAuthClientOptions({
     database: {
       db: db,
