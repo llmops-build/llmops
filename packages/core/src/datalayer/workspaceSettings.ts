@@ -150,12 +150,17 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
      * Check if initial setup has been completed
      */
     isSetupComplete: async (): Promise<boolean> => {
-      const settings = await db
-        .selectFrom('workspace_settings')
-        .select('setupComplete')
-        .executeTakeFirst();
+      try {
+        const settings = await db
+          .selectFrom('workspace_settings')
+          .select('setupComplete')
+          .executeTakeFirst();
 
-      return settings?.setupComplete ?? false;
+        return settings?.setupComplete ?? false;
+      } catch {
+        // Table may not exist yet if migrations haven't run
+        return false;
+      }
     },
 
     /**

@@ -453,11 +453,19 @@ export async function getMigrations(
 
   let getAuthMigrations: typeof import('better-auth/db').getMigrations;
   try {
-    ({ getMigrations: getAuthMigrations } = await import('better-auth/db'));
+    // Try better-auth 1.4.x path first, then 1.5.x path
+    try {
+      ({ getMigrations: getAuthMigrations } = await import('better-auth/db'));
+    } catch {
+      ({ getMigrations: getAuthMigrations } = await import(
+        // @ts-expect-error - better-auth 1.5.x moved getMigrations to db/migration
+        'better-auth/db/migration'
+      ));
+    }
   } catch (error) {
     logger.warn(
       { error },
-      'Failed to import better-auth/db; skipping auth migrations'
+      'Failed to import better-auth migrations; skipping auth migrations'
     );
     return {
       toBeCreated,
