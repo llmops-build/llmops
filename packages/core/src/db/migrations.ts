@@ -451,22 +451,32 @@ export async function getMigrations(
     }
   }
 
-  let getAuthMigrations: typeof import('better-auth/db').getMigrations;
+  let getAuthMigrations: typeof import('better-auth/db').getMigrations | undefined;
   try {
-    // Try better-auth 1.4.x path first, then 1.5.x path
-    try {
-      ({ getMigrations: getAuthMigrations } = await import('better-auth/db'));
-    } catch {
-      ({ getMigrations: getAuthMigrations } = await import(
+    // Try better-auth 1.4.x path first
+    const dbModule = await import('better-auth/db');
+    if (typeof dbModule.getMigrations === 'function') {
+      getAuthMigrations = dbModule.getMigrations;
+    }
+
+    // Fallback to better-auth 1.5.x path where getMigrations moved to db/migration
+    if (!getAuthMigrations) {
+      const migrationModule = await import(
         // @ts-expect-error - better-auth 1.5.x moved getMigrations to db/migration
         'better-auth/db/migration'
-      ));
+      );
+      if (typeof migrationModule.getMigrations === 'function') {
+        getAuthMigrations = migrationModule.getMigrations;
+      }
     }
   } catch (error) {
     logger.warn(
       { error },
       'Failed to import better-auth migrations; skipping auth migrations'
     );
+  }
+
+  if (!getAuthMigrations) {
     return {
       toBeCreated,
       toBeAdded,
