@@ -22,6 +22,7 @@ import {
   TableHeaderCell,
   TableCell,
   Button,
+  Tooltip,
 } from '@ui';
 import {
   sectionTitle,
@@ -79,6 +80,12 @@ const formatCost = (microDollars: number) => {
     return `$${dollars.toFixed(4)}`;
   }
   return `$${dollars.toFixed(2)}`;
+};
+
+const formatCostFull = (microDollars: number) => {
+  const dollars = microDollars / 1_000_000;
+  if (dollars === 0) return '$0.000000';
+  return `$${dollars.toFixed(6)}`;
 };
 
 const formatDuration = (ms: number | null) => {
@@ -173,7 +180,9 @@ function RouteComponent() {
       columnHelper.accessor('totalCost', {
         header: 'Cost',
         cell: (info) => (
-          <span className={timestampCell}>{formatCost(info.getValue())}</span>
+          <Tooltip content={formatCostFull(info.getValue())}>
+            <span className={timestampCell}>{formatCost(info.getValue())}</span>
+          </Tooltip>
         ),
       }),
       columnHelper.accessor('durationMs', {
