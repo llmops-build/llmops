@@ -29,6 +29,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   Button,
+  Tooltip,
 } from '@ui';
 import {
   sectionTitle,
@@ -90,6 +91,12 @@ const formatCost = (microDollars: number) => {
     return `$${dollars.toFixed(4)}`;
   }
   return `$${dollars.toFixed(2)}`;
+};
+
+const formatCostFull = (microDollars: number) => {
+  const dollars = microDollars / 1_000_000;
+  if (dollars === 0) return '$0.000000';
+  return `$${dollars.toFixed(6)}`;
 };
 
 function RouteComponent() {
@@ -223,15 +230,19 @@ function RouteComponent() {
         id: 'cacheSavings',
         header: 'Cache Savings',
         cell: (info) => (
-          <span className={timestampCell}>
-            {formatCost(info.getValue() ?? 0)}
-          </span>
+          <Tooltip content={formatCostFull(info.getValue() ?? 0)}>
+            <span className={timestampCell}>
+              {formatCost(info.getValue() ?? 0)}
+            </span>
+          </Tooltip>
         ),
       }),
       columnHelper.accessor('cost', {
         header: 'Cost',
         cell: (info) => (
-          <span className={timestampCell}>{formatCost(info.getValue())}</span>
+          <Tooltip content={formatCostFull(info.getValue())}>
+            <span className={timestampCell}>{formatCost(info.getValue())}</span>
+          </Tooltip>
         ),
       }),
       columnHelper.accessor('latencyMs', {

@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Icon } from '@client/components/icons';
 import { X, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
-import { Button } from '@ui';
+import { Button, Tooltip } from '@ui';
 import { useState, useMemo } from 'react';
 import {
   useTraceDetail,
@@ -114,6 +114,12 @@ const formatCost = (microDollars: number) => {
   if (dollars === 0) return '$0.00';
   if (dollars < 0.01) return `$${dollars.toFixed(4)}`;
   return `$${dollars.toFixed(2)}`;
+};
+
+const formatCostFull = (microDollars: number) => {
+  const dollars = microDollars / 1_000_000;
+  if (dollars === 0) return '$0.000000';
+  return `$${dollars.toFixed(6)}`;
 };
 
 const SPAN_STATUS_MAP: Record<number, string> = {
@@ -357,7 +363,9 @@ function SpanDetailView({
         {span.cost > 0 && (
           <div className={spanDetailMetaItem}>
             <span className={spanDetailMetaLabel}>Cost</span>
-            <span className={spanDetailMetaValue}>{formatCost(span.cost)}</span>
+            <Tooltip content={formatCostFull(span.cost)}>
+              <span className={spanDetailMetaValue}>{formatCost(span.cost)}</span>
+            </Tooltip>
           </div>
         )}
         <div className={spanDetailMetaItem}>
@@ -541,7 +549,9 @@ export function TraceDetail({ traceId }: { traceId: string }) {
         </div>
         <div className={metricItem}>
           <span className={metricLabel}>Cost</span>
-          <span className={metricValue}>{formatCost(trace.totalCost)}</span>
+          <Tooltip content={formatCostFull(trace.totalCost)}>
+            <span className={metricValue}>{formatCost(trace.totalCost)}</span>
+          </Tooltip>
         </div>
         <div className={metricItem}>
           <span className={metricLabel}>Started</span>
