@@ -1,5 +1,9 @@
 import { zv } from '@server/lib/zv';
-import { internalServerError, successResponse } from '@shared/responses';
+import {
+  clientErrorResponse,
+  internalServerError,
+  successResponse,
+} from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
 
@@ -33,6 +37,23 @@ interface DbWithTraces {
     endDate: Date;
     sessionId?: string;
     userId?: string;
+  }) => Promise<unknown | undefined>;
+  listSpanAnnotations: (params: {
+    spanId: string;
+  }) => Promise<unknown[]>;
+  createSpanAnnotation: (params: {
+    traceId: string;
+    spanId: string;
+    type: 'score' | 'label' | 'comment';
+    value: Record<string, unknown>;
+  }) => Promise<unknown | undefined>;
+  updateSpanAnnotation: (params: {
+    annotationId: string;
+    type?: 'score' | 'label' | 'comment';
+    value?: Record<string, unknown>;
+  }) => Promise<unknown | undefined>;
+  deleteSpanAnnotation: (params: {
+    annotationId: string;
   }) => Promise<unknown | undefined>;
 }
 
@@ -206,6 +227,171 @@ const app = new Hono()
         console.error('Error fetching trace stats:', error);
         return c.json(
           internalServerError('Failed to fetch trace stats', 500),
+          500
+        );
+      }
+    }
+  )
+
+  // ============ Span Annotations ============
+
+  /**
+   * GET /traces/:traceId/spans/:spanId/annotations
+   * List annotations for a span
+   */
+  .get(
+    '/:traceId/spans/:spanId/annotations',
+    zv(
+      'param',
+      z.object({
+        traceId: z.string(),
+        spanId: z.string(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db') as unknown as DbWithTraces;
+      const { spanId } = c.req.valid('param');
+
+      try {
+        const annotations = await db.listSpanAnnotations({ spanId });
+        return c.json(successResponse(annotations, 200));
+      } catch (error) {
+        console.error('Error fetching annotations:', error);
+        return c.json(
+          internalServerError('Failed to fetch annotations', 500),
+          500
+        );
+      }
+    }
+  )
+
+  /**
+   * POST /traces/:traceId/spans/:spanId/annotations
+   * Create an annotation on a span
+   */
+  .post(
+    '/:traceId/spans/:spanId/annotations',
+    zv(
+      'param',
+      z.object({
+        traceId: z.string(),
+        spanId: z.string(),
+      })
+    ),
+    zv(
+      'json',
+      z.object({
+        type: z.enum(['score', 'label', 'comment']),
+        value: z.record(z.string(), z.unknown()),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db') as unknown as DbWithTraces;
+      const { traceId, spanId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      try {
+        const annotation = await db.createSpanAnnotation({
+          traceId,
+          spanId,
+          ...body,
+        });
+        if (!annotation) {
+          return c.json(
+            internalServerError('Failed to create annotation', 500),
+            500
+          );
+        }
+        return c.json(successResponse(annotation, 200));
+      } catch (error) {
+        console.error('Error creating annotation:', error);
+        return c.json(
+          internalServerError('Failed to create annotation', 500),
+          500
+        );
+      }
+    }
+  )
+
+  /**
+   * PATCH /traces/:traceId/spans/:spanId/annotations/:annotationId
+   * Update an annotation
+   */
+  .patch(
+    '/:traceId/spans/:spanId/annotations/:annotationId',
+    zv(
+      'param',
+      z.object({
+        traceId: z.string(),
+        spanId: z.string(),
+        annotationId: z.string(),
+      })
+    ),
+    zv(
+      'json',
+      z.object({
+        type: z.enum(['score', 'label', 'comment']).optional(),
+        value: z.record(z.string(), z.unknown()).optional(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db') as unknown as DbWithTraces;
+      const { annotationId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      try {
+        const annotation = await db.updateSpanAnnotation({
+          annotationId,
+          ...body,
+        });
+        if (!annotation) {
+          return c.json(
+            clientErrorResponse('Annotation not found', 404),
+            404
+          );
+        }
+        return c.json(successResponse(annotation, 200));
+      } catch (error) {
+        console.error('Error updating annotation:', error);
+        return c.json(
+          internalServerError('Failed to update annotation', 500),
+          500
+        );
+      }
+    }
+  )
+
+  /**
+   * DELETE /traces/:traceId/spans/:spanId/annotations/:annotationId
+   * Delete an annotation
+   */
+  .delete(
+    '/:traceId/spans/:spanId/annotations/:annotationId',
+    zv(
+      'param',
+      z.object({
+        traceId: z.string(),
+        spanId: z.string(),
+        annotationId: z.string(),
+      })
+    ),
+    async (c) => {
+      const db = c.get('db') as unknown as DbWithTraces;
+      const { annotationId } = c.req.valid('param');
+
+      try {
+        const annotation = await db.deleteSpanAnnotation({ annotationId });
+        if (!annotation) {
+          return c.json(
+            clientErrorResponse('Annotation not found', 404),
+            404
+          );
+        }
+        return c.json(successResponse(annotation, 200));
+      } catch (error) {
+        console.error('Error deleting annotation:', error);
+        return c.json(
+          internalServerError('Failed to delete annotation', 500),
           500
         );
       }

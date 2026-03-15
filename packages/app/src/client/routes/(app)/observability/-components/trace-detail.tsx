@@ -2,12 +2,15 @@ import { useNavigate } from '@tanstack/react-router';
 import { Icon } from '@client/components/icons';
 import { X, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@ui';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   useTraceDetail,
   type SpanRow,
   type SpanEventRow,
 } from '@client/hooks/queries/useTraces';
+import { useSpanAnnotations } from '@client/hooks/queries/useSpanAnnotations';
+import { useCreateSpanAnnotation } from '@client/hooks/mutations/useCreateSpanAnnotation';
+import { useDeleteSpanAnnotation } from '@client/hooks/mutations/useDeleteSpanAnnotation';
 import { statusBadge, statusSuccess, statusError } from './observability.css';
 import clsx from 'clsx';
 import { format } from 'date-fns';
@@ -55,6 +58,14 @@ import {
   eventName,
   emptyDetail,
   loadingContainer,
+  annotationsContainer,
+  annotationItem,
+  annotationTypeBadge,
+  annotationContent,
+  annotationDeleteBtn,
+  annotationForm,
+  annotationSelect,
+  annotationInput as annotationInputStyle,
 } from './trace-detail.css';
 
 type SpanNode = SpanRow & { children: SpanNode[]; depth: number };
@@ -291,13 +302,46 @@ function CollapsibleSection({
 function SpanDetailView({
   span,
   events,
+  traceId,
 }: {
   span: SpanRow;
   events: SpanEventRow[];
+  traceId: string;
 }) {
   const spanStatus = SPAN_STATUS_MAP[span.status] ?? 'unset';
   const spanKind = SPAN_KIND_MAP[span.kind] ?? 'internal';
   const spanEvents = events.filter((e) => e.spanId === span.spanId);
+
+  // Annotations
+  const { data: annotations = [] } = useSpanAnnotations(traceId, span.spanId);
+  const createAnnotation = useCreateSpanAnnotation();
+  const deleteAnnotation = useDeleteSpanAnnotation();
+  const [annotationType, setAnnotationType] = useState<'score' | 'label' | 'comment'>('comment');
+  const [annotationInputValue, setAnnotationInputValue] = useState('');
+
+  const handleAnnotationSubmit = useCallback(() => {
+    const trimmed = annotationInputValue.trim();
+    if (!trimmed) return;
+
+    let value: Record<string, unknown>;
+    if (annotationType === 'score') {
+      const num = Number(trimmed);
+      if (isNaN(num)) return;
+      value = { score: num };
+    } else if (annotationType === 'label') {
+      value = { label: trimmed };
+    } else {
+      value = { comment: trimmed };
+    }
+
+    createAnnotation.mutate({
+      traceId,
+      spanId: span.spanId,
+      type: annotationType,
+      value,
+    });
+    setAnnotationInputValue('');
+  }, [annotationInputValue, annotationType, traceId, span.spanId, createAnnotation]);
 
   const filteredAttributes = useMemo(() => {
     return Object.entries(span.attributes).filter(
@@ -424,6 +468,65 @@ function SpanDetailView({
           <pre className={jsonBlock}>{span.statusMessage}</pre>
         </CollapsibleSection>
       )}
+
+      {/* Annotations */}
+      <CollapsibleSection title={`Annotations (${annotations.length})`} defaultOpen>
+        {annotations.length > 0 && (
+          <div className={annotationsContainer}>
+            {annotations.map((ann) => (
+              <div className={annotationItem} key={ann.id}>
+                <span className={annotationTypeBadge}>{ann.type}</span>
+                <span className={annotationContent}>
+                  {ann.type === 'score' && `${(ann.value as Record<string, unknown>).name ?? 'Score'}: ${(ann.value as Record<string, unknown>).score}`}
+                  {ann.type === 'label' && String((ann.value as Record<string, unknown>).label)}
+                  {ann.type === 'comment' && String((ann.value as Record<string, unknown>).comment)}
+                </span>
+                <button
+                  type="button"
+                  className={annotationDeleteBtn}
+                  onClick={() =>
+                    deleteAnnotation.mutate({
+                      traceId,
+                      spanId: span.spanId,
+                      annotationId: ann.id,
+                    })
+                  }
+                >
+                  <Icon icon={X} size="xs" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className={annotationForm}>
+          <select
+            className={annotationSelect}
+            value={annotationType}
+            onChange={(e) => setAnnotationType(e.target.value as 'score' | 'label' | 'comment')}
+          >
+            <option value="comment">Comment</option>
+            <option value="label">Label</option>
+            <option value="score">Score</option>
+          </select>
+          <input
+            className={annotationInputStyle}
+            placeholder={
+              annotationType === 'score'
+                ? 'Score (e.g. 0-10)'
+                : annotationType === 'label'
+                  ? 'Label name'
+                  : 'Add a comment...'
+            }
+            value={annotationInputValue}
+            onChange={(e) => setAnnotationInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleAnnotationSubmit();
+              }
+            }}
+          />
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }
@@ -574,7 +677,7 @@ export function TraceDetail({ traceId }: { traceId: string }) {
 
         {/* Selected span detail */}
         {selectedSpan && (
-          <SpanDetailView span={selectedSpan} events={events} />
+          <SpanDetailView span={selectedSpan} events={events} traceId={trace.traceId} />
         )}
       </div>
     </div>
