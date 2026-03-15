@@ -69,15 +69,7 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
       config.providers as InlineProvidersConfig | undefined
     ),
   }))
-  // Validate: either database or providers (including auto-detected) must exist
-  .refine(
-    (config) =>
-      config.database !== undefined ||
-      (config.providers && config.providers.length > 0),
-    'Either database or providers must be configured. ' +
-      'Set a database connection, configure providers explicitly, ' +
-      'or set API key environment variables (e.g., OPENAI_API_KEY).'
-  );
+;
 
 /**
  * Validated LLMOps configuration
