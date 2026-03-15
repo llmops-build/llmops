@@ -14,37 +14,44 @@ export const createSeedMiddleware = (): MiddlewareHandler => {
 
   return async (c, next) => {
     if (!initialized) {
-      const db = c.get('db');
+      try {
+        const db = c.get('db');
 
-      // Check if environments already exist
-      const environmentCount = await db.countEnvironments();
+        // Check if environments already exist
+        const environmentCount = await db.countEnvironments();
 
-      if (environmentCount === 0) {
-        console.log(
-          '[Seed] No environments found, seeding default environments...'
-        );
+        if (environmentCount === 0) {
+          console.log(
+            '[Seed] No environments found, seeding default environments...'
+          );
 
-        for (const env of DEFAULT_ENVIRONMENTS) {
-          // Create environment
-          const createdEnv = await db.createNewEnvironment({
-            name: env.name,
-            slug: env.slug,
-            isProd: env.isProd,
-          });
-
-          if (createdEnv) {
-            // Create secret for the environment
-            await db.createEnvironmentSecret({
-              environmentId: createdEnv.id,
-              keyName: 'Secret key',
-              keyValue: generateSecretKey(),
+          for (const env of DEFAULT_ENVIRONMENTS) {
+            // Create environment
+            const createdEnv = await db.createNewEnvironment({
+              name: env.name,
+              slug: env.slug,
+              isProd: env.isProd,
             });
 
-            console.log(`[Seed] Created environment: ${env.name} with API key`);
-          }
-        }
+            if (createdEnv) {
+              // Create secret for the environment
+              await db.createEnvironmentSecret({
+                environmentId: createdEnv.id,
+                keyName: 'Secret key',
+                keyValue: generateSecretKey(),
+              });
 
-        console.log('[Seed] Default environments seeded successfully');
+              console.log(
+                `[Seed] Created environment: ${env.name} with API key`
+              );
+            }
+          }
+
+          console.log('[Seed] Default environments seeded successfully');
+        }
+      } catch (error) {
+        // Tables may not exist yet if migrations haven't completed
+        console.warn('[Seed] Skipping seed, tables may not exist yet:', error);
       }
 
       initialized = true;
