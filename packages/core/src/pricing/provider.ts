@@ -143,9 +143,9 @@ export class LLMOpsPricingProvider implements PricingProvider {
   }
 
   /**
-   * Get pricing for a specific model
+   * Internal: fetch with cache and deduplication for a specific provider+model
    */
-  async getModelPricing(
+  private async getCachedPricing(
     provider: string,
     model: string
   ): Promise<ModelPricing | null> {
@@ -172,6 +172,33 @@ export class LLMOpsPricingProvider implements PricingProvider {
     }
 
     return pending;
+  }
+
+  /**
+   * Get pricing for a specific model.
+   *
+   * When the model name contains a slash (e.g. "google/gemini-2.5-flash"),
+   * it's likely an OpenRouter model ID. If the initial provider lookup fails,
+   * we automatically retry with "openrouter" as the provider.
+   */
+  async getModelPricing(
+    provider: string,
+    model: string
+  ): Promise<ModelPricing | null> {
+    const pricing = await this.getCachedPricing(provider, model);
+    if (pricing) return pricing;
+
+    // Model names with slashes (e.g. "google/gemini-2.5-flash") are OpenRouter
+    // model IDs. When the caller's provider (often "openai" from gen_ai.system)
+    // doesn't match, fall back to openrouter.
+    if (!pricing && model.includes('/') && provider.toLowerCase() !== 'openrouter') {
+      logger.debug(
+        `[Pricing] Retrying ${provider}/${model} as openrouter/${model}`
+      );
+      return this.getCachedPricing('openrouter', model);
+    }
+
+    return pricing;
   }
 
   /**
