@@ -5,15 +5,12 @@ import guardrails from '@server/handlers/guardrails';
 import playgrounds from '@server/handlers/playgrounds';
 import providers from '@server/handlers/providers';
 import traces from '@server/handlers/traces';
-import workspaceSettings from '@server/handlers/workspace-settings';
-
 const app = new Hono()
   .route('/analytics', analytics)
   .route('/datasets', datasets)
   .route('/guardrails', guardrails)
   .route('/playgrounds', playgrounds)
   .route('/providers', providers)
-  .route('/traces', traces)
-  .route('/workspace-settings', workspaceSettings);
+  .route('/traces', traces);
 
 export default app;
