@@ -3,8 +3,6 @@
 
 export interface BootstrapData {
   basePath?: string;
-  authType?: 'basic' | 'clerk' | string;
-  setupComplete?: boolean;
 }
 
 declare global {

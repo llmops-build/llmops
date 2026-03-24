@@ -21,7 +21,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { name, description } = c.req.valid('json');
 
       try {
@@ -47,7 +47,7 @@ const app = new Hono()
 
   // List all datasets
   .get('/', async (c) => {
-    const db = c.get('db');
+    const db = c.get('db')!;
 
     try {
       const datasets = await db.listDatasets();
@@ -71,7 +71,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {
@@ -107,7 +107,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -140,7 +140,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {
@@ -178,7 +178,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const { limit, offset } = c.req.valid('query');
 
@@ -213,7 +213,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -260,7 +260,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { recordId } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -294,7 +294,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { recordId } = c.req.valid('param');
 
       try {
@@ -332,7 +332,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const { limit, offset } = c.req.valid('query');
 
@@ -366,7 +366,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -412,7 +412,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { versionId } = c.req.valid('param');
       const { limit, offset } = c.req.valid('query');
 

@@ -205,7 +205,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithAnalytics;
+      const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
       const query = c.req.valid('query');
 
       // Parse tags from JSON string if provided
@@ -258,7 +258,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithAnalytics;
+      const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
       const { requestId } = c.req.valid('param');
 
       try {
@@ -279,7 +279,7 @@ const app = new Hono()
    * Get total costs for a date range with optional filters
    */
   .get('/costs/total', zv('query', dateRangeWithFiltersSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate, configId, variantId, environmentId, tags } =
       c.req.valid('query');
 
@@ -338,7 +338,7 @@ const app = new Hono()
    * Get cost breakdown by model
    */
   .get('/costs/by-model', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -358,7 +358,7 @@ const app = new Hono()
    * Get cost breakdown by provider
    */
   .get('/costs/by-provider', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -378,7 +378,7 @@ const app = new Hono()
    * Get cost breakdown by config
    */
   .get('/costs/by-config', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -398,7 +398,7 @@ const app = new Hono()
    * Get daily cost breakdown
    */
   .get('/costs/daily', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -427,7 +427,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithAnalytics;
+      const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
       const {
         startDate,
         endDate,
@@ -475,7 +475,7 @@ const app = new Hono()
    * Get request statistics for a date range with optional filters
    */
   .get('/stats', zv('query', dateRangeWithFiltersSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate, configId, variantId, environmentId, tags } =
       c.req.valid('query');
 
@@ -535,7 +535,7 @@ const app = new Hono()
    * Get distinct tag key-value pairs from all requests
    */
   .get('/tags', async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
 
     try {
       const tags = await db.getDistinctTags();

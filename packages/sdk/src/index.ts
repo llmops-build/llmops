@@ -1,11 +1,11 @@
 export * from './lib/express';
-export * from './lib/auth';
 export {
   createLLMOps as llmops,
   type LLMOpsClient,
   type TraceContext,
   type ProviderOptions,
 } from './client';
+export { createPgStore as pgStore, type TelemetryStore } from '@llmops/core';
 export {
   createLLMOpsSpanExporter,
   type LLMOpsExporterConfig,

@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useRequestList } from '@client/hooks/queries/useAnalytics';
-import { useConfigList } from '@client/hooks/queries/useConfigList';
 import {
   useReactTable,
   getCoreRowModel,
@@ -141,13 +140,6 @@ function RouteComponent() {
     tags: parsedTags,
   });
 
-  const { data: configs } = useConfigList();
-
-  // Create a map of configId -> configName for fast lookup
-  const configNameMap = useMemo(() => {
-    if (!configs) return new Map<string, string>();
-    return new Map(configs.map((c) => [c.id, c.name]));
-  }, [configs]);
 
   const columns = useMemo(
     () => [
@@ -159,15 +151,6 @@ function RouteComponent() {
             {format(new Date(info.getValue()), 'yyyy-MM-dd HH:mm:ss')}
           </span>
         ),
-      }),
-      columnHelper.accessor('configId', {
-        id: 'config',
-        header: 'Config',
-        cell: (info) => {
-          const configId = info.getValue();
-          const configName = configId ? configNameMap.get(configId) : null;
-          return <span className={timestampCell}>{configName ?? '—'}</span>;
-        },
       }),
       columnHelper.accessor('provider', {
         header: 'Provider',
@@ -253,7 +236,7 @@ function RouteComponent() {
         ),
       }),
     ],
-    [configNameMap]
+    []
   );
 
   const table = useReactTable({

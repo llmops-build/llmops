@@ -1,10 +1,6 @@
 import { command, string } from '@drizzle-team/brocli';
 import { logger } from '@llmops/core';
-import {
-  createDatabaseFromConnection,
-  detectDatabaseType,
-  getMigrations,
-} from '@llmops/core/db';
+import { getMigrations } from '@llmops/core/db';
 import { existsSync } from 'node:fs';
 import yoctoSpinner from 'yocto-spinner';
 import chalk from 'chalk';
@@ -20,7 +16,7 @@ import { getConfig } from '../lib/get-config';
  * 4. If the config file exists, read and parse it.
  * 5. If not passed, look for default config file locations.
  * 6. Use zod to validate the existing configuration schema.
- * 7. If valid, get the db adapter from the config.
+ * 7. If valid, get the telemetry store from the config.
  */
 export const migrateCommand = command({
   name: 'migrate',
@@ -60,30 +56,22 @@ export const migrateCommand = command({
       process.exit(1);
     }
 
-    if (!config.database) {
-      logger.error('No database configuration found.');
+    // Resolve telemetry store
+    const telemetry = config.telemetry;
+    const store = Array.isArray(telemetry) ? telemetry[0] : telemetry;
+
+    if (!store || !store._db) {
+      logger.error('No telemetry store with database found. Configure pgStore in your config.');
       process.exit(1);
     }
 
-    // Create database connection with schema option
-    const schema = config.schema ?? 'llmops';
-    const db = await createDatabaseFromConnection(config.database, { schema });
-    if (!db) {
-      logger.error('Failed to create database connection.');
-      process.exit(1);
-    }
-
-    const dbType = detectDatabaseType(config.database);
-    if (!dbType) {
-      logger.error('Could not detect database type.');
-      process.exit(1);
-    }
+    const db = store._db;
 
     const spinner = yoctoSpinner({ text: 'preparing migration...' }).start();
     const { toBeAdded, toBeCreated, runMigrations } = await getMigrations(
       db,
-      dbType,
-      { schema }
+      'postgres',
+      { schema: 'llmops' }
     );
 
     if (!toBeAdded.length && !toBeCreated.length) {

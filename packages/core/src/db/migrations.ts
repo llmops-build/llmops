@@ -3,7 +3,6 @@ import { sql } from 'kysely';
 import type { Database } from './schema';
 import { SCHEMA_METADATA } from './schema';
 import { logger } from '../utils/logger';
-import { getAuthClientOptions } from '@/auth';
 import type { DatabaseType } from './index';
 
 /**
@@ -436,98 +435,20 @@ export async function getMigrations(
     }
   }
 
-  // For Neon, schema is set via currentSchema in connection string
-  // For regular PostgreSQL, ensure schema is set
-  if (dbType === 'postgres') {
-    try {
-      await sql`SET search_path TO "${options?.schema ?? 'llmops'}"`.execute(
-        db
-      );
-    } catch (error) {
-      logger.warn(
-        { error },
-        'Failed to set search_path for Better Auth migrations'
-      );
-    }
-  }
-
-  let getAuthMigrations: typeof import('better-auth/db').getMigrations | undefined;
-  try {
-    // Try better-auth 1.4.x path first
-    const dbModule = await import('better-auth/db');
-    if (typeof dbModule.getMigrations === 'function') {
-      getAuthMigrations = dbModule.getMigrations;
-    }
-
-    // Fallback to better-auth 1.5.x path where getMigrations moved to db/migration
-    if (!getAuthMigrations) {
-      const migrationModule = await import(
-        // @ts-expect-error - better-auth 1.5.x moved getMigrations to db/migration
-        'better-auth/db/migration'
-      );
-      if (typeof migrationModule.getMigrations === 'function') {
-        getAuthMigrations = migrationModule.getMigrations;
-      }
-    }
-  } catch (error) {
-    logger.warn(
-      { error },
-      'Failed to import better-auth migrations; skipping auth migrations'
-    );
-  }
-
-  if (!getAuthMigrations) {
-    return {
-      toBeCreated,
-      toBeAdded,
-      runMigrations: async () => {
-        for (const migration of migrations) {
-          await migration.execute();
-        }
-      },
-      compileMigrations: async () => {
-        const compiled = migrations.map((m) => m.compile().sql);
-        return compiled.join(';\n\n') + ';';
-      },
-      migrations,
-      needsMigration: toBeCreated.length > 0 || toBeAdded.length > 0,
-    };
-  }
-  const authOptions = getAuthClientOptions({
-    database: {
-      db: db,
-      type: dbType === 'neon' ? 'postgres' : dbType,
-    },
-  });
-  const {
-    toBeAdded: authChangesToBeAdded,
-    toBeCreated: authChangesToBeCreated,
-    runMigrations: runAuthMigrations,
-  } = await getAuthMigrations(authOptions);
-
-  async function runMigrations() {
-    for (const migration of migrations) {
-      await migration.execute();
-    }
-    await runAuthMigrations();
-  }
-
-  async function compileMigrations() {
-    const compiled = migrations.map((m) => m.compile().sql);
-    return compiled.join(';\n\n') + ';';
-  }
-
   return {
-    toBeCreated: [...toBeCreated, ...authChangesToBeCreated],
-    toBeAdded: [...toBeAdded, ...authChangesToBeAdded],
-    runMigrations,
-    compileMigrations,
+    toBeCreated,
+    toBeAdded,
+    runMigrations: async () => {
+      for (const migration of migrations) {
+        await migration.execute();
+      }
+    },
+    compileMigrations: async () => {
+      const compiled = migrations.map((m) => m.compile().sql);
+      return compiled.join(';\n\n') + ';';
+    },
     migrations,
-    needsMigration:
-      toBeCreated.length > 0 ||
-      toBeAdded.length > 0 ||
-      authChangesToBeCreated.length > 0 ||
-      authChangesToBeAdded.length > 0,
+    needsMigration: toBeCreated.length > 0 || toBeAdded.length > 0,
   };
 }
 

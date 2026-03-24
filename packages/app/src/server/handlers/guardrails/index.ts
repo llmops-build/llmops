@@ -66,7 +66,7 @@ const app = new Hono()
 
   // List all guardrail configs
   .get('/configs', async (c) => {
-    const db = c.get('db');
+    const db = c.get('db')!;
 
     try {
       const configs = await db.listGuardrailConfigs();
@@ -90,7 +90,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {
@@ -129,7 +129,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const body = c.req.valid('json');
 
       try {
@@ -186,7 +186,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -226,7 +226,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {
@@ -270,7 +270,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {
@@ -306,7 +306,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -376,7 +376,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -416,7 +416,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {

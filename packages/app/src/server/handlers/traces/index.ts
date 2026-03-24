@@ -99,7 +99,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const db = c.get('telemetryStore') as unknown as DbWithTraces;
       const query = c.req.valid('query');
 
       try {
@@ -141,7 +141,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const db = c.get('telemetryStore') as unknown as DbWithTraces;
       const { traceId } = c.req.valid('param');
 
       try {
@@ -174,7 +174,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const db = c.get('telemetryStore') as unknown as DbWithTraces;
       const { startDate, endDate, sessionId, userId } = c.req.valid('query');
 
       try {

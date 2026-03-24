@@ -1,7 +1,7 @@
 import { Icon } from '@client/components/icons';
 import { Button } from '@ui';
 import { X, ArrowLeft } from 'lucide-react';
-import { headerStyles } from '../../../prompts/-components/configs.css';
+import { headerStyles } from '../../../-styles/shared-header.css';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import UpdateOrCreateDatasetName from './update-or-create-dataset-name';
 import { useDatasetById } from '@client/hooks/queries/useDatasetById';

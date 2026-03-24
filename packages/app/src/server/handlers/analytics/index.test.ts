@@ -14,9 +14,10 @@ function createMockDb(overrides: Record<string, unknown> = {}) {
     getRequestByRequestId: vi.fn().mockResolvedValue(undefined),
     getCostByModel: vi.fn().mockResolvedValue([]),
     getCostByProvider: vi.fn().mockResolvedValue([]),
-    getCostByConfig: vi.fn().mockResolvedValue([]),
     getDailyCosts: vi.fn().mockResolvedValue([]),
     getDistinctTags: vi.fn().mockResolvedValue([]),
+    batchInsertRequests: vi.fn().mockResolvedValue(undefined),
+    insertRequest: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -28,7 +29,8 @@ function createMockDb(overrides: Record<string, unknown> = {}) {
 function createTestApp(mockDb: ReturnType<typeof createMockDb>) {
   const app = new Hono();
   app.use('*', async (c, next) => {
-    c.set('db', mockDb);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    c.set('telemetryStore' as any, mockDb as any);
     await next();
   });
   app.route('/analytics', analyticsApp);

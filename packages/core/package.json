@@ -54,10 +54,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/utils": "^0.3.0",
     "@llmops/gateway": "workspace:^",
     "@neondatabase/serverless": "^1.0.2",
-    "better-auth": "^1.4.10",
     "hono": "^4.10.7",
     "json-logic-js": "^2.0.5",
     "kysely": "^0.28.8",

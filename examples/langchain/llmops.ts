@@ -1,12 +1,8 @@
 import 'dotenv/config';
-import { llmops } from '@llmops/sdk';
+import { llmops, pgStore } from '@llmops/sdk';
 import { env } from 'node:process';
-import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  database: new Pool({
-    connectionString: env.POSTGRES_URL || '',
-  }),
-  schema: 'llmops',
+  telemetry: pgStore(env.POSTGRES_URL || ''),
 });

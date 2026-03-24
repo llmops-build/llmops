@@ -26,7 +26,7 @@ import {
   headerStyle,
 } from './-components/_layout.css';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
-import { headerStyles } from './prompts/-components/configs.css';
+import { headerStyles } from './-styles/shared-header.css';
 import DatasetsHeader from './datasets/$id/-components/datasets-header';
 
 export const Route = createFileRoute('/(app)/datasets')({

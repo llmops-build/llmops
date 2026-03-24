@@ -255,9 +255,7 @@ summary {
     {% endfor %}
     <script>
       window.bootstrapData = {
-        basePath: "{{ basePath }}",
-        authType: "{{ authType }}",
-        setupComplete: {{ setupComplete }}
+        basePath: "{{ basePath }}"
       };
     </script>
     {% if dev %}
@@ -280,15 +278,11 @@ summary {
 export interface RendererOptions {
   basePath?: string;
   dev?: boolean;
-  authType?: string;
-  setupComplete?: boolean;
 }
 
 export const renderer = ({
   basePath = '',
   dev = false,
-  authType,
-  setupComplete = false,
 }: RendererOptions): string => {
   const stylesPath = basePath === '/' ? styles : basePath + styles;
   const clientPath = basePath === '/' ? client : basePath + client;
@@ -311,8 +305,6 @@ export const renderer = ({
   return env.renderString(htmlTemplate, {
     basePath,
     dev,
-    authType: authType || 'basic',
-    setupComplete,
     stylesPath,
     clientPath,
     faviconIcoPath,

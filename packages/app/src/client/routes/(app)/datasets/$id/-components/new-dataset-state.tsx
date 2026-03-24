@@ -3,7 +3,7 @@ import {
   newConfigStateContainer,
   newConfigStateContent,
   newConfigStateTitle,
-} from '../../../prompts/$id/-components/new-config-state.css';
+} from '../../../-styles/empty-state.css';
 import Logo from '@client/components/icons/llmops.svg?react';
 
 const NewDatasetState = () => {

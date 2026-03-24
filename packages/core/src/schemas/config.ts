@@ -26,11 +26,16 @@ const providersConfigSchema = z.array(inlineProviderConfigSchema).optional();
  */
 const llmopsConfigBaseSchema = z.object({
   /**
-   * Database connection for storing configs, variants, etc.
-   * Optional when providers are configured inline or env vars are set.
-   * Required for dashboard UI and config management features.
+   * Telemetry store(s) for recording LLM requests, traces, and spans.
+   * Pass a single store or an array of stores/sinks.
+   *
+   * Example:
+   * ```ts
+   * import { llmops, pgStore } from '@llmops/sdk'
+   * const ops = llmops({ telemetry: pgStore(process.env.DATABASE_URL) })
+   * ```
    */
-  database: z.any().optional(),
+  telemetry: z.any().optional(),
   basePath: z
     .string()
     .min(1, 'Base path cannot be empty')
@@ -39,12 +44,6 @@ const llmopsConfigBaseSchema = z.object({
       'Base path must start with a forward slash'
     )
     .default('/llmops'),
-  /**
-   * Database schema name for PostgreSQL connections.
-   * This sets the search_path on every connection.
-   * Defaults to 'llmops'. Set to 'public' to use the default PostgreSQL schema.
-   */
-  schema: z.string().optional().default('llmops'),
   /**
    * Inline provider configurations.
    * Each provider has a unique slug for routing via @slug/model format.
@@ -78,21 +77,17 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
  * Either database or providers must be present (enforced by schema)
  */
 export type ValidatedLLMOpsConfig = {
-  database?: unknown;
+  telemetry?: unknown;
   basePath: string;
-  schema: string;
   providers?: InlineProvidersConfig;
 };
 
 /**
  * Input type for LLMOps configuration (before validation)
- * Users can omit optional fields like schema and providers
- * Either database or providers must be provided
  */
 export type LLMOpsConfigInput = {
-  database?: unknown;
+  telemetry?: unknown;
   basePath?: string;
-  schema?: string;
   providers?: InlineProvidersConfig;
 };
 
