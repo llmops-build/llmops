@@ -15,7 +15,7 @@ import {
   Moon,
   Network,
   Play,
-  Settings,
+
   Sun,
   Telescope,
 } from 'lucide-react';
@@ -103,12 +103,6 @@ export function AppSidebar() {
           <Link to="/">
             <Icon icon={Blocks} />
             Overview
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/settings">
-            <Icon icon={Settings} />
-            Settings
           </Link>
         </SidebarItem>
         <span
