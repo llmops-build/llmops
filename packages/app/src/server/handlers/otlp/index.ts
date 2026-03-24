@@ -167,7 +167,7 @@ const app = new Hono()
       return c.json({ error: 'Missing resourceSpans' }, 400);
     }
 
-    const db = c.get('db') as unknown as DbWithTraces | null;
+    const db = c.get('telemetryStore') as unknown as DbWithTraces | null;
     if (!db) {
       return c.json({ error: 'Database not configured' }, 503);
     }

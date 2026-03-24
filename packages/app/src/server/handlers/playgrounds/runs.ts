@@ -18,7 +18,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id: playgroundId } = c.req.valid('param');
 
       try {
@@ -44,7 +44,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { runId } = c.req.valid('param');
 
       try {
@@ -73,7 +73,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { runId } = c.req.valid('param');
 
       try {
@@ -99,7 +99,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { runId } = c.req.valid('param');
 
       try {

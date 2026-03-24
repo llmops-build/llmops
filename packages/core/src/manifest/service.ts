@@ -36,8 +36,6 @@ export class ManifestService {
         log.info(
           {
             version: built.version,
-            configCount: Object.keys(built.configs).length,
-            environmentCount: Object.keys(built.environments).length,
           },
           'Manifest built successfully'
         );

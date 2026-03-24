@@ -1,25 +1,23 @@
 import {
   type ValidatedLLMOpsConfig,
   type InlineProvidersConfig,
+  type TelemetryStore,
 } from '@llmops/core';
 import { createDataLayer } from '@llmops/core';
-import type { DatabaseType } from '@llmops/core/db';
-import type { Auth, BetterAuthOptions } from 'better-auth';
 
 declare module 'hono' {
   interface ContextVariableMap {
     llmopsConfig: ValidatedLLMOpsConfig;
     /** Inline provider configurations from code config */
     inlineProviders?: InlineProvidersConfig;
-    /** Data layer - null when running in inline-only mode (no database) */
+    /** Data layer for non-telemetry queries (datasets, playgrounds, etc.) - null in inline-only mode */
     db: Awaited<ReturnType<typeof createDataLayer>> | null;
-    /** Raw Kysely instance with correct schema configuration - null in inline-only mode */
+    /** Raw Kysely instance - null in inline-only mode */
     kyselyDb: any | null;
-    /** Database type (postgres, mysql, sqlite, mssql) - null in inline-only mode */
-    dbType: DatabaseType | null;
-    /** Auth client - null in inline-only mode */
-    authClient: Auth<BetterAuthOptions> | null;
-    setupComplete: boolean;
+    /** Database type - null in inline-only mode */
+    dbType: string | null;
+    /** Telemetry store for LLM request logging and traces - null in inline-only mode */
+    telemetryStore: TelemetryStore | null;
   }
 }
 

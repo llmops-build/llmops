@@ -62,7 +62,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id: playgroundId } = c.req.valid('param');
 
       try {
@@ -181,7 +181,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id: playgroundId } = c.req.valid('param');
       const { runId } = c.req.valid('query');
 
@@ -213,27 +213,6 @@ const app = new Hono()
         return c.json(
           clientErrorResponse('No pending results to execute', 400),
           400
-        );
-      }
-
-      // Get production environment secret for gateway auth
-      const environments = await db.listEnvironments();
-      const prodEnv = environments.find((e) => e.isProd);
-      if (!prodEnv) {
-        return c.json(
-          internalServerError('No production environment configured', 500),
-          500
-        );
-      }
-
-      const secrets = await db.getSecretsByEnvironmentId({
-        environmentId: prodEnv.id,
-      });
-      const secret = secrets[0];
-      if (!secret) {
-        return c.json(
-          internalServerError('No API key configured for production environment', 500),
-          500
         );
       }
 
@@ -290,7 +269,7 @@ const app = new Hono()
 
       const openai = new OpenAI({
         baseURL: gatewayBaseURL,
-        apiKey: secret.keyValue,
+        apiKey: 'llmops',
       });
 
       // Update run status

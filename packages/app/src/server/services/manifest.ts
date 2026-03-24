@@ -1,4 +1,4 @@
-import { ManifestService, ManifestRouter } from '@llmops/core';
+import { ManifestService } from '@llmops/core';
 import { cacheService } from './cache';
 
 // Singleton manifest service - initialized lazily with first db access
@@ -46,5 +46,3 @@ export async function invalidateManifest(): Promise<void> {
   }
 }
 
-// Re-export ManifestRouter for convenience
-export { ManifestRouter };

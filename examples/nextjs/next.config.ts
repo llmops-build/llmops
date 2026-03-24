@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     '@llmops/core',
     '@llmops/sdk',
     'pg',
-    'better-auth',
     'nunjucks',
     'chokidar',
     'fsevents',

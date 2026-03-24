@@ -2,23 +2,14 @@ import type { MiddlewareHandler } from 'hono';
 import type { LLMOpsConfig } from '@llmops/core';
 
 /**
- * Extended config type with schema option
- */
-type LLMOpsConfigWithSchema = LLMOpsConfig & {
-  schema?: string;
-};
-
-/**
- * Creates a middleware that handles auto-migration on startup
+ * Creates a middleware that handles auto-migration on startup.
  *
  * This middleware runs once on application startup and automatically
- * runs database migrations if needed.
- *
- * IMPORTANT: This middleware should run BEFORE the seed middleware
- * but AFTER the database middleware creates the connection.
+ * runs database migrations if needed. It uses the telemetry store's
+ * internal Kysely instance.
  */
 export const createMigrationMiddleware = (
-  config: LLMOpsConfigWithSchema
+  config: LLMOpsConfig
 ): MiddlewareHandler => {
   let migrationComplete = false;
   let migrationPromise: Promise<void> | null = null;
@@ -34,39 +25,23 @@ export const createMigrationMiddleware = (
     if (!migrationPromise) {
       migrationPromise = (async () => {
         try {
-          // Dynamically import to avoid build-time dependency issues
-          const {
-            detectDatabaseType,
-            runAutoMigrations,
-            createDatabaseFromConnection,
-          } = await import('@llmops/core/db');
+          // Resolve telemetry store from config
+          const telemetry = config.telemetry;
+          const store = Array.isArray(telemetry)
+            ? telemetry[0]
+            : telemetry;
 
-          const rawConnection = config.database;
-          const dbType = detectDatabaseType(rawConnection);
-
-          if (!dbType) {
+          if (!store || !store._db) {
             console.warn(
-              '[Migration] Could not detect database type, skipping auto-migration'
+              '[Migration] No telemetry store with database, skipping auto-migration'
             );
             return;
           }
 
-          // Create a fresh Kysely instance for migrations with schema option
-          const schema = config.schema ?? 'llmops';
-          const db = await createDatabaseFromConnection(rawConnection, {
-            schema,
-          });
+          const { runAutoMigrations } = await import('@llmops/core/db');
 
-          if (!db) {
-            console.warn(
-              '[Migration] Could not create database connection, skipping auto-migration'
-            );
-            return;
-          }
-
-          const result = await runAutoMigrations(db, dbType, {
-            rawConnection,
-            schema,
+          const result = await runAutoMigrations(store._db, 'postgres', {
+            schema: 'llmops',
           });
 
           if (result.ran) {
@@ -76,7 +51,7 @@ export const createMigrationMiddleware = (
           }
         } catch (error) {
           console.error('[Migration] Auto-migration failed:', error);
-          // Don't throw - allow the app to continue, user can run CLI migration
+          // Don't throw - allow the app to continue
         } finally {
           migrationComplete = true;
         }

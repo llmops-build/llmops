@@ -254,7 +254,7 @@ const app = new Hono()
   // Get models grouped by provider for configured providers
   .get('/models/grouped', async (c) => {
     try {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const data = await fetchModelsDevData();
       const providerConfigs = await db.listProviderConfigs();
 
@@ -320,7 +320,7 @@ const app = new Hono()
 
   // List all provider configs
   .get('/configs', async (c) => {
-    const db = c.get('db');
+    const db = c.get('db')!;
 
     try {
       const configs = await db.listProviderConfigs();
@@ -343,7 +343,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {
@@ -378,7 +378,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const body = c.req.valid('json');
 
       try {
@@ -430,7 +430,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
 
@@ -468,7 +468,7 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db');
+      const db = c.get('db')!;
       const { id } = c.req.valid('param');
 
       try {

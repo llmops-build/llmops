@@ -645,13 +645,6 @@ export interface SpanEventsTable {
  * Main Kysely Database interface
  */
 export interface Database {
-  configs: ConfigsTable;
-  variants: VariantsTable;
-  variant_versions: VariantVersionsTable;
-  environments: EnvironmentsTable;
-  environment_secrets: EnvironmentSecretsTable;
-  config_variants: ConfigVariantsTable;
-  targeting_rules: TargetingRulesTable;
   workspace_settings: WorkspaceSettingsTable;
   provider_configs: ProviderConfigsTable;
   playgrounds: PlaygroundsTable;
@@ -719,119 +712,6 @@ export type Updateable<T extends TableName> = {
  */
 export const SCHEMA_METADATA = {
   tables: {
-    configs: {
-      order: 1,
-      schema: configsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        slug: { type: 'text', unique: true }, // Short unique ID for LLM calls
-        name: { type: 'text', nullable: true },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
-    variants: {
-      order: 2,
-      schema: variantsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        name: { type: 'text' },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
-    variant_versions: {
-      order: 3,
-      schema: variantVersionsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        variantId: {
-          type: 'uuid',
-          references: { table: 'variants', column: 'id' },
-        },
-        version: { type: 'integer' },
-        provider: { type: 'text' },
-        modelName: { type: 'text' },
-        jsonData: { type: 'jsonb' },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-      uniqueConstraints: [{ columns: ['variantId', 'version'] }],
-    },
-    environments: {
-      order: 4,
-      schema: environmentsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        name: { type: 'text' },
-        slug: { type: 'text', unique: true },
-        isProd: { type: 'boolean', default: false },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
-    environment_secrets: {
-      order: 5,
-      schema: environmentSecretsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        environmentId: {
-          type: 'uuid',
-          references: { table: 'environments', column: 'id' },
-        },
-        keyName: { type: 'text' },
-        keyValue: { type: 'text' },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
-    config_variants: {
-      order: 6,
-      schema: configVariantsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        configId: {
-          type: 'uuid',
-          references: { table: 'configs', column: 'id' },
-        },
-        variantId: {
-          type: 'uuid',
-          references: { table: 'variants', column: 'id' },
-        },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
-    targeting_rules: {
-      order: 7,
-      schema: targetingRulesSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        environmentId: {
-          type: 'uuid',
-          references: { table: 'environments', column: 'id' },
-        },
-        configId: {
-          type: 'uuid',
-          references: { table: 'configs', column: 'id' },
-        },
-        configVariantId: {
-          type: 'uuid',
-          references: { table: 'config_variants', column: 'id' },
-        },
-        variantVersionId: {
-          type: 'uuid',
-          nullable: true,
-          references: { table: 'variant_versions', column: 'id' },
-        },
-        weight: { type: 'integer', default: 10000 },
-        priority: { type: 'integer', default: 0 },
-        enabled: { type: 'boolean', default: true },
-        conditions: { type: 'jsonb', default: '{}' },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
     workspace_settings: {
       order: 8,
       schema: workspaceSettingsSchema,

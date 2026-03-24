@@ -20,7 +20,6 @@ import { Link } from '@tanstack/react-router';
 import { gridElement, workingArea } from './-components/area.css';
 import clsx from 'clsx';
 import * as styles from './-components/overview.css';
-import { useConfigList } from '@client/hooks/queries/useConfigList';
 import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
 import { OnboardingFlow } from './-components/onboarding-flow';
 import { QuickStats } from './-components/quick-stats';
@@ -41,7 +40,6 @@ export const Route = createFileRoute('/(app)/')({
 function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
-  const { data: configs, isLoading: configsLoading } = useConfigList();
   const { data: providerConfigs, isLoading: providersLoading } =
     useProviderConfigs();
   const [copied, setCopied] = useState(false);
@@ -51,7 +49,7 @@ function RouteComponent() {
 
   const hasProviders = providerConfigs && providerConfigs.length > 0;
   const hasNoProviders = !providerConfigs || providerConfigs.length === 0;
-  const isLoading = configsLoading || providersLoading;
+  const isLoading = providersLoading;
 
   // Determine onboarding state only once when data first loads
   useEffect(() => {
@@ -199,13 +197,6 @@ function RouteComponent() {
             <div className={styles.quickLinksSection}>
               <Link to="/gateway/usage" className={styles.quickLink}>
                 <span className={styles.quickLinkText}>API Usage Guide</span>
-                <ArrowRight size={16} className={styles.quickLinkArrow} />
-              </Link>
-              <Link to="/prompts" className={styles.quickLink}>
-                <span className={styles.quickLinkText}>Manage Prompts</span>
-                <span className={styles.quickLinkBadge}>
-                  {configs?.length ?? 0}
-                </span>
                 <ArrowRight size={16} className={styles.quickLinkArrow} />
               </Link>
               <Link to="/observability/overview" className={styles.quickLink}>

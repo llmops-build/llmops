@@ -357,9 +357,9 @@ const app = new Hono()
       return c.json({ error: 'x-api-key header required' }, 401);
     }
 
-    const db = c.get('db') as unknown as DbWithTraces | null;
+    const db = c.get('telemetryStore') as unknown as DbWithTraces | null;
     if (!db) {
-      return c.json({ error: 'Database not configured' }, 503);
+      return c.json({ error: 'Telemetry store not configured' }, 503);
     }
 
     let body: { post?: RunCreate[]; patch?: RunUpdate[] };

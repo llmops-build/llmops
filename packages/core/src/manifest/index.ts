@@ -1,14 +1,7 @@
 export { ManifestBuilder } from './builder';
 export { ManifestService } from './service';
-export { ManifestRouter } from './router';
 export type {
   GatewayManifest,
-  ManifestConfig,
-  ManifestEnvironment,
   ManifestGuardrail,
   ManifestProviderGuardrailOverride,
-  ManifestTargetingRule,
-  ManifestVariantVersion,
-  RoutingContext,
-  RoutingResult,
 } from './types';

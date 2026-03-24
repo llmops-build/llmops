@@ -1,5 +1,13 @@
-import { createRandomStringGenerator } from '@better-auth/utils/random';
+import { randomBytes } from 'node:crypto';
+
+const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
 export const generateId = (size?: number) => {
-  return createRandomStringGenerator('a-z', 'A-Z', '0-9')(size || 32);
+  const length = size || 32;
+  const bytes = randomBytes(length);
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += CHARS[bytes[i]! % CHARS.length];
+  }
+  return result;
 };

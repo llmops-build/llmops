@@ -1,12 +1,10 @@
 import 'dotenv/config';
 import { createApp } from './index';
 import { env } from 'node:process';
-import { Pool } from 'pg';
+import { createPgStore } from '@llmops/core';
 
 const { app } = createApp({
-  database: new Pool({
-    connectionString: env.POSTGRES_URL || '',
-  }),
+  telemetry: createPgStore(env.POSTGRES_URL || ''),
   basePath: '/',
 });
 

@@ -97,7 +97,6 @@ export const COST_SUMMARY_GROUP_BY = [
   'hour',
   'model',
   'provider',
-  'config',
   'endpoint',
   'tags',
 ] as const;
@@ -123,7 +122,6 @@ const costSummarySchema = z.object({
  * Uses sql.ref() to properly quote column names for the database
  */
 const col = (name: string) => sql.ref(name);
-const tableCol = (table: string, name: string) => sql.ref(`${table}.${name}`);
 
 export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
   return {
@@ -490,49 +488,6 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
     },
 
     /**
-     * Get cost breakdown by config
-     */
-    getCostByConfig: async (params: z.infer<typeof dateRangeSchema>) => {
-      const result = await dateRangeSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
-
-      const { startDate, endDate } = result.data;
-
-      return db
-        .selectFrom('llm_requests')
-        .leftJoin('configs', 'llm_requests.configId', 'configs.id')
-        .select([
-          'llm_requests.configId',
-          'configs.name as configName',
-          'configs.slug as configSlug',
-          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'cost')}), 0)`.as(
-            'totalCost'
-          ),
-          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'inputCost')}), 0)`.as(
-            'totalInputCost'
-          ),
-          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'outputCost')}), 0)`.as(
-            'totalOutputCost'
-          ),
-          sql<number>`COALESCE(SUM(${tableCol('llm_requests', 'totalTokens')}), 0)`.as(
-            'totalTokens'
-          ),
-          sql<number>`COUNT(*)`.as('requestCount'),
-        ])
-        .where(
-          sql<boolean>`${tableCol('llm_requests', 'createdAt')} >= ${startDate.toISOString()}`
-        )
-        .where(
-          sql<boolean>`${tableCol('llm_requests', 'createdAt')} <= ${endDate.toISOString()}`
-        )
-        .groupBy(['llm_requests.configId', 'configs.name', 'configs.slug'])
-        .orderBy(sql`SUM(${tableCol('llm_requests', 'cost')})`, 'desc')
-        .execute();
-    },
-
-    /**
      * Get daily cost summary
      */
     getDailyCosts: async (params: z.infer<typeof dateRangeSchema>) => {
@@ -672,19 +627,6 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
               sql<number>`COUNT(*)`.as('requestCount'),
             ])
             .groupBy('provider')
-            .orderBy(sql`SUM(${col('cost')})`, 'desc')
-            .execute();
-
-        case 'config':
-          return baseQuery
-            .select([
-              sql<string>`COALESCE(${col('configId')}::text, 'no-config')`.as(
-                'groupKey'
-              ),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-            ])
-            .groupBy('configId')
             .orderBy(sql`SUM(${col('cost')})`, 'desc')
             .execute();
 

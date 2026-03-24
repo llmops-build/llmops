@@ -85,12 +85,6 @@ interface StreamChunkUsage {
   };
 }
 
-/**
- * Hook results SSE event structure
- */
-interface HookResultsEvent {
-  hook_results?: GatewayHookResults;
-}
 
 /**
  * Callback invoked when stream completes with extracted usage

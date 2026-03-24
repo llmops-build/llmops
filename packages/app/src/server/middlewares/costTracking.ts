@@ -401,11 +401,10 @@ export function createCostTrackingMiddleware(
       return;
     }
 
-    // Skip cost tracking if no database (inline-only mode)
-    // Cost tracking requires database to store request logs
-    const db = c.get('db') as unknown as DbWithBatchInsert | null;
+    // Skip cost tracking if no telemetry store configured
+    const db = c.get('telemetryStore') as unknown as DbWithBatchInsert | null;
     if (!db) {
-      log(`Skipping cost tracking - no database configured`);
+      log(`Skipping cost tracking - no telemetry store configured`);
       return;
     }
 
