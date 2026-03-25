@@ -251,7 +251,7 @@ app.get(
   swaggerUi.setup(openApiSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'LLMOps API Documentation',
-  })
+  }),
 );
 
 app.use('/llmops', llmops);

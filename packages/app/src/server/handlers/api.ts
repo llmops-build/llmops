@@ -20,7 +20,7 @@ const storeRequiredError = (c: Context<any, any, any>) => {
         type: 'configuration_error',
       },
     },
-    503
+    503,
   );
 };
 

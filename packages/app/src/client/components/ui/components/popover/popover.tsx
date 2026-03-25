@@ -107,7 +107,7 @@ export function Popover({
       }
       onOpenChange?.(isOpen);
     },
-    [onOpenChange, preventCloseOnNestedPortals]
+    [onOpenChange, preventCloseOnNestedPortals],
   );
 
   return (

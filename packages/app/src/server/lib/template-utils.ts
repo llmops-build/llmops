@@ -138,13 +138,13 @@ function extractBaseName(expression: string): string | null {
  */
 function extractVariablesFromBlock(
   blockContent: string,
-  loopVariables: Set<string>
+  loopVariables: Set<string>,
 ): string[] {
   const variables: string[] = [];
 
   // Handle "for x in y" pattern
   const forMatch = blockContent.match(
-    /^for\s+\w+(?:\s*,\s*\w+)?\s+in\s+([a-zA-Z_][a-zA-Z0-9_.]*)/
+    /^for\s+\w+(?:\s*,\s*\w+)?\s+in\s+([a-zA-Z_][a-zA-Z0-9_.]*)/,
   );
   if (forMatch) {
     const baseName = extractBaseName(forMatch[1]);
@@ -185,7 +185,7 @@ function extractVariablesFromBlock(
 
   // Handle "set x = value" pattern
   const setMatch = blockContent.match(
-    /^set\s+\w+\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)/
+    /^set\s+\w+\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)/,
   );
   if (setMatch) {
     const baseName = extractBaseName(setMatch[1]);
@@ -243,7 +243,7 @@ export function validateTemplate(template: string): {
  */
 export function renderTemplate(
   template: string,
-  context: Record<string, unknown>
+  context: Record<string, unknown>,
 ): string {
   const env = new nunjucks.Environment(null, { autoescape: false });
   return env.renderString(template, context);

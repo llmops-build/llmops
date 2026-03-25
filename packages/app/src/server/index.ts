@@ -10,7 +10,9 @@ const app = new Hono();
 // before the database middlewares to avoid heavy initialization for asset requests
 
 app
-  .get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }))
+  .get('/health', (c) =>
+    c.json({ status: 'ok', timestamp: new Date().toISOString() }),
+  )
   .use('*', async (c, next) => {
     if (!c.req.path.startsWith('/api')) {
       // Check if running in inline-only mode (no telemetry store)
@@ -26,7 +28,7 @@ app
               type: 'configuration_error',
             },
           },
-          503
+          503,
         );
       }
 
@@ -36,7 +38,7 @@ app
         renderer({
           basePath,
           dev: (env.LLMOPS_DEV as unknown) === 'true',
-        })
+        }),
       );
     }
     await next();

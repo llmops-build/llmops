@@ -236,7 +236,6 @@ export function PromptColumn({
           </button>
         </div>
       </div>
-
     </div>
   );
 }

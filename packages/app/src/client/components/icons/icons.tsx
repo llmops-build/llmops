@@ -3,10 +3,8 @@ import { clsx } from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import { iconRecipe, type IconVariants } from '../icon/icon.css';
 
-export interface IconProps extends Omit<
-  ComponentPropsWithoutRef<'span'>,
-  'children'
-> {
+export interface IconProps
+  extends Omit<ComponentPropsWithoutRef<'span'>, 'children'> {
   icon: LucideIcon;
   size?: IconVariants['size'];
 }

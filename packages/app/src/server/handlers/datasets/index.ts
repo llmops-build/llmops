@@ -18,7 +18,7 @@ const app = new Hono()
       z.object({
         name: z.string().min(1),
         description: z.string().nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -30,7 +30,7 @@ const app = new Hono()
         if (!dataset) {
           return c.json(
             internalServerError('Failed to create dataset', 500),
-            500
+            500,
           );
         }
 
@@ -39,10 +39,10 @@ const app = new Hono()
         console.error('Error creating dataset:', error);
         return c.json(
           internalServerError('Failed to create dataset', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // List all datasets
@@ -54,10 +54,7 @@ const app = new Hono()
       return c.json(successResponse(datasets, 200));
     } catch (error) {
       console.error('Error fetching datasets:', error);
-      return c.json(
-        internalServerError('Failed to fetch datasets', 500),
-        500
-      );
+      return c.json(internalServerError('Failed to fetch datasets', 500), 500);
     }
   })
 
@@ -68,7 +65,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -82,12 +79,9 @@ const app = new Hono()
         return c.json(successResponse(dataset, 200));
       } catch (error) {
         console.error('Error fetching dataset:', error);
-        return c.json(
-          internalServerError('Failed to fetch dataset', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to fetch dataset', 500), 500);
       }
-    }
+    },
   )
 
   // Update dataset
@@ -97,14 +91,14 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
       z.object({
         name: z.string().min(1).optional(),
         description: z.string().nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -124,10 +118,10 @@ const app = new Hono()
         console.error('Error updating dataset:', error);
         return c.json(
           internalServerError('Failed to update dataset', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Delete dataset
@@ -137,7 +131,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -153,10 +147,10 @@ const app = new Hono()
         console.error('Error deleting dataset:', error);
         return c.json(
           internalServerError('Failed to delete dataset', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // ============ Record CRUD ============
@@ -168,14 +162,14 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'query',
       z.object({
         limit: z.coerce.number().int().positive().optional(),
         offset: z.coerce.number().int().nonnegative().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -187,12 +181,9 @@ const app = new Hono()
         return c.json(successResponse(records, 200));
       } catch (error) {
         console.error('Error fetching records:', error);
-        return c.json(
-          internalServerError('Failed to fetch records', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to fetch records', 500), 500);
       }
-    }
+    },
   )
 
   // Create a new record
@@ -202,7 +193,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
@@ -210,7 +201,7 @@ const app = new Hono()
         input: z.record(z.string(), z.unknown()),
         expected: z.record(z.string(), z.unknown()).nullable().optional(),
         metadata: z.record(z.string(), z.unknown()).optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -226,19 +217,16 @@ const app = new Hono()
         if (!record) {
           return c.json(
             internalServerError('Failed to create record', 500),
-            500
+            500,
           );
         }
 
         return c.json(successResponse(record, 200));
       } catch (error) {
         console.error('Error creating record:', error);
-        return c.json(
-          internalServerError('Failed to create record', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to create record', 500), 500);
       }
-    }
+    },
   )
 
   // Update a record
@@ -249,7 +237,7 @@ const app = new Hono()
       z.object({
         id: z.string().uuid(),
         recordId: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
@@ -257,7 +245,7 @@ const app = new Hono()
         input: z.record(z.string(), z.unknown()).optional(),
         expected: z.record(z.string(), z.unknown()).nullable().optional(),
         metadata: z.record(z.string(), z.unknown()).optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -275,12 +263,9 @@ const app = new Hono()
         return c.json(successResponse(record, 200));
       } catch (error) {
         console.error('Error updating record:', error);
-        return c.json(
-          internalServerError('Failed to update record', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to update record', 500), 500);
       }
-    }
+    },
   )
 
   // Delete a record
@@ -291,7 +276,7 @@ const app = new Hono()
       z.object({
         id: z.string().uuid(),
         recordId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -305,12 +290,9 @@ const app = new Hono()
         return c.json(successResponse(record, 200));
       } catch (error) {
         console.error('Error deleting record:', error);
-        return c.json(
-          internalServerError('Failed to delete record', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to delete record', 500), 500);
       }
-    }
+    },
   )
 
   // ============ Version CRUD ============
@@ -322,14 +304,14 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'query',
       z.object({
         limit: z.coerce.number().int().positive().optional(),
         offset: z.coerce.number().int().nonnegative().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -337,16 +319,20 @@ const app = new Hono()
       const { limit, offset } = c.req.valid('query');
 
       try {
-        const versions = await db.listVersions({ datasetId: id, limit, offset });
+        const versions = await db.listVersions({
+          datasetId: id,
+          limit,
+          offset,
+        });
         return c.json(successResponse(versions, 200));
       } catch (error) {
         console.error('Error fetching versions:', error);
         return c.json(
           internalServerError('Failed to fetch versions', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Create a new version (snapshot current records)
@@ -356,14 +342,14 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
       z.object({
         name: z.string().nullable().optional(),
         description: z.string().nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -379,7 +365,7 @@ const app = new Hono()
         if (!version) {
           return c.json(
             internalServerError('Failed to create version', 500),
-            500
+            500,
           );
         }
 
@@ -388,10 +374,10 @@ const app = new Hono()
         console.error('Error creating version:', error);
         return c.json(
           internalServerError('Failed to create version', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Get records for a specific version
@@ -402,14 +388,14 @@ const app = new Hono()
       z.object({
         id: z.string().uuid(),
         versionId: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'query',
       z.object({
         limit: z.coerce.number().int().positive().optional(),
         offset: z.coerce.number().int().nonnegative().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -417,16 +403,20 @@ const app = new Hono()
       const { limit, offset } = c.req.valid('query');
 
       try {
-        const records = await db.getVersionRecords({ versionId, limit, offset });
+        const records = await db.getVersionRecords({
+          versionId,
+          limit,
+          offset,
+        });
         return c.json(successResponse(records, 200));
       } catch (error) {
         console.error('Error fetching version records:', error);
         return c.json(
           internalServerError('Failed to fetch version records', 500),
-          500
+          500,
         );
       }
-    }
+    },
   );
 
 export default app;

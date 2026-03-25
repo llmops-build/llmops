@@ -41,7 +41,7 @@ const llmopsConfigBaseSchema = z.object({
     .min(1, 'Base path cannot be empty')
     .refine(
       (path) => path.startsWith('/'),
-      'Base path must start with a forward slash'
+      'Base path must start with a forward slash',
     )
     .default('/llmops'),
   /**
@@ -65,10 +65,9 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
   .transform((config) => ({
     ...config,
     providers: mergeWithDefaultProviders(
-      config.providers as InlineProvidersConfig | undefined
+      config.providers as InlineProvidersConfig | undefined,
     ),
-  }))
-;
+  }));
 
 /**
  * Validated LLMOps configuration
@@ -91,9 +90,7 @@ export type LLMOpsConfigInput = {
   providers?: InlineProvidersConfig;
 };
 
-export function validateLLMOpsConfig(
-  config?: unknown
-): ValidatedLLMOpsConfig {
+export function validateLLMOpsConfig(config?: unknown): ValidatedLLMOpsConfig {
   const result = llmopsConfigSchema.safeParse(config ?? {});
 
   if (!result.success) {
@@ -102,7 +99,7 @@ export function validateLLMOpsConfig(
       .join('\n');
 
     throw new Error(
-      `LLMOps configuration validation failed:\n${errorMessages}`
+      `LLMOps configuration validation failed:\n${errorMessages}`,
     );
   }
 

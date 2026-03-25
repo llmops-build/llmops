@@ -50,7 +50,7 @@ export function DatasetsDataTable() {
         queryKey: getQueryKey(datasetId),
       });
     },
-    [queryClient]
+    [queryClient],
   );
 
   const columns = useMemo<ColumnDef<Dataset, any>[]>(
@@ -68,7 +68,7 @@ export function DatasetsDataTable() {
         },
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -122,7 +122,7 @@ export function DatasetsDataTable() {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHeaderCell>
                 );

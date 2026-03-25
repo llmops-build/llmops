@@ -57,7 +57,7 @@ const typeMap = {
 export function matchType(
   columnDataType: string,
   fieldType: string,
-  dbType: DatabaseType
+  dbType: DatabaseType,
 ): boolean {
   const normalize = (type: string) => type.toLowerCase().split('(')[0]!.trim();
   const types = typeMap[dbType] as any;
@@ -65,7 +65,7 @@ export function matchType(
   for (const [expectedType, variants] of Object.entries(types)) {
     if (fieldType.toLowerCase().includes(expectedType.toLowerCase())) {
       return (variants as string[]).some(
-        (variant) => variant.toLowerCase() === normalize(columnDataType)
+        (variant) => variant.toLowerCase() === normalize(columnDataType),
       );
     }
   }
@@ -79,7 +79,7 @@ export function matchType(
 async function getPostgresSchema(db: Kysely<Database>): Promise<string> {
   try {
     const result = await sql<{ search_path: string }>`SHOW search_path`.execute(
-      db
+      db,
     );
     if (result.rows[0]?.search_path) {
       const schemas = result.rows[0].search_path
@@ -100,7 +100,7 @@ async function getPostgresSchema(db: Kysely<Database>): Promise<string> {
  */
 async function ensurePostgresSchemaExists(
   db: Kysely<Database>,
-  schema: string
+  schema: string,
 ): Promise<void> {
   if (schema === 'public') {
     // public schema always exists
@@ -148,7 +148,7 @@ export interface MigrationResult {
 export async function getMigrations(
   db: Kysely<Database>,
   dbType: DatabaseType,
-  options?: MigrationOptions
+  options?: MigrationOptions,
 ): Promise<MigrationResult> {
   // For PostgreSQL and Neon, detect and log the current schema being used
   let currentSchema = 'public';
@@ -177,20 +177,20 @@ export async function getMigrations(
       `.execute(db);
 
       const tableNamesInSchema = new Set(
-        tablesInSchema.rows.map((row) => row.table_name)
+        tablesInSchema.rows.map((row) => row.table_name),
       );
 
       tableMetadata = allTableMetadata.filter(
         (table) =>
-          table.schema === currentSchema && tableNamesInSchema.has(table.name)
+          table.schema === currentSchema && tableNamesInSchema.has(table.name),
       );
 
       logger.debug(
-        `Found ${tableMetadata.length} table(s) in schema '${currentSchema}'`
+        `Found ${tableMetadata.length} table(s) in schema '${currentSchema}'`,
       );
     } catch (error) {
       logger.warn(
-        'Could not filter tables by schema. Using all discovered tables.'
+        'Could not filter tables by schema. Using all discovered tables.',
       );
     }
   }
@@ -229,7 +229,7 @@ export async function getMigrations(
     > = {};
     for (const [fieldName, fieldConfig] of Object.entries(tableConfig.fields)) {
       const existingColumn = existingTable.columns.find(
-        (c) => c.name === fieldName
+        (c) => c.name === fieldName,
       );
 
       if (!existingColumn) {
@@ -241,7 +241,7 @@ export async function getMigrations(
       if (!matchType(existingColumn.dataType, fieldConfig.type, dbType)) {
         logger.warn(
           `Field ${fieldName} in table ${tableName} has a different type. ` +
-            `Expected ${fieldConfig.type} but got ${existingColumn.dataType}.`
+            `Expected ${fieldConfig.type} but got ${existingColumn.dataType}.`,
         );
       }
     }
@@ -264,7 +264,7 @@ export async function getMigrations(
   // Helper to get the correct column type for each database
   function getColumnType(
     fieldConfig: any,
-    fieldName: string
+    fieldName: string,
   ): ColumnDataType | RawBuilder<unknown> {
     const { type } = fieldConfig;
 
@@ -337,10 +337,7 @@ export async function getMigrations(
 
         if (fieldName === 'id') {
           if (dbType === 'postgres') {
-            c = c
-              .primaryKey()
-              .defaultTo(sql`gen_random_uuid()`)
-              .notNull();
+            c = c.primaryKey().defaultTo(sql`gen_random_uuid()`).notNull();
           } else {
             c = c.primaryKey().notNull();
           }
@@ -458,27 +455,27 @@ export async function getMigrations(
 async function fixLegacyConstraints(
   db: Kysely<Database>,
   dbType: DatabaseType,
-  schema: string = 'public'
+  schema: string = 'public',
 ) {
   // Only handling Postgres for now as it's the primary supported DB with this issue
   if (dbType === 'postgres') {
     logger.info(
-      `Auto-migration: Checking for legacy constraints in schema '${schema}'...`
+      `Auto-migration: Checking for legacy constraints in schema '${schema}'...`,
     );
 
     // 1. Explicitly drop the known problematic constraint from the error log
     // The error confirmed the name is "provider_configs_providerId_key"
     try {
       await sql`ALTER TABLE ${sql.ref(schema)}."provider_configs" DROP CONSTRAINT IF EXISTS "provider_configs_providerId_key"`.execute(
-        db
+        db,
       );
       // Also try the lowercase version just in case
       await sql`ALTER TABLE ${sql.ref(schema)}."provider_configs" DROP CONSTRAINT IF EXISTS "provider_configs_providerid_key"`.execute(
-        db
+        db,
       );
     } catch (err) {
       logger.warn(
-        `Auto-migration: Failed to drop specific legacy constraint: ${err}`
+        `Auto-migration: Failed to drop specific legacy constraint: ${err}`,
       );
     }
 
@@ -503,16 +500,16 @@ async function fixLegacyConstraints(
 
       for (const row of result.rows) {
         logger.info(
-          `Auto-migration: Removing legacy unique constraint '${row.conname}' from provider_configs`
+          `Auto-migration: Removing legacy unique constraint '${row.conname}' from provider_configs`,
         );
         // Safely drop the constraint
         await sql`ALTER TABLE ${sql.ref(schema)}."provider_configs" DROP CONSTRAINT ${sql.ref(row.conname)}`.execute(
-          db
+          db,
         );
       }
     } catch (err) {
       logger.warn(
-        `Auto-migration: Failed to cleanup legacy constraints: ${err}`
+        `Auto-migration: Failed to cleanup legacy constraints: ${err}`,
       );
     }
   }
@@ -528,7 +525,7 @@ async function fixLegacyConstraints(
 export async function runAutoMigrations(
   db: Kysely<Database>,
   dbType: DatabaseType,
-  options?: MigrationOptions
+  options?: MigrationOptions,
 ): Promise<{ ran: boolean; tables: string[]; fields: string[] }> {
   // Resolve schema for fixups
   let currentSchema = options?.schema || 'public';
@@ -557,11 +554,11 @@ export async function runAutoMigrations(
 
   const tables = toBeCreated.map((t) => t.table);
   const fields = toBeAdded.flatMap((t) =>
-    Object.keys(t.fields).map((f) => `${t.table}.${f}`)
+    Object.keys(t.fields).map((f) => `${t.table}.${f}`),
   );
 
   logger.info(
-    `Auto-migration: Running migrations for ${tables.length} table(s) and ${fields.length} field(s)`
+    `Auto-migration: Running migrations for ${tables.length} table(s) and ${fields.length} field(s)`,
   );
 
   if (tables.length > 0) {

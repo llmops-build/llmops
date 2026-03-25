@@ -45,7 +45,7 @@ export type DatabaseConnection =
  * Create a Kysely database instance with type safety
  */
 export function createDatabase(
-  connection: DatabaseConnection
+  connection: DatabaseConnection,
 ): Kysely<Database> {
   if ('kysely' in connection) {
     return connection.kysely;
@@ -115,7 +115,7 @@ export function detectDatabaseType(db: unknown): DatabaseType | null {
  */
 export async function createDatabaseFromConnection(
   rawConnection: any,
-  options?: DatabaseOptions
+  options?: DatabaseOptions,
 ): Promise<Kysely<Database> | null> {
   const dbType = detectDatabaseType(rawConnection);
   if (!dbType) {
@@ -158,7 +158,7 @@ export async function createDatabaseFromConnection(
         onCreateConnection: async (connection) => {
           // Set search_path on every new connection
           await connection.executeQuery(
-            CompiledQuery.raw(`SET search_path TO "${schema}"`)
+            CompiledQuery.raw(`SET search_path TO "${schema}"`),
           );
         },
       });
@@ -184,7 +184,7 @@ export async function createDatabaseFromConnection(
       if (!connectionString) {
         throw new Error(
           'Neon connection string is required. Pass it directly as the database option ' +
-            'or set one of: NEON_CONNECTION_STRING, NEON_PG_URL, DATABASE_URL, POSTGRES_URL'
+            'or set one of: NEON_CONNECTION_STRING, NEON_PG_URL, DATABASE_URL, POSTGRES_URL',
         );
       }
 

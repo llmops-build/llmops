@@ -13,7 +13,7 @@ export const Route = createFileRoute('/(app)/datasets/$id/')({
     }
 
     const dataset = await ctx.queryClient.ensureQueryData(
-      datasetByIdQueryOptions(params.id)
+      datasetByIdQueryOptions(params.id),
     );
 
     return {

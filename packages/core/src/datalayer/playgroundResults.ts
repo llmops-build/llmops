@@ -9,7 +9,9 @@ const createPlaygroundResult = z.object({
   columnId: z.string().uuid(),
   datasetRecordId: z.string().uuid().nullable().optional(),
   inputVariables: z.record(z.string(), z.unknown()).default({}),
-  status: z.enum(['pending', 'running', 'completed', 'failed']).default('pending'),
+  status: z
+    .enum(['pending', 'running', 'completed', 'failed'])
+    .default('pending'),
 });
 
 const createPlaygroundResultsBatch = z.object({
@@ -46,7 +48,7 @@ const deletePlaygroundResultsByRunId = z.object({
 export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
   return {
     createPlaygroundResult: async (
-      params: z.infer<typeof createPlaygroundResult>
+      params: z.infer<typeof createPlaygroundResult>,
     ) => {
       const value = await createPlaygroundResult.safeParseAsync(params);
       if (!value.success) {
@@ -79,7 +81,7 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
     },
 
     createPlaygroundResultsBatch: async (
-      params: z.infer<typeof createPlaygroundResultsBatch>
+      params: z.infer<typeof createPlaygroundResultsBatch>,
     ) => {
       const value = await createPlaygroundResultsBatch.safeParseAsync(params);
       if (!value.success) {
@@ -118,7 +120,7 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
     },
 
     updatePlaygroundResult: async (
-      params: z.infer<typeof updatePlaygroundResult>
+      params: z.infer<typeof updatePlaygroundResult>,
     ) => {
       const value = await updatePlaygroundResult.safeParseAsync(params);
       if (!value.success) {
@@ -158,7 +160,7 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
     },
 
     getPlaygroundResultById: async (
-      params: z.infer<typeof getPlaygroundResultById>
+      params: z.infer<typeof getPlaygroundResultById>,
     ) => {
       const value = await getPlaygroundResultById.safeParseAsync(params);
       if (!value.success) {
@@ -174,7 +176,7 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
     },
 
     listPlaygroundResults: async (
-      params: z.infer<typeof listPlaygroundResults>
+      params: z.infer<typeof listPlaygroundResults>,
     ) => {
       const value = await listPlaygroundResults.safeParseAsync(params);
       if (!value.success) {
@@ -199,7 +201,7 @@ export const createPlaygroundResultsDataLayer = (db: Kysely<Database>) => {
     },
 
     deletePlaygroundResultsByRunId: async (
-      params: z.infer<typeof deletePlaygroundResultsByRunId>
+      params: z.infer<typeof deletePlaygroundResultsByRunId>,
     ) => {
       const value = await deletePlaygroundResultsByRunId.safeParseAsync(params);
       if (!value.success) {

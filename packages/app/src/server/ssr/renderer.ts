@@ -298,7 +298,7 @@ export const renderer = ({
       ?.filter((key) => manifest[key].isEntry && manifest[key].css)
       ?.flatMap((key) => manifest[key].css || [])
       .map((cssFile) =>
-        basePath === '/' ? `/${cssFile}` : basePath + `/${cssFile}`
+        basePath === '/' ? `/${cssFile}` : basePath + `/${cssFile}`,
       )
       .filter((cssFile) => cssFile !== stylesPath) || [];
 

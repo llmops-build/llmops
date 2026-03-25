@@ -9,7 +9,7 @@ import type { LLMOpsConfig } from '@llmops/core';
  * internal Kysely instance.
  */
 export const createMigrationMiddleware = (
-  config: LLMOpsConfig
+  config: LLMOpsConfig,
 ): MiddlewareHandler => {
   let migrationComplete = false;
   let migrationPromise: Promise<void> | null = null;
@@ -27,13 +27,11 @@ export const createMigrationMiddleware = (
         try {
           // Resolve telemetry store from config
           const telemetry = config.telemetry;
-          const store = Array.isArray(telemetry)
-            ? telemetry[0]
-            : telemetry;
+          const store = Array.isArray(telemetry) ? telemetry[0] : telemetry;
 
           if (!store || !store._db) {
             console.warn(
-              '[Migration] No telemetry store with database, skipping auto-migration'
+              '[Migration] No telemetry store with database, skipping auto-migration',
             );
             return;
           }
@@ -46,7 +44,7 @@ export const createMigrationMiddleware = (
 
           if (result.ran) {
             console.log(
-              `[Migration] Auto-migration completed: ${result.tables.length} table(s) created, ${result.fields.length} field(s) added`
+              `[Migration] Auto-migration completed: ${result.tables.length} table(s) created, ${result.fields.length} field(s) added`,
             );
           }
         } catch (error) {

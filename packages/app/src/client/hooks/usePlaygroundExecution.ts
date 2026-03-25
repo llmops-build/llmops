@@ -21,7 +21,10 @@ export type CellResult = {
 // Key for cell results: `${columnId}:${recordId || 'manual'}`
 export type CellKey = string;
 
-export function makeCellKey(columnId: string, recordId: string | null): CellKey {
+export function makeCellKey(
+  columnId: string,
+  recordId: string | null,
+): CellKey {
   return `${columnId}:${recordId || 'manual'}`;
 }
 
@@ -44,7 +47,8 @@ export function usePlaygroundExecution(playgroundId: string) {
     failedCells: 0,
     results: new Map(),
   });
-  const [hasLoadedPersistedResults, setHasLoadedPersistedResults] = useState(false);
+  const [hasLoadedPersistedResults, setHasLoadedPersistedResults] =
+    useState(false);
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const resultIdToCellKeyRef = useRef<Map<string, CellKey>>(new Map());
@@ -54,13 +58,13 @@ export function usePlaygroundExecution(playgroundId: string) {
 
   // Find the latest completed run
   const latestCompletedRun = runs?.find(
-    (run) => run.status === 'completed' || run.status === 'failed'
+    (run) => run.status === 'completed' || run.status === 'failed',
   );
 
   // Fetch results for the latest completed run
   const { data: persistedResults } = usePlaygroundResults(
     playgroundId,
-    latestCompletedRun?.id ?? ''
+    latestCompletedRun?.id ?? '',
   );
 
   // Load persisted results into state on initial load
@@ -128,12 +132,15 @@ export function usePlaygroundExecution(playgroundId: string) {
     try {
       // Start the run
       const basePath = getBasePath();
-      const response = await fetch(`${basePath}/api/v1/playgrounds/${playgroundId}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${basePath}/api/v1/playgrounds/${playgroundId}/execute`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const error = await response.json();
@@ -151,7 +158,7 @@ export function usePlaygroundExecution(playgroundId: string) {
 
       // Connect to SSE stream
       const eventSource = new EventSource(
-        `${basePath}/api/v1/playgrounds/${playgroundId}/execute/stream?runId=${runId}`
+        `${basePath}/api/v1/playgrounds/${playgroundId}/execute/stream?runId=${runId}`,
       );
       eventSourceRef.current = eventSource;
 

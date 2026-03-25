@@ -61,7 +61,7 @@ function RouteComponent() {
   const [selectedGuardrail, setSelectedGuardrail] =
     useState<AvailableGuardrail | null>(null);
   const [editingConfig, setEditingConfig] = useState<GuardrailConfig | null>(
-    null
+    null,
   );
 
   const {
@@ -82,7 +82,7 @@ function RouteComponent() {
     (functionId: string) => {
       return availableGuardrails?.find((g) => g.id === functionId);
     },
-    [availableGuardrails]
+    [availableGuardrails],
   );
 
   const handleOpenAdd = () => {
@@ -122,7 +122,7 @@ function RouteComponent() {
     setValue(
       'parameters',
       { ...formValues.parameters, [fieldName]: value },
-      { shouldDirty: true }
+      { shouldDirty: true },
     );
   };
 
@@ -140,8 +140,7 @@ function RouteComponent() {
     if (!selectedGuardrail) return false;
     if (!formValues.name.trim()) return false;
     // Check required parameters
-    const requiredParams =
-      selectedGuardrail.parameters?.required || [];
+    const requiredParams = selectedGuardrail.parameters?.required || [];
     for (const param of requiredParams) {
       const value = formValues.parameters[param];
       if (value === undefined || value === null || value === '') {
@@ -260,7 +259,7 @@ function RouteComponent() {
                 <label className={styles.formFieldLabel}>Hook Type *</label>
                 <div className={styles.hookTypeSelector}>
                   {selectedGuardrail.supportedHooks.includes(
-                    'beforeRequestHook'
+                    'beforeRequestHook',
                   ) && (
                     <button
                       type="button"
@@ -274,7 +273,7 @@ function RouteComponent() {
                     </button>
                   )}
                   {selectedGuardrail.supportedHooks.includes(
-                    'afterRequestHook'
+                    'afterRequestHook',
                   ) && (
                     <button
                       type="button"

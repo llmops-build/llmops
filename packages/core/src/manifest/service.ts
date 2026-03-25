@@ -17,7 +17,7 @@ export class ManifestService {
   constructor(
     private cache: CacheService,
     db: Kysely<Database>,
-    private ttlMs: number = DEFAULT_TTL_MS
+    private ttlMs: number = DEFAULT_TTL_MS,
   ) {
     this.builder = new ManifestBuilder(db);
     log.debug({ ttlMs }, 'ManifestService initialized');
@@ -37,11 +37,11 @@ export class ManifestService {
           {
             version: built.version,
           },
-          'Manifest built successfully'
+          'Manifest built successfully',
         );
         return built;
       },
-      { namespace: MANIFEST_NAMESPACE, ttl: this.ttlMs }
+      { namespace: MANIFEST_NAMESPACE, ttl: this.ttlMs },
     );
     log.debug({ version: manifest.version }, 'Manifest retrieved');
     return manifest;
@@ -71,7 +71,7 @@ export class ManifestService {
   async getVersion(): Promise<number | null> {
     const manifest = await this.cache.get<GatewayManifest>(
       MANIFEST_CACHE_KEY,
-      MANIFEST_NAMESPACE
+      MANIFEST_NAMESPACE,
     );
     const version = manifest?.version ?? null;
     log.debug({ version }, 'Got manifest version');

@@ -6,7 +6,7 @@ import { schemas, type TableName } from './schema';
  */
 export function validateTableData<T extends TableName>(
   table: T,
-  data: unknown
+  data: unknown,
 ) {
   const schema = schemas[table];
   return schema.safeParse(data);
@@ -17,7 +17,7 @@ export function validateTableData<T extends TableName>(
  */
 export function validatePartialTableData<T extends TableName>(
   table: T,
-  data: unknown
+  data: unknown,
 ) {
   const schema = schemas[table].partial();
   return schema.safeParse(data);
@@ -36,7 +36,7 @@ export function parseTableData<T extends TableName>(table: T, data: unknown) {
  */
 export function parsePartialTableData<T extends TableName>(
   table: T,
-  data: unknown
+  data: unknown,
 ) {
   const schema = schemas[table].partial();
   return schema.parse(data);

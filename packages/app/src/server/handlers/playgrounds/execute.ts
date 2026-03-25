@@ -40,7 +40,7 @@ type SSEEvent =
 // Resolve template variables in message content
 function resolveTemplateVariables(
   content: string,
-  variables: Record<string, unknown>
+  variables: Record<string, unknown>,
 ): string {
   return content.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) => {
     const value = variables[key];
@@ -59,7 +59,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -75,11 +75,8 @@ const app = new Hono()
         const columns = playground.columns as PlaygroundColumn[] | null;
         if (!columns || columns.length === 0) {
           return c.json(
-            clientErrorResponse(
-              'Playground has no columns configured',
-              400
-            ),
-            400
+            clientErrorResponse('Playground has no columns configured', 400),
+            400,
           );
         }
 
@@ -125,10 +122,7 @@ const app = new Hono()
         });
 
         if (!run) {
-          return c.json(
-            internalServerError('Failed to create run', 500),
-            500
-          );
+          return c.json(internalServerError('Failed to create run', 500), 500);
         }
 
         // Create result records for each (column, record) pair
@@ -153,17 +147,17 @@ const app = new Hono()
               runId: run.id,
               totalCells,
             },
-            200
-          )
+            200,
+          ),
         );
       } catch (error) {
         console.error('Error starting playground execution:', error);
         return c.json(
           internalServerError('Failed to start execution', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Stream execution results via SSE
   .get(
@@ -172,13 +166,13 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'query',
       z.object({
         runId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -201,7 +195,7 @@ const app = new Hono()
       if (!columns || columns.length === 0) {
         return c.json(
           clientErrorResponse('Playground has no columns configured', 400),
-          400
+          400,
         );
       }
 
@@ -212,7 +206,7 @@ const app = new Hono()
       if (pendingResults.length === 0) {
         return c.json(
           clientErrorResponse('No pending results to execute', 400),
-          400
+          400,
         );
       }
 
@@ -227,7 +221,7 @@ const app = new Hono()
         ...new Set(
           columns
             .map((c) => c.providerConfigId)
-            .filter((id): id is string => id !== null)
+            .filter((id): id is string => id !== null),
         ),
       ];
       const providerConfigs = new Map<string, { slug: string | null }>();
@@ -244,13 +238,15 @@ const app = new Hono()
       // Derive base URL from request origin, including basePath
       // Handle reverse proxy scenarios by checking forwarded headers
       const forwardedProto = c.req.header('x-forwarded-proto');
-      const forwardedHost = c.req.header('x-forwarded-host') || c.req.header('host');
+      const forwardedHost =
+        c.req.header('x-forwarded-host') || c.req.header('host');
       const url = new URL(c.req.url);
       const protocol = forwardedProto ? `${forwardedProto}:` : url.protocol;
       const host = forwardedHost || url.host;
       const baseURL = `${protocol}//${host}`;
       const basePath = c.get('llmopsConfig')?.basePath || '';
-      const gatewayPath = basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
+      const gatewayPath =
+        basePath === '/' ? '/api/genai/v1' : `${basePath}/api/genai/v1`;
       const gatewayBaseURL = `${baseURL}${gatewayPath}`;
 
       logger.debug({
@@ -415,10 +411,7 @@ const app = new Hono()
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : 'Unknown error';
-            console.error(
-              `Error executing cell ${result.id}:`,
-              errorMessage
-            );
+            console.error(`Error executing cell ${result.id}:`, errorMessage);
 
             await db.updatePlaygroundResult({
               resultId: result.id,
@@ -446,7 +439,8 @@ const app = new Hono()
           // Mark run as completed
           await db.updatePlaygroundRun({
             runId,
-            status: failedCount === pendingResults.length ? 'failed' : 'completed',
+            status:
+              failedCount === pendingResults.length ? 'failed' : 'completed',
             completedAt: new Date(),
             completedRecords: completedCount + failedCount,
           });
@@ -472,7 +466,7 @@ const app = new Hono()
           });
         }
       });
-    }
+    },
   );
 
 export default app;

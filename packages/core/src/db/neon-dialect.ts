@@ -8,7 +8,7 @@ import { type NeonQueryFunction } from '@neondatabase/serverless';
  * @returns Kysely dialect configured for Neon serverless
  */
 export function createNeonDialect(
-  neonInstance: NeonQueryFunction<false, false>
+  neonInstance: NeonQueryFunction<false, false>,
 ): any {
   return new NeonDialect({
     neon: neonInstance,
@@ -26,7 +26,7 @@ export function createNeonDialect(
 export async function executeWithSchema(
   neonInstance: NeonQueryFunction<false, false>,
   query: string,
-  schema?: string
+  schema?: string,
 ): Promise<any> {
   if (schema && schema !== 'public') {
     try {

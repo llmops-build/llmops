@@ -74,7 +74,7 @@ export interface BatchWriterConfig {
 export interface BatchWriterDeps {
   /** Database batch insert function */
   batchInsertRequests: (
-    requests: LLMRequestData[]
+    requests: LLMRequestData[],
   ) => Promise<{ count: number }>;
 }
 
@@ -115,7 +115,7 @@ export interface BatchWriter {
  */
 export function createBatchWriter(
   deps: BatchWriterDeps,
-  config: BatchWriterConfig = {}
+  config: BatchWriterConfig = {},
 ): BatchWriter {
   const { flushIntervalMs = 2000, maxBatchSize = 100, debug = false } = config;
 
@@ -146,7 +146,7 @@ export function createBatchWriter(
       // On error, re-queue the failed batch at the front
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(
-        `[BatchWriter] Flush failed, re-queuing requests: ${errorMsg}`
+        `[BatchWriter] Flush failed, re-queuing requests: ${errorMsg}`,
       );
       queue = [...batch, ...queue];
     } finally {
@@ -194,7 +194,7 @@ export function createBatchWriter(
   function enqueue(request: LLMRequestData): void {
     queue.push(request);
     log(
-      `[BatchWriter] Enqueued request ${request.requestId}, queue size: ${queue.length}`
+      `[BatchWriter] Enqueued request ${request.requestId}, queue size: ${queue.length}`,
     );
 
     // Auto-start on first enqueue
@@ -236,12 +236,12 @@ let globalWriter: BatchWriter | null = null;
  */
 export function getGlobalBatchWriter(
   deps?: BatchWriterDeps,
-  config?: BatchWriterConfig
+  config?: BatchWriterConfig,
 ): BatchWriter {
   if (!globalWriter) {
     if (!deps) {
       throw new Error(
-        'BatchWriter dependencies required on first initialization'
+        'BatchWriter dependencies required on first initialization',
       );
     }
     globalWriter = createBatchWriter(deps, config);

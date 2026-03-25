@@ -15,7 +15,6 @@ import {
   Moon,
   Network,
   Play,
-
   Sun,
   Telescope,
 } from 'lucide-react';

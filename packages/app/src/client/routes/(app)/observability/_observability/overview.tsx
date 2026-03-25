@@ -33,7 +33,7 @@ import {
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
-  '/(app)/observability/_observability/overview'
+  '/(app)/observability/_observability/overview',
 )({
   component: RouteComponent,
   staticData: {

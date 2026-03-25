@@ -15,7 +15,7 @@ import {
  * Returns null if the model doesn't match the expected format
  */
 function parseProviderSlugModel(
-  model: string
+  model: string,
 ): { providerSlug: string; modelName: string } | null {
   if (!model || !model.startsWith('@')) {
     return null;
@@ -136,7 +136,7 @@ interface PortkeyConfig {
  * Gateway format: { deny: true, regexMatch: { id: 'default.regexMatch', rule: '.*' } }
  */
 function convertGuardrailsToGatewayFormat(
-  guardrails: ManifestGuardrail[]
+  guardrails: ManifestGuardrail[],
 ): GatewayGuardrail[] {
   return guardrails.map((guardrail) => {
     const gatewayGuardrail: GatewayGuardrail = {
@@ -178,7 +178,7 @@ const PROVIDER_MAP: Record<string, string> = {
  */
 function buildPortkeyConfig(
   portkeyProvider: string,
-  credentials: ProviderCredentials | null
+  credentials: ProviderCredentials | null,
 ): PortkeyConfig {
   const portkeyConfig: PortkeyConfig = {
     provider: portkeyProvider,
@@ -286,7 +286,7 @@ async function handleDirectProviderRequest(
   next: Parameters<MiddlewareHandler>[1],
   originalBody: Record<string, unknown>,
   providerSlug: string,
-  modelName: string
+  modelName: string,
 ) {
   const db = c.var.db;
   const kyselyDb = c.var.kyselyDb;
@@ -296,7 +296,7 @@ async function handleDirectProviderRequest(
   const result = await getProviderCredentialsWithFallback(
     providerSlug,
     inlineProviders,
-    db
+    db,
   );
 
   if (!result) {
@@ -309,7 +309,7 @@ async function handleDirectProviderRequest(
           type: 'invalid_request_error',
         },
       },
-      404
+      404,
     );
   }
 
@@ -317,12 +317,12 @@ async function handleDirectProviderRequest(
 
   // Map provider name to Portkey provider
   const portkeyProvider = getPortkeyProviderId(
-    PROVIDER_MAP[providerId] || providerId
+    PROVIDER_MAP[providerId] || providerId,
   );
 
   // Check if API key is required
   const requiresApiKey = !['bedrock', 'sagemaker', 'vertex-ai'].includes(
-    providerId
+    providerId,
   );
 
   if (requiresApiKey && !credentials?.apiKey) {
@@ -333,7 +333,7 @@ async function handleDirectProviderRequest(
           type: 'invalid_request_error',
         },
       },
-      400
+      400,
     );
   }
 
@@ -350,7 +350,7 @@ async function handleDirectProviderRequest(
       const { guardrails } = manifest;
 
       portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
-        guardrails.beforeRequestHook
+        guardrails.beforeRequestHook,
       );
       portkeyConfig.default_output_guardrails =
         convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
@@ -387,13 +387,13 @@ async function handleDirectProviderRequest(
   if (portkeyConfig.default_input_guardrails) {
     newHeaders.set(
       'x-portkey-default-input-guardrails',
-      JSON.stringify(portkeyConfig.default_input_guardrails)
+      JSON.stringify(portkeyConfig.default_input_guardrails),
     );
   }
   if (portkeyConfig.default_output_guardrails) {
     newHeaders.set(
       'x-portkey-default-output-guardrails',
-      JSON.stringify(portkeyConfig.default_output_guardrails)
+      JSON.stringify(portkeyConfig.default_output_guardrails),
     );
   }
 
@@ -426,7 +426,7 @@ async function handleDirectProviderRequest(
   });
   logger.debug(
     { headers: debugHeaders, body: updatedBody },
-    'Gateway request [direct]'
+    'Gateway request [direct]',
   );
 
   await next();
@@ -468,7 +468,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
               next,
               body,
               parsed.providerSlug,
-              parsed.modelName
+              parsed.modelName,
             );
           }
         }
@@ -485,7 +485,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
             type: 'invalid_request_error',
           },
         },
-        400
+        400,
       );
     }
 
@@ -500,7 +500,7 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
           type: 'invalid_request_error',
         },
       },
-      400
+      400,
     );
   };
 };

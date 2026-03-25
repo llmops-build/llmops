@@ -41,7 +41,7 @@ import {
 } from '../-components/observability.css';
 
 export const Route = createFileRoute(
-  '/(app)/observability/_observability/costs'
+  '/(app)/observability/_observability/costs',
 )({
   component: RouteComponent,
   staticData: {
@@ -108,7 +108,7 @@ function RouteComponent() {
   const { data: distinctTags } = useDistinctTags(breakdownBy === 'tags');
   const availableTagKeys = useMemo(
     () => [...new Set(distinctTags?.map((t) => t.key))],
-    [distinctTags]
+    [distinctTags],
   );
   // Stable string for dependency tracking to avoid re-running on same data
   const availableTagKeysKey = availableTagKeys.join('\0');
@@ -118,7 +118,7 @@ function RouteComponent() {
   useEffect(() => {
     if (breakdownBy === 'tags' && availableTagKeys.length > 0) {
       setSelectedTagKeys((prev) =>
-        prev.length === 0 ? [availableTagKeys[0]] : prev
+        prev.length === 0 ? [availableTagKeys[0]] : prev,
       );
     } else if (breakdownBy !== 'tags') {
       setSelectedTagKeys([]);
@@ -127,8 +127,7 @@ function RouteComponent() {
 
   const { data: totalCost, isLoading } = useTotalCost(analyticsParams);
 
-  const groupBy =
-    breakdownBy !== 'input-output' ? breakdownBy : undefined;
+  const groupBy = breakdownBy !== 'input-output' ? breakdownBy : undefined;
   const { data: summaryData } = useCostSummary(
     {
       ...analyticsParams,
@@ -137,7 +136,7 @@ function RouteComponent() {
         ? { tagKeys: selectedTagKeys }
         : {}),
     },
-    breakdownBy !== 'input-output'
+    breakdownBy !== 'input-output',
   );
 
   if (isLoading) {
@@ -177,15 +176,12 @@ function RouteComponent() {
     if (breakdownBy === 'input-output' || !summaryData?.length) return null;
     const total = summaryData.reduce(
       (sum, item) => sum + Number(item.totalCost),
-      0
+      0,
     );
     if (total === 0) return null;
-    const stripPrefix =
-      breakdownBy === 'tags' && selectedTagKeys.length === 1;
+    const stripPrefix = breakdownBy === 'tags' && selectedTagKeys.length === 1;
     return summaryData.map((item, i) => ({
-      label: stripPrefix
-        ? item.groupKey.replace(/^[^:]+:/, '')
-        : item.groupKey,
+      label: stripPrefix ? item.groupKey.replace(/^[^:]+:/, '') : item.groupKey,
       cost: Number(item.totalCost),
       percentage: (Number(item.totalCost) / total) * 100,
       color: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
@@ -305,9 +301,7 @@ function RouteComponent() {
                   onClick={() => {
                     if (isActive && selectedTagKeys.length === 1) return;
                     setSelectedTagKeys((prev) =>
-                      isActive
-                        ? prev.filter((k) => k !== key)
-                        : [...prev, key]
+                      isActive ? prev.filter((k) => k !== key) : [...prev, key],
                     );
                   }}
                 >
@@ -349,8 +343,7 @@ function RouteComponent() {
                     width: `${outputPercentage}%`,
                     height: '100%',
                     backgroundColor: '#f59e0b',
-                    borderRadius:
-                      inputPercentage === 0 ? '4px' : '0 4px 4px 0',
+                    borderRadius: inputPercentage === 0 ? '4px' : '0 4px 4px 0',
                     transition: 'width 0.3s ease',
                     cursor: 'default',
                   }}

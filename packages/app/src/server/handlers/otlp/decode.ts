@@ -167,9 +167,7 @@ function isZeroBytes(bytes: Uint8Array | Buffer | number[]): boolean {
  * Convert a protobufjs Long / number / string to a nanosecond string.
  * protobufjs decodes fixed64 as Long when longs are not forced to number.
  */
-function toNanoString(
-  val: unknown
-): string {
+function toNanoString(val: unknown): string {
   if (val == null) return '0';
   // protobufjs Long
   if (typeof val === 'object' && val !== null && 'toString' in val) {
@@ -182,7 +180,7 @@ function toNanoString(
  * Normalise an AnyValue from decoded protobuf into the OTLP JSON shape.
  */
 function normaliseAnyValue(
-  av: Record<string, unknown>
+  av: Record<string, unknown>,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (av.stringValue !== undefined && av.stringValue !== '')
@@ -203,7 +201,7 @@ function normaliseAnyValue(
     const arr = av.arrayValue as { values?: unknown[] };
     out.arrayValue = {
       values: (arr.values ?? []).map((v) =>
-        normaliseAnyValue(v as Record<string, unknown>)
+        normaliseAnyValue(v as Record<string, unknown>),
       ),
     };
   }
@@ -211,7 +209,7 @@ function normaliseAnyValue(
     const kvl = av.kvlistValue as { values?: unknown[] };
     out.kvlistValue = {
       values: (kvl.values ?? []).map((kv) =>
-        normaliseKeyValue(kv as Record<string, unknown>)
+        normaliseKeyValue(kv as Record<string, unknown>),
       ),
     };
   }
@@ -221,14 +219,13 @@ function normaliseAnyValue(
   return out;
 }
 
-function normaliseKeyValue(
-  kv: Record<string, unknown>
-): { key: string; value: Record<string, unknown> } {
+function normaliseKeyValue(kv: Record<string, unknown>): {
+  key: string;
+  value: Record<string, unknown>;
+} {
   return {
     key: kv.key as string,
-    value: normaliseAnyValue(
-      (kv.value as Record<string, unknown>) ?? {}
-    ),
+    value: normaliseAnyValue((kv.value as Record<string, unknown>) ?? {}),
   };
 }
 
@@ -292,7 +289,7 @@ export interface ExportTraceServiceRequest {
  * - deprecated instrumentationLibrarySpans merged into scopeSpans
  */
 export function decodeOtlpProtobuf(
-  buffer: Uint8Array
+  buffer: Uint8Array,
 ): ExportTraceServiceRequest {
   const RequestType = getRequestType();
   const decoded = RequestType.decode(buffer) as unknown as Record<
@@ -312,7 +309,7 @@ export function decodeOtlpProtobuf(
     const resource = rawResource
       ? {
           attributes: (rawResource.attributes ?? []).map(
-            normaliseKeyValue
+            normaliseKeyValue,
           ) as OtlpKeyValue[],
         }
       : undefined;
@@ -346,18 +343,16 @@ export function decodeOtlpProtobuf(
             ? bytesToHex(parentSpanIdBytes)
             : undefined;
 
-        const rawAttrs = (s.attributes ?? []) as Array<
-          Record<string, unknown>
-        >;
+        const rawAttrs = (s.attributes ?? []) as Array<Record<string, unknown>>;
         const attributes = rawAttrs.map(normaliseKeyValue) as OtlpKeyValue[];
 
         const rawEvents = (s.events ?? []) as Array<Record<string, unknown>>;
         const events: OtlpEvent[] = rawEvents.map((e) => ({
           name: (e.name as string) ?? '',
           timeUnixNano: toNanoString(e.timeUnixNano),
-          attributes: ((e.attributes ?? []) as Array<Record<string, unknown>>).map(
-            normaliseKeyValue
-          ) as OtlpKeyValue[],
+          attributes: (
+            (e.attributes ?? []) as Array<Record<string, unknown>>
+          ).map(normaliseKeyValue) as OtlpKeyValue[],
         }));
 
         const rawStatus = s.status as

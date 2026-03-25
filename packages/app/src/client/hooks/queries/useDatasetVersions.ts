@@ -13,11 +13,14 @@ export type DatasetVersion = {
   updatedAt: string;
 };
 
-export const getQueryKey = (datasetId: string) => ['dataset-versions', datasetId];
+export const getQueryKey = (datasetId: string) => [
+  'dataset-versions',
+  datasetId,
+];
 
 export const datasetVersionsQueryOptions = (
   datasetId: string,
-  options?: { limit?: number; offset?: number }
+  options?: { limit?: number; offset?: number },
 ) =>
   queryOptions({
     queryKey: [...getQueryKey(datasetId), options?.limit, options?.offset],
@@ -37,7 +40,7 @@ export const datasetVersionsQueryOptions = (
 
 export const useDatasetVersions = (
   datasetId: string,
-  options?: { limit?: number; offset?: number }
+  options?: { limit?: number; offset?: number },
 ) => {
   return useQuery(datasetVersionsQueryOptions(datasetId, options));
 };

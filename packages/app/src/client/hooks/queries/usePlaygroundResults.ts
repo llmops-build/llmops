@@ -27,15 +27,16 @@ export const getQueryKey = (playgroundId: string, runId: string) => [
 
 export const playgroundResultsQueryOptions = (
   playgroundId: string,
-  runId: string
+  runId: string,
 ) =>
   queryOptions({
     queryKey: getQueryKey(playgroundId, runId),
     queryFn: async () => {
-      const response = await hc.v1.playgrounds[':id'].runs[':runId'].results
-        .$get({
-          param: { id: playgroundId, runId },
-        });
+      const response = await hc.v1.playgrounds[':id'].runs[
+        ':runId'
+      ].results.$get({
+        param: { id: playgroundId, runId },
+      });
       const result = await response.json();
       return ('data' in result ? result.data : []) as PlaygroundResult[];
     },

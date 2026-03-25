@@ -61,7 +61,7 @@ export type ObservabilitySearchParams = {
 export const Route = createFileRoute('/(app)/observability')({
   component: RouteComponent,
   validateSearch: (
-    search: Record<string, unknown>
+    search: Record<string, unknown>,
   ): ObservabilitySearchParams => {
     const range = (search.range as string) || '7d';
     const defaultRange = getDateRangeFromPreset(range);

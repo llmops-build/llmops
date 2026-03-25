@@ -29,7 +29,7 @@ export function CurlBuilder() {
     useProviderConfigs();
   const { data: availableProviders } = useProvidersList();
   const { data: models, isLoading: modelsLoading } = useProviderModels(
-    selected.providerId
+    selected.providerId,
   );
 
   // Get provider info helper
@@ -55,7 +55,7 @@ export function CurlBuilder() {
 
   // Build model options
   const selectedConfig = providerConfigs?.find(
-    (c) => c.id === selected.providerConfigId
+    (c) => c.id === selected.providerConfigId,
   );
   const selectedProviderInfo = selectedConfig
     ? getProviderInfo(selectedConfig.providerId)
@@ -71,7 +71,7 @@ export function CurlBuilder() {
 
   // Get the selected values for display
   const selectedProviderConfig = providerConfigs?.find(
-    (c) => c.id === selected.providerConfigId
+    (c) => c.id === selected.providerConfigId,
   );
   const selectedModel = models?.find((m) => m.id === selected.modelId);
 
@@ -148,70 +148,69 @@ export function CurlBuilder() {
   return (
     <div className={styles.codeBlockContainer}>
       <div className={styles.codeBlockHeader}>
-        <Button
-          variant="outline"
-          scheme="gray"
-          size="sm"
-          onClick={handleCopy}
-        >
+        <Button variant="outline" scheme="gray" size="sm" onClick={handleCopy}>
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? 'Copied!' : 'Copy Curl'}
         </Button>
       </div>
       <div className={styles.codeBlock}>
         <code className={styles.codeElement}>
-        <span className={styles.codeLine}>
-          <span className={styles.codeKeyword}>curl</span> -X POST{' '}
-          {baseUrl}/api/genai/v1/chat/completions \
-        </span>
-
-        <span className={styles.codeLineIndent}>
-          -H <span className={styles.codeString}>"Content-Type: application/json"</span> \
-        </span>
-
-        <span className={styles.codeLineIndent}>
-          -d <span className={styles.codeString}>{"'{"}</span>
-        </span>
-
-        <span className={styles.codeLineIndent}>
-          {'    '}
-          <span className={styles.codeString}>
-            "model": "
-            <InlineSelect
-              value={selected.providerConfigId}
-              options={providerOptions}
-              onChange={handleProviderChange}
-              placeholder="@provider"
-              emptyMessage="No providers configured"
-              isLoading={configsLoading}
-            />
-            /
-            <InlineSelect
-              value={selected.modelId}
-              options={modelOptions}
-              onChange={handleModelChange}
-              placeholder="model"
-              emptyMessage={
-                selected.providerId
-                  ? 'No models available'
-                  : 'Select a provider first'
-              }
-              isLoading={modelsLoading}
-            />
-            ",
+          <span className={styles.codeLine}>
+            <span className={styles.codeKeyword}>curl</span> -X POST {baseUrl}
+            /api/genai/v1/chat/completions \
           </span>
-        </span>
 
-        <span className={styles.codeLineIndent}>
-          {'    '}
-          <span className={styles.codeString}>
-            "messages": [{'{"role": "user", "content": "Hello!"}'}]
+          <span className={styles.codeLineIndent}>
+            -H{' '}
+            <span className={styles.codeString}>
+              "Content-Type: application/json"
+            </span>{' '}
+            \
           </span>
-        </span>
 
-        <span className={styles.codeLineIndent}>
-          <span className={styles.codeString}>{"  }'"}</span>
-        </span>
+          <span className={styles.codeLineIndent}>
+            -d <span className={styles.codeString}>{"'{"}</span>
+          </span>
+
+          <span className={styles.codeLineIndent}>
+            {'    '}
+            <span className={styles.codeString}>
+              "model": "
+              <InlineSelect
+                value={selected.providerConfigId}
+                options={providerOptions}
+                onChange={handleProviderChange}
+                placeholder="@provider"
+                emptyMessage="No providers configured"
+                isLoading={configsLoading}
+              />
+              /
+              <InlineSelect
+                value={selected.modelId}
+                options={modelOptions}
+                onChange={handleModelChange}
+                placeholder="model"
+                emptyMessage={
+                  selected.providerId
+                    ? 'No models available'
+                    : 'Select a provider first'
+                }
+                isLoading={modelsLoading}
+              />
+              ",
+            </span>
+          </span>
+
+          <span className={styles.codeLineIndent}>
+            {'    '}
+            <span className={styles.codeString}>
+              "messages": [{'{"role": "user", "content": "Hello!"}'}]
+            </span>
+          </span>
+
+          <span className={styles.codeLineIndent}>
+            <span className={styles.codeString}>{"  }'"}</span>
+          </span>
         </code>
       </div>
     </div>

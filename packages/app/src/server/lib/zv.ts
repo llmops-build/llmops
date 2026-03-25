@@ -4,7 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 
 export const zv = <T extends ZodType, Target extends keyof ValidationTargets>(
   target: Target,
-  schema: T
+  schema: T,
 ) =>
   zValidator(target, schema, (result, c) => {
     if (!result.success) {
@@ -16,7 +16,7 @@ export const zv = <T extends ZodType, Target extends keyof ValidationTargets>(
             message: issue.message,
           })),
         },
-        400
+        400,
       );
     }
   });

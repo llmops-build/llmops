@@ -88,7 +88,7 @@ export function DateRangePicker() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [customStart, setCustomStart] = useState(
-    isoToDateInputValue(search.from)
+    isoToDateInputValue(search.from),
   );
   const [customEnd, setCustomEnd] = useState(isoToDateInputValue(search.to));
 

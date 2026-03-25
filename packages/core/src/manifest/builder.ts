@@ -35,7 +35,7 @@ export class ManifestBuilder {
     const afterRequestGuardrails: ManifestGuardrail[] = [];
 
     logger.info(
-      `[ManifestBuilder] Found ${guardrailConfigs.length} enabled guardrail configs`
+      `[ManifestBuilder] Found ${guardrailConfigs.length} enabled guardrail configs`,
     );
 
     for (const guardrail of guardrailConfigs) {
@@ -92,7 +92,7 @@ export class ManifestBuilder {
         providerGuardrailOverrides[override.providerConfigId] = [];
       }
       providerGuardrailOverrides[override.providerConfigId].push(
-        manifestOverride
+        manifestOverride,
       );
     }
 

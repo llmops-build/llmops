@@ -89,7 +89,9 @@ export function DatasetRecordsTable({ datasetId }: DatasetRecordsTableProps) {
     }));
   }, [records]);
 
-  const columns = useMemo<ColumnDef<DatasetRecord & { rowIndex: number }, any>[]>(
+  const columns = useMemo<
+    ColumnDef<DatasetRecord & { rowIndex: number }, any>[]
+  >(
     () => [
       columnHelper.accessor('rowIndex', {
         header: '#',
@@ -142,7 +144,7 @@ export function DatasetRecordsTable({ datasetId }: DatasetRecordsTableProps) {
         },
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -239,7 +241,7 @@ export function DatasetRecordsTable({ datasetId }: DatasetRecordsTableProps) {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHeaderCell>
                   );

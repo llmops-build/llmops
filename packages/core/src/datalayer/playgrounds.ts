@@ -34,7 +34,7 @@ const listPlaygrounds = z.object({
 export const createPlaygroundDataLayer = (db: Kysely<Database>) => {
   return {
     createNewPlayground: async (
-      params: z.infer<typeof createNewPlayground>
+      params: z.infer<typeof createNewPlayground>,
     ) => {
       const value = await createNewPlayground.safeParseAsync(params);
       if (!value.success) {

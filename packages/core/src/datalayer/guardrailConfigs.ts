@@ -43,7 +43,7 @@ const listGuardrailConfigs = z.object({
 export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
   return {
     createGuardrailConfig: async (
-      params: z.infer<typeof createGuardrailConfig>
+      params: z.infer<typeof createGuardrailConfig>,
     ) => {
       const value = await createGuardrailConfig.safeParseAsync(params);
       if (!value.success) {
@@ -80,7 +80,7 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
     },
 
     updateGuardrailConfig: async (
-      params: z.infer<typeof updateGuardrailConfig>
+      params: z.infer<typeof updateGuardrailConfig>,
     ) => {
       const value = await updateGuardrailConfig.safeParseAsync(params);
       if (!value.success) {
@@ -109,7 +109,7 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
     },
 
     getGuardrailConfigById: async (
-      params: z.infer<typeof getGuardrailConfigById>
+      params: z.infer<typeof getGuardrailConfigById>,
     ) => {
       const value = await getGuardrailConfigById.safeParseAsync(params);
       if (!value.success) {
@@ -125,7 +125,7 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
     },
 
     deleteGuardrailConfig: async (
-      params: z.infer<typeof deleteGuardrailConfig>
+      params: z.infer<typeof deleteGuardrailConfig>,
     ) => {
       const value = await deleteGuardrailConfig.safeParseAsync(params);
       if (!value.success) {
@@ -141,7 +141,7 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
     },
 
     listGuardrailConfigs: async (
-      params?: z.infer<typeof listGuardrailConfigs>
+      params?: z.infer<typeof listGuardrailConfigs>,
     ) => {
       const value = await listGuardrailConfigs.safeParseAsync(params || {});
       if (!value.success) {
@@ -180,7 +180,7 @@ export const createGuardrailConfigsDataLayer = (db: Kysely<Database>) => {
      * Ordered by priority (highest first)
      */
     getEnabledGuardrailsByHookType: async (
-      hookType: 'beforeRequestHook' | 'afterRequestHook'
+      hookType: 'beforeRequestHook' | 'afterRequestHook',
     ) => {
       return db
         .selectFrom('guardrail_configs')

@@ -11,11 +11,11 @@ export const createEnvValidatorMiddleware = (): MiddlewareHandler => {
       if (!parseResult.success) {
         console.error(
           'Environment variable validation failed:',
-          z.treeifyError(parseResult.error)
+          z.treeifyError(parseResult.error),
         );
         return c.text(
           'Internal Server Error: Invalid environment configuration',
-          500
+          500,
         );
       }
       c.set('env', parseResult.data);

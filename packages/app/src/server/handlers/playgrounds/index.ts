@@ -23,7 +23,7 @@ const app = new Hono()
         name: z.string().min(1),
         datasetId: z.string().uuid().nullable().optional(),
         columns: z.array(playgroundColumnSchema).nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -39,7 +39,7 @@ const app = new Hono()
         if (!playground) {
           return c.json(
             internalServerError('Failed to create playground', 500),
-            500
+            500,
           );
         }
 
@@ -48,10 +48,10 @@ const app = new Hono()
         console.error('Error creating playground:', error);
         return c.json(
           internalServerError('Failed to create playground', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // List all playgrounds
   .get('/', async (c) => {
@@ -64,7 +64,7 @@ const app = new Hono()
       console.error('Error fetching playgrounds:', error);
       return c.json(
         internalServerError('Failed to fetch playgrounds', 500),
-        500
+        500,
       );
     }
   })
@@ -75,7 +75,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -91,10 +91,10 @@ const app = new Hono()
         console.error('Error fetching playground:', error);
         return c.json(
           internalServerError('Failed to fetch playground', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Update playground
   .patch(
@@ -103,7 +103,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
@@ -111,7 +111,7 @@ const app = new Hono()
         name: z.string().min(1).optional(),
         datasetId: z.string().uuid().nullable().optional(),
         columns: z.array(playgroundColumnSchema).nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -133,10 +133,10 @@ const app = new Hono()
         console.error('Error updating playground:', error);
         return c.json(
           internalServerError('Failed to update playground', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Delete playground
   .delete(
@@ -145,7 +145,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -161,10 +161,10 @@ const app = new Hono()
         console.error('Error deleting playground:', error);
         return c.json(
           internalServerError('Failed to delete playground', 500),
-          500
+          500,
         );
       }
-    }
+    },
   );
 
 export default app;

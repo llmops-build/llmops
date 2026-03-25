@@ -19,7 +19,7 @@ export const MODELS_DEV_TO_INTERNAL_PROVIDER_MAP: Record<string, string> = {
  */
 export const INTERNAL_TO_MODELS_DEV_PROVIDER_MAP: Record<string, string> =
   Object.fromEntries(
-    Object.entries(MODELS_DEV_TO_INTERNAL_PROVIDER_MAP).map(([k, v]) => [v, k])
+    Object.entries(MODELS_DEV_TO_INTERNAL_PROVIDER_MAP).map(([k, v]) => [v, k]),
   );
 
 /**
