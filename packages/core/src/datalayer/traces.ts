@@ -110,9 +110,7 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
     upsertTrace: async (data: TraceUpsert) => {
       const result = await upsertTraceSchema.safeParseAsync(data);
       if (!result.success) {
-        throw new LLMOpsError(
-          `Invalid trace data: ${result.error.message}`
-        );
+        throw new LLMOpsError(`Invalid trace data: ${result.error.message}`);
       }
 
       const trace = result.data;
@@ -177,7 +175,7 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
         const result = await insertSpanSchema.safeParseAsync(span);
         if (!result.success) {
           logger.warn(
-            `[batchInsertSpans] Skipping invalid span ${span.spanId}: ${result.error.message}`
+            `[batchInsertSpans] Skipping invalid span ${span.spanId}: ${result.error.message}`,
           );
           continue;
         }
@@ -238,7 +236,7 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
         const result = await insertSpanEventSchema.safeParseAsync(event);
         if (!result.success) {
           logger.warn(
-            `[batchInsertSpanEvents] Skipping invalid event: ${result.error.message}`
+            `[batchInsertSpanEvents] Skipping invalid event: ${result.error.message}`,
           );
           continue;
         }
@@ -297,17 +295,17 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
       }
       if (name) {
         baseQuery = baseQuery.where(
-          sql<boolean>`${col('name')} ILIKE ${'%' + name + '%'}`
+          sql<boolean>`${col('name')} ILIKE ${'%' + name + '%'}`,
         );
       }
       if (startDate) {
         baseQuery = baseQuery.where(
-          sql<boolean>`${col('startTime')} >= ${startDate.toISOString()}`
+          sql<boolean>`${col('startTime')} >= ${startDate.toISOString()}`,
         );
       }
       if (endDate) {
         baseQuery = baseQuery.where(
-          sql<boolean>`${col('startTime')} <= ${endDate.toISOString()}`
+          sql<boolean>`${col('startTime')} <= ${endDate.toISOString()}`,
         );
       }
       if (tags && Object.keys(tags).length > 0) {
@@ -315,12 +313,12 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
           if (values.length === 0) continue;
           if (values.length === 1) {
             baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
             );
           } else {
             const valueList = sql.join(values.map((v) => sql`${v}`));
             baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
             );
           }
         }
@@ -388,10 +386,16 @@ export const createTracesDataLayer = (db: Kysely<Database>) => {
         .selectFrom('traces')
         .select([
           sql<number>`COUNT(*)`.as('totalTraces'),
-          sql<number>`COALESCE(AVG(${col('durationMs')}), 0)`.as('avgDurationMs'),
-          sql<number>`COUNT(CASE WHEN ${col('status')} = 'error' THEN 1 END)`.as('errorCount'),
+          sql<number>`COALESCE(AVG(${col('durationMs')}), 0)`.as(
+            'avgDurationMs',
+          ),
+          sql<number>`COUNT(CASE WHEN ${col('status')} = 'error' THEN 1 END)`.as(
+            'errorCount',
+          ),
           sql<number>`COALESCE(SUM(${col('totalCost')}), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as('totalTokens'),
+          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
+            'totalTokens',
+          ),
           sql<number>`COALESCE(SUM(${col('spanCount')}), 0)`.as('totalSpans'),
         ])
         .where(sql<boolean>`${col('startTime')} >= ${startDate.toISOString()}`)

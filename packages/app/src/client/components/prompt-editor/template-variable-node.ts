@@ -33,14 +33,14 @@ export class TemplateVariableNode extends TextNode {
     return new TemplateVariableNode(
       node.__text,
       node.__variableType,
-      node.__key
+      node.__key,
     );
   }
 
   constructor(
     text: string,
     variableType?: TemplateVariableType,
-    key?: NodeKey
+    key?: NodeKey,
   ) {
     super(text, key);
     this.__variableType = variableType || TemplateVariableNode.detectType(text);
@@ -143,11 +143,11 @@ export class TemplateVariableNode extends TextNode {
   }
 
   static importJSON(
-    serializedNode: SerializedTemplateVariableNode
+    serializedNode: SerializedTemplateVariableNode,
   ): TemplateVariableNode {
     const node = $createTemplateVariableNode(
       serializedNode.text,
-      serializedNode.variableType
+      serializedNode.variableType,
     );
     node.setFormat(serializedNode.format);
     node.setDetail(serializedNode.detail);
@@ -195,13 +195,13 @@ export const TEMPLATE_REGEX = {
 
 export function $createTemplateVariableNode(
   text: string,
-  variableType?: TemplateVariableType
+  variableType?: TemplateVariableType,
 ): TemplateVariableNode {
   return new TemplateVariableNode(text, variableType);
 }
 
 export function $isTemplateVariableNode(
-  node: LexicalNode | null | undefined
+  node: LexicalNode | null | undefined,
 ): node is TemplateVariableNode {
   return node instanceof TemplateVariableNode;
 }
@@ -210,7 +210,7 @@ export function $isTemplateVariableNode(
  * Convert a TemplateVariableNode back to a regular TextNode
  */
 export function $convertTemplateVariableToText(
-  node: TemplateVariableNode
+  node: TemplateVariableNode,
 ): TextNode {
   return $createTextNode(node.getTextContent());
 }

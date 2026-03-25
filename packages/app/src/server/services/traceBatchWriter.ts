@@ -14,7 +14,7 @@ export interface TraceBatchWriterDeps {
   upsertTrace: (data: TraceUpsert) => Promise<void>;
   batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
   batchInsertSpanEvents: (
-    events: SpanEventInsert[]
+    events: SpanEventInsert[],
   ) => Promise<{ count: number }>;
 }
 
@@ -34,7 +34,7 @@ export interface TraceBatchWriter {
 
 export function createTraceBatchWriter(
   deps: TraceBatchWriterDeps,
-  config: TraceBatchWriterConfig = {}
+  config: TraceBatchWriterConfig = {},
 ): TraceBatchWriter {
   const { flushIntervalMs = 2000, maxBatchSize = 100, debug = false } = config;
 
@@ -62,11 +62,14 @@ export function createTraceBatchWriter(
         // Merge trace upserts: accumulate spans, tokens, cost
         const existing = traceMap.get(item.trace.traceId);
         if (existing) {
-          existing.spanCount = (existing.spanCount ?? 0) + (item.trace.spanCount ?? 1);
+          existing.spanCount =
+            (existing.spanCount ?? 0) + (item.trace.spanCount ?? 1);
           existing.totalInputTokens =
-            (existing.totalInputTokens ?? 0) + (item.trace.totalInputTokens ?? 0);
+            (existing.totalInputTokens ?? 0) +
+            (item.trace.totalInputTokens ?? 0);
           existing.totalOutputTokens =
-            (existing.totalOutputTokens ?? 0) + (item.trace.totalOutputTokens ?? 0);
+            (existing.totalOutputTokens ?? 0) +
+            (item.trace.totalOutputTokens ?? 0);
           existing.totalTokens =
             (existing.totalTokens ?? 0) + (item.trace.totalTokens ?? 0);
           existing.totalCost =
@@ -129,15 +132,15 @@ export function createTraceBatchWriter(
       }
 
       logger.debug(
-        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`
+        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`,
       );
       log(
-        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`
+        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`,
       );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(
-        `[TraceBatchWriter] Flush failed, re-queuing items: ${errorMsg}`
+        `[TraceBatchWriter] Flush failed, re-queuing items: ${errorMsg}`,
       );
       queue = [...batch, ...queue];
     } finally {
@@ -175,7 +178,7 @@ export function createTraceBatchWriter(
   function enqueue(item: TraceQueueItem): void {
     queue.push(item);
     log(
-      `[TraceBatchWriter] Enqueued span ${item.span.spanId}, queue size: ${queue.length}`
+      `[TraceBatchWriter] Enqueued span ${item.span.spanId}, queue size: ${queue.length}`,
     );
 
     if (!running) {
@@ -207,12 +210,12 @@ let globalWriter: TraceBatchWriter | null = null;
 
 export function getGlobalTraceBatchWriter(
   deps?: TraceBatchWriterDeps,
-  config?: TraceBatchWriterConfig
+  config?: TraceBatchWriterConfig,
 ): TraceBatchWriter {
   if (!globalWriter) {
     if (!deps) {
       throw new Error(
-        'TraceBatchWriter dependencies required on first initialization'
+        'TraceBatchWriter dependencies required on first initialization',
       );
     }
     globalWriter = createTraceBatchWriter(deps, config);

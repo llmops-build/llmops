@@ -52,7 +52,7 @@ import { format } from 'date-fns';
 import clsx from 'clsx';
 
 export const Route = createFileRoute(
-  '/(app)/observability/_observability/requests'
+  '/(app)/observability/_observability/requests',
 )({
   component: RouteComponent,
   staticData: {
@@ -140,7 +140,6 @@ function RouteComponent() {
     tags: parsedTags,
   });
 
-
   const columns = useMemo(
     () => [
       columnHelper.accessor('createdAt', {
@@ -182,7 +181,7 @@ function RouteComponent() {
                 statusBadge,
                 statusCode >= 200 && statusCode < 300
                   ? statusSuccess
-                  : statusError
+                  : statusError,
               )}
             >
               {statusCode}
@@ -236,7 +235,7 @@ function RouteComponent() {
         ),
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -328,7 +327,7 @@ function RouteComponent() {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHeaderCell>
                 ))}

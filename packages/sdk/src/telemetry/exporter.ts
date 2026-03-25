@@ -34,7 +34,7 @@
 export interface SpanExporter {
   export(
     spans: ReadonlyArray<ReadableSpan>,
-    resultCallback: (result: ExportResult) => void
+    resultCallback: (result: ExportResult) => void,
   ): void;
   shutdown(): Promise<void>;
   forceFlush?(): Promise<void>;
@@ -127,14 +127,14 @@ function hrTimeToNano(hrTime: [number, number]): string {
  * Create an OTel SpanExporter that sends spans to an LLMOps server.
  */
 export function createLLMOpsSpanExporter(
-  config: LLMOpsExporterConfig
+  config: LLMOpsExporterConfig,
 ): SpanExporter {
   const url = `${config.baseURL.replace(/\/$/, '')}/api/otlp/v1/traces`;
 
   return {
     export(
       spans: ReadonlyArray<ReadableSpan>,
-      resultCallback: (result: ExportResult) => void
+      resultCallback: (result: ExportResult) => void,
     ): void {
       // Group spans by resource
       const resourceMap = new Map<string, ReadableSpan[]>();
@@ -208,10 +208,10 @@ export function createLLMOpsSpanExporter(
                     },
                   };
                 }),
-              })
+              }),
             ),
           };
-        }
+        },
       );
 
       const body = { resourceSpans };
@@ -238,8 +238,7 @@ export function createLLMOpsSpanExporter(
         .catch((error) => {
           resultCallback({
             code: ExportResultCode.FAILED,
-            error:
-              error instanceof Error ? error : new Error(String(error)),
+            error: error instanceof Error ? error : new Error(String(error)),
           });
         });
     },

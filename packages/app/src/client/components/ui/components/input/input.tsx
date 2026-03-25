@@ -3,7 +3,8 @@ import clsx from 'clsx';
 import { inputRecipe, type InputVariants } from './input.css';
 
 export interface InputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>, InputVariants {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>,
+    InputVariants {
   size?: InputVariants['size'];
 }
 
@@ -16,7 +17,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {...props}
       />
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

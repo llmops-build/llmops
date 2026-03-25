@@ -88,9 +88,12 @@ export const useExecutePlayground = (playgroundId: string) => {
         return result.data as { runId: string; totalCells: number };
       }
       throw new Error(
-        'error' in result && result.error && typeof result.error === 'object' && 'message' in result.error
+        'error' in result &&
+          result.error &&
+          typeof result.error === 'object' &&
+          'message' in result.error
           ? String(result.error.message)
-          : 'Failed to start execution'
+          : 'Failed to start execution',
       );
     },
     onSuccess: async (data) => {

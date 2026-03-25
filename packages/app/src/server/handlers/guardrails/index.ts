@@ -9,7 +9,9 @@ import { Hono } from 'hono';
 import z from 'zod';
 // Import manifest directly - works in both dev and production builds
 // Note: 'with { type: "json" }' is required for Node.js v24+ compatibility
-import defaultManifest from '@llmops/gateway/plugins/default/manifest.json' with { type: 'json' };
+import defaultManifest from '@llmops/gateway/plugins/default/manifest.json' with {
+  type: 'json',
+};
 
 // Type for the manifest structure
 interface ManifestFunction {
@@ -48,14 +50,14 @@ const app = new Hono()
       const manifest = getDefaultManifest();
       // Filter to only guardrail type functions (not transformers)
       const guardrails = manifest.functions.filter(
-        (f: ManifestFunction) => f.type === 'guardrail'
+        (f: ManifestFunction) => f.type === 'guardrail',
       );
       return c.json(successResponse(guardrails, 200));
     } catch (error) {
       console.error('Error fetching available guardrails:', error);
       return c.json(
         internalServerError('Failed to fetch available guardrails', 500),
-        500
+        500,
       );
     }
   })
@@ -75,7 +77,7 @@ const app = new Hono()
       console.error('Error fetching guardrail configs:', error);
       return c.json(
         internalServerError('Failed to fetch guardrail configs', 500),
-        500
+        500,
       );
     }
   })
@@ -87,7 +89,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -98,7 +100,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             clientErrorResponse('Guardrail config not found', 404),
-            404
+            404,
           );
         }
         return c.json(successResponse(config, 200));
@@ -106,10 +108,10 @@ const app = new Hono()
         console.error('Error fetching guardrail config:', error);
         return c.json(
           internalServerError('Failed to fetch guardrail config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Create new guardrail config
@@ -126,7 +128,7 @@ const app = new Hono()
         enabled: z.boolean().optional(),
         priority: z.number().int().optional(),
         onFail: z.enum(['block', 'log']).optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -147,7 +149,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             internalServerError('Failed to create guardrail config', 500),
-            500
+            500,
           );
         }
 
@@ -159,10 +161,10 @@ const app = new Hono()
         console.error('Error creating guardrail config:', error);
         return c.json(
           internalServerError('Failed to create guardrail config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Update guardrail config
@@ -172,7 +174,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
@@ -183,7 +185,7 @@ const app = new Hono()
         enabled: z.boolean().optional(),
         priority: z.number().int().optional(),
         onFail: z.enum(['block', 'log']).optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -198,7 +200,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             clientErrorResponse('Guardrail config not found', 404),
-            404
+            404,
           );
         }
 
@@ -210,10 +212,10 @@ const app = new Hono()
         console.error('Error updating guardrail config:', error);
         return c.json(
           internalServerError('Failed to update guardrail config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Delete guardrail config
@@ -223,7 +225,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -238,7 +240,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             clientErrorResponse('Guardrail config not found', 404),
-            404
+            404,
           );
         }
 
@@ -250,10 +252,10 @@ const app = new Hono()
         console.error('Error deleting guardrail config:', error);
         return c.json(
           internalServerError('Failed to delete guardrail config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // =============================================
@@ -267,7 +269,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -282,10 +284,10 @@ const app = new Hono()
         console.error('Error fetching guardrail overrides:', error);
         return c.json(
           internalServerError('Failed to fetch guardrail overrides', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Create or update provider override for a guardrail
@@ -295,7 +297,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
@@ -303,7 +305,7 @@ const app = new Hono()
         providerConfigId: z.string().uuid(),
         enabled: z.boolean().optional(),
         parameters: z.record(z.string(), z.unknown()).nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -316,7 +318,7 @@ const app = new Hono()
         if (!guardrailConfig) {
           return c.json(
             clientErrorResponse('Guardrail config not found', 404),
-            404
+            404,
           );
         }
 
@@ -327,7 +329,7 @@ const app = new Hono()
         if (!providerConfig) {
           return c.json(
             clientErrorResponse('Provider config not found', 404),
-            404
+            404,
           );
         }
 
@@ -341,7 +343,7 @@ const app = new Hono()
         if (!override) {
           return c.json(
             internalServerError('Failed to create guardrail override', 500),
-            500
+            500,
           );
         }
 
@@ -353,10 +355,10 @@ const app = new Hono()
         console.error('Error creating guardrail override:', error);
         return c.json(
           internalServerError('Failed to create guardrail override', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Update provider override
@@ -366,14 +368,14 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
       z.object({
         enabled: z.boolean().optional(),
         parameters: z.record(z.string(), z.unknown()).nullable().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -388,7 +390,7 @@ const app = new Hono()
         if (!override) {
           return c.json(
             clientErrorResponse('Guardrail override not found', 404),
-            404
+            404,
           );
         }
 
@@ -400,10 +402,10 @@ const app = new Hono()
         console.error('Error updating guardrail override:', error);
         return c.json(
           internalServerError('Failed to update guardrail override', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   // Delete provider override
@@ -413,7 +415,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -424,7 +426,7 @@ const app = new Hono()
         if (!override) {
           return c.json(
             clientErrorResponse('Guardrail override not found', 404),
-            404
+            404,
           );
         }
 
@@ -436,10 +438,10 @@ const app = new Hono()
         console.error('Error deleting guardrail override:', error);
         return c.json(
           internalServerError('Failed to delete guardrail override', 500),
-          500
+          500,
         );
       }
-    }
+    },
   );
 
 export default app;

@@ -43,7 +43,7 @@ export const createWorkspaceSettingsDataLayer = (db: Kysely<Database>) => {
      * Update workspace settings
      */
     updateWorkspaceSettings: async (
-      params: z.infer<typeof updateWorkspaceSettings>
+      params: z.infer<typeof updateWorkspaceSettings>,
     ) => {
       const value = await updateWorkspaceSettings.safeParseAsync(params);
       if (!value.success) {

@@ -182,7 +182,7 @@ class NodeSqliteIntrospector implements DatabaseIntrospector {
   }
 
   async getTables(
-    options: DatabaseMetadataOptions = { withInternalKyselyTables: false }
+    options: DatabaseMetadataOptions = { withInternalKyselyTables: false },
   ): Promise<TableMetadata[]> {
     let query = this.#db
       .selectFrom('sqlite_schema' as any)
@@ -199,12 +199,12 @@ class NodeSqliteIntrospector implements DatabaseIntrospector {
 
     const tables = await query.execute();
     return Promise.all(
-      tables.map(({ name }: { name: string }) => this.#getTableMetadata(name))
+      tables.map(({ name }: { name: string }) => this.#getTableMetadata(name)),
     );
   }
 
   async getMetadata(
-    options?: DatabaseMetadataOptions | undefined
+    options?: DatabaseMetadataOptions | undefined,
   ): Promise<DatabaseMetadata> {
     return {
       tables: await this.getTables(options),
@@ -238,7 +238,7 @@ class NodeSqliteIntrospector implements DatabaseIntrospector {
           type: string;
           notnull: 0 | 1;
           dflt_value: any;
-        }>`pragma_table_info(${table})`.as('table_info')
+        }>`pragma_table_info(${table})`.as('table_info'),
       )
       .select(['name', 'type', 'notnull', 'dflt_value'])
       .execute();

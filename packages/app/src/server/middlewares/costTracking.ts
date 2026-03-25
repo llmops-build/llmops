@@ -100,7 +100,7 @@ interface OpenAIResponse {
  */
 function transformHookResultsToGuardrailResults(
   hookResults: GatewayHookResults | undefined,
-  wasBlocked: boolean
+  wasBlocked: boolean,
 ): GuardrailResults | null {
   if (!hookResults) return null;
 
@@ -211,12 +211,12 @@ export interface CostTrackingConfig {
  */
 interface DbWithBatchInsert {
   batchInsertRequests: (
-    requests: LLMRequestData[]
+    requests: LLMRequestData[],
   ) => Promise<{ count: number }>;
   upsertTrace: (data: TraceUpsert) => Promise<void>;
   batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
   batchInsertSpanEvents: (
-    events: SpanEventInsert[]
+    events: SpanEventInsert[],
   ) => Promise<{ count: number }>;
 }
 
@@ -230,7 +230,7 @@ interface DbWithBatchInsert {
  * - Adds x-llmops-request-id header for tracing
  */
 export function createCostTrackingMiddleware(
-  config: CostTrackingConfig = {}
+  config: CostTrackingConfig = {},
 ): MiddlewareHandler {
   const {
     enabled = true,
@@ -267,7 +267,7 @@ export function createCostTrackingMiddleware(
       (endpoint) =>
         path.endsWith(endpoint) ||
         // Handle /responses/:id pattern but not /responses/:id/input_items
-        (endpoint === '/responses' && path.match(/\/responses\/[^/]+$/))
+        (endpoint === '/responses' && path.match(/\/responses\/[^/]+$/)),
     );
 
     if (!shouldTrack) {
@@ -297,7 +297,7 @@ export function createCostTrackingMiddleware(
           streamValue: body.stream,
           model: body.model,
         },
-        'Cost tracking: parsed request body'
+        'Cost tracking: parsed request body',
       );
 
       // For streaming requests, ensure include_usage is set
@@ -339,7 +339,7 @@ export function createCostTrackingMiddleware(
       c.header(LLMOPS_SPAN_ID_HEADER, traceContext.spanId);
       c.header(
         'traceparent',
-        formatTraceparent(traceContext.traceId, traceContext.spanId)
+        formatTraceparent(traceContext.traceId, traceContext.spanId),
       );
     }
 
@@ -390,8 +390,8 @@ export function createCostTrackingMiddleware(
     if (body.metadata && typeof body.metadata === 'object') {
       customTags = Object.fromEntries(
         Object.entries(body.metadata as Record<string, unknown>).filter(
-          ([k, v]) => typeof k === 'string' && typeof v === 'string'
-        )
+          ([k, v]) => typeof k === 'string' && typeof v === 'string',
+        ),
       ) as Record<string, string>;
     }
 
@@ -412,7 +412,7 @@ export function createCostTrackingMiddleware(
     // Cast db to include batchInsertRequests (added by createLLMRequestsDataLayer)
     const batchWriter = getGlobalBatchWriter(
       { batchInsertRequests: (requests) => db.batchInsertRequests(requests) },
-      { flushIntervalMs, debug }
+      { flushIntervalMs, debug },
     );
 
     // Skip trace batch writer for internal SDK requests — tracing is handled
@@ -425,7 +425,7 @@ export function createCostTrackingMiddleware(
             batchInsertSpans: (spans) => db.batchInsertSpans(spans),
             batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
           },
-          { flushIntervalMs, debug }
+          { flushIntervalMs, debug },
         );
 
     // Handle streaming vs non-streaming responses
@@ -445,7 +445,7 @@ export function createCostTrackingMiddleware(
           const guardrailResults = usage?.hookResults
             ? transformHookResultsToGuardrailResults(
                 usage.hookResults,
-                statusCode === 446
+                statusCode === 446,
               )
             : null;
 
@@ -483,7 +483,7 @@ export function createCostTrackingMiddleware(
         })
         .catch((err) => {
           logger.error(
-            `[CostTracking] Failed to process streaming usage: ${err}`
+            `[CostTracking] Failed to process streaming usage: ${err}`,
           );
         });
     } else {
@@ -515,7 +515,7 @@ export function createCostTrackingMiddleware(
             hasUsage: !!responseBody.usage,
             rawUsage: responseBody.usage,
           },
-          'Cost tracking: parsing response body'
+          'Cost tracking: parsing response body',
         );
 
         if (responseBody.usage) {
@@ -532,22 +532,22 @@ export function createCostTrackingMiddleware(
             promptTokens,
             completionTokens,
             totalTokens:
-              responseBody.usage.total_tokens || promptTokens + completionTokens,
+              responseBody.usage.total_tokens ||
+              promptTokens + completionTokens,
             cachedTokens:
               responseBody.usage.prompt_tokens_details?.cached_tokens ??
               responseBody.usage.input_tokens_details?.cached_tokens ??
               responseBody.usage.cache_read_input_tokens,
-            cacheCreationTokens:
-              responseBody.usage.cache_creation_input_tokens,
+            cacheCreationTokens: responseBody.usage.cache_creation_input_tokens,
           };
           logger.debug(
             { endpoint: context.endpoint, usage },
-            'Cost tracking: extracted usage'
+            'Cost tracking: extracted usage',
           );
         } else {
           logger.debug(
             { endpoint: context.endpoint },
-            'Cost tracking: no usage in response body'
+            'Cost tracking: no usage in response body',
           );
         }
 
@@ -557,18 +557,18 @@ export function createCostTrackingMiddleware(
           const wasBlocked = statusCode === 446;
           guardrailResults = transformHookResultsToGuardrailResults(
             responseBody.hook_results,
-            wasBlocked
+            wasBlocked,
           );
           if (guardrailResults) {
             log(
-              `Extracted guardrail results: ${guardrailResults.results.length} checks, action=${guardrailResults.action}`
+              `Extracted guardrail results: ${guardrailResults.results.length} checks, action=${guardrailResults.action}`,
             );
           }
         }
       } catch (error) {
         logger.error(
           { endpoint: context.endpoint, error },
-          'Cost tracking: failed to parse response body for usage'
+          'Cost tracking: failed to parse response body for usage',
         );
       }
 
@@ -681,7 +681,7 @@ async function processUsageAndLog(params: {
             cacheCreationTokens: usage.cacheCreationTokens,
           },
           pricing,
-          provider
+          provider,
         );
         cost = costResult.totalCost;
         inputCost = costResult.inputCost;
@@ -702,7 +702,7 @@ async function processUsageAndLog(params: {
 
   const validateUUID = (
     value: string | null,
-    fieldName: string
+    fieldName: string,
   ): string | null => {
     if (!value) return null;
     if (!UUID_REGEX.test(value)) {
@@ -714,10 +714,13 @@ async function processUsageAndLog(params: {
 
   const validConfigId = validateUUID(configId || null, 'configId');
   const validVariantId = validateUUID(variantId || null, 'variantId');
-  const validEnvironmentId = validateUUID(environmentId || null, 'environmentId');
+  const validEnvironmentId = validateUUID(
+    environmentId || null,
+    'environmentId',
+  );
   const validProviderConfigId = validateUUID(
     providerConfigId || null,
-    'providerConfigId'
+    'providerConfigId',
   );
 
   // Build request data for logging
@@ -846,6 +849,8 @@ async function processUsageAndLog(params: {
       span: spanData,
       trace: traceData,
     });
-    log(`Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`);
+    log(
+      `Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`,
+    );
   }
 }

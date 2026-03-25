@@ -66,7 +66,7 @@ export interface PricingProvider {
    */
   getModelPricing(
     provider: string,
-    model: string
+    model: string,
   ): Promise<ModelPricing | null>;
 
   /**

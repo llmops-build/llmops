@@ -133,14 +133,14 @@ export function Combobox<T = string>({
     disabled &&
       (isInline
         ? styles.comboboxInputWrapperInlineDisabled
-        : styles.comboboxInputWrapperDisabled)
+        : styles.comboboxInputWrapperDisabled),
   );
   const inputClass = clsx(
     isInline ? styles.comboboxInputInline : styles.comboboxInput,
     disabled &&
       (isInline
         ? styles.comboboxInputInlineDisabled
-        : styles.comboboxInputDisabled)
+        : styles.comboboxInputDisabled),
   );
   const actionButtonsClass = isInline
     ? styles.comboboxActionButtonsInline
@@ -150,7 +150,7 @@ export function Combobox<T = string>({
     (newValue: T | null, event: { reason: string }) => {
       onValueChange?.(newValue);
     },
-    [onValueChange]
+    [onValueChange],
   );
 
   // Determine if we're in controlled mode

@@ -123,7 +123,7 @@ const app = new Hono()
       'param',
       z.object({
         providerId: z.string().min(1),
-      })
+      }),
     ),
     async (c) => {
       const { providerId } = c.req.valid('param');
@@ -136,7 +136,7 @@ const app = new Hono()
         if (!provider) {
           return c.json(
             clientErrorResponse(`Provider ${providerId} not found`, 404),
-            404
+            404,
           );
         }
 
@@ -182,7 +182,7 @@ const app = new Hono()
         console.error('Error fetching models:', error);
         return c.json(internalServerError('Failed to fetch models', 500), 500);
       }
-    }
+    },
   )
   // Get all models from all providers
   .get('/models', async (c) => {
@@ -310,7 +310,7 @@ const app = new Hono()
       console.error('Error fetching grouped models:', error);
       return c.json(
         internalServerError('Failed to fetch grouped models', 500),
-        500
+        500,
       );
     }
   })
@@ -329,7 +329,7 @@ const app = new Hono()
       console.error('Error fetching provider configs:', error);
       return c.json(
         internalServerError('Failed to fetch provider configs', 500),
-        500
+        500,
       );
     }
   })
@@ -340,7 +340,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -351,7 +351,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             clientErrorResponse('Provider config not found', 404),
-            404
+            404,
           );
         }
         return c.json(successResponse(config, 200));
@@ -359,10 +359,10 @@ const app = new Hono()
         console.error('Error fetching provider config:', error);
         return c.json(
           internalServerError('Failed to fetch provider config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Create new provider config
   .post(
@@ -375,7 +375,7 @@ const app = new Hono()
         name: z.string().nullable().optional(),
         config: z.record(z.string(), z.unknown()),
         enabled: z.boolean().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -393,7 +393,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             internalServerError('Failed to create provider config', 500),
-            500
+            500,
           );
         }
 
@@ -406,10 +406,10 @@ const app = new Hono()
         console.error('Error creating provider config:', error);
         return c.json(
           internalServerError('Failed to create provider config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Update provider config
   .patch(
@@ -418,7 +418,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     zv(
       'json',
@@ -427,7 +427,7 @@ const app = new Hono()
         name: z.string().nullable().optional(),
         config: z.record(z.string(), z.unknown()).optional(),
         enabled: z.boolean().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -442,7 +442,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             clientErrorResponse('Provider config not found', 404),
-            404
+            404,
           );
         }
         await invalidateProviderCredentials(config.id);
@@ -453,10 +453,10 @@ const app = new Hono()
         console.error('Error updating provider config:', error);
         return c.json(
           internalServerError('Failed to update provider config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Delete provider config
   .delete(
@@ -465,7 +465,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -476,7 +476,7 @@ const app = new Hono()
         if (!config) {
           return c.json(
             clientErrorResponse('Provider config not found', 404),
-            404
+            404,
           );
         }
         await invalidateProviderCredentials(config.id);
@@ -487,10 +487,10 @@ const app = new Hono()
         console.error('Error deleting provider config:', error);
         return c.json(
           internalServerError('Failed to delete provider config', 500),
-          500
+          500,
         );
       }
-    }
+    },
   );
 
 export default app;

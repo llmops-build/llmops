@@ -27,7 +27,7 @@ export const requestHeadersSchema = z.object({
     {
       message:
         'Invalid content type. Must be application/json, multipart/form-data, or audio/*',
-    }
+    },
   ),
   'x-llmops-config': z.string().optional(),
   'x-llmops-prompt': z.string().optional(),
@@ -48,7 +48,7 @@ export function extractEnvSecretFromAuth(authHeader: string): string {
   const match = authHeader.match(/^Bearer\s+(.+)$/i);
   if (!match) {
     throw new Error(
-      'Invalid Authorization header format. Expected: Bearer <environment-secret>'
+      'Invalid Authorization header format. Expected: Bearer <environment-secret>',
     );
   }
 

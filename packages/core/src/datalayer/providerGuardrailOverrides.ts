@@ -39,11 +39,11 @@ const getOverrideByProviderAndGuardrail = z.object({
 });
 
 export const createProviderGuardrailOverridesDataLayer = (
-  db: Kysely<Database>
+  db: Kysely<Database>,
 ) => {
   return {
     createProviderGuardrailOverride: async (
-      params: z.infer<typeof createProviderGuardrailOverride>
+      params: z.infer<typeof createProviderGuardrailOverride>,
     ) => {
       const value =
         await createProviderGuardrailOverride.safeParseAsync(params);
@@ -69,7 +69,7 @@ export const createProviderGuardrailOverridesDataLayer = (
     },
 
     updateProviderGuardrailOverride: async (
-      params: z.infer<typeof updateProviderGuardrailOverride>
+      params: z.infer<typeof updateProviderGuardrailOverride>,
     ) => {
       const value =
         await updateProviderGuardrailOverride.safeParseAsync(params);
@@ -108,7 +108,7 @@ export const createProviderGuardrailOverridesDataLayer = (
     },
 
     deleteProviderGuardrailOverride: async (
-      params: z.infer<typeof deleteOverride>
+      params: z.infer<typeof deleteOverride>,
     ) => {
       const value = await deleteOverride.safeParseAsync(params);
       if (!value.success) {
@@ -124,10 +124,9 @@ export const createProviderGuardrailOverridesDataLayer = (
     },
 
     getOverridesByProviderConfigId: async (
-      params: z.infer<typeof getOverridesByProviderConfigId>
+      params: z.infer<typeof getOverridesByProviderConfigId>,
     ) => {
-      const value =
-        await getOverridesByProviderConfigId.safeParseAsync(params);
+      const value = await getOverridesByProviderConfigId.safeParseAsync(params);
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
@@ -141,7 +140,7 @@ export const createProviderGuardrailOverridesDataLayer = (
     },
 
     getOverridesByGuardrailConfigId: async (
-      params: z.infer<typeof getOverridesByGuardrailConfigId>
+      params: z.infer<typeof getOverridesByGuardrailConfigId>,
     ) => {
       const value =
         await getOverridesByGuardrailConfigId.safeParseAsync(params);
@@ -158,7 +157,7 @@ export const createProviderGuardrailOverridesDataLayer = (
     },
 
     getOverrideByProviderAndGuardrail: async (
-      params: z.infer<typeof getOverrideByProviderAndGuardrail>
+      params: z.infer<typeof getOverrideByProviderAndGuardrail>,
     ) => {
       const value =
         await getOverrideByProviderAndGuardrail.safeParseAsync(params);
@@ -179,7 +178,7 @@ export const createProviderGuardrailOverridesDataLayer = (
      * Upsert provider guardrail override - creates if not exists, updates if exists
      */
     upsertProviderGuardrailOverride: async (
-      params: z.infer<typeof createProviderGuardrailOverride>
+      params: z.infer<typeof createProviderGuardrailOverride>,
     ) => {
       const value =
         await createProviderGuardrailOverride.safeParseAsync(params);
@@ -232,7 +231,7 @@ export const createProviderGuardrailOverridesDataLayer = (
      * Useful when deleting a guardrail config
      */
     deleteOverridesByGuardrailConfigId: async (
-      params: z.infer<typeof getOverridesByGuardrailConfigId>
+      params: z.infer<typeof getOverridesByGuardrailConfigId>,
     ) => {
       const value =
         await getOverridesByGuardrailConfigId.safeParseAsync(params);

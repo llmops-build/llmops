@@ -49,7 +49,7 @@ export function formatTraceparent(traceId: string, spanId: string): string {
  * Returns null if the header is invalid
  */
 function parseTraceparent(
-  header: string
+  header: string,
 ): { traceId: string; parentSpanId: string } | null {
   const parts = header.trim().split('-');
   if (parts.length < 4) return null;

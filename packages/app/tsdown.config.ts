@@ -38,7 +38,7 @@ const getMimeType = (filePath: string): string => {
 // Helper to recursively get all files in a directory
 const getAllFiles = (
   dirPath: string,
-  arrayOfFiles: string[] = []
+  arrayOfFiles: string[] = [],
 ): string[] => {
   if (!existsSync(dirPath)) return arrayOfFiles;
 
@@ -117,11 +117,11 @@ export const decodeAsset = (asset: EmbeddedAsset): Buffer => {
       }
       writeFileSync(
         join(generatedPath, 'embedded-assets.ts'),
-        embeddedAssetsSource
+        embeddedAssetsSource,
       );
 
       console.log(
-        `[embed-assets] Embedded ${Object.keys(assets).length} assets`
+        `[embed-assets] Embedded ${Object.keys(assets).length} assets`,
       );
     },
     resolveId(id: string) {
@@ -164,7 +164,7 @@ const urlImportPlugin = () => {
               return resolved.id + '?url';
             }
             return null;
-          }
+          },
         );
       }
     },

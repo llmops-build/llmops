@@ -153,7 +153,7 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
           db
             .selectFrom('dataset_versions')
             .select('id')
-            .where('datasetId', '=', datasetId)
+            .where('datasetId', '=', datasetId),
         )
         .execute();
 
@@ -390,7 +390,7 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
               position: index,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-            }))
+            })),
           )
           .execute();
       }
@@ -451,7 +451,7 @@ export const createDatasetsDataLayer = (db: Kysely<Database>) => {
         .innerJoin(
           'dataset_records',
           'dataset_records.id',
-          'dataset_version_records.datasetRecordId'
+          'dataset_version_records.datasetRecordId',
         )
         .selectAll('dataset_records')
         .select('dataset_version_records.position')

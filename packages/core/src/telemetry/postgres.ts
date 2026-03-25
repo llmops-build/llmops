@@ -25,7 +25,7 @@ export type PgStore = TelemetryStore & {
  */
 export function createPgStore(
   connectionString: string,
-  options?: { schema?: string }
+  options?: { schema?: string },
 ): PgStore {
   const schema = options?.schema ?? 'llmops';
 
@@ -37,7 +37,7 @@ export function createPgStore(
     pool = new pg.Pool({ connectionString });
   } catch {
     throw new Error(
-      'pgStore requires the "pg" package. Install it with: pnpm add pg'
+      'pgStore requires the "pg" package. Install it with: pnpm add pg',
     );
   }
 
@@ -45,7 +45,7 @@ export function createPgStore(
     pool,
     onCreateConnection: async (connection) => {
       await connection.executeQuery(
-        CompiledQuery.raw(`SET search_path TO "${schema}"`)
+        CompiledQuery.raw(`SET search_path TO "${schema}"`),
       );
     },
   });

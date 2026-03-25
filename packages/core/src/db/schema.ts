@@ -101,7 +101,7 @@ export const playgroundColumnSchema = z.object({
     z.object({
       role: z.enum(['system', 'user', 'assistant']),
       content: z.string(),
-    })
+    }),
   ),
   temperature: z.number().nullable().optional(),
   maxTokens: z.number().int().nullable().optional(),
@@ -560,7 +560,11 @@ export interface LLMRequestsTable extends BaseTable {
   completionTokens: ColumnType<number, number | undefined, number | undefined>;
   totalTokens: ColumnType<number, number | undefined, number | undefined>;
   cachedTokens: ColumnType<number, number | undefined, number | undefined>;
-  cacheCreationTokens: ColumnType<number, number | undefined, number | undefined>;
+  cacheCreationTokens: ColumnType<
+    number,
+    number | undefined,
+    number | undefined
+  >;
   cost: ColumnType<number, number | undefined, number | undefined>;
   cacheSavings: ColumnType<number, number | undefined, number | undefined>;
   inputCost: ColumnType<number, number | undefined, number | undefined>;

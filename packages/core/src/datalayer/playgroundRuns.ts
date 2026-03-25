@@ -41,14 +41,19 @@ const deletePlaygroundRun = z.object({
 export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
   return {
     createPlaygroundRun: async (
-      params: z.infer<typeof createPlaygroundRun>
+      params: z.infer<typeof createPlaygroundRun>,
     ) => {
       const value = await createPlaygroundRun.safeParseAsync(params);
       if (!value.success) {
         throw new LLMOpsError(`Invalid parameters: ${value.error.message}`);
       }
-      const { playgroundId, datasetId, datasetVersionId, status, totalRecords } =
-        value.data;
+      const {
+        playgroundId,
+        datasetId,
+        datasetVersionId,
+        status,
+        totalRecords,
+      } = value.data;
 
       return db
         .insertInto('playground_runs')
@@ -70,7 +75,7 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
     },
 
     updatePlaygroundRun: async (
-      params: z.infer<typeof updatePlaygroundRun>
+      params: z.infer<typeof updatePlaygroundRun>,
     ) => {
       const value = await updatePlaygroundRun.safeParseAsync(params);
       if (!value.success) {
@@ -99,7 +104,7 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
     },
 
     getPlaygroundRunById: async (
-      params: z.infer<typeof getPlaygroundRunById>
+      params: z.infer<typeof getPlaygroundRunById>,
     ) => {
       const value = await getPlaygroundRunById.safeParseAsync(params);
       if (!value.success) {
@@ -132,7 +137,7 @@ export const createPlaygroundRunsDataLayer = (db: Kysely<Database>) => {
     },
 
     deletePlaygroundRun: async (
-      params: z.infer<typeof deletePlaygroundRun>
+      params: z.infer<typeof deletePlaygroundRun>,
     ) => {
       const value = await deletePlaygroundRun.safeParseAsync(params);
       if (!value.success) {

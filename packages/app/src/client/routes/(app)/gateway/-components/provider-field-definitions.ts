@@ -492,7 +492,7 @@ export const providerFieldDefinitions: Record<string, ProviderFieldConfig> = {
  * Normalizes provider IDs from models.dev format to internal format.
  */
 export function getProviderFields(
-  providerId: string
+  providerId: string,
 ): ProviderFieldDefinition[] {
   // Normalize provider ID (e.g., 'azure-cognitive-services' -> 'azure-ai')
   const normalizedId = getInternalProviderId(providerId);

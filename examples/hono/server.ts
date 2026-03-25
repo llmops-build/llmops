@@ -189,7 +189,7 @@ app.get(
   '/',
   swaggerUI({
     url: '/openapi.json',
-  })
+  }),
 );
 
 // Health check endpoint
@@ -208,7 +208,7 @@ serve(
   (info) => {
     console.log(`Server running at http://localhost:${info.port}`);
     console.log(
-      `API Documentation available at http://localhost:${info.port}/`
+      `API Documentation available at http://localhost:${info.port}/`,
     );
-  }
+  },
 );

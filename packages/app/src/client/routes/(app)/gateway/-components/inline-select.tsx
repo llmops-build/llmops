@@ -63,7 +63,9 @@ export function InlineSelect({
             {isLoading ? (
               <div className={styles.inlineSelectEmptyState}>Loading...</div>
             ) : options.length === 0 ? (
-              <div className={styles.inlineSelectEmptyState}>{emptyMessage}</div>
+              <div className={styles.inlineSelectEmptyState}>
+                {emptyMessage}
+              </div>
             ) : (
               options.map((option) => (
                 <Select.Item
@@ -71,10 +73,12 @@ export function InlineSelect({
                   value={option.id}
                   className={clsx(
                     styles.inlineSelectOption,
-                    value === option.id && styles.inlineSelectOptionSelected
+                    value === option.id && styles.inlineSelectOptionSelected,
                   )}
                 >
-                  <Select.ItemIndicator className={styles.inlineSelectItemIndicator}>
+                  <Select.ItemIndicator
+                    className={styles.inlineSelectItemIndicator}
+                  >
                     <Check size={14} />
                   </Select.ItemIndicator>
                   {option.icon && (

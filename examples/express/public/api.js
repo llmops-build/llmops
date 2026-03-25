@@ -220,7 +220,7 @@ async function testOpenAICompletion() {
   const response = await makeAPICall(
     'POST',
     '/api/openai/completion',
-    requestBody
+    requestBody,
   );
   displayResponse('openai-response', response);
 }

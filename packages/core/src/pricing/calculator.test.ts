@@ -135,7 +135,11 @@ describe('calculateCacheAwareCost', () => {
     // cacheWriteCost = 200 * 4.0 = 800
     // outputCost = 200 * 15.0 = 3000
     // cacheSavings = (400 + 200) * 3.0 - 200 - 800 = 1800 - 1000 = 800
-    const result = calculateCacheAwareCost(usage, pricingWithCache, 'anthropic');
+    const result = calculateCacheAwareCost(
+      usage,
+      pricingWithCache,
+      'anthropic',
+    );
     expect(result.inputCost).toBe(1200 + 200 + 800); // 2200
     expect(result.outputCost).toBe(3000);
     expect(result.totalCost).toBe(5200);

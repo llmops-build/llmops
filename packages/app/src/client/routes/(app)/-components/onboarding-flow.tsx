@@ -33,7 +33,7 @@ export function OnboardingFlow({
   onComplete,
 }: OnboardingFlowProps) {
   const [step, setStep] = useState<OnboardingStep>(
-    hasProviders ? 'gateway' : 'provider'
+    hasProviders ? 'gateway' : 'provider',
   );
   const [savedProvider, setSavedProvider] = useState<ProviderInfo | null>(null);
 
@@ -108,7 +108,7 @@ export function OnboardingFlow({
   };
 
   const getStepStatus = (
-    targetStep: OnboardingStep
+    targetStep: OnboardingStep,
   ): 'completed' | 'active' | 'pending' => {
     const steps: OnboardingStep[] = hasProviders
       ? ['gateway', 'complete']

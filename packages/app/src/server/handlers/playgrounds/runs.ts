@@ -15,7 +15,7 @@ const app = new Hono()
       'param',
       z.object({
         id: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -28,10 +28,10 @@ const app = new Hono()
         console.error('Error fetching playground runs:', error);
         return c.json(
           internalServerError('Failed to fetch playground runs', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Get a specific run by ID
   .get(
@@ -41,7 +41,7 @@ const app = new Hono()
       z.object({
         id: z.string().uuid(),
         runId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -57,10 +57,10 @@ const app = new Hono()
         console.error('Error fetching playground run:', error);
         return c.json(
           internalServerError('Failed to fetch playground run', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Get results for a specific run
   .get(
@@ -70,7 +70,7 @@ const app = new Hono()
       z.object({
         id: z.string().uuid(),
         runId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -83,10 +83,10 @@ const app = new Hono()
         console.error('Error fetching playground results:', error);
         return c.json(
           internalServerError('Failed to fetch playground results', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
   // Delete a run
   .delete(
@@ -96,7 +96,7 @@ const app = new Hono()
       z.object({
         id: z.string().uuid(),
         runId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('db')!;
@@ -115,10 +115,10 @@ const app = new Hono()
         console.error('Error deleting playground run:', error);
         return c.json(
           internalServerError('Failed to delete playground run', 500),
-          500
+          500,
         );
       }
-    }
+    },
   );
 
 export default app;

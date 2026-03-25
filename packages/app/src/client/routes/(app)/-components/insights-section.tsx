@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { AlertTriangle, Info, TrendingUp, Zap } from 'lucide-react';
 import { Icon } from '@client/components/icons';
-import { useRequestStats, useTotalCost } from '@client/hooks/queries/useAnalytics';
+import {
+  useRequestStats,
+  useTotalCost,
+} from '@client/hooks/queries/useAnalytics';
 import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
 import * as styles from './insights-section.css';
 
@@ -60,7 +63,8 @@ export function InsightsSection() {
           id: 'no-activity',
           type: 'info',
           icon: Info,
-          message: 'No API requests in the last 24 hours. Your Gateway is ready to use.',
+          message:
+            'No API requests in the last 24 hours. Your Gateway is ready to use.',
           actionLabel: 'View API Usage',
           actionTo: '/gateway/usage',
         });

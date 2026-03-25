@@ -102,7 +102,7 @@ export const useTraceList = (
     endDate?: string;
     tags?: Record<string, string[]>;
   } = {},
-  enabled = true
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: ['traces', 'list', params],

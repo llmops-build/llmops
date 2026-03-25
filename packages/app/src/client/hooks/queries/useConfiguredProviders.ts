@@ -40,7 +40,7 @@ export const useConfiguredProviders = () => {
         if (!config.enabled) continue;
 
         const providerInfo = providersList.find(
-          (p) => p.id === config.providerId
+          (p) => p.id === config.providerId,
         );
 
         if (providerInfo) {

@@ -1,4 +1,8 @@
-import { useMemo, type ReactElement, type ComponentPropsWithoutRef } from 'react';
+import {
+  useMemo,
+  type ReactElement,
+  type ComponentPropsWithoutRef,
+} from 'react';
 import clsx from 'clsx';
 import {
   breadcrumbsContainer,

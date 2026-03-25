@@ -61,7 +61,9 @@ export const migrateCommand = command({
     const store = Array.isArray(telemetry) ? telemetry[0] : telemetry;
 
     if (!store || !store._db) {
-      logger.error('No telemetry store with database found. Configure pgStore in your config.');
+      logger.error(
+        'No telemetry store with database found. Configure pgStore in your config.',
+      );
       process.exit(1);
     }
 
@@ -71,7 +73,7 @@ export const migrateCommand = command({
     const { toBeAdded, toBeCreated, runMigrations } = await getMigrations(
       db,
       'postgres',
-      { schema: 'llmops' }
+      { schema: 'llmops' },
     );
 
     if (!toBeAdded.length && !toBeCreated.length) {
@@ -89,7 +91,7 @@ export const migrateCommand = command({
         chalk.magenta(Object.keys(table.fields).join(', ')),
         chalk.white('fields on'),
         chalk.yellow(`${table.table}`),
-        chalk.white('table.')
+        chalk.white('table.'),
       );
     }
 

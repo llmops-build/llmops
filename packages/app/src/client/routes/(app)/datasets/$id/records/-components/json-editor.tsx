@@ -30,7 +30,7 @@ export function JsonEditor({
         },
       }),
     ],
-    [minHeight]
+    [minHeight],
   );
 
   return (

@@ -76,17 +76,17 @@ function RouteComponent() {
 
   const handleInputChange = useCallback(
     (value: string) => form.setValue('input', value),
-    [form]
+    [form],
   );
 
   const handleExpectedChange = useCallback(
     (value: string) => form.setValue('expected', value),
-    [form]
+    [form],
   );
 
   const handleMetadataChange = useCallback(
     (value: string) => form.setValue('metadata', value),
-    [form]
+    [form],
   );
 
   const handleBack = () => {

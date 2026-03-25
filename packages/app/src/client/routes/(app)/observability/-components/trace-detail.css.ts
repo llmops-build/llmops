@@ -248,13 +248,9 @@ export const spanDetailMetaItem = style([
   },
 ]);
 
-export const spanDetailMetaLabel = style([
-  sprinkles({ color: 'gray9' }),
-]);
+export const spanDetailMetaLabel = style([sprinkles({ color: 'gray9' })]);
 
-export const spanDetailMetaValue = style([
-  sprinkles({ color: 'gray11' }),
-]);
+export const spanDetailMetaValue = style([sprinkles({ color: 'gray11' })]);
 
 export const collapsibleHeader = style([
   sprinkles({
