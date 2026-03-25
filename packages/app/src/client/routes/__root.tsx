@@ -1,7 +1,4 @@
-import {
-  Outlet,
-  createRootRouteWithContext,
-} from '@tanstack/react-router';
+import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import { Page } from '@ui';
 import { AppSidebar } from '@client/components/app-sidebar';
 import { contentLayout } from './-styles/root.css';

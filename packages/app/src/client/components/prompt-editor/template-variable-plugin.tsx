@@ -28,7 +28,7 @@ export function TemplateVariablePlugin(): null {
   useEffect(() => {
     if (!editor.hasNodes([TemplateVariableNode])) {
       throw new Error(
-        'TemplateVariablePlugin: TemplateVariableNode not registered on editor'
+        'TemplateVariablePlugin: TemplateVariableNode not registered on editor',
       );
     }
 
@@ -87,11 +87,11 @@ export function TemplateVariablePlugin(): null {
 
     const unregisterTextTransform = editor.registerNodeTransform(
       TextNode,
-      $transformTextNode
+      $transformTextNode,
     );
     const unregisterTemplateTransform = editor.registerNodeTransform(
       TemplateVariableNode,
-      $transformTemplateNode
+      $transformTemplateNode,
     );
 
     return () => {
@@ -121,7 +121,7 @@ export function TemplateVariablePlugin(): null {
   useLexicalTextEntity<TemplateVariableNode>(
     getTemplateMatch,
     TemplateVariableNode,
-    $createTemplateNode
+    $createTemplateNode,
   );
 
   return null;

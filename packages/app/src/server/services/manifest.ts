@@ -45,4 +45,3 @@ export async function invalidateManifest(): Promise<void> {
     await cacheService.clear('gateway');
   }
 }
-

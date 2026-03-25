@@ -23,7 +23,7 @@ import type { ModelPricing, UsageData, CostResult } from './types';
  */
 export function calculateCost(
   usage: UsageData,
-  pricing: ModelPricing
+  pricing: ModelPricing,
 ): CostResult {
   // Calculate input cost: (tokens / 1M) * costPer1M * 1M (convert to micro-dollars)
   // Simplified: tokens * costPer1M
@@ -31,7 +31,7 @@ export function calculateCost(
 
   // Calculate output cost
   const outputCost = Math.round(
-    usage.completionTokens * pricing.outputCostPer1M
+    usage.completionTokens * pricing.outputCostPer1M,
   );
 
   // Total cost
@@ -51,7 +51,7 @@ export function calculateCost(
  */
 function getDefaultCacheReadRate(
   provider: string | undefined,
-  inputCostPer1M: number
+  inputCostPer1M: number,
 ): number {
   switch (provider?.toLowerCase()) {
     case 'anthropic':
@@ -74,7 +74,7 @@ function getDefaultCacheReadRate(
  */
 function getDefaultCacheWriteRate(
   provider: string | undefined,
-  inputCostPer1M: number
+  inputCostPer1M: number,
 ): number {
   switch (provider?.toLowerCase()) {
     case 'anthropic':
@@ -99,7 +99,7 @@ function getDefaultCacheWriteRate(
 export function calculateCacheAwareCost(
   usage: UsageData,
   pricing: ModelPricing,
-  provider?: string
+  provider?: string,
 ): CostResult {
   const cachedTokens = usage.cachedTokens ?? 0;
   const cacheCreationTokens = usage.cacheCreationTokens ?? 0;
@@ -120,16 +120,16 @@ export function calculateCacheAwareCost(
   // Uncached input = total prompt minus cached and creation tokens
   const uncachedInputTokens = Math.max(
     0,
-    usage.promptTokens - cachedTokens - cacheCreationTokens
+    usage.promptTokens - cachedTokens - cacheCreationTokens,
   );
 
   const regularInputCost = Math.round(
-    uncachedInputTokens * pricing.inputCostPer1M
+    uncachedInputTokens * pricing.inputCostPer1M,
   );
   const cacheReadCost = Math.round(cachedTokens * cacheReadRate);
   const cacheWriteCost = Math.round(cacheCreationTokens * cacheWriteRate);
   const outputCost = Math.round(
-    usage.completionTokens * pricing.outputCostPer1M
+    usage.completionTokens * pricing.outputCostPer1M,
   );
 
   const inputCost = regularInputCost + cacheReadCost + cacheWriteCost;
@@ -137,9 +137,10 @@ export function calculateCacheAwareCost(
 
   // Cache savings = what cached tokens would have cost at full input rate minus what they actually cost
   const fullPriceForCachedTokens = Math.round(
-    (cachedTokens + cacheCreationTokens) * pricing.inputCostPer1M
+    (cachedTokens + cacheCreationTokens) * pricing.inputCostPer1M,
   );
-  const cacheSavings = fullPriceForCachedTokens - cacheReadCost - cacheWriteCost;
+  const cacheSavings =
+    fullPriceForCachedTokens - cacheReadCost - cacheWriteCost;
 
   return { inputCost, outputCost, totalCost, cacheSavings };
 }

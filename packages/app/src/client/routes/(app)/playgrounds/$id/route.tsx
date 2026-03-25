@@ -11,7 +11,7 @@ export const Route = createFileRoute('/(app)/playgrounds/$id')({
     }
 
     const playground = await ctx.queryClient.ensureQueryData(
-      playgroundByIdQueryOptions(params.id)
+      playgroundByIdQueryOptions(params.id),
     );
 
     return {

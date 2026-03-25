@@ -31,12 +31,12 @@ export interface CacheStats {
 export interface CacheBackend {
   get<T = unknown>(
     key: string,
-    namespace?: string
+    namespace?: string,
   ): Promise<CacheEntry<T> | null>;
   set<T = unknown>(
     key: string,
     value: T,
-    options?: CacheOptions
+    options?: CacheOptions,
   ): Promise<void>;
   delete(key: string, namespace?: string): Promise<boolean>;
   clear(namespace?: string): Promise<void>;

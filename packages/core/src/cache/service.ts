@@ -35,12 +35,12 @@ export class CacheService {
           config.dataDir,
           config.fileName,
           config.saveInterval,
-          config.cleanupInterval
+          config.cleanupInterval,
         );
 
       default:
         throw new Error(
-          `Unsupported cache backend: ${(config as CacheConfig).backend}`
+          `Unsupported cache backend: ${(config as CacheConfig).backend}`,
         );
     }
   }
@@ -54,7 +54,7 @@ export class CacheService {
   /** Get the full cache entry (with metadata) */
   async getEntry<T = unknown>(
     key: string,
-    namespace?: string
+    namespace?: string,
   ): Promise<CacheEntry<T> | null> {
     return this.backend.get<T>(key, namespace);
   }
@@ -63,7 +63,7 @@ export class CacheService {
   async set<T = unknown>(
     key: string,
     value: T,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<void> {
     const finalOptions = {
       ...options,
@@ -78,7 +78,7 @@ export class CacheService {
     key: string,
     value: T,
     ttlSeconds: number,
-    namespace?: string
+    namespace?: string,
   ): Promise<void> {
     await this.set(key, value, {
       ttl: ttlSeconds * 1000,
@@ -132,7 +132,7 @@ export class CacheService {
   async getOrSet<T = unknown>(
     key: string,
     factory: () => Promise<T> | T,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<T> {
     const existing = await this.get<T>(key, options.namespace);
     if (existing !== null) {
@@ -148,7 +148,7 @@ export class CacheService {
   async increment(
     key: string,
     delta: number = 1,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<number> {
     const current = (await this.get<number>(key, options.namespace)) || 0;
     const newValue = current + delta;
@@ -159,10 +159,10 @@ export class CacheService {
   /** Set multiple values at once */
   async setMany<T = unknown>(
     entries: Array<{ key: string; value: T; options?: CacheOptions }>,
-    defaultOptions: CacheOptions = {}
+    defaultOptions: CacheOptions = {},
   ): Promise<void> {
     const promises = entries.map(({ key, value, options }) =>
-      this.set(key, value, { ...defaultOptions, ...options })
+      this.set(key, value, { ...defaultOptions, ...options }),
     );
     await Promise.all(promises);
   }
@@ -170,7 +170,7 @@ export class CacheService {
   /** Get multiple values at once */
   async getMany<T = unknown>(
     keys: string[],
-    namespace?: string
+    namespace?: string,
   ): Promise<Array<{ key: string; value: T | null }>> {
     const promises = keys.map(async (key) => ({
       key,

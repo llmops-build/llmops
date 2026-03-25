@@ -202,7 +202,7 @@ const app = new Hono()
         startDate: isoDateString.optional(),
         endDate: isoDateString.optional(),
         tags: z.string().optional(), // JSON string of key-value pairs
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
@@ -239,10 +239,10 @@ const app = new Hono()
         console.error('Error fetching requests:', error);
         return c.json(
           internalServerError('Failed to fetch requests', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   /**
@@ -255,7 +255,7 @@ const app = new Hono()
       'param',
       z.object({
         requestId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
@@ -271,7 +271,7 @@ const app = new Hono()
         console.error('Error fetching request:', error);
         return c.json(internalServerError('Failed to fetch request', 500), 500);
       }
-    }
+    },
   )
 
   /**
@@ -307,8 +307,8 @@ const app = new Hono()
               totalCacheSavings: 0,
               requestCount: 0,
             },
-            200
-          )
+            200,
+          ),
         );
       }
 
@@ -321,14 +321,14 @@ const app = new Hono()
             totalOutputCostFormatted: formatCost(data.totalOutputCost),
             totalCacheSavingsFormatted: formatCost(data.totalCacheSavings),
           },
-          200
-        )
+          200,
+        ),
       );
     } catch (error) {
       console.error('Error fetching total costs:', error);
       return c.json(
         internalServerError('Failed to fetch total costs', 500),
-        500
+        500,
       );
     }
   })
@@ -348,7 +348,7 @@ const app = new Hono()
       console.error('Error fetching costs by model:', error);
       return c.json(
         internalServerError('Failed to fetch costs by model', 500),
-        500
+        500,
       );
     }
   })
@@ -368,7 +368,7 @@ const app = new Hono()
       console.error('Error fetching costs by provider:', error);
       return c.json(
         internalServerError('Failed to fetch costs by provider', 500),
-        500
+        500,
       );
     }
   })
@@ -388,7 +388,7 @@ const app = new Hono()
       console.error('Error fetching costs by config:', error);
       return c.json(
         internalServerError('Failed to fetch costs by config', 500),
-        500
+        500,
       );
     }
   })
@@ -408,7 +408,7 @@ const app = new Hono()
       console.error('Error fetching daily costs:', error);
       return c.json(
         internalServerError('Failed to fetch daily costs', 500),
-        500
+        500,
       );
     }
   })
@@ -424,7 +424,7 @@ const app = new Hono()
       dateRangeWithFiltersSchema.extend({
         groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
         tagKeys: z.string().optional(),
-      })
+      }),
     ),
     async (c) => {
       const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
@@ -464,10 +464,10 @@ const app = new Hono()
         console.error('Error fetching cost summary:', error);
         return c.json(
           internalServerError('Failed to fetch cost summary', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   /**
@@ -501,8 +501,8 @@ const app = new Hono()
               minLatencyMs: 0,
               successRate: 0,
             },
-            200
-          )
+            200,
+          ),
         );
       }
 
@@ -518,14 +518,14 @@ const app = new Hono()
                   ).toFixed(2)
                 : 0,
           },
-          200
-        )
+          200,
+        ),
       );
     } catch (error) {
       console.error('Error fetching request stats:', error);
       return c.json(
         internalServerError('Failed to fetch request stats', 500),
-        500
+        500,
       );
     }
   })

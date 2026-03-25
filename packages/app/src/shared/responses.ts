@@ -14,7 +14,7 @@ export interface APIResponse<T extends unknown = unknown> {
 
 export const successResponse = <T>(
   data: T,
-  code: SuccessStatusCode
+  code: SuccessStatusCode,
 ): APIResponse<T> => {
   return {
     code,
@@ -25,7 +25,7 @@ export const successResponse = <T>(
 
 export const clientErrorResponse = (
   message: string,
-  code: ClientErrorStatusCode
+  code: ClientErrorStatusCode,
 ): APIResponse => {
   return {
     code,
@@ -36,7 +36,7 @@ export const clientErrorResponse = (
 
 export const internalServerError = (
   message: string,
-  code: ServerErrorStatusCode
+  code: ServerErrorStatusCode,
 ): APIResponse => {
   return {
     code,

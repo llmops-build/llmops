@@ -2,7 +2,7 @@ import type { Context, MiddlewareHandler, Next } from 'hono';
 import type { LLMOpsClient } from '../../client';
 
 export function createLLMOpsMiddleware(
-  client: LLMOpsClient
+  client: LLMOpsClient,
 ): MiddlewareHandler {
   const basePath = client.config.basePath;
 

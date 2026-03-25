@@ -47,13 +47,19 @@ export interface ProviderCredentials {
 type DataLayerWithProviderConfig = {
   getProviderConfigById: (params: {
     id: string;
-  }) => Promise<{ config: Record<string, unknown> | string; providerId: string } | undefined>;
+  }) => Promise<
+    { config: Record<string, unknown> | string; providerId: string } | undefined
+  >;
   getProviderConfigByProviderId?: (params: {
     providerId: string;
-  }) => Promise<{ config: Record<string, unknown> | string; providerId: string } | undefined>;
+  }) => Promise<
+    { config: Record<string, unknown> | string; providerId: string } | undefined
+  >;
   getProviderConfigBySlug?: (params: {
     slug: string;
-  }) => Promise<{ config: Record<string, unknown> | string; providerId: string } | undefined>;
+  }) => Promise<
+    { config: Record<string, unknown> | string; providerId: string } | undefined
+  >;
 };
 
 /**
@@ -69,7 +75,7 @@ export interface ProviderCredentialsWithProvider {
  */
 export async function getProviderCredentials(
   providerConfigId: string,
-  db: DataLayerWithProviderConfig
+  db: DataLayerWithProviderConfig,
 ): Promise<ProviderCredentials | null> {
   return cacheService.getOrSet(
     `credentials:${providerConfigId}`,
@@ -84,7 +90,7 @@ export async function getProviderCredentials(
 
       return configData as ProviderCredentials;
     },
-    { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS }
+    { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS },
   );
 }
 
@@ -94,7 +100,7 @@ export async function getProviderCredentials(
 export async function getProviderCredentialsByProviderId(
   providerId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any
+  db: any,
 ): Promise<ProviderCredentials | null> {
   if (!db.getProviderConfigByProviderId) {
     return null;
@@ -113,7 +119,7 @@ export async function getProviderCredentialsByProviderId(
 
       return configData as ProviderCredentials;
     },
-    { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS }
+    { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS },
   );
 }
 
@@ -124,7 +130,7 @@ export async function getProviderCredentialsByProviderId(
 export async function getProviderCredentialsBySlug(
   slug: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any
+  db: any,
 ): Promise<ProviderCredentialsWithProvider | null> {
   if (!db.getProviderConfigBySlug) {
     logger.debug('[credentialsCache] db.getProviderConfigBySlug not found');
@@ -134,9 +140,15 @@ export async function getProviderCredentialsBySlug(
   return cacheService.getOrSet(
     `credentials-by-slug:${slug}`,
     async () => {
-      logger.debug('[credentialsCache] Looking up provider config by slug: %s', slug);
+      logger.debug(
+        '[credentialsCache] Looking up provider config by slug: %s',
+        slug,
+      );
       const config = await db.getProviderConfigBySlug({ slug });
-      logger.debug('[credentialsCache] Found config: %s', config ? config.id : 'null');
+      logger.debug(
+        '[credentialsCache] Found config: %s',
+        config ? config.id : 'null',
+      );
       if (!config) return null;
 
       const configData =
@@ -149,7 +161,7 @@ export async function getProviderCredentialsBySlug(
         providerId: config.providerId,
       };
     },
-    { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS }
+    { namespace: CREDENTIALS_NAMESPACE, ttl: CREDENTIALS_TTL_MS },
   );
 }
 
@@ -159,11 +171,9 @@ export async function getProviderCredentialsBySlug(
  */
 export function getInlineProviderCredentials(
   slug: string,
-  inlineProviders: InlineProvidersConfig
+  inlineProviders: InlineProvidersConfig,
 ): ProviderCredentialsWithProvider | null {
-  const config = inlineProviders.find(
-    (p: { slug: string }) => p.slug === slug
-  );
+  const config = inlineProviders.find((p: { slug: string }) => p.slug === slug);
   if (!config) {
     return null;
   }
@@ -186,7 +196,7 @@ export function getInlineProviderCredentials(
 export async function getProviderCredentialsWithFallback(
   slug: string,
   inlineProviders: InlineProvidersConfig | undefined,
-  db: DataLayerWithProviderConfig | null
+  db: DataLayerWithProviderConfig | null,
 ): Promise<ProviderCredentialsWithProvider | null> {
   // Try inline config first (code-configured takes precedence)
   if (inlineProviders) {
@@ -208,11 +218,11 @@ export async function getProviderCredentialsWithFallback(
  * Invalidate credentials cache for a specific provider config
  */
 export async function invalidateProviderCredentials(
-  providerConfigId: string
+  providerConfigId: string,
 ): Promise<void> {
   await cacheService.delete(
     `credentials:${providerConfigId}`,
-    CREDENTIALS_NAMESPACE
+    CREDENTIALS_NAMESPACE,
   );
 }
 
@@ -220,11 +230,11 @@ export async function invalidateProviderCredentials(
  * Invalidate credentials cache for a provider ID
  */
 export async function invalidateProviderCredentialsByProviderId(
-  providerId: string
+  providerId: string,
 ): Promise<void> {
   await cacheService.delete(
     `credentials-by-provider:${providerId}`,
-    CREDENTIALS_NAMESPACE
+    CREDENTIALS_NAMESPACE,
   );
 }
 
@@ -232,11 +242,11 @@ export async function invalidateProviderCredentialsByProviderId(
  * Invalidate credentials cache for a provider config slug
  */
 export async function invalidateProviderCredentialsBySlug(
-  slug: string
+  slug: string,
 ): Promise<void> {
   await cacheService.delete(
     `credentials-by-slug:${slug}`,
-    CREDENTIALS_NAMESPACE
+    CREDENTIALS_NAMESPACE,
   );
 }
 

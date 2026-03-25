@@ -10,7 +10,7 @@ import z from 'zod';
  */
 async function generateUniqueSlug(
   db: Kysely<Database>,
-  baseSlug: string
+  baseSlug: string,
 ): Promise<string> {
   // Check if base slug exists
   const existing = await db
@@ -85,7 +85,7 @@ const listProviderConfigs = z.object({
 export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
   return {
     createProviderConfig: async (
-      params: z.infer<typeof createProviderConfig>
+      params: z.infer<typeof createProviderConfig>,
     ) => {
       const value = await createProviderConfig.safeParseAsync(params);
       if (!value.success) {
@@ -112,7 +112,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .executeTakeFirst();
     },
     updateProviderConfig: async (
-      params: z.infer<typeof updateProviderConfig>
+      params: z.infer<typeof updateProviderConfig>,
     ) => {
       const value = await updateProviderConfig.safeParseAsync(params);
       if (!value.success) {
@@ -136,7 +136,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .executeTakeFirst();
     },
     getProviderConfigById: async (
-      params: z.infer<typeof getProviderConfigById>
+      params: z.infer<typeof getProviderConfigById>,
     ) => {
       const value = await getProviderConfigById.safeParseAsync(params);
       if (!value.success) {
@@ -151,7 +151,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .executeTakeFirst();
     },
     getProviderConfigByProviderId: async (
-      params: z.infer<typeof getProviderConfigByProviderId>
+      params: z.infer<typeof getProviderConfigByProviderId>,
     ) => {
       const value = await getProviderConfigByProviderId.safeParseAsync(params);
       if (!value.success) {
@@ -166,7 +166,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .executeTakeFirst();
     },
     getProviderConfigBySlug: async (
-      params: z.infer<typeof getProviderConfigBySlug>
+      params: z.infer<typeof getProviderConfigBySlug>,
     ) => {
       const value = await getProviderConfigBySlug.safeParseAsync(params);
       if (!value.success) {
@@ -181,7 +181,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .executeTakeFirst();
     },
     deleteProviderConfig: async (
-      params: z.infer<typeof deleteProviderConfig>
+      params: z.infer<typeof deleteProviderConfig>,
     ) => {
       const value = await deleteProviderConfig.safeParseAsync(params);
       if (!value.success) {
@@ -196,7 +196,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
         .executeTakeFirst();
     },
     listProviderConfigs: async (
-      params?: z.infer<typeof listProviderConfigs>
+      params?: z.infer<typeof listProviderConfigs>,
     ) => {
       const value = await listProviderConfigs.safeParseAsync(params || {});
       if (!value.success) {
@@ -224,7 +224,7 @@ export const createProviderConfigsDataLayer = (db: Kysely<Database>) => {
      * Useful for the dashboard UI where you want to set/update a provider config
      */
     upsertProviderConfig: async (
-      params: z.infer<typeof createProviderConfig>
+      params: z.infer<typeof createProviderConfig>,
     ) => {
       const value = await createProviderConfig.safeParseAsync(params);
       if (!value.success) {

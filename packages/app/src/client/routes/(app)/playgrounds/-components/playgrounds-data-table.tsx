@@ -50,7 +50,7 @@ export function PlaygroundsDataTable() {
         queryKey: getQueryKey(playgroundId),
       });
     },
-    [queryClient]
+    [queryClient],
   );
 
   const columns = useMemo<ColumnDef<Playground, any>[]>(
@@ -68,7 +68,7 @@ export function PlaygroundsDataTable() {
         },
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -122,7 +122,7 @@ export function PlaygroundsDataTable() {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHeaderCell>
                 );

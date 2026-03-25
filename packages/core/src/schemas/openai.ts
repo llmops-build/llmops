@@ -84,7 +84,7 @@ const chatCompletionAssistantMessageParamSchema = z.object({
         z.union([
           chatCompletionContentPartTextSchema,
           chatCompletionContentPartRefusalSchema,
-        ])
+        ]),
       ),
     ])
     .optional()
@@ -276,7 +276,7 @@ export const chatCompletionCreateParamsBaseSchema = z.object({
         name: z.string(),
         description: z.string().optional(),
         parameters: z.record(z.string(), z.any()).optional(),
-      })
+      }),
     )
     .optional(),
   logit_bias: z
@@ -366,7 +366,7 @@ export const variantJsonDataSchema = z.object({
         name: z.string(),
         description: z.string().optional(),
         parameters: z.record(z.string(), z.any()).optional(),
-      })
+      }),
     )
     .optional(),
   logit_bias: z

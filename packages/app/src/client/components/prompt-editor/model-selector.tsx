@@ -164,8 +164,24 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
   // Watch only model-related fields - this isolates re-renders to this component
   const value = useWatch<ModelSelectorFormData>({
     control,
-    name: ['provider', 'modelName', 'temperature', 'maxTokens', 'topP', 'frequencyPenalty', 'presencePenalty'],
-  }) as [string, string, number | undefined, number | undefined, number | undefined, number | undefined, number | undefined];
+    name: [
+      'provider',
+      'modelName',
+      'temperature',
+      'maxTokens',
+      'topP',
+      'frequencyPenalty',
+      'presencePenalty',
+    ],
+  }) as [
+    string,
+    string,
+    number | undefined,
+    number | undefined,
+    number | undefined,
+    number | undefined,
+    number | undefined,
+  ];
 
   const currentSettings: ModelSettings = {
     provider: value[0] || '',
@@ -192,7 +208,7 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
 
   const handleSettingChange = (
     key: keyof Omit<ModelSettings, 'provider' | 'modelName'>,
-    newValue: number | undefined
+    newValue: number | undefined,
   ) => {
     const updatedSettings = {
       ...currentSettings,
@@ -253,7 +269,7 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
         const matchingModels = group.models.filter(
           (model) =>
             model.label.toLowerCase().includes(lowerQuery) ||
-            model.value.toLowerCase().includes(lowerQuery)
+            model.value.toLowerCase().includes(lowerQuery),
         );
 
         if (matchingModels.length > 0) {
@@ -279,7 +295,7 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
   const justSelectedRef = useRef(false);
 
   const handleValueChange = (
-    item: ModelWithProvider | ProviderGroupWithModels | null
+    item: ModelWithProvider | ProviderGroupWithModels | null,
   ) => {
     // Only handle ModelWithProvider, ignore ProviderGroupWithModels
     if (item && 'value' in item) {
@@ -365,20 +381,34 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
                     <Link
                       to="/gateway/providers"
                       className={styles.connectProviderLink}
-                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                      onMouseEnter={(
+                        e: React.MouseEvent<HTMLAnchorElement>,
+                      ) => {
                         const target = e.currentTarget;
                         // Click the active/open menu trigger to close it
                         const activeButton = menubarRef.current?.querySelector(
-                          'button[data-popup-open="true"], button[aria-expanded="true"]'
+                          'button[data-popup-open="true"], button[aria-expanded="true"]',
                         ) as HTMLElement | null;
                         activeButton?.click();
                         target.focus();
                       }}
                     >
                       <div className={styles.providerLogoStack}>
-                        <img src="https://models.dev/logos/openai.svg" alt="" className={styles.stackedLogo} />
-                        <img src="https://models.dev/logos/anthropic.svg" alt="" className={styles.stackedLogo} />
-                        <img src="https://models.dev/logos/google.svg" alt="" className={styles.stackedLogo} />
+                        <img
+                          src="https://models.dev/logos/openai.svg"
+                          alt=""
+                          className={styles.stackedLogo}
+                        />
+                        <img
+                          src="https://models.dev/logos/anthropic.svg"
+                          alt=""
+                          className={styles.stackedLogo}
+                        />
+                        <img
+                          src="https://models.dev/logos/google.svg"
+                          alt=""
+                          className={styles.stackedLogo}
+                        />
                       </div>
                       Connect Provider
                     </Link>
@@ -423,12 +453,26 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
                     <Link
                       to="/gateway/providers"
                       className={styles.connectProviderLink}
-                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.focus()}
+                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) =>
+                        e.currentTarget.focus()
+                      }
                     >
                       <div className={styles.providerLogoStack}>
-                        <img src="https://models.dev/logos/openai.svg" alt="" className={styles.stackedLogo} />
-                        <img src="https://models.dev/logos/anthropic.svg" alt="" className={styles.stackedLogo} />
-                        <img src="https://models.dev/logos/google.svg" alt="" className={styles.stackedLogo} />
+                        <img
+                          src="https://models.dev/logos/openai.svg"
+                          alt=""
+                          className={styles.stackedLogo}
+                        />
+                        <img
+                          src="https://models.dev/logos/anthropic.svg"
+                          alt=""
+                          className={styles.stackedLogo}
+                        />
+                        <img
+                          src="https://models.dev/logos/google.svg"
+                          alt=""
+                          className={styles.stackedLogo}
+                        />
                       </div>
                       Connect Provider
                     </Link>

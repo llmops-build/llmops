@@ -50,16 +50,18 @@ const getWeather = tool(
     const weather: Record<string, string> = {
       'san francisco': 'Foggy, 58°F',
       'new york': 'Sunny, 75°F',
-      'london': 'Rainy, 52°F',
-      'tokyo': 'Cloudy, 68°F',
+      london: 'Rainy, 52°F',
+      tokyo: 'Cloudy, 68°F',
     };
-    return weather[city.toLowerCase()] || `Weather data not available for ${city}`;
+    return (
+      weather[city.toLowerCase()] || `Weather data not available for ${city}`
+    );
   },
   {
     name: 'get_weather',
     description: 'Get the current weather for a city',
     schema: z.object({ city: z.string().describe('The city name') }),
-  }
+  },
 );
 
 const calculate = tool(
@@ -76,9 +78,11 @@ const calculate = tool(
     name: 'calculate',
     description: 'Evaluate a math expression',
     schema: z.object({
-      expression: z.string().describe('A math expression like "2 + 2" or "100 * 0.15"'),
+      expression: z
+        .string()
+        .describe('A math expression like "2 + 2" or "100 * 0.15"'),
     }),
-  }
+  },
 );
 
 const tools = [getWeather, calculate];
@@ -104,7 +108,7 @@ app.post('/api/agent', async (req, res) => {
     const agent = createReactAgent({ llm, tools });
     const result = await agent.invoke(
       { messages: [{ role: 'user', content: prompt }] },
-      { callbacks: [tracer] }
+      { callbacks: [tracer] },
     );
 
     const lastMessage = result.messages[result.messages.length - 1];
@@ -202,7 +206,9 @@ app.listen(port, () => {
   console.log(`LLMOps dashboard at http://localhost:${port}/llmops`);
   console.log();
   console.log('Endpoints:');
-  console.log(`  POST /api/agent        - Agent with tools (weather, calculator)`);
+  console.log(
+    `  POST /api/agent        - Agent with tools (weather, calculator)`,
+  );
   console.log(`  POST /api/chat         - Chat completion`);
   console.log(`  POST /api/chat/stream  - Streaming chat`);
   console.log(`  POST /api/embeddings   - Generate embeddings`);

@@ -62,10 +62,10 @@ function RouteComponent() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<ProviderInfo | null>(
-    null
+    null,
   );
   const [editingConfig, setEditingConfig] = useState<ProviderConfig | null>(
-    null
+    null,
   );
 
   const {
@@ -86,7 +86,7 @@ function RouteComponent() {
     (providerId: string) => {
       return availableProviders?.find((p) => p.id === providerId);
     },
-    [availableProviders]
+    [availableProviders],
   );
 
   const handleOpenAdd = () => {
@@ -144,7 +144,7 @@ function RouteComponent() {
 
     // Filter out empty values
     const cleanedConfig = Object.fromEntries(
-      Object.entries(data.config).filter(([, v]) => v?.trim())
+      Object.entries(data.config).filter(([, v]) => v?.trim()),
     );
 
     if (viewMode === 'edit' && editingConfig) {

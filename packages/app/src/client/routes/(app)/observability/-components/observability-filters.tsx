@@ -17,12 +17,15 @@ export function ObservabilityFilters() {
   const tagsByKey = useMemo(() => {
     if (!distinctTags) return {};
     return distinctTags.reduce(
-      (acc: Record<string, string[]>, { key, value }: { key: string; value: string }) => {
+      (
+        acc: Record<string, string[]>,
+        { key, value }: { key: string; value: string },
+      ) => {
         if (!acc[key]) acc[key] = [];
         acc[key].push(value);
         return acc;
       },
-      {} as Record<string, string[]>
+      {} as Record<string, string[]>,
     );
   }, [distinctTags]);
 
@@ -40,7 +43,7 @@ export function ObservabilityFilters() {
   const selectedTagCount = useMemo(() => {
     return Object.values(selectedTags).reduce(
       (sum, values) => sum + values.length,
-      0
+      0,
     );
   }, [selectedTags]);
 
@@ -68,7 +71,7 @@ export function ObservabilityFilters() {
         replace: true,
       });
     },
-    [selectedTags, navigate]
+    [selectedTags, navigate],
   );
 
   const clearFilters = () => {

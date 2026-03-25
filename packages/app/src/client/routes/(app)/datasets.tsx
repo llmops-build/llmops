@@ -50,7 +50,7 @@ function RouteComponent() {
     .filter(
       (match) =>
         Boolean(match.staticData.customData?.title) ||
-        Boolean((match.loaderData as { title?: string } | undefined)?.title)
+        Boolean((match.loaderData as { title?: string } | undefined)?.title),
     )
     .map((match) => {
       const loaderTitle = (match.loaderData as { title?: string } | undefined)

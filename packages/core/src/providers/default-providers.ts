@@ -141,7 +141,7 @@ const DEFAULT_PROVIDER_MAPPINGS: DefaultProviderMapping[] = [
  * ```
  */
 export function getDefaultProviders(
-  env: Record<string, string | undefined> = process.env
+  env: Record<string, string | undefined> = process.env,
 ): InlineProviderConfig[] {
   const providers: InlineProviderConfig[] = [];
 
@@ -182,7 +182,7 @@ export function getDefaultProviders(
  */
 export function mergeWithDefaultProviders(
   userProviders: InlineProviderConfig[] | undefined,
-  env: Record<string, string | undefined> = process.env
+  env: Record<string, string | undefined> = process.env,
 ): InlineProviderConfig[] {
   const defaults = getDefaultProviders(env);
 
@@ -205,5 +205,5 @@ export function mergeWithDefaultProviders(
  * Useful for documentation or debugging.
  */
 export const DEFAULT_PROVIDER_ENV_VARS = DEFAULT_PROVIDER_MAPPINGS.map(
-  (m) => m.envVar
+  (m) => m.envVar,
 );

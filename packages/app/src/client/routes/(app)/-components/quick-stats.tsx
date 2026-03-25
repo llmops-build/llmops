@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { useRequestStats, useTotalCost } from '@client/hooks/queries/useAnalytics';
+import {
+  useRequestStats,
+  useTotalCost,
+} from '@client/hooks/queries/useAnalytics';
 import * as styles from './quick-stats.css';
 import clsx from 'clsx';
 
@@ -64,7 +67,7 @@ export function QuickStats() {
               styles.quickStatValue,
               styles.quickStatValueStatus({
                 status: getSuccessRateStatus(successRate),
-              })
+              }),
             )}
           >
             {successRate.toFixed(1)}%

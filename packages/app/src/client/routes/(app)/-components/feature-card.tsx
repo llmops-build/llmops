@@ -32,8 +32,12 @@ export function FeatureCard({
       <div className={styles.featureCardMetrics}>
         {metrics.map((metric) => (
           <div key={metric.label} className={styles.featureCardMetric}>
-            <span className={styles.featureCardMetricValue}>{metric.value}</span>
-            <span className={styles.featureCardMetricLabel}>{metric.label}</span>
+            <span className={styles.featureCardMetricValue}>
+              {metric.value}
+            </span>
+            <span className={styles.featureCardMetricLabel}>
+              {metric.label}
+            </span>
           </div>
         ))}
       </div>

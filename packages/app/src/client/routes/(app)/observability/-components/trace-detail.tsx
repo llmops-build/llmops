@@ -81,7 +81,7 @@ function buildSpanTree(spans: SpanRow[]): SpanNode[] {
   const sortChildren = (nodes: SpanNode[]) => {
     nodes.sort(
       (a, b) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
     );
     for (const node of nodes) sortChildren(node.children);
   };
@@ -137,7 +137,13 @@ const SPAN_KIND_MAP: Record<number, string> = {
   5: 'consumer',
 };
 
-type SpanType = 'generation' | 'agent' | 'tool' | 'guardrail' | 'embedding' | 'default';
+type SpanType =
+  | 'generation'
+  | 'agent'
+  | 'tool'
+  | 'guardrail'
+  | 'embedding'
+  | 'default';
 
 function getSpanType(span: SpanRow): SpanType {
   const attrs = span.attributes;
@@ -251,7 +257,10 @@ function SpanWaterfallRow({
       onClick={onClick}
       style={{ paddingLeft: `${span.depth * 16 + 4}px` }}
     >
-      <span className={spanNameColumn} style={{ width: `${140 - span.depth * 16}px` }}>
+      <span
+        className={spanNameColumn}
+        style={{ width: `${140 - span.depth * 16}px` }}
+      >
         {span.name}
       </span>
       <div className={spanBarColumn}>
@@ -307,7 +316,7 @@ function SpanDetailView({
 
   const filteredAttributes = useMemo(() => {
     return Object.entries(span.attributes).filter(
-      ([key]) => !key.startsWith('ai.prompt') && !key.startsWith('ai.response')
+      ([key]) => !key.startsWith('ai.prompt') && !key.startsWith('ai.response'),
     );
   }, [span.attributes]);
 
@@ -322,7 +331,7 @@ function SpanDetailView({
               ? statusSuccess
               : spanStatus === 'error'
                 ? statusError
-                : undefined
+                : undefined,
           )}
         >
           {spanStatus}
@@ -364,7 +373,9 @@ function SpanDetailView({
           <div className={spanDetailMetaItem}>
             <span className={spanDetailMetaLabel}>Cost</span>
             <Tooltip content={formatCostFull(span.cost)}>
-              <span className={spanDetailMetaValue}>{formatCost(span.cost)}</span>
+              <span className={spanDetailMetaValue}>
+                {formatCost(span.cost)}
+              </span>
             </Tooltip>
           </div>
         )}
@@ -449,13 +460,11 @@ export function TraceDetail({ traceId }: { traceId: string }) {
 
   const spanTree = useMemo(
     () => (data?.spans ? buildSpanTree(data.spans) : []),
-    [data?.spans]
+    [data?.spans],
   );
   const flatSpans = useMemo(() => flattenTree(spanTree), [spanTree]);
 
-  const traceStart = data?.trace
-    ? new Date(data.trace.startTime).getTime()
-    : 0;
+  const traceStart = data?.trace ? new Date(data.trace.startTime).getTime() : 0;
   const traceDuration = data?.trace?.durationMs ?? 0;
 
   const selectedSpan = useMemo(
@@ -463,7 +472,7 @@ export function TraceDetail({ traceId }: { traceId: string }) {
       selectedSpanId
         ? data?.spans.find((s) => s.spanId === selectedSpanId)
         : null,
-    [selectedSpanId, data?.spans]
+    [selectedSpanId, data?.spans],
   );
 
   if (isLoading) {
@@ -511,7 +520,7 @@ export function TraceDetail({ traceId }: { traceId: string }) {
                   ? statusSuccess
                   : traceStatus === 'error'
                     ? statusError
-                    : undefined
+                    : undefined,
               )}
             >
               {traceStatus}
@@ -519,12 +528,7 @@ export function TraceDetail({ traceId }: { traceId: string }) {
           </div>
           <span className={traceDetailId}>{trace.traceId}</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          scheme="gray"
-          onClick={handleClose}
-        >
+        <Button variant="ghost" size="icon" scheme="gray" onClick={handleClose}>
           <Icon icon={X} size="sm" />
         </Button>
       </div>
@@ -575,7 +579,7 @@ export function TraceDetail({ traceId }: { traceId: string }) {
               isSelected={span.spanId === selectedSpanId}
               onClick={() =>
                 setSelectedSpanId(
-                  span.spanId === selectedSpanId ? null : span.spanId
+                  span.spanId === selectedSpanId ? null : span.spanId,
                 )
               }
             />
@@ -583,9 +587,7 @@ export function TraceDetail({ traceId }: { traceId: string }) {
         </div>
 
         {/* Selected span detail */}
-        {selectedSpan && (
-          <SpanDetailView span={selectedSpan} events={events} />
-        )}
+        {selectedSpan && <SpanDetailView span={selectedSpan} events={events} />}
       </div>
     </div>
   );

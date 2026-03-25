@@ -138,11 +138,11 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           const result = await insertLLMRequestSchema.safeParseAsync(req);
           if (!result.success) {
             throw new LLMOpsError(
-              `Invalid request data: ${result.error.message}`
+              `Invalid request data: ${result.error.message}`,
             );
           }
           return result.data;
-        })
+        }),
       );
 
       const now = new Date().toISOString();
@@ -285,12 +285,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
       }
       if (startDate) {
         baseQuery = baseQuery.where(
-          sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`
+          sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`,
         );
       }
       if (endDate) {
         baseQuery = baseQuery.where(
-          sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`
+          sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`,
         );
       }
       // Filter by tags - OR within same key, AND between keys
@@ -299,12 +299,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           if (values.length === 0) continue;
           if (values.length === 1) {
             baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
             );
           } else {
             const valueList = sql.join(values.map((v) => sql`${v}`));
             baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
             );
           }
         }
@@ -360,25 +360,25 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         .select([
           sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
           sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost'
+            'totalInputCost',
           ),
           sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost'
+            'totalOutputCost',
           ),
           sql<number>`COALESCE(SUM(${col('promptTokens')}), 0)`.as(
-            'totalPromptTokens'
+            'totalPromptTokens',
           ),
           sql<number>`COALESCE(SUM(${col('completionTokens')}), 0)`.as(
-            'totalCompletionTokens'
+            'totalCompletionTokens',
           ),
           sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens'
+            'totalTokens',
           ),
           sql<number>`COALESCE(SUM(${col('cachedTokens')}), 0)`.as(
-            'totalCachedTokens'
+            'totalCachedTokens',
           ),
           sql<number>`COALESCE(SUM(${col('cacheSavings')}), 0)`.as(
-            'totalCacheSavings'
+            'totalCacheSavings',
           ),
           sql<number>`COUNT(*)`.as('requestCount'),
         ])
@@ -400,12 +400,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           if (values.length === 0) continue;
           if (values.length === 1) {
             query = query.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
             );
           } else {
             const valueList = sql.join(values.map((v) => sql`${v}`));
             query = query.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
             );
           }
         }
@@ -434,13 +434,13 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           'model',
           sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
           sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost'
+            'totalInputCost',
           ),
           sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost'
+            'totalOutputCost',
           ),
           sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens'
+            'totalTokens',
           ),
           sql<number>`COUNT(*)`.as('requestCount'),
           sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
@@ -469,13 +469,13 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           'provider',
           sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
           sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost'
+            'totalInputCost',
           ),
           sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost'
+            'totalOutputCost',
           ),
           sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens'
+            'totalTokens',
           ),
           sql<number>`COUNT(*)`.as('requestCount'),
           sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
@@ -504,13 +504,13 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           sql<string>`DATE(${col('createdAt')})`.as('date'),
           sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
           sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost'
+            'totalInputCost',
           ),
           sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost'
+            'totalOutputCost',
           ),
           sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens'
+            'totalTokens',
           ),
           sql<number>`COUNT(*)`.as('requestCount'),
         ])
@@ -563,12 +563,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           if (values.length === 0) continue;
           if (values.length === 1) {
             baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
             );
           } else {
             const valueList = sql.join(values.map((v) => sql`${v}`));
             baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
             );
           }
         }
@@ -583,7 +583,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
               sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
               sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-                'totalTokens'
+                'totalTokens',
               ),
             ])
             .groupBy(sql`DATE(${col('createdAt')})`)
@@ -594,12 +594,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           return baseQuery
             .select([
               sql<string>`DATE_TRUNC('hour', ${col('createdAt')})`.as(
-                'groupKey'
+                'groupKey',
               ),
               sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
               sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-                'totalTokens'
+                'totalTokens',
               ),
             ])
             .groupBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`)
@@ -610,7 +610,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           return baseQuery
             .select([
               sql<string>`${col('provider')} || '/' || ${col('model')}`.as(
-                'groupKey'
+                'groupKey',
               ),
               sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
@@ -634,7 +634,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           return baseQuery
             .select([
               sql<string>`COALESCE(${col('endpoint')}, 'unknown')`.as(
-                'groupKey'
+                'groupKey',
               ),
               sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
               sql<number>`COUNT(*)`.as('requestCount'),
@@ -650,26 +650,19 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
             sql`${col('createdAt')} >= ${startDate.toISOString()}`,
             sql`${col('createdAt')} <= ${endDate.toISOString()}`,
           ];
-          if (configId)
-            conditions.push(sql`${col('configId')} = ${configId}`);
+          if (configId) conditions.push(sql`${col('configId')} = ${configId}`);
           if (variantId)
             conditions.push(sql`${col('variantId')} = ${variantId}`);
           if (environmentId)
-            conditions.push(
-              sql`${col('environmentId')} = ${environmentId}`
-            );
+            conditions.push(sql`${col('environmentId')} = ${environmentId}`);
           if (tags && Object.keys(tags).length > 0) {
             for (const [key, values] of Object.entries(tags)) {
               if (values.length === 0) continue;
               if (values.length === 1) {
-                conditions.push(
-                  sql`${col('tags')}->>${key} = ${values[0]}`
-                );
+                conditions.push(sql`${col('tags')}->>${key} = ${values[0]}`);
               } else {
                 const valueList = sql.join(values.map((v) => sql`${v}`));
-                conditions.push(
-                  sql`${col('tags')}->>${key} IN (${valueList})`
-                );
+                conditions.push(sql`${col('tags')}->>${key} IN (${valueList})`);
               }
             }
           }
@@ -677,7 +670,7 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           if (tagKeys && tagKeys.length > 0) {
             const tagKeyList = sql.join(
               tagKeys.map((k) => sql`${k}`),
-              sql`, `
+              sql`, `,
             );
             conditions.push(sql`t.key IN (${tagKeyList})`);
           }
@@ -727,13 +720,13 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
         .select([
           sql<number>`COUNT(*)`.as('totalRequests'),
           sql<number>`COUNT(CASE WHEN ${col('statusCode')} >= 200 AND ${col('statusCode')} < 300 THEN 1 END)`.as(
-            'successfulRequests'
+            'successfulRequests',
           ),
           sql<number>`COUNT(CASE WHEN ${col('statusCode')} >= 400 THEN 1 END)`.as(
-            'failedRequests'
+            'failedRequests',
           ),
           sql<number>`COUNT(CASE WHEN ${col('isStreaming')} = true THEN 1 END)`.as(
-            'streamingRequests'
+            'streamingRequests',
           ),
           sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
           sql<number>`MAX(${col('latencyMs')})`.as('maxLatencyMs'),
@@ -757,12 +750,12 @@ export const createLLMRequestsDataLayer = (db: Kysely<Database>) => {
           if (values.length === 0) continue;
           if (values.length === 1) {
             query = query.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`
+              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
             );
           } else {
             const valueList = sql.join(values.map((v) => sql`${v}`));
             query = query.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`
+              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
             );
           }
         }

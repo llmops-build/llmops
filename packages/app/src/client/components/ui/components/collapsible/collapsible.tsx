@@ -48,7 +48,9 @@ export function CollapsibleTrigger({
   showIcon = true,
 }: CollapsibleTriggerProps) {
   return (
-    <BaseCollapsible.Trigger className={clsx(styles.collapsibleTrigger, className)}>
+    <BaseCollapsible.Trigger
+      className={clsx(styles.collapsibleTrigger, className)}
+    >
       {children}
       {showIcon && (
         <span className={styles.collapsibleTriggerIcon}>

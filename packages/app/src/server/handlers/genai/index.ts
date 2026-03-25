@@ -30,8 +30,8 @@ app
   .notFound((c) =>
     c.json(
       { error: { message: 'Not Found', type: 'invalid_request_error' } },
-      404
-    )
+      404,
+    ),
   )
   .onError((err, c) => {
     if (err instanceof HTTPException) {
@@ -39,7 +39,7 @@ app
     }
     return c.json(
       { error: { message: 'Internal Server Error', type: 'api_error' } },
-      500
+      500,
     );
   });
 

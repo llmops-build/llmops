@@ -64,7 +64,7 @@ export class MemoryCacheBackend implements CacheBackend {
 
   async get<T = unknown>(
     key: string,
-    namespace?: string
+    namespace?: string,
   ): Promise<CacheEntry<T> | null> {
     const fullKey = this.getFullKey(key, namespace);
     const entry = this.cache.get(fullKey);
@@ -91,7 +91,7 @@ export class MemoryCacheBackend implements CacheBackend {
   async set<T = unknown>(
     key: string,
     value: T,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<void> {
     const fullKey = this.getFullKey(key, options.namespace);
     const now = Date.now();
@@ -109,7 +109,7 @@ export class MemoryCacheBackend implements CacheBackend {
     this.stats.size = this.cache.size;
     logger.debug(
       { key: fullKey, ttl: options.ttl, namespace: options.namespace },
-      '[MemoryCache] SET'
+      '[MemoryCache] SET',
     );
   }
 
@@ -132,7 +132,7 @@ export class MemoryCacheBackend implements CacheBackend {
     if (namespace) {
       const prefix = `${namespace}:`;
       const keysToDelete = Array.from(this.cache.keys()).filter((key) =>
-        key.startsWith(prefix)
+        key.startsWith(prefix),
       );
 
       for (const key of keysToDelete) {
@@ -142,7 +142,7 @@ export class MemoryCacheBackend implements CacheBackend {
       this.stats.deletes += keysToDelete.length;
       logger.debug(
         { namespace, deletedCount: keysToDelete.length },
-        '[MemoryCache] CLEAR namespace'
+        '[MemoryCache] CLEAR namespace',
       );
     } else {
       const count = this.cache.size;
@@ -186,7 +186,7 @@ export class MemoryCacheBackend implements CacheBackend {
     if (namespace) {
       const prefix = `${namespace}:`;
       const namespaceKeys = Array.from(this.cache.keys()).filter((key) =>
-        key.startsWith(prefix)
+        key.startsWith(prefix),
       );
 
       let expired = 0;

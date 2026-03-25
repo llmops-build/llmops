@@ -76,7 +76,9 @@ function OutputCell({
   if (result.status === 'running') {
     return (
       <div className={styles.clampedText}>
-        {result.output || <span className={styles.runningText}>Running...</span>}
+        {result.output || (
+          <span className={styles.runningText}>Running...</span>
+        )}
       </div>
     );
   }
@@ -103,7 +105,7 @@ export function DatasetResultsSection({
   const navigate = useNavigate();
   const { data: records, isLoading: isLoadingRecords } = useDatasetRecords(
     datasetId ?? '',
-    { limit: 100 }
+    { limit: 100 },
   );
 
   const handleRowClick = (recordId: string) => {
@@ -119,7 +121,7 @@ export function DatasetResultsSection({
         ...record,
         rowIndex: index + 1,
       })),
-    [records]
+    [records],
   );
 
   // Build table columns: Input + one column per playground prompt
@@ -147,10 +149,10 @@ export function DatasetResultsSection({
               executionResults={executionResults}
             />
           ),
-        })
+        }),
       ),
     ],
-    [columnKey, executionResults]
+    [columnKey, executionResults],
   );
 
   const table = useReactTable({
@@ -201,7 +203,7 @@ export function DatasetResultsSection({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHeaderCell>
                   ))}
@@ -228,7 +230,7 @@ export function DatasetResultsSection({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

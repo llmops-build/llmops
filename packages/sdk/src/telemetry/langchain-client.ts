@@ -92,7 +92,7 @@ export interface LLMOpsLangChainClientConfig {
  * This gives one HTTP call per run with complete data (inputs + outputs).
  */
 export function createLLMOpsLangChainClient(
-  config: LLMOpsLangChainClientConfig
+  config: LLMOpsLangChainClientConfig,
 ): LangChainTracingClient {
   const url = `${config.baseURL.replace(/\/$/, '')}/api/langsmith/runs/batch`;
   const fetchFn = config.fetch ?? globalThis.fetch;
@@ -100,7 +100,7 @@ export function createLLMOpsLangChainClient(
 
   async function postBatch(
     post: CreateRunParams[],
-    patch: RunUpdate[]
+    patch: RunUpdate[],
   ): Promise<void> {
     const response = await fetchFn(url, {
       method: 'POST',
@@ -112,7 +112,7 @@ export function createLLMOpsLangChainClient(
     });
     if (!response.ok) {
       console.warn(
-        `[LLMOps LangChain] POST /runs/batch failed: ${response.status} ${response.statusText}`
+        `[LLMOps LangChain] POST /runs/batch failed: ${response.status} ${response.statusText}`,
       );
     }
   }

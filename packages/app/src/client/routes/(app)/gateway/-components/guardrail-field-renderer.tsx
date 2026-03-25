@@ -404,7 +404,7 @@ function TagInputField({
         onChange(tags.slice(0, -1));
       }
     },
-    [inputValue, tags, onChange]
+    [inputValue, tags, onChange],
   );
 
   const handleRemoveTag = (tagToRemove: string) => {

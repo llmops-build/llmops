@@ -17,7 +17,7 @@ export const createRequestGuardMiddleware = (): MiddlewareHandler => {
           message: 'Invalid request headers',
           errors: headers.error.flatten().fieldErrors,
         },
-        400
+        400,
       );
     }
 
@@ -32,7 +32,7 @@ export const createRequestGuardMiddleware = (): MiddlewareHandler => {
           message:
             error instanceof Error ? error.message : 'Invalid authorization',
         },
-        401
+        401,
       );
     }
 

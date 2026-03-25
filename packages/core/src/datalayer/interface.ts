@@ -14,7 +14,9 @@ export type DatasetsDataLayer = ReturnType<typeof createDatasetsDataLayer>;
 export type GuardrailConfigsDataLayer = ReturnType<
   typeof createGuardrailConfigsDataLayer
 >;
-export type LLMRequestsDataLayer = ReturnType<typeof createLLMRequestsDataLayer>;
+export type LLMRequestsDataLayer = ReturnType<
+  typeof createLLMRequestsDataLayer
+>;
 export type PlaygroundsDataLayer = ReturnType<typeof createPlaygroundDataLayer>;
 export type PlaygroundResultsDataLayer = ReturnType<
   typeof createPlaygroundResultsDataLayer

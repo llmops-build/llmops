@@ -51,7 +51,7 @@ export const Route = createFileRoute('/(app)/playgrounds/$id/')({
     }
 
     const playground = await ctx.queryClient.ensureQueryData(
-      playgroundByIdQueryOptions(params.id)
+      playgroundByIdQueryOptions(params.id),
     );
 
     return {
@@ -84,7 +84,7 @@ function PlaygroundContent({ id }: { id: string }) {
   const execution = usePlaygroundExecution(id);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [localColumns, setLocalColumns] = useState<PlaygroundColumn[] | null>(
-    null
+    null,
   );
   const [localDatasetId, setLocalDatasetId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,7 +99,7 @@ function PlaygroundContent({ id }: { id: string }) {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Derive columns from local state or server data
@@ -156,7 +156,7 @@ function PlaygroundContent({ id }: { id: string }) {
         onError: () => {
           setSaveStatus('idle');
         },
-      }
+      },
     );
   };
 
@@ -203,7 +203,7 @@ function PlaygroundContent({ id }: { id: string }) {
 
   const handleColumnChange = (
     index: number,
-    updatedColumn: PlaygroundColumn
+    updatedColumn: PlaygroundColumn,
   ) => {
     const newColumns = [...columns];
     newColumns[index] = updatedColumn;
@@ -293,7 +293,11 @@ function PlaygroundContent({ id }: { id: string }) {
         </div>
         <div className={toolbarRight}>
           {execution.isRunning ? (
-            <Button variant="outline" scheme="gray" onClick={execution.stopExecution}>
+            <Button
+              variant="outline"
+              scheme="gray"
+              onClick={execution.stopExecution}
+            >
               <Icon icon={Square} />
               Stop
             </Button>

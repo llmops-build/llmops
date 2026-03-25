@@ -11,11 +11,14 @@ export type DatasetRecord = {
   updatedAt: string;
 };
 
-export const getQueryKey = (datasetId: string) => ['dataset-records', datasetId];
+export const getQueryKey = (datasetId: string) => [
+  'dataset-records',
+  datasetId,
+];
 
 export const datasetRecordsQueryOptions = (
   datasetId: string,
-  options?: { limit?: number; offset?: number }
+  options?: { limit?: number; offset?: number },
 ) =>
   queryOptions({
     queryKey: [...getQueryKey(datasetId), options?.limit, options?.offset],
@@ -35,7 +38,7 @@ export const datasetRecordsQueryOptions = (
 
 export const useDatasetRecords = (
   datasetId: string,
-  options?: { limit?: number; offset?: number }
+  options?: { limit?: number; offset?: number },
 ) => {
   return useQuery(datasetRecordsQueryOptions(datasetId, options));
 };

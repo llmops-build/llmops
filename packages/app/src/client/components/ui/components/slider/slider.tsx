@@ -40,7 +40,7 @@ export function Slider({
         onValueChange?.(newValue[0]);
       }
     },
-    [onValueChange]
+    [onValueChange],
   );
 
   const handleValueCommitted = React.useCallback(
@@ -51,7 +51,7 @@ export function Slider({
         onValueCommitted?.(newValue[0]);
       }
     },
-    [onValueCommitted]
+    [onValueCommitted],
   );
 
   const displayValue = value ?? defaultValue ?? min;

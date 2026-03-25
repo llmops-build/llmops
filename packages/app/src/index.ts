@@ -11,7 +11,7 @@ import { createMigrationMiddleware } from '@server/middlewares/migration';
 import { createStaticAssetMiddleware } from '@server/middlewares/static-assets';
 
 const setConfigMiddleware = (
-  config: ValidatedLLMOpsConfig
+  config: ValidatedLLMOpsConfig,
 ): MiddlewareHandler => {
   return async (c, next) => {
     c.set('llmopsConfig', config);
@@ -37,7 +37,7 @@ function resolveTelemetryStore(telemetry: unknown) {
  * Middleware that wires up telemetry store and remaining datalayer.
  */
 const createTelemetryMiddleware = (
-  validatedConfig: ValidatedLLMOpsConfig
+  validatedConfig: ValidatedLLMOpsConfig,
 ): MiddlewareHandler => {
   return async (c, next) => {
     const store = resolveTelemetryStore(validatedConfig.telemetry);

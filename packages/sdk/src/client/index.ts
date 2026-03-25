@@ -46,7 +46,7 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
   const basePath = validatedConfig.basePath;
 
   const createInternalFetch = (
-    getTraceContext?: () => TraceContext | null
+    getTraceContext?: () => TraceContext | null,
   ): typeof globalThis.fetch => {
     return (input, init) => {
       const request = new Request(input, init);
@@ -83,7 +83,7 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
           headers,
           body: request.body,
           duplex: 'half',
-        } as RequestInit)
+        } as RequestInit),
       );
     };
   };

@@ -45,7 +45,7 @@ export function createLLMOpsMiddleware(client: LLMOpsClient) {
       // For SSE streaming, pipe the body directly to avoid buffering
       // Convert Web ReadableStream to Node.js Readable and pipe to response
       Readable.fromWeb(
-        response.body as import('stream/web').ReadableStream
+        response.body as import('stream/web').ReadableStream,
       ).pipe(res);
     } else {
       // For non-streaming responses, buffer and send

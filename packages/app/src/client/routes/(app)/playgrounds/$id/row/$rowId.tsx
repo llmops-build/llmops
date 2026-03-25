@@ -33,17 +33,17 @@ function RouteComponent() {
     usePlaygroundById(playgroundId);
   const { data: runs } = usePlaygroundRuns(playgroundId);
   const latestCompletedRun = runs?.find(
-    (run) => run.status === 'completed' || run.status === 'failed'
+    (run) => run.status === 'completed' || run.status === 'failed',
   );
   const { data: results } = usePlaygroundResults(
     playgroundId,
-    latestCompletedRun?.id ?? ''
+    latestCompletedRun?.id ?? '',
   );
 
   const datasetId = playground?.datasetId ?? null;
   const { data: records, isLoading: isLoadingRecords } = useDatasetRecords(
     datasetId ?? '',
-    { limit: 500 }
+    { limit: 500 },
   );
 
   const columns = (playground?.columns as PlaygroundColumn[] | null) ?? [];
