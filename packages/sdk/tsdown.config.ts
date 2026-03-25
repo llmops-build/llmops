@@ -7,6 +7,8 @@ export default defineConfig({
     express: 'src/lib/express/index.ts',
     hono: 'src/lib/hono/index.ts',
     nextjs: 'src/lib/nextjs/index.ts',
+    'store/pg': 'src/store/pg.ts',
+    types: 'src/types/index.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

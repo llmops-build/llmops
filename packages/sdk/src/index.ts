@@ -5,7 +5,6 @@ export {
   type TraceContext,
   type ProviderOptions,
 } from './client';
-export { createPgStore as pgStore, type TelemetryStore } from '@llmops/core';
 export {
   createLLMOpsSpanExporter,
   type LLMOpsExporterConfig,
