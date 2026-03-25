@@ -78,6 +78,26 @@
         "default": "./dist/nextjs.cjs"
       }
     },
+    "./store/pg": {
+      "import": {
+        "types": "./dist/store/pg.d.mts",
+        "default": "./dist/store/pg.mjs"
+      },
+      "require": {
+        "types": "./dist/store/pg.d.cts",
+        "default": "./dist/store/pg.cjs"
+      }
+    },
+    "./types": {
+      "import": {
+        "types": "./dist/types.d.mts",
+        "default": "./dist/types.mjs"
+      },
+      "require": {
+        "types": "./dist/types.d.cts",
+        "default": "./dist/types.cjs"
+      }
+    },
     "./*": "./*"
   },
   "publishConfig": {

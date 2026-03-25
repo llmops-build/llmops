@@ -1,4 +1,5 @@
-import { llmops, pgStore } from '@llmops/sdk';
+import { llmops } from '@llmops/sdk';
+import { pgStore } from '@llmops/sdk/store/pg';
 
 export default llmops({
   basePath: '/api/llmops',

@@ -13,21 +13,16 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as appPlaygroundsRouteImport } from './routes/(app)/playgrounds'
 import { Route as appDatasetsRouteImport } from './routes/(app)/datasets'
-import { Route as appSettingsRouteRouteImport } from './routes/(app)/settings/route'
 import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
 import { Route as appGatewayRouteRouteImport } from './routes/(app)/gateway/route'
-import { Route as appSettingsIndexRouteImport } from './routes/(app)/settings/index'
 import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index'
 import { Route as appGatewayIndexRouteImport } from './routes/(app)/gateway/index'
-import { Route as appSettingsSettingsRouteImport } from './routes/(app)/settings/_settings'
 import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
 import { Route as appGatewayGatewayRouteImport } from './routes/(app)/gateway/_gateway'
 import { Route as appPlaygroundsIdRouteRouteImport } from './routes/(app)/playgrounds/$id/route'
 import { Route as appDatasetsIdRouteRouteImport } from './routes/(app)/datasets/$id/route'
 import { Route as appPlaygroundsIdIndexRouteImport } from './routes/(app)/playgrounds/$id/index'
 import { Route as appDatasetsIdIndexRouteImport } from './routes/(app)/datasets/$id/index'
-import { Route as appSettingsSettingsWorkspaceGeneralRouteImport } from './routes/(app)/settings/_settings/workspace-general'
-import { Route as appSettingsSettingsUserProfileRouteImport } from './routes/(app)/settings/_settings/user-profile'
 import { Route as appObservabilityObservabilityTracesRouteImport } from './routes/(app)/observability/_observability/traces'
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
 import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
@@ -58,11 +53,6 @@ const appDatasetsRoute = appDatasetsRouteImport.update({
   path: '/datasets',
   getParentRoute: () => appRouteRoute,
 } as any)
-const appSettingsRouteRoute = appSettingsRouteRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => appRouteRoute,
-} as any)
 const appObservabilityRouteRoute = appObservabilityRouteRouteImport.update({
   id: '/observability',
   path: '/observability',
@@ -73,11 +63,6 @@ const appGatewayRouteRoute = appGatewayRouteRouteImport.update({
   path: '/gateway',
   getParentRoute: () => appRouteRoute,
 } as any)
-const appSettingsIndexRoute = appSettingsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => appSettingsRouteRoute,
-} as any)
 const appObservabilityIndexRoute = appObservabilityIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -87,10 +72,6 @@ const appGatewayIndexRoute = appGatewayIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appGatewayRouteRoute,
-} as any)
-const appSettingsSettingsRoute = appSettingsSettingsRouteImport.update({
-  id: '/_settings',
-  getParentRoute: () => appSettingsRouteRoute,
 } as any)
 const appObservabilityObservabilityRoute =
   appObservabilityObservabilityRouteImport.update({
@@ -121,18 +102,6 @@ const appDatasetsIdIndexRoute = appDatasetsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appDatasetsIdRouteRoute,
 } as any)
-const appSettingsSettingsWorkspaceGeneralRoute =
-  appSettingsSettingsWorkspaceGeneralRouteImport.update({
-    id: '/workspace-general',
-    path: '/workspace-general',
-    getParentRoute: () => appSettingsSettingsRoute,
-  } as any)
-const appSettingsSettingsUserProfileRoute =
-  appSettingsSettingsUserProfileRouteImport.update({
-    id: '/user-profile',
-    path: '/user-profile',
-    getParentRoute: () => appSettingsSettingsRoute,
-  } as any)
 const appObservabilityObservabilityTracesRoute =
   appObservabilityObservabilityTracesRouteImport.update({
     id: '/traces',
@@ -196,7 +165,6 @@ const appDatasetsIdRecordsRecordIdRoute =
 export interface FileRoutesByFullPath {
   '/gateway': typeof appGatewayGatewayRouteWithChildren
   '/observability': typeof appObservabilityObservabilityRouteWithChildren
-  '/settings': typeof appSettingsSettingsRouteWithChildren
   '/datasets': typeof appDatasetsRouteWithChildren
   '/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/': typeof appIndexRoute
@@ -204,7 +172,6 @@ export interface FileRoutesByFullPath {
   '/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
   '/gateway/': typeof appGatewayIndexRoute
   '/observability/': typeof appObservabilityIndexRoute
-  '/settings/': typeof appSettingsIndexRoute
   '/gateway/guardrails': typeof appGatewayGatewayGuardrailsRoute
   '/gateway/providers': typeof appGatewayGatewayProvidersRoute
   '/gateway/usage': typeof appGatewayGatewayUsageRoute
@@ -212,8 +179,6 @@ export interface FileRoutesByFullPath {
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
-  '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
-  '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/datasets/$id/': typeof appDatasetsIdIndexRoute
   '/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
   '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
@@ -226,7 +191,6 @@ export interface FileRoutesByTo {
   '/': typeof appIndexRoute
   '/gateway': typeof appGatewayIndexRoute
   '/observability': typeof appObservabilityIndexRoute
-  '/settings': typeof appSettingsIndexRoute
   '/gateway/guardrails': typeof appGatewayGatewayGuardrailsRoute
   '/gateway/providers': typeof appGatewayGatewayProvidersRoute
   '/gateway/usage': typeof appGatewayGatewayUsageRoute
@@ -234,8 +198,6 @@ export interface FileRoutesByTo {
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
-  '/settings/user-profile': typeof appSettingsSettingsUserProfileRoute
-  '/settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/datasets/$id': typeof appDatasetsIdIndexRoute
   '/playgrounds/$id': typeof appPlaygroundsIdIndexRoute
   '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
@@ -247,7 +209,6 @@ export interface FileRoutesById {
   '/(app)': typeof appRouteRouteWithChildren
   '/(app)/gateway': typeof appGatewayRouteRouteWithChildren
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
-  '/(app)/settings': typeof appSettingsRouteRouteWithChildren
   '/(app)/datasets': typeof appDatasetsRouteWithChildren
   '/(app)/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/(app)/': typeof appIndexRoute
@@ -255,10 +216,8 @@ export interface FileRoutesById {
   '/(app)/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
   '/(app)/gateway/_gateway': typeof appGatewayGatewayRouteWithChildren
   '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
-  '/(app)/settings/_settings': typeof appSettingsSettingsRouteWithChildren
   '/(app)/gateway/': typeof appGatewayIndexRoute
   '/(app)/observability/': typeof appObservabilityIndexRoute
-  '/(app)/settings/': typeof appSettingsIndexRoute
   '/(app)/gateway/_gateway/guardrails': typeof appGatewayGatewayGuardrailsRoute
   '/(app)/gateway/_gateway/providers': typeof appGatewayGatewayProvidersRoute
   '/(app)/gateway/_gateway/usage': typeof appGatewayGatewayUsageRoute
@@ -266,8 +225,6 @@ export interface FileRoutesById {
   '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/(app)/observability/_observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
-  '/(app)/settings/_settings/user-profile': typeof appSettingsSettingsUserProfileRoute
-  '/(app)/settings/_settings/workspace-general': typeof appSettingsSettingsWorkspaceGeneralRoute
   '/(app)/datasets/$id/': typeof appDatasetsIdIndexRoute
   '/(app)/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
   '/(app)/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
@@ -279,7 +236,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/gateway'
     | '/observability'
-    | '/settings'
     | '/datasets'
     | '/playgrounds'
     | '/'
@@ -287,7 +243,6 @@ export interface FileRouteTypes {
     | '/playgrounds/$id'
     | '/gateway/'
     | '/observability/'
-    | '/settings/'
     | '/gateway/guardrails'
     | '/gateway/providers'
     | '/gateway/usage'
@@ -295,8 +250,6 @@ export interface FileRouteTypes {
     | '/observability/overview'
     | '/observability/requests'
     | '/observability/traces'
-    | '/settings/user-profile'
-    | '/settings/workspace-general'
     | '/datasets/$id/'
     | '/playgrounds/$id/'
     | '/datasets/$id/records/$recordId'
@@ -309,7 +262,6 @@ export interface FileRouteTypes {
     | '/'
     | '/gateway'
     | '/observability'
-    | '/settings'
     | '/gateway/guardrails'
     | '/gateway/providers'
     | '/gateway/usage'
@@ -317,8 +269,6 @@ export interface FileRouteTypes {
     | '/observability/overview'
     | '/observability/requests'
     | '/observability/traces'
-    | '/settings/user-profile'
-    | '/settings/workspace-general'
     | '/datasets/$id'
     | '/playgrounds/$id'
     | '/datasets/$id/records/$recordId'
@@ -329,7 +279,6 @@ export interface FileRouteTypes {
     | '/(app)'
     | '/(app)/gateway'
     | '/(app)/observability'
-    | '/(app)/settings'
     | '/(app)/datasets'
     | '/(app)/playgrounds'
     | '/(app)/'
@@ -337,10 +286,8 @@ export interface FileRouteTypes {
     | '/(app)/playgrounds/$id'
     | '/(app)/gateway/_gateway'
     | '/(app)/observability/_observability'
-    | '/(app)/settings/_settings'
     | '/(app)/gateway/'
     | '/(app)/observability/'
-    | '/(app)/settings/'
     | '/(app)/gateway/_gateway/guardrails'
     | '/(app)/gateway/_gateway/providers'
     | '/(app)/gateway/_gateway/usage'
@@ -348,8 +295,6 @@ export interface FileRouteTypes {
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
     | '/(app)/observability/_observability/traces'
-    | '/(app)/settings/_settings/user-profile'
-    | '/(app)/settings/_settings/workspace-general'
     | '/(app)/datasets/$id/'
     | '/(app)/playgrounds/$id/'
     | '/(app)/datasets/$id/records/$recordId'
@@ -391,13 +336,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDatasetsRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/settings': {
-      id: '/(app)/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof appSettingsRouteRouteImport
-      parentRoute: typeof appRouteRoute
-    }
     '/(app)/observability': {
       id: '/(app)/observability'
       path: '/observability'
@@ -412,13 +350,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appGatewayRouteRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/settings/': {
-      id: '/(app)/settings/'
-      path: '/'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof appSettingsIndexRouteImport
-      parentRoute: typeof appSettingsRouteRoute
-    }
     '/(app)/observability/': {
       id: '/(app)/observability/'
       path: '/'
@@ -432,13 +363,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/gateway/'
       preLoaderRoute: typeof appGatewayIndexRouteImport
       parentRoute: typeof appGatewayRouteRoute
-    }
-    '/(app)/settings/_settings': {
-      id: '/(app)/settings/_settings'
-      path: ''
-      fullPath: '/settings'
-      preLoaderRoute: typeof appSettingsSettingsRouteImport
-      parentRoute: typeof appSettingsRouteRoute
     }
     '/(app)/observability/_observability': {
       id: '/(app)/observability/_observability'
@@ -481,20 +405,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/datasets/$id/'
       preLoaderRoute: typeof appDatasetsIdIndexRouteImport
       parentRoute: typeof appDatasetsIdRouteRoute
-    }
-    '/(app)/settings/_settings/workspace-general': {
-      id: '/(app)/settings/_settings/workspace-general'
-      path: '/workspace-general'
-      fullPath: '/settings/workspace-general'
-      preLoaderRoute: typeof appSettingsSettingsWorkspaceGeneralRouteImport
-      parentRoute: typeof appSettingsSettingsRoute
-    }
-    '/(app)/settings/_settings/user-profile': {
-      id: '/(app)/settings/_settings/user-profile'
-      path: '/user-profile'
-      fullPath: '/settings/user-profile'
-      preLoaderRoute: typeof appSettingsSettingsUserProfileRouteImport
-      parentRoute: typeof appSettingsSettingsRoute
     }
     '/(app)/observability/_observability/traces': {
       id: '/(app)/observability/_observability/traces'
@@ -653,33 +563,6 @@ const appObservabilityRouteRouteWithChildren =
     appObservabilityRouteRouteChildren,
   )
 
-interface appSettingsSettingsRouteChildren {
-  appSettingsSettingsUserProfileRoute: typeof appSettingsSettingsUserProfileRoute
-  appSettingsSettingsWorkspaceGeneralRoute: typeof appSettingsSettingsWorkspaceGeneralRoute
-}
-
-const appSettingsSettingsRouteChildren: appSettingsSettingsRouteChildren = {
-  appSettingsSettingsUserProfileRoute: appSettingsSettingsUserProfileRoute,
-  appSettingsSettingsWorkspaceGeneralRoute:
-    appSettingsSettingsWorkspaceGeneralRoute,
-}
-
-const appSettingsSettingsRouteWithChildren =
-  appSettingsSettingsRoute._addFileChildren(appSettingsSettingsRouteChildren)
-
-interface appSettingsRouteRouteChildren {
-  appSettingsSettingsRoute: typeof appSettingsSettingsRouteWithChildren
-  appSettingsIndexRoute: typeof appSettingsIndexRoute
-}
-
-const appSettingsRouteRouteChildren: appSettingsRouteRouteChildren = {
-  appSettingsSettingsRoute: appSettingsSettingsRouteWithChildren,
-  appSettingsIndexRoute: appSettingsIndexRoute,
-}
-
-const appSettingsRouteRouteWithChildren =
-  appSettingsRouteRoute._addFileChildren(appSettingsRouteRouteChildren)
-
 interface appDatasetsIdRouteRouteChildren {
   appDatasetsIdIndexRoute: typeof appDatasetsIdIndexRoute
   appDatasetsIdRecordsRecordIdRoute: typeof appDatasetsIdRecordsRecordIdRoute
@@ -735,7 +618,6 @@ const appPlaygroundsRouteWithChildren = appPlaygroundsRoute._addFileChildren(
 interface appRouteRouteChildren {
   appGatewayRouteRoute: typeof appGatewayRouteRouteWithChildren
   appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
-  appSettingsRouteRoute: typeof appSettingsRouteRouteWithChildren
   appDatasetsRoute: typeof appDatasetsRouteWithChildren
   appPlaygroundsRoute: typeof appPlaygroundsRouteWithChildren
   appIndexRoute: typeof appIndexRoute
@@ -744,7 +626,6 @@ interface appRouteRouteChildren {
 const appRouteRouteChildren: appRouteRouteChildren = {
   appGatewayRouteRoute: appGatewayRouteRouteWithChildren,
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
-  appSettingsRouteRoute: appSettingsRouteRouteWithChildren,
   appDatasetsRoute: appDatasetsRouteWithChildren,
   appPlaygroundsRoute: appPlaygroundsRouteWithChildren,
   appIndexRoute: appIndexRoute,
