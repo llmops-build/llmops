@@ -4,3 +4,4 @@ node_modules
 .sessions
 _ralph
 .mcp.json
+.context
