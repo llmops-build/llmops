@@ -1,12 +1,7 @@
 import type { MiddlewareHandler } from 'hono';
+import { SupportedProviders, logger } from '@llmops/core';
 import {
-  SupportedProviders,
-  logger,
-  type ManifestGuardrail,
-} from '@llmops/core';
-import { getManifestService } from '@server/services/manifest';
-import {
-  getProviderCredentialsWithFallback,
+  getInlineProviderCredentials,
   type ProviderCredentials,
 } from '@server/services/credentialsCache';
 
@@ -64,16 +59,6 @@ function getPortkeyProviderId(providerId: string): string {
  * Portkey Gateway Config format
  * @see packages/gateway/src/middlewares/requestValidator/schema/config.ts
  */
-/**
- * Gateway guardrail format
- * Each guardrail object has the function ID as key with parameters
- */
-type GatewayGuardrail = {
-  deny?: boolean;
-  on_fail?: string;
-  [functionId: string]: unknown;
-};
-
 interface PortkeyConfig {
   provider: string;
   api_key?: string;
@@ -122,37 +107,6 @@ interface PortkeyConfig {
   forward_headers?: string[];
   weight?: number;
   on_status_codes?: number[];
-  // Guardrails
-  default_input_guardrails?: GatewayGuardrail[];
-  default_output_guardrails?: GatewayGuardrail[];
-}
-
-/**
- * Converts manifest guardrails to gateway format.
- * The gateway expects guardrails as objects with function ID as key.
- *
- * @example
- * Manifest format: { functionId: 'regexMatch', parameters: { rule: '.*' }, onFail: 'block' }
- * Gateway format: { deny: true, regexMatch: { id: 'default.regexMatch', rule: '.*' } }
- */
-function convertGuardrailsToGatewayFormat(
-  guardrails: ManifestGuardrail[],
-): GatewayGuardrail[] {
-  return guardrails.map((guardrail) => {
-    const gatewayGuardrail: GatewayGuardrail = {
-      // deny: true means block the request if guardrail fails
-      deny: guardrail.onFail === 'block',
-    };
-
-    // Add the function with its parameters
-    // The gateway expects the function ID as key with parameters as value
-    gatewayGuardrail[guardrail.functionId] = {
-      id: `${guardrail.pluginId}.${guardrail.functionId}`,
-      ...guardrail.parameters,
-    };
-
-    return gatewayGuardrail;
-  });
 }
 
 /**
@@ -170,7 +124,6 @@ const PROVIDER_MAP: Record<string, string> = {
   cohere: 'cohere',
   'together-ai': 'together-ai',
   deepseek: 'deepseek',
-  // Add more mappings as needed
 };
 
 /**
@@ -186,25 +139,18 @@ function buildPortkeyConfig(
 
   if (!credentials) return portkeyConfig;
 
-  // Add API key if present
   if (credentials.apiKey) {
     portkeyConfig.api_key = credentials.apiKey;
   }
-
-  // Add custom host if configured
   if (credentials.customHost) {
     portkeyConfig.custom_host = credentials.customHost;
   }
-
-  // OpenAI specific
   if (credentials.openaiOrganization) {
     portkeyConfig.openai_organization = credentials.openaiOrganization;
   }
   if (credentials.openaiProject) {
     portkeyConfig.openai_project = credentials.openaiProject;
   }
-
-  // AWS Bedrock/SageMaker
   if (credentials.awsAccessKeyId) {
     portkeyConfig.aws_access_key_id = credentials.awsAccessKeyId;
   }
@@ -217,8 +163,6 @@ function buildPortkeyConfig(
   if (credentials.awsRegion) {
     portkeyConfig.aws_region = credentials.awsRegion;
   }
-
-  // Azure OpenAI
   if (credentials.resourceName) {
     portkeyConfig.azure_resource_name = credentials.resourceName;
   }
@@ -260,8 +204,6 @@ function buildPortkeyConfig(
   if (credentials.azureApiVersion) {
     portkeyConfig.azure_api_version = credentials.azureApiVersion;
   }
-
-  // Google Vertex AI
   if (credentials.vertexProjectId) {
     portkeyConfig.vertex_project_id = credentials.vertexProjectId;
   }
@@ -278,8 +220,7 @@ function buildPortkeyConfig(
 
 /**
  * Handle direct provider requests with @provider-slug/model format.
- * This is used when no config header is provided and the model field
- * specifies a provider slug directly (e.g., @openai-prod/gpt-4.1-nano).
+ * Providers are resolved from inline config (code-configured).
  */
 async function handleDirectProviderRequest(
   c: Parameters<MiddlewareHandler>[0],
@@ -288,16 +229,21 @@ async function handleDirectProviderRequest(
   providerSlug: string,
   modelName: string,
 ) {
-  const db = c.var.db;
-  const kyselyDb = c.var.kyselyDb;
   const inlineProviders = c.var.inlineProviders;
 
-  // Look up provider credentials - inline config takes precedence over database
-  const result = await getProviderCredentialsWithFallback(
-    providerSlug,
-    inlineProviders,
-    db,
-  );
+  if (!inlineProviders) {
+    return c.json(
+      {
+        error: {
+          message: `No providers configured. Add providers to your llmops() config.`,
+          type: 'invalid_request_error',
+        },
+      },
+      400,
+    );
+  }
+
+  const result = getInlineProviderCredentials(providerSlug, inlineProviders);
 
   if (!result) {
     return c.json(
@@ -305,7 +251,7 @@ async function handleDirectProviderRequest(
         error: {
           message:
             `Provider config not found for slug: ${providerSlug}. ` +
-            `Configure it inline in your llmops config or add it to the database.`,
+            `Configure it in your llmops() config.`,
           type: 'invalid_request_error',
         },
       },
@@ -340,32 +286,6 @@ async function handleDirectProviderRequest(
   // Build Portkey config for the gateway
   const portkeyConfig = buildPortkeyConfig(portkeyProvider, credentials);
 
-  // Get guardrails from manifest (pre-loaded and cached)
-  // Always set both arrays (even if empty) - gateway expects arrays, not undefined
-  // Note: Guardrails require database, skip if running in inline-only mode
-  if (kyselyDb) {
-    try {
-      const manifestService = getManifestService(kyselyDb);
-      const manifest = await manifestService.getManifest();
-      const { guardrails } = manifest;
-
-      portkeyConfig.default_input_guardrails = convertGuardrailsToGatewayFormat(
-        guardrails.beforeRequestHook,
-      );
-      portkeyConfig.default_output_guardrails =
-        convertGuardrailsToGatewayFormat(guardrails.afterRequestHook);
-    } catch (error) {
-      logger.warn(`Failed to get guardrails from manifest: ${error}`);
-      // Set empty arrays as fallback - gateway expects arrays, not undefined
-      portkeyConfig.default_input_guardrails = [];
-      portkeyConfig.default_output_guardrails = [];
-    }
-  } else {
-    // No database - no manifest-based guardrails available
-    portkeyConfig.default_input_guardrails = [];
-    portkeyConfig.default_output_guardrails = [];
-  }
-
   // Update the body with the extracted model name (without the @slug/ prefix)
   const updatedBody: Record<string, unknown> = {
     ...originalBody,
@@ -373,7 +293,6 @@ async function handleDirectProviderRequest(
   };
 
   // Remove 'input_variables' from the final body as it's not part of OpenAI API spec
-  // This field is used for nunjucks template rendering only
   delete updatedBody.input_variables;
 
   // Clone headers from the original request
@@ -381,21 +300,6 @@ async function handleDirectProviderRequest(
 
   // Set the gateway config header with provider credentials
   newHeaders.set('x-llmops-config', JSON.stringify(portkeyConfig));
-
-  // Set guardrails headers - gateway reads these to apply guardrails
-  // (gateway overwrites config JSON guardrails with these header values)
-  if (portkeyConfig.default_input_guardrails) {
-    newHeaders.set(
-      'x-portkey-default-input-guardrails',
-      JSON.stringify(portkeyConfig.default_input_guardrails),
-    );
-  }
-  if (portkeyConfig.default_output_guardrails) {
-    newHeaders.set(
-      'x-portkey-default-output-guardrails',
-      JSON.stringify(portkeyConfig.default_output_guardrails),
-    );
-  }
 
   // Create a completely new Request object with the updated body
   const newRequest = new Request(c.req.raw.url, {
@@ -435,26 +339,17 @@ async function handleDirectProviderRequest(
 /**
  * Middleware that adapts LLMOps config to Portkey Gateway format.
  *
- * Flow:
- * 1. If no configId, check for @provider-slug/model format in request body
- * 2. If configId provided, uses manifest to resolve targeting rules and variant
- * 3. Fetches provider credentials from cache
- * 4. Translates to Portkey config format
- * 5. Sets x-llmops-config header for gateway consumption
- * 6. Modifies request body to merge variant config settings
+ * Checks for @provider-slug/model format in request body and resolves
+ * provider credentials from inline config.
  */
 export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
-    const configId = c.get('configId');
-
     const method = c.req.method;
     const contentType = c.req.header('content-type')?.split(';')[0];
     const isJsonPostRequest =
       method === 'POST' && contentType === 'application/json';
 
-    // If no configId, check for @provider-slug/model format in any JSON POST request
-    // This supports both /chat/completions and /responses endpoints (used by OpenAI Agents SDK)
-    if (!configId && isJsonPostRequest) {
+    if (isJsonPostRequest) {
       try {
         const body = await c.req.json();
         const model = body.model as string | undefined;
@@ -462,7 +357,6 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
         if (model) {
           const parsed = parseProviderSlugModel(model);
           if (parsed) {
-            // Direct provider request with @provider-slug/model format
             return handleDirectProviderRequest(
               c,
               next,
@@ -475,28 +369,14 @@ export const createGatewayAdapterMiddleware = (): MiddlewareHandler => {
       } catch {
         // If body parsing fails, continue with normal flow
       }
-
-      // No config and no @provider-slug/model format
-      return c.json(
-        {
-          error: {
-            message:
-              'Config ID is required. Either provide x-llmops-config header or use @provider-slug/model format in the model field.',
-            type: 'invalid_request_error',
-          },
-        },
-        400,
-      );
     }
 
-    // Config-based routing has been removed.
-    // Use @provider-slug/model format in the model field instead.
+    // No @provider-slug/model format found
     return c.json(
       {
         error: {
           message:
-            'Config-based routing is no longer supported. ' +
-            'Use @provider-slug/model format in the model field instead.',
+            'Use @provider-slug/model format in the model field. Example: @openai/gpt-4.1-nano',
           type: 'invalid_request_error',
         },
       },

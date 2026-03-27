@@ -95,7 +95,8 @@ export const playgroundColumnSchema = z.object({
   id: z.string().uuid(), // Client-generated for React keys & result mapping
   name: z.string(),
   position: z.number().int().min(0),
-  providerConfigId: z.union([z.string().uuid(), z.null()]), // FK to provider_configs - get slug for gateway calls (null when no model selected)
+  providerConfigId: z.union([z.string().uuid(), z.null()]).optional(), // Deprecated: was FK to provider_configs
+  providerSlug: z.string().nullable().optional(), // Provider slug for @slug/model gateway calls
   modelName: z.string(),
   messages: z.array(
     z.object({
@@ -108,10 +109,6 @@ export const playgroundColumnSchema = z.object({
   topP: z.number().nullable().optional(),
   frequencyPenalty: z.number().nullable().optional(),
   presencePenalty: z.number().nullable().optional(),
-  // Source tracking - links column back to the original prompt config/variant
-  configId: z.string().uuid().nullable().optional(), // FK to configs
-  variantId: z.string().uuid().nullable().optional(), // FK to variants
-  variantVersionId: z.string().uuid().nullable().optional(), // FK to variant_versions
 });
 
 // Playgrounds table schema - stores playground configurations
@@ -650,12 +647,9 @@ export interface SpanEventsTable {
  */
 export interface Database {
   workspace_settings: WorkspaceSettingsTable;
-  provider_configs: ProviderConfigsTable;
   playgrounds: PlaygroundsTable;
   playground_runs: PlaygroundRunsTable;
   playground_results: PlaygroundResultsTable;
-  guardrail_configs: GuardrailConfigsTable;
-  provider_guardrail_overrides: ProviderGuardrailOverridesTable;
   datasets: DatasetsTable;
   dataset_versions: DatasetVersionsTable;
   dataset_records: DatasetRecordsTable;
@@ -724,20 +718,6 @@ export const SCHEMA_METADATA = {
         name: { type: 'text', nullable: true },
         setupComplete: { type: 'boolean', default: false },
         superAdminId: { type: 'text', nullable: true },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
-    provider_configs: {
-      order: 9,
-      schema: providerConfigsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        providerId: { type: 'text' },
-        slug: { type: 'text', nullable: true },
-        name: { type: 'text', nullable: true },
-        config: { type: 'jsonb', default: '{}' },
-        enabled: { type: 'boolean', default: true },
         createdAt: { type: 'timestamp', default: 'now()' },
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
@@ -814,23 +794,6 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
     },
-    guardrail_configs: {
-      order: 14,
-      schema: guardrailConfigsSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        name: { type: 'text' },
-        pluginId: { type: 'text' },
-        functionId: { type: 'text' },
-        hookType: { type: 'text' },
-        parameters: { type: 'jsonb', default: '{}' },
-        enabled: { type: 'boolean', default: true },
-        priority: { type: 'integer', default: 0 },
-        onFail: { type: 'text', default: 'block' },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-    },
     datasets: {
       order: 10,
       schema: datasetsSchema,
@@ -897,28 +860,6 @@ export const SCHEMA_METADATA = {
         updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
       },
       uniqueConstraints: [{ columns: ['datasetVersionId', 'datasetRecordId'] }],
-    },
-    provider_guardrail_overrides: {
-      order: 15,
-      schema: providerGuardrailOverridesSchema,
-      fields: {
-        id: { type: 'uuid', primaryKey: true },
-        providerConfigId: {
-          type: 'uuid',
-          references: { table: 'provider_configs', column: 'id' },
-        },
-        guardrailConfigId: {
-          type: 'uuid',
-          references: { table: 'guardrail_configs', column: 'id' },
-        },
-        enabled: { type: 'boolean', default: true },
-        parameters: { type: 'jsonb', nullable: true },
-        createdAt: { type: 'timestamp', default: 'now()' },
-        updatedAt: { type: 'timestamp', default: 'now()', onUpdate: 'now()' },
-      },
-      uniqueConstraints: [
-        { columns: ['providerConfigId', 'guardrailConfigId'] },
-      ],
     },
     llm_requests: {
       order: 17,
@@ -1050,21 +991,11 @@ export const SCHEMA_METADATA = {
  * Export all Zod schemas for runtime validation
  */
 export const schemas = {
-  configs: configsSchema,
-  variants: variantsSchema,
-  variant_versions: variantVersionsSchema,
-  environments: environmentsSchema,
-  environment_secrets: environmentSecretsSchema,
-  config_variants: configVariantsSchema,
-  targeting_rules: targetingRulesSchema,
   workspace_settings: workspaceSettingsSchema,
-  provider_configs: providerConfigsSchema,
   playgrounds: playgroundsSchema,
   playground_columns: playgroundColumnSchema,
   playground_runs: playgroundRunsSchema,
   playground_results: playgroundResultsSchema,
-  guardrail_configs: guardrailConfigsSchema,
-  provider_guardrail_overrides: providerGuardrailOverridesSchema,
   datasets: datasetsSchema,
   dataset_versions: datasetVersionsSchema,
   dataset_records: datasetRecordsSchema,

@@ -216,24 +216,6 @@ const app = new Hono()
         columnMap.set(col.id, col);
       }
 
-      // Get provider configs for all columns
-      const providerConfigIds = [
-        ...new Set(
-          columns
-            .map((c) => c.providerConfigId)
-            .filter((id): id is string => id !== null),
-        ),
-      ];
-      const providerConfigs = new Map<string, { slug: string | null }>();
-      for (const configId of providerConfigIds) {
-        const config = await db.getProviderConfigById({
-          id: configId,
-        });
-        if (config) {
-          providerConfigs.set(configId, { slug: config.slug });
-        }
-      }
-
       // Create OpenAI client pointing to our gateway
       // Derive base URL from request origin, including basePath
       // Handle reverse proxy scenarios by checking forwarded headers
@@ -299,26 +281,13 @@ const app = new Hono()
             return;
           }
 
-          if (!column.providerConfigId) {
+          if (!column.providerSlug) {
             failedCount++;
             await sendEvent({
               type: 'cell_failed',
               data: {
                 resultId: result.id,
-                error: 'No provider configured for this column',
-              },
-            });
-            return;
-          }
-
-          const providerConfig = providerConfigs.get(column.providerConfigId);
-          if (!providerConfig || !providerConfig.slug) {
-            failedCount++;
-            await sendEvent({
-              type: 'cell_failed',
-              data: {
-                resultId: result.id,
-                error: 'Provider config not found or missing slug',
+                error: 'No provider slug configured for this column',
               },
             });
             return;
@@ -354,7 +323,7 @@ const app = new Hono()
             }));
 
             // Construct model string with provider slug
-            const model = `@${providerConfig.slug}/${column.modelName}`;
+            const model = `@${column.providerSlug}/${column.modelName}`;
 
             // Make streaming call to gateway via OpenAI SDK
             const response = await openai.chat.completions.create({

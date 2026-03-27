@@ -13,7 +13,6 @@ import {
   Database,
   Monitor,
   Moon,
-  Network,
   Play,
   Sun,
   Telescope,
@@ -109,12 +108,6 @@ export function AppSidebar() {
         >
           Workspace
         </span>
-        <SidebarItem asChild>
-          <Link to="/gateway/usage">
-            <Icon icon={Network} />
-            Gateway
-          </Link>
-        </SidebarItem>
         <SidebarItem asChild>
           <Link to="/playgrounds">
             <Icon icon={Play} />

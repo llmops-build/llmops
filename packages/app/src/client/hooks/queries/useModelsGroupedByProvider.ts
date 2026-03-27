@@ -1,37 +1,13 @@
-import { hc } from '@client/lib/hc';
 import { useQuery } from '@tanstack/react-query';
 
 export type Model = {
-  label: string;
-  value: string;
   id: string;
-  name: string;
-  family?: string;
-  attachment: boolean;
-  reasoning: boolean;
-  tool_call: boolean;
+  value: string;
+  label: string;
   temperature?: boolean;
-  knowledge?: string;
-  release_date: string;
-  last_updated: string;
-  modalities: {
-    input: string[];
-    output: string[];
-  };
-  open_weights: boolean;
-  cost: {
-    input: number;
-    output: number;
-    reasoning?: number;
-    cache_read?: number;
-    cache_write?: number;
-    input_audio?: number;
-    output_audio?: number;
-  };
-  limit: {
-    context: number;
+  limit?: {
     input?: number;
-    output: number;
+    output?: number;
   };
 };
 
@@ -41,20 +17,17 @@ export type ProviderGroup = {
   slug: string | null;
   label: string;
   logo: string | null;
-  models: Array<Model>;
+  models: Model[];
 };
 
-export const useModelsGroupedByProvider = () => {
-  return useQuery({
-    queryKey: ['models-grouped'],
-    queryFn: async () => {
-      const response = await hc.v1.providers.models.grouped.$get();
-      const json = await response.json();
-      if ('data' in json && json.data) {
-        return json.data as ProviderGroup[];
-      }
-      return [] as ProviderGroup[];
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+/**
+ * Stub: providers are now configured in code via llmops().
+ * Model selection in playgrounds will be updated to work with inline providers.
+ */
+export function useModelsGroupedByProvider() {
+  return useQuery<ProviderGroup[]>({
+    queryKey: ['models-grouped-by-provider'],
+    queryFn: async () => [],
+    staleTime: Number.POSITIVE_INFINITY,
   });
-};
+}

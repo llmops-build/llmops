@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
-import { requestValidator } from './requestValidator';
 import { createRequestGuardMiddleware } from './requestGuard';
 import { createGatewayAdapterMiddleware } from './gatewayAdapter';
 import { createCostTrackingMiddleware } from '@server/middlewares/costTracking';
@@ -16,13 +15,11 @@ app
   .get('/health', async (c) => {
     return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
   })
-  // LLMOps request validation (x-llmops-config, Authorization)
-  .use('*', requestValidator)
-  // Request guard (extracts envSec from apiKey, CORS handling)
+  // Request guard (CORS handling)
   .use('*', createRequestGuardMiddleware())
   // Cost tracking middleware (captures usage and costs from responses)
   .use('*', createCostTrackingMiddleware())
-  // Adapter: translates LLMOps config to Portkey gateway format
+  // Adapter: translates @provider/model to Portkey gateway format
   .use('*', createGatewayAdapterMiddleware())
   // Mount the gateway at root - gateway routes already have /v1 prefix
   .route('/', gateway)

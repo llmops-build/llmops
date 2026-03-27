@@ -20,12 +20,10 @@ import { Link } from '@tanstack/react-router';
 import { gridElement, workingArea } from './-components/area.css';
 import clsx from 'clsx';
 import * as styles from './-components/overview.css';
-import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
-import { OnboardingFlow } from './-components/onboarding-flow';
 import { QuickStats } from './-components/quick-stats';
 import { InsightsSection } from './-components/insights-section';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/(app)/')({
   component: RouteComponent,
@@ -40,36 +38,7 @@ export const Route = createFileRoute('/(app)/')({
 function RouteComponent() {
   const { toggleSidebar } = useSidebarWidth();
   const matches = useMatches();
-  const { data: providerConfigs, isLoading: providersLoading } =
-    useProviderConfigs();
   const [copied, setCopied] = useState(false);
-  // Track if we're in onboarding mode - null means we haven't determined yet
-  const [isInOnboarding, setIsInOnboarding] = useState<boolean | null>(null);
-  const initialCheckDone = useRef(false);
-
-  const hasProviders = providerConfigs && providerConfigs.length > 0;
-  const hasNoProviders = !providerConfigs || providerConfigs.length === 0;
-  const isLoading = providersLoading;
-
-  // Determine onboarding state only once when data first loads
-  useEffect(() => {
-    if (!isLoading && !initialCheckDone.current) {
-      initialCheckDone.current = true;
-      // Start onboarding if no providers exist
-      if (hasNoProviders) {
-        setIsInOnboarding(true);
-      } else {
-        setIsInOnboarding(false);
-      }
-    }
-  }, [isLoading, hasNoProviders]);
-
-  const handleOnboardingComplete = () => {
-    setIsInOnboarding(false);
-  };
-
-  // Show onboarding when explicitly in onboarding mode
-  const showOnboarding = isInOnboarding === true;
 
   const baseUrl =
     typeof window !== 'undefined'
@@ -107,43 +76,6 @@ function RouteComponent() {
       };
     });
 
-  // Still determining onboarding state - show nothing
-  if (isInOnboarding === null) {
-    return null;
-  }
-
-  // Show onboarding flow when no providers exist
-  if (showOnboarding) {
-    return (
-      <>
-        <Header className={headerStyle}>
-          <div className={headerGroup}>
-            <Button
-              onClick={() => {
-                toggleSidebar();
-              }}
-              size="icon"
-              variant="ghost"
-              scheme="gray"
-            >
-              <Icon icon={Columns2} />
-            </Button>
-            <Icon icon={ChevronRight} className={chevronStyle} />
-            <Breadcrumbs items={breadcrumbItems} />
-          </div>
-        </Header>
-        <div className={gridElement}>
-          <div className={clsx(workingArea, styles.overviewContainer)}>
-            <OnboardingFlow
-              hasProviders={hasProviders}
-              onComplete={handleOnboardingComplete}
-            />
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
       <Header className={headerStyle}>
@@ -169,8 +101,7 @@ function RouteComponent() {
             <div className={styles.heroSection}>
               <h1 className={styles.heroTitle}>Mission Control</h1>
               <p className={styles.heroSubtitle}>
-                Route requests to any provider. Manage prompts. Track
-                everything.
+                Route requests to any provider. Track everything.
               </p>
               <div className={styles.baseUrlSection}>
                 <span className={styles.baseUrlLabel}>Base URL</span>
@@ -195,10 +126,6 @@ function RouteComponent() {
 
             {/* Quick Links */}
             <div className={styles.quickLinksSection}>
-              <Link to="/gateway/usage" className={styles.quickLink}>
-                <span className={styles.quickLinkText}>API Usage Guide</span>
-                <ArrowRight size={16} className={styles.quickLinkArrow} />
-              </Link>
               <Link to="/observability/overview" className={styles.quickLink}>
                 <span className={styles.quickLinkText}>View Analytics</span>
                 <ArrowRight size={16} className={styles.quickLinkArrow} />
