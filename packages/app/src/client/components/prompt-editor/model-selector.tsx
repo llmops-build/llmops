@@ -14,7 +14,6 @@ import {
   Search,
   SlidersHorizontal,
 } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import * as styles from './model-selector.css';
 import {
   useModelsGroupedByProvider,
@@ -378,40 +377,6 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
                       selectedModel={selectedModel}
                       onSelect={handleValueChange}
                     />
-                    <Link
-                      to="/gateway/providers"
-                      className={styles.connectProviderLink}
-                      onMouseEnter={(
-                        e: React.MouseEvent<HTMLAnchorElement>,
-                      ) => {
-                        const target = e.currentTarget;
-                        // Click the active/open menu trigger to close it
-                        const activeButton = menubarRef.current?.querySelector(
-                          'button[data-popup-open="true"], button[aria-expanded="true"]',
-                        ) as HTMLElement | null;
-                        activeButton?.click();
-                        target.focus();
-                      }}
-                    >
-                      <div className={styles.providerLogoStack}>
-                        <img
-                          src="https://models.dev/logos/openai.svg"
-                          alt=""
-                          className={styles.stackedLogo}
-                        />
-                        <img
-                          src="https://models.dev/logos/anthropic.svg"
-                          alt=""
-                          className={styles.stackedLogo}
-                        />
-                        <img
-                          src="https://models.dev/logos/google.svg"
-                          alt=""
-                          className={styles.stackedLogo}
-                        />
-                      </div>
-                      Connect Provider
-                    </Link>
                   </BaseMenubar>
                 ) : (
                   <>
@@ -450,32 +415,6 @@ const ModelSelector = ({ control, onChange }: ModelSelectorProps) => {
                         </BaseCombobox.Group>
                       ))}
                     </BaseCombobox.List>
-                    <Link
-                      to="/gateway/providers"
-                      className={styles.connectProviderLink}
-                      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) =>
-                        e.currentTarget.focus()
-                      }
-                    >
-                      <div className={styles.providerLogoStack}>
-                        <img
-                          src="https://models.dev/logos/openai.svg"
-                          alt=""
-                          className={styles.stackedLogo}
-                        />
-                        <img
-                          src="https://models.dev/logos/anthropic.svg"
-                          alt=""
-                          className={styles.stackedLogo}
-                        />
-                        <img
-                          src="https://models.dev/logos/google.svg"
-                          alt=""
-                          className={styles.stackedLogo}
-                        />
-                      </div>
-                      Connect Provider
-                    </Link>
                   </>
                 )}
               </div>

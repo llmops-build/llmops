@@ -8,244 +8,187 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as appRouteRouteImport } from './routes/(app)/route';
-import { Route as appIndexRouteImport } from './routes/(app)/index';
-import { Route as appPlaygroundsRouteImport } from './routes/(app)/playgrounds';
-import { Route as appDatasetsRouteImport } from './routes/(app)/datasets';
-import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route';
-import { Route as appGatewayRouteRouteImport } from './routes/(app)/gateway/route';
-import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index';
-import { Route as appGatewayIndexRouteImport } from './routes/(app)/gateway/index';
-import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability';
-import { Route as appGatewayGatewayRouteImport } from './routes/(app)/gateway/_gateway';
-import { Route as appPlaygroundsIdRouteRouteImport } from './routes/(app)/playgrounds/$id/route';
-import { Route as appDatasetsIdRouteRouteImport } from './routes/(app)/datasets/$id/route';
-import { Route as appPlaygroundsIdIndexRouteImport } from './routes/(app)/playgrounds/$id/index';
-import { Route as appDatasetsIdIndexRouteImport } from './routes/(app)/datasets/$id/index';
-import { Route as appObservabilityObservabilityTracesRouteImport } from './routes/(app)/observability/_observability/traces';
-import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests';
-import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview';
-import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs';
-import { Route as appGatewayGatewayUsageRouteImport } from './routes/(app)/gateway/_gateway/usage';
-import { Route as appGatewayGatewayProvidersRouteImport } from './routes/(app)/gateway/_gateway/providers';
-import { Route as appGatewayGatewayGuardrailsRouteImport } from './routes/(app)/gateway/_gateway/guardrails';
-import { Route as appPlaygroundsIdRowRowIdRouteImport } from './routes/(app)/playgrounds/$id/row/$rowId';
-import { Route as appObservabilityObservabilityTracesTraceIdRouteImport } from './routes/(app)/observability/_observability/traces/$traceId';
-import { Route as appDatasetsIdRecordsRecordIdRouteImport } from './routes/(app)/datasets/$id/records/$recordId';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
+import { Route as appIndexRouteImport } from './routes/(app)/index'
+import { Route as appPlaygroundsRouteImport } from './routes/(app)/playgrounds'
+import { Route as appDatasetsRouteImport } from './routes/(app)/datasets'
+import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
+import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index'
+import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
+import { Route as appPlaygroundsIdRouteRouteImport } from './routes/(app)/playgrounds/$id/route'
+import { Route as appDatasetsIdRouteRouteImport } from './routes/(app)/datasets/$id/route'
+import { Route as appPlaygroundsIdIndexRouteImport } from './routes/(app)/playgrounds/$id/index'
+import { Route as appDatasetsIdIndexRouteImport } from './routes/(app)/datasets/$id/index'
+import { Route as appObservabilityObservabilityTracesRouteImport } from './routes/(app)/observability/_observability/traces'
+import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
+import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
+import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
+import { Route as appPlaygroundsIdRowRowIdRouteImport } from './routes/(app)/playgrounds/$id/row/$rowId'
+import { Route as appObservabilityObservabilityTracesTraceIdRouteImport } from './routes/(app)/observability/_observability/traces/$traceId'
+import { Route as appDatasetsIdRecordsRecordIdRouteImport } from './routes/(app)/datasets/$id/records/$recordId'
 
 const appRouteRoute = appRouteRouteImport.update({
   id: '/(app)',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const appIndexRoute = appIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appRouteRoute,
-} as any);
+} as any)
 const appPlaygroundsRoute = appPlaygroundsRouteImport.update({
   id: '/playgrounds',
   path: '/playgrounds',
   getParentRoute: () => appRouteRoute,
-} as any);
+} as any)
 const appDatasetsRoute = appDatasetsRouteImport.update({
   id: '/datasets',
   path: '/datasets',
   getParentRoute: () => appRouteRoute,
-} as any);
+} as any)
 const appObservabilityRouteRoute = appObservabilityRouteRouteImport.update({
   id: '/observability',
   path: '/observability',
   getParentRoute: () => appRouteRoute,
-} as any);
-const appGatewayRouteRoute = appGatewayRouteRouteImport.update({
-  id: '/gateway',
-  path: '/gateway',
-  getParentRoute: () => appRouteRoute,
-} as any);
+} as any)
 const appObservabilityIndexRoute = appObservabilityIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appObservabilityRouteRoute,
-} as any);
-const appGatewayIndexRoute = appGatewayIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => appGatewayRouteRoute,
-} as any);
+} as any)
 const appObservabilityObservabilityRoute =
   appObservabilityObservabilityRouteImport.update({
     id: '/_observability',
     getParentRoute: () => appObservabilityRouteRoute,
-  } as any);
-const appGatewayGatewayRoute = appGatewayGatewayRouteImport.update({
-  id: '/_gateway',
-  getParentRoute: () => appGatewayRouteRoute,
-} as any);
+  } as any)
 const appPlaygroundsIdRouteRoute = appPlaygroundsIdRouteRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => appPlaygroundsRoute,
-} as any);
+} as any)
 const appDatasetsIdRouteRoute = appDatasetsIdRouteRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => appDatasetsRoute,
-} as any);
+} as any)
 const appPlaygroundsIdIndexRoute = appPlaygroundsIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appPlaygroundsIdRouteRoute,
-} as any);
+} as any)
 const appDatasetsIdIndexRoute = appDatasetsIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => appDatasetsIdRouteRoute,
-} as any);
+} as any)
 const appObservabilityObservabilityTracesRoute =
   appObservabilityObservabilityTracesRouteImport.update({
     id: '/traces',
     path: '/traces',
     getParentRoute: () => appObservabilityObservabilityRoute,
-  } as any);
+  } as any)
 const appObservabilityObservabilityRequestsRoute =
   appObservabilityObservabilityRequestsRouteImport.update({
     id: '/requests',
     path: '/requests',
     getParentRoute: () => appObservabilityObservabilityRoute,
-  } as any);
+  } as any)
 const appObservabilityObservabilityOverviewRoute =
   appObservabilityObservabilityOverviewRouteImport.update({
     id: '/overview',
     path: '/overview',
     getParentRoute: () => appObservabilityObservabilityRoute,
-  } as any);
+  } as any)
 const appObservabilityObservabilityCostsRoute =
   appObservabilityObservabilityCostsRouteImport.update({
     id: '/costs',
     path: '/costs',
     getParentRoute: () => appObservabilityObservabilityRoute,
-  } as any);
-const appGatewayGatewayUsageRoute = appGatewayGatewayUsageRouteImport.update({
-  id: '/usage',
-  path: '/usage',
-  getParentRoute: () => appGatewayGatewayRoute,
-} as any);
-const appGatewayGatewayProvidersRoute =
-  appGatewayGatewayProvidersRouteImport.update({
-    id: '/providers',
-    path: '/providers',
-    getParentRoute: () => appGatewayGatewayRoute,
-  } as any);
-const appGatewayGatewayGuardrailsRoute =
-  appGatewayGatewayGuardrailsRouteImport.update({
-    id: '/guardrails',
-    path: '/guardrails',
-    getParentRoute: () => appGatewayGatewayRoute,
-  } as any);
+  } as any)
 const appPlaygroundsIdRowRowIdRoute =
   appPlaygroundsIdRowRowIdRouteImport.update({
     id: '/row/$rowId',
     path: '/row/$rowId',
     getParentRoute: () => appPlaygroundsIdRouteRoute,
-  } as any);
+  } as any)
 const appObservabilityObservabilityTracesTraceIdRoute =
   appObservabilityObservabilityTracesTraceIdRouteImport.update({
     id: '/$traceId',
     path: '/$traceId',
     getParentRoute: () => appObservabilityObservabilityTracesRoute,
-  } as any);
+  } as any)
 const appDatasetsIdRecordsRecordIdRoute =
   appDatasetsIdRecordsRecordIdRouteImport.update({
     id: '/records/$recordId',
     path: '/records/$recordId',
     getParentRoute: () => appDatasetsIdRouteRoute,
-  } as any);
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/gateway': typeof appGatewayGatewayRouteWithChildren;
-  '/observability': typeof appObservabilityObservabilityRouteWithChildren;
-  '/datasets': typeof appDatasetsRouteWithChildren;
-  '/playgrounds': typeof appPlaygroundsRouteWithChildren;
-  '/': typeof appIndexRoute;
-  '/datasets/$id': typeof appDatasetsIdRouteRouteWithChildren;
-  '/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren;
-  '/gateway/': typeof appGatewayIndexRoute;
-  '/observability/': typeof appObservabilityIndexRoute;
-  '/gateway/guardrails': typeof appGatewayGatewayGuardrailsRoute;
-  '/gateway/providers': typeof appGatewayGatewayProvidersRoute;
-  '/gateway/usage': typeof appGatewayGatewayUsageRoute;
-  '/observability/costs': typeof appObservabilityObservabilityCostsRoute;
-  '/observability/overview': typeof appObservabilityObservabilityOverviewRoute;
-  '/observability/requests': typeof appObservabilityObservabilityRequestsRoute;
-  '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren;
-  '/datasets/$id/': typeof appDatasetsIdIndexRoute;
-  '/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute;
-  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute;
-  '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute;
-  '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute;
+  '/observability': typeof appObservabilityObservabilityRouteWithChildren
+  '/datasets': typeof appDatasetsRouteWithChildren
+  '/playgrounds': typeof appPlaygroundsRouteWithChildren
+  '/': typeof appIndexRoute
+  '/datasets/$id': typeof appDatasetsIdRouteRouteWithChildren
+  '/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
+  '/observability/': typeof appObservabilityIndexRoute
+  '/observability/costs': typeof appObservabilityObservabilityCostsRoute
+  '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
+  '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
+  '/datasets/$id/': typeof appDatasetsIdIndexRoute
+  '/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
+  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
+  '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
+  '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
 }
 export interface FileRoutesByTo {
-  '/datasets': typeof appDatasetsRouteWithChildren;
-  '/playgrounds': typeof appPlaygroundsRouteWithChildren;
-  '/': typeof appIndexRoute;
-  '/gateway': typeof appGatewayIndexRoute;
-  '/observability': typeof appObservabilityIndexRoute;
-  '/gateway/guardrails': typeof appGatewayGatewayGuardrailsRoute;
-  '/gateway/providers': typeof appGatewayGatewayProvidersRoute;
-  '/gateway/usage': typeof appGatewayGatewayUsageRoute;
-  '/observability/costs': typeof appObservabilityObservabilityCostsRoute;
-  '/observability/overview': typeof appObservabilityObservabilityOverviewRoute;
-  '/observability/requests': typeof appObservabilityObservabilityRequestsRoute;
-  '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren;
-  '/datasets/$id': typeof appDatasetsIdIndexRoute;
-  '/playgrounds/$id': typeof appPlaygroundsIdIndexRoute;
-  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute;
-  '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute;
-  '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute;
+  '/datasets': typeof appDatasetsRouteWithChildren
+  '/playgrounds': typeof appPlaygroundsRouteWithChildren
+  '/': typeof appIndexRoute
+  '/observability': typeof appObservabilityIndexRoute
+  '/observability/costs': typeof appObservabilityObservabilityCostsRoute
+  '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
+  '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
+  '/datasets/$id': typeof appDatasetsIdIndexRoute
+  '/playgrounds/$id': typeof appPlaygroundsIdIndexRoute
+  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
+  '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
+  '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  '/(app)': typeof appRouteRouteWithChildren;
-  '/(app)/gateway': typeof appGatewayRouteRouteWithChildren;
-  '/(app)/observability': typeof appObservabilityRouteRouteWithChildren;
-  '/(app)/datasets': typeof appDatasetsRouteWithChildren;
-  '/(app)/playgrounds': typeof appPlaygroundsRouteWithChildren;
-  '/(app)/': typeof appIndexRoute;
-  '/(app)/datasets/$id': typeof appDatasetsIdRouteRouteWithChildren;
-  '/(app)/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren;
-  '/(app)/gateway/_gateway': typeof appGatewayGatewayRouteWithChildren;
-  '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren;
-  '/(app)/gateway/': typeof appGatewayIndexRoute;
-  '/(app)/observability/': typeof appObservabilityIndexRoute;
-  '/(app)/gateway/_gateway/guardrails': typeof appGatewayGatewayGuardrailsRoute;
-  '/(app)/gateway/_gateway/providers': typeof appGatewayGatewayProvidersRoute;
-  '/(app)/gateway/_gateway/usage': typeof appGatewayGatewayUsageRoute;
-  '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute;
-  '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute;
-  '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute;
-  '/(app)/observability/_observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren;
-  '/(app)/datasets/$id/': typeof appDatasetsIdIndexRoute;
-  '/(app)/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute;
-  '/(app)/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute;
-  '/(app)/observability/_observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute;
-  '/(app)/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute;
+  __root__: typeof rootRouteImport
+  '/(app)': typeof appRouteRouteWithChildren
+  '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
+  '/(app)/datasets': typeof appDatasetsRouteWithChildren
+  '/(app)/playgrounds': typeof appPlaygroundsRouteWithChildren
+  '/(app)/': typeof appIndexRoute
+  '/(app)/datasets/$id': typeof appDatasetsIdRouteRouteWithChildren
+  '/(app)/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
+  '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
+  '/(app)/observability/': typeof appObservabilityIndexRoute
+  '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
+  '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
+  '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
+  '/(app)/observability/_observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
+  '/(app)/datasets/$id/': typeof appDatasetsIdIndexRoute
+  '/(app)/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
+  '/(app)/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
+  '/(app)/observability/_observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
+  '/(app)/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/gateway'
     | '/observability'
     | '/datasets'
     | '/playgrounds'
     | '/'
     | '/datasets/$id'
     | '/playgrounds/$id'
-    | '/gateway/'
     | '/observability/'
-    | '/gateway/guardrails'
-    | '/gateway/providers'
-    | '/gateway/usage'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
@@ -254,17 +197,13 @@ export interface FileRouteTypes {
     | '/playgrounds/$id/'
     | '/datasets/$id/records/$recordId'
     | '/observability/traces/$traceId'
-    | '/playgrounds/$id/row/$rowId';
-  fileRoutesByTo: FileRoutesByTo;
+    | '/playgrounds/$id/row/$rowId'
+  fileRoutesByTo: FileRoutesByTo
   to:
     | '/datasets'
     | '/playgrounds'
     | '/'
-    | '/gateway'
     | '/observability'
-    | '/gateway/guardrails'
-    | '/gateway/providers'
-    | '/gateway/usage'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
@@ -273,24 +212,18 @@ export interface FileRouteTypes {
     | '/playgrounds/$id'
     | '/datasets/$id/records/$recordId'
     | '/observability/traces/$traceId'
-    | '/playgrounds/$id/row/$rowId';
+    | '/playgrounds/$id/row/$rowId'
   id:
     | '__root__'
     | '/(app)'
-    | '/(app)/gateway'
     | '/(app)/observability'
     | '/(app)/datasets'
     | '/(app)/playgrounds'
     | '/(app)/'
     | '/(app)/datasets/$id'
     | '/(app)/playgrounds/$id'
-    | '/(app)/gateway/_gateway'
     | '/(app)/observability/_observability'
-    | '/(app)/gateway/'
     | '/(app)/observability/'
-    | '/(app)/gateway/_gateway/guardrails'
-    | '/(app)/gateway/_gateway/providers'
-    | '/(app)/gateway/_gateway/usage'
     | '/(app)/observability/_observability/costs'
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
@@ -299,235 +232,164 @@ export interface FileRouteTypes {
     | '/(app)/playgrounds/$id/'
     | '/(app)/datasets/$id/records/$recordId'
     | '/(app)/observability/_observability/traces/$traceId'
-    | '/(app)/playgrounds/$id/row/$rowId';
-  fileRoutesById: FileRoutesById;
+    | '/(app)/playgrounds/$id/row/$rowId'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  appRouteRoute: typeof appRouteRouteWithChildren;
+  appRouteRoute: typeof appRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/(app)': {
-      id: '/(app)';
-      path: '';
-      fullPath: '';
-      preLoaderRoute: typeof appRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/(app)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof appRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(app)/': {
-      id: '/(app)/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof appIndexRouteImport;
-      parentRoute: typeof appRouteRoute;
-    };
+      id: '/(app)/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof appIndexRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/playgrounds': {
-      id: '/(app)/playgrounds';
-      path: '/playgrounds';
-      fullPath: '/playgrounds';
-      preLoaderRoute: typeof appPlaygroundsRouteImport;
-      parentRoute: typeof appRouteRoute;
-    };
+      id: '/(app)/playgrounds'
+      path: '/playgrounds'
+      fullPath: '/playgrounds'
+      preLoaderRoute: typeof appPlaygroundsRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/datasets': {
-      id: '/(app)/datasets';
-      path: '/datasets';
-      fullPath: '/datasets';
-      preLoaderRoute: typeof appDatasetsRouteImport;
-      parentRoute: typeof appRouteRoute;
-    };
+      id: '/(app)/datasets'
+      path: '/datasets'
+      fullPath: '/datasets'
+      preLoaderRoute: typeof appDatasetsRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/observability': {
-      id: '/(app)/observability';
-      path: '/observability';
-      fullPath: '/observability';
-      preLoaderRoute: typeof appObservabilityRouteRouteImport;
-      parentRoute: typeof appRouteRoute;
-    };
-    '/(app)/gateway': {
-      id: '/(app)/gateway';
-      path: '/gateway';
-      fullPath: '/gateway';
-      preLoaderRoute: typeof appGatewayRouteRouteImport;
-      parentRoute: typeof appRouteRoute;
-    };
+      id: '/(app)/observability'
+      path: '/observability'
+      fullPath: '/observability'
+      preLoaderRoute: typeof appObservabilityRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/observability/': {
-      id: '/(app)/observability/';
-      path: '/';
-      fullPath: '/observability/';
-      preLoaderRoute: typeof appObservabilityIndexRouteImport;
-      parentRoute: typeof appObservabilityRouteRoute;
-    };
-    '/(app)/gateway/': {
-      id: '/(app)/gateway/';
-      path: '/';
-      fullPath: '/gateway/';
-      preLoaderRoute: typeof appGatewayIndexRouteImport;
-      parentRoute: typeof appGatewayRouteRoute;
-    };
+      id: '/(app)/observability/'
+      path: '/'
+      fullPath: '/observability/'
+      preLoaderRoute: typeof appObservabilityIndexRouteImport
+      parentRoute: typeof appObservabilityRouteRoute
+    }
     '/(app)/observability/_observability': {
-      id: '/(app)/observability/_observability';
-      path: '';
-      fullPath: '/observability';
-      preLoaderRoute: typeof appObservabilityObservabilityRouteImport;
-      parentRoute: typeof appObservabilityRouteRoute;
-    };
-    '/(app)/gateway/_gateway': {
-      id: '/(app)/gateway/_gateway';
-      path: '';
-      fullPath: '/gateway';
-      preLoaderRoute: typeof appGatewayGatewayRouteImport;
-      parentRoute: typeof appGatewayRouteRoute;
-    };
+      id: '/(app)/observability/_observability'
+      path: ''
+      fullPath: '/observability'
+      preLoaderRoute: typeof appObservabilityObservabilityRouteImport
+      parentRoute: typeof appObservabilityRouteRoute
+    }
     '/(app)/playgrounds/$id': {
-      id: '/(app)/playgrounds/$id';
-      path: '/$id';
-      fullPath: '/playgrounds/$id';
-      preLoaderRoute: typeof appPlaygroundsIdRouteRouteImport;
-      parentRoute: typeof appPlaygroundsRoute;
-    };
+      id: '/(app)/playgrounds/$id'
+      path: '/$id'
+      fullPath: '/playgrounds/$id'
+      preLoaderRoute: typeof appPlaygroundsIdRouteRouteImport
+      parentRoute: typeof appPlaygroundsRoute
+    }
     '/(app)/datasets/$id': {
-      id: '/(app)/datasets/$id';
-      path: '/$id';
-      fullPath: '/datasets/$id';
-      preLoaderRoute: typeof appDatasetsIdRouteRouteImport;
-      parentRoute: typeof appDatasetsRoute;
-    };
+      id: '/(app)/datasets/$id'
+      path: '/$id'
+      fullPath: '/datasets/$id'
+      preLoaderRoute: typeof appDatasetsIdRouteRouteImport
+      parentRoute: typeof appDatasetsRoute
+    }
     '/(app)/playgrounds/$id/': {
-      id: '/(app)/playgrounds/$id/';
-      path: '/';
-      fullPath: '/playgrounds/$id/';
-      preLoaderRoute: typeof appPlaygroundsIdIndexRouteImport;
-      parentRoute: typeof appPlaygroundsIdRouteRoute;
-    };
+      id: '/(app)/playgrounds/$id/'
+      path: '/'
+      fullPath: '/playgrounds/$id/'
+      preLoaderRoute: typeof appPlaygroundsIdIndexRouteImport
+      parentRoute: typeof appPlaygroundsIdRouteRoute
+    }
     '/(app)/datasets/$id/': {
-      id: '/(app)/datasets/$id/';
-      path: '/';
-      fullPath: '/datasets/$id/';
-      preLoaderRoute: typeof appDatasetsIdIndexRouteImport;
-      parentRoute: typeof appDatasetsIdRouteRoute;
-    };
+      id: '/(app)/datasets/$id/'
+      path: '/'
+      fullPath: '/datasets/$id/'
+      preLoaderRoute: typeof appDatasetsIdIndexRouteImport
+      parentRoute: typeof appDatasetsIdRouteRoute
+    }
     '/(app)/observability/_observability/traces': {
-      id: '/(app)/observability/_observability/traces';
-      path: '/traces';
-      fullPath: '/observability/traces';
-      preLoaderRoute: typeof appObservabilityObservabilityTracesRouteImport;
-      parentRoute: typeof appObservabilityObservabilityRoute;
-    };
+      id: '/(app)/observability/_observability/traces'
+      path: '/traces'
+      fullPath: '/observability/traces'
+      preLoaderRoute: typeof appObservabilityObservabilityTracesRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
     '/(app)/observability/_observability/requests': {
-      id: '/(app)/observability/_observability/requests';
-      path: '/requests';
-      fullPath: '/observability/requests';
-      preLoaderRoute: typeof appObservabilityObservabilityRequestsRouteImport;
-      parentRoute: typeof appObservabilityObservabilityRoute;
-    };
+      id: '/(app)/observability/_observability/requests'
+      path: '/requests'
+      fullPath: '/observability/requests'
+      preLoaderRoute: typeof appObservabilityObservabilityRequestsRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
     '/(app)/observability/_observability/overview': {
-      id: '/(app)/observability/_observability/overview';
-      path: '/overview';
-      fullPath: '/observability/overview';
-      preLoaderRoute: typeof appObservabilityObservabilityOverviewRouteImport;
-      parentRoute: typeof appObservabilityObservabilityRoute;
-    };
+      id: '/(app)/observability/_observability/overview'
+      path: '/overview'
+      fullPath: '/observability/overview'
+      preLoaderRoute: typeof appObservabilityObservabilityOverviewRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
     '/(app)/observability/_observability/costs': {
-      id: '/(app)/observability/_observability/costs';
-      path: '/costs';
-      fullPath: '/observability/costs';
-      preLoaderRoute: typeof appObservabilityObservabilityCostsRouteImport;
-      parentRoute: typeof appObservabilityObservabilityRoute;
-    };
-    '/(app)/gateway/_gateway/usage': {
-      id: '/(app)/gateway/_gateway/usage';
-      path: '/usage';
-      fullPath: '/gateway/usage';
-      preLoaderRoute: typeof appGatewayGatewayUsageRouteImport;
-      parentRoute: typeof appGatewayGatewayRoute;
-    };
-    '/(app)/gateway/_gateway/providers': {
-      id: '/(app)/gateway/_gateway/providers';
-      path: '/providers';
-      fullPath: '/gateway/providers';
-      preLoaderRoute: typeof appGatewayGatewayProvidersRouteImport;
-      parentRoute: typeof appGatewayGatewayRoute;
-    };
-    '/(app)/gateway/_gateway/guardrails': {
-      id: '/(app)/gateway/_gateway/guardrails';
-      path: '/guardrails';
-      fullPath: '/gateway/guardrails';
-      preLoaderRoute: typeof appGatewayGatewayGuardrailsRouteImport;
-      parentRoute: typeof appGatewayGatewayRoute;
-    };
+      id: '/(app)/observability/_observability/costs'
+      path: '/costs'
+      fullPath: '/observability/costs'
+      preLoaderRoute: typeof appObservabilityObservabilityCostsRouteImport
+      parentRoute: typeof appObservabilityObservabilityRoute
+    }
     '/(app)/playgrounds/$id/row/$rowId': {
-      id: '/(app)/playgrounds/$id/row/$rowId';
-      path: '/row/$rowId';
-      fullPath: '/playgrounds/$id/row/$rowId';
-      preLoaderRoute: typeof appPlaygroundsIdRowRowIdRouteImport;
-      parentRoute: typeof appPlaygroundsIdRouteRoute;
-    };
+      id: '/(app)/playgrounds/$id/row/$rowId'
+      path: '/row/$rowId'
+      fullPath: '/playgrounds/$id/row/$rowId'
+      preLoaderRoute: typeof appPlaygroundsIdRowRowIdRouteImport
+      parentRoute: typeof appPlaygroundsIdRouteRoute
+    }
     '/(app)/observability/_observability/traces/$traceId': {
-      id: '/(app)/observability/_observability/traces/$traceId';
-      path: '/$traceId';
-      fullPath: '/observability/traces/$traceId';
-      preLoaderRoute: typeof appObservabilityObservabilityTracesTraceIdRouteImport;
-      parentRoute: typeof appObservabilityObservabilityTracesRoute;
-    };
+      id: '/(app)/observability/_observability/traces/$traceId'
+      path: '/$traceId'
+      fullPath: '/observability/traces/$traceId'
+      preLoaderRoute: typeof appObservabilityObservabilityTracesTraceIdRouteImport
+      parentRoute: typeof appObservabilityObservabilityTracesRoute
+    }
     '/(app)/datasets/$id/records/$recordId': {
-      id: '/(app)/datasets/$id/records/$recordId';
-      path: '/records/$recordId';
-      fullPath: '/datasets/$id/records/$recordId';
-      preLoaderRoute: typeof appDatasetsIdRecordsRecordIdRouteImport;
-      parentRoute: typeof appDatasetsIdRouteRoute;
-    };
+      id: '/(app)/datasets/$id/records/$recordId'
+      path: '/records/$recordId'
+      fullPath: '/datasets/$id/records/$recordId'
+      preLoaderRoute: typeof appDatasetsIdRecordsRecordIdRouteImport
+      parentRoute: typeof appDatasetsIdRouteRoute
+    }
   }
 }
 
-interface appGatewayGatewayRouteChildren {
-  appGatewayGatewayGuardrailsRoute: typeof appGatewayGatewayGuardrailsRoute;
-  appGatewayGatewayProvidersRoute: typeof appGatewayGatewayProvidersRoute;
-  appGatewayGatewayUsageRoute: typeof appGatewayGatewayUsageRoute;
-}
-
-const appGatewayGatewayRouteChildren: appGatewayGatewayRouteChildren = {
-  appGatewayGatewayGuardrailsRoute: appGatewayGatewayGuardrailsRoute,
-  appGatewayGatewayProvidersRoute: appGatewayGatewayProvidersRoute,
-  appGatewayGatewayUsageRoute: appGatewayGatewayUsageRoute,
-};
-
-const appGatewayGatewayRouteWithChildren =
-  appGatewayGatewayRoute._addFileChildren(appGatewayGatewayRouteChildren);
-
-interface appGatewayRouteRouteChildren {
-  appGatewayGatewayRoute: typeof appGatewayGatewayRouteWithChildren;
-  appGatewayIndexRoute: typeof appGatewayIndexRoute;
-}
-
-const appGatewayRouteRouteChildren: appGatewayRouteRouteChildren = {
-  appGatewayGatewayRoute: appGatewayGatewayRouteWithChildren,
-  appGatewayIndexRoute: appGatewayIndexRoute,
-};
-
-const appGatewayRouteRouteWithChildren = appGatewayRouteRoute._addFileChildren(
-  appGatewayRouteRouteChildren,
-);
-
 interface appObservabilityObservabilityTracesRouteChildren {
-  appObservabilityObservabilityTracesTraceIdRoute: typeof appObservabilityObservabilityTracesTraceIdRoute;
+  appObservabilityObservabilityTracesTraceIdRoute: typeof appObservabilityObservabilityTracesTraceIdRoute
 }
 
 const appObservabilityObservabilityTracesRouteChildren: appObservabilityObservabilityTracesRouteChildren =
   {
     appObservabilityObservabilityTracesTraceIdRoute:
       appObservabilityObservabilityTracesTraceIdRoute,
-  };
+  }
 
 const appObservabilityObservabilityTracesRouteWithChildren =
   appObservabilityObservabilityTracesRoute._addFileChildren(
     appObservabilityObservabilityTracesRouteChildren,
-  );
+  )
 
 interface appObservabilityObservabilityRouteChildren {
-  appObservabilityObservabilityCostsRoute: typeof appObservabilityObservabilityCostsRoute;
-  appObservabilityObservabilityOverviewRoute: typeof appObservabilityObservabilityOverviewRoute;
-  appObservabilityObservabilityRequestsRoute: typeof appObservabilityObservabilityRequestsRoute;
-  appObservabilityObservabilityTracesRoute: typeof appObservabilityObservabilityTracesRouteWithChildren;
+  appObservabilityObservabilityCostsRoute: typeof appObservabilityObservabilityCostsRoute
+  appObservabilityObservabilityOverviewRoute: typeof appObservabilityObservabilityOverviewRoute
+  appObservabilityObservabilityRequestsRoute: typeof appObservabilityObservabilityRequestsRoute
+  appObservabilityObservabilityTracesRoute: typeof appObservabilityObservabilityTracesRouteWithChildren
 }
 
 const appObservabilityObservabilityRouteChildren: appObservabilityObservabilityRouteChildren =
@@ -540,104 +402,102 @@ const appObservabilityObservabilityRouteChildren: appObservabilityObservabilityR
       appObservabilityObservabilityRequestsRoute,
     appObservabilityObservabilityTracesRoute:
       appObservabilityObservabilityTracesRouteWithChildren,
-  };
+  }
 
 const appObservabilityObservabilityRouteWithChildren =
   appObservabilityObservabilityRoute._addFileChildren(
     appObservabilityObservabilityRouteChildren,
-  );
+  )
 
 interface appObservabilityRouteRouteChildren {
-  appObservabilityObservabilityRoute: typeof appObservabilityObservabilityRouteWithChildren;
-  appObservabilityIndexRoute: typeof appObservabilityIndexRoute;
+  appObservabilityObservabilityRoute: typeof appObservabilityObservabilityRouteWithChildren
+  appObservabilityIndexRoute: typeof appObservabilityIndexRoute
 }
 
 const appObservabilityRouteRouteChildren: appObservabilityRouteRouteChildren = {
   appObservabilityObservabilityRoute:
     appObservabilityObservabilityRouteWithChildren,
   appObservabilityIndexRoute: appObservabilityIndexRoute,
-};
+}
 
 const appObservabilityRouteRouteWithChildren =
   appObservabilityRouteRoute._addFileChildren(
     appObservabilityRouteRouteChildren,
-  );
+  )
 
 interface appDatasetsIdRouteRouteChildren {
-  appDatasetsIdIndexRoute: typeof appDatasetsIdIndexRoute;
-  appDatasetsIdRecordsRecordIdRoute: typeof appDatasetsIdRecordsRecordIdRoute;
+  appDatasetsIdIndexRoute: typeof appDatasetsIdIndexRoute
+  appDatasetsIdRecordsRecordIdRoute: typeof appDatasetsIdRecordsRecordIdRoute
 }
 
 const appDatasetsIdRouteRouteChildren: appDatasetsIdRouteRouteChildren = {
   appDatasetsIdIndexRoute: appDatasetsIdIndexRoute,
   appDatasetsIdRecordsRecordIdRoute: appDatasetsIdRecordsRecordIdRoute,
-};
+}
 
 const appDatasetsIdRouteRouteWithChildren =
-  appDatasetsIdRouteRoute._addFileChildren(appDatasetsIdRouteRouteChildren);
+  appDatasetsIdRouteRoute._addFileChildren(appDatasetsIdRouteRouteChildren)
 
 interface appDatasetsRouteChildren {
-  appDatasetsIdRouteRoute: typeof appDatasetsIdRouteRouteWithChildren;
+  appDatasetsIdRouteRoute: typeof appDatasetsIdRouteRouteWithChildren
 }
 
 const appDatasetsRouteChildren: appDatasetsRouteChildren = {
   appDatasetsIdRouteRoute: appDatasetsIdRouteRouteWithChildren,
-};
+}
 
 const appDatasetsRouteWithChildren = appDatasetsRoute._addFileChildren(
   appDatasetsRouteChildren,
-);
+)
 
 interface appPlaygroundsIdRouteRouteChildren {
-  appPlaygroundsIdIndexRoute: typeof appPlaygroundsIdIndexRoute;
-  appPlaygroundsIdRowRowIdRoute: typeof appPlaygroundsIdRowRowIdRoute;
+  appPlaygroundsIdIndexRoute: typeof appPlaygroundsIdIndexRoute
+  appPlaygroundsIdRowRowIdRoute: typeof appPlaygroundsIdRowRowIdRoute
 }
 
 const appPlaygroundsIdRouteRouteChildren: appPlaygroundsIdRouteRouteChildren = {
   appPlaygroundsIdIndexRoute: appPlaygroundsIdIndexRoute,
   appPlaygroundsIdRowRowIdRoute: appPlaygroundsIdRowRowIdRoute,
-};
+}
 
 const appPlaygroundsIdRouteRouteWithChildren =
   appPlaygroundsIdRouteRoute._addFileChildren(
     appPlaygroundsIdRouteRouteChildren,
-  );
+  )
 
 interface appPlaygroundsRouteChildren {
-  appPlaygroundsIdRouteRoute: typeof appPlaygroundsIdRouteRouteWithChildren;
+  appPlaygroundsIdRouteRoute: typeof appPlaygroundsIdRouteRouteWithChildren
 }
 
 const appPlaygroundsRouteChildren: appPlaygroundsRouteChildren = {
   appPlaygroundsIdRouteRoute: appPlaygroundsIdRouteRouteWithChildren,
-};
+}
 
 const appPlaygroundsRouteWithChildren = appPlaygroundsRoute._addFileChildren(
   appPlaygroundsRouteChildren,
-);
+)
 
 interface appRouteRouteChildren {
-  appGatewayRouteRoute: typeof appGatewayRouteRouteWithChildren;
-  appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren;
-  appDatasetsRoute: typeof appDatasetsRouteWithChildren;
-  appPlaygroundsRoute: typeof appPlaygroundsRouteWithChildren;
-  appIndexRoute: typeof appIndexRoute;
+  appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
+  appDatasetsRoute: typeof appDatasetsRouteWithChildren
+  appPlaygroundsRoute: typeof appPlaygroundsRouteWithChildren
+  appIndexRoute: typeof appIndexRoute
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
-  appGatewayRouteRoute: appGatewayRouteRouteWithChildren,
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
   appDatasetsRoute: appDatasetsRouteWithChildren,
   appPlaygroundsRoute: appPlaygroundsRouteWithChildren,
   appIndexRoute: appIndexRoute,
-};
+}
 
 const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
   appRouteRouteChildren,
-);
+)
 
 const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()

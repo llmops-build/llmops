@@ -9,4 +9,3 @@ export * from './utils/id';
 export * from './datalayer';
 export * from './pricing';
 export * from './telemetry';
-export * from './manifest';
