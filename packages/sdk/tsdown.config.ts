@@ -13,8 +13,8 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   clean: false,
-  // Force bundling of workspace dependencies
-  // noExternal: ['@llmops/app', '@llmops/core', '@llmops/ui'],
-  // // Keep these external
-  // external: ['express', 'hono'],
+  // Inline .sql files as strings at build time
+  loader: {
+    '.sql': 'text',
+  },
 });
