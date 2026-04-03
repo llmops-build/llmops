@@ -115,6 +115,8 @@
     "@llmops/core": "workspace:^"
   },
   "devDependencies": {
+    "@tsqx/cli": "^0.0.4",
+    "@tsqx/kit": "^0.0.4",
     "@types/express": "^5.0.6",
     "@types/pg": "^8.15.6",
     "hono": "^4.7.0"

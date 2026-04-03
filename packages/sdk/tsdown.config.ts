@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
@@ -13,8 +14,16 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   clean: false,
-  // Inline .sql files as strings at build time
-  loader: {
-    '.sql': 'text',
-  },
+  plugins: [
+    // Inline .sql files as string exports at build time
+    {
+      name: 'sql-loader',
+      load(id) {
+        if (id.endsWith('.sql')) {
+          const content = readFileSync(id, 'utf-8');
+          return `export default ${JSON.stringify(content)};`;
+        }
+      },
+    },
+  ],
 });
