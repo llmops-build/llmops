@@ -1,4 +1,3 @@
--- @name GetTotalCost :one
 SELECT
   COALESCE(SUM("cost"), 0)::int                AS "totalCost",
   COALESCE(SUM("inputCost"), 0)::int           AS "totalInputCost",

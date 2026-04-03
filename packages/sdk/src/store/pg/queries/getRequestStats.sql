@@ -1,4 +1,3 @@
--- @name GetRequestStats :one
 SELECT
   COUNT(*)::int                                                                      AS "totalRequests",
   COUNT(CASE WHEN "statusCode" >= 200 AND "statusCode" < 300 THEN 1 END)::int       AS "successfulRequests",

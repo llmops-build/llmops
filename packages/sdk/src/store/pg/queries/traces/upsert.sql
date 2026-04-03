@@ -1,4 +1,3 @@
--- @name UpsertTrace :exec
 INSERT INTO "traces" (
   "id", "traceId", "name", "sessionId", "userId", "status",
   "startTime", "endTime", "durationMs", "spanCount",

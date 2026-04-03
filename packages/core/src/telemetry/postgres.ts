@@ -1045,6 +1045,8 @@ function createTracesStore(db: Kysely<Database>) {
 export type PgStore = ReturnType<typeof createLLMRequestsStore> &
   ReturnType<typeof createTracesStore> & {
     _db: Kysely<Database>;
+    _pool: unknown;
+    _schema: string;
   };
 
 /**
@@ -1105,5 +1107,7 @@ export function createPgStore(
     ...createLLMRequestsStore(db),
     ...createTracesStore(db),
     _db: db,
+    _pool: pool,
+    _schema: schema,
   };
 }

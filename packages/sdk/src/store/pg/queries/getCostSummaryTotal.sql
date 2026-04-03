@@ -1,4 +1,3 @@
--- @name GetCostSummaryTotal :many
 SELECT
   'total'                                  AS "groupKey",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",

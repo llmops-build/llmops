@@ -1,4 +1,3 @@
--- @name GetCostSummaryByModel :many
 SELECT
   "provider" || '/' || "model"             AS "groupKey",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",

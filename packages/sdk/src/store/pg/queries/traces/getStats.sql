@@ -1,4 +1,3 @@
--- @name GetTraceStats :one
 SELECT
   COUNT(*)::int                                                              AS "totalTraces",
   COALESCE(AVG("durationMs"), 0)                                            AS "avgDurationMs",

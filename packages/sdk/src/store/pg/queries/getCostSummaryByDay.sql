@@ -1,4 +1,3 @@
--- @name GetCostSummaryByDay :many
 SELECT
   DATE("createdAt")::text                  AS "groupKey",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",

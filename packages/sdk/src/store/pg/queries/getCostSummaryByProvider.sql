@@ -1,4 +1,3 @@
--- @name GetCostSummaryByProvider :many
 SELECT
   "provider"                               AS "groupKey",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",

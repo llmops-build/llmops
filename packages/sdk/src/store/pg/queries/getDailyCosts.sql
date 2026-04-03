@@ -1,4 +1,3 @@
--- @name GetDailyCosts :many
 SELECT
   DATE("createdAt")::text                  AS "date",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",
