@@ -10,10 +10,8 @@ import { Icon } from '@client/components/icons';
 import {
   Blocks,
   BookOpen,
-  Database,
   Monitor,
   Moon,
-  Play,
   Sun,
   Telescope,
 } from 'lucide-react';
@@ -24,8 +22,6 @@ import {
   menuPositioner,
   menuSection,
   menuSectionLabel,
-  sidebarSectionTitle,
-  sidebarSectionTitleHidden,
   themeButton,
   themeButtonActive,
   themeButtonIcon,
@@ -89,8 +85,6 @@ function SettingsMenu() {
 }
 
 export function AppSidebar() {
-  const { isCollapsed } = useSidebarWidth();
-
   return (
     <Sidebar>
       <SidebarHeader>
@@ -101,23 +95,6 @@ export function AppSidebar() {
           <Link to="/">
             <Icon icon={Blocks} />
             Overview
-          </Link>
-        </SidebarItem>
-        <span
-          className={`${sidebarSectionTitle} ${isCollapsed ? sidebarSectionTitleHidden : ''}`}
-        >
-          Workspace
-        </span>
-        <SidebarItem asChild>
-          <Link to="/playgrounds">
-            <Icon icon={Play} />
-            Playgrounds
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/datasets">
-            <Icon icon={Database} />
-            Datasets
           </Link>
         </SidebarItem>
         <SidebarItem asChild>

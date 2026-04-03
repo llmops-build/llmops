@@ -11,22 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as appIndexRouteImport } from './routes/(app)/index'
-import { Route as appPlaygroundsRouteImport } from './routes/(app)/playgrounds'
-import { Route as appDatasetsRouteImport } from './routes/(app)/datasets'
 import { Route as appObservabilityRouteRouteImport } from './routes/(app)/observability/route'
 import { Route as appObservabilityIndexRouteImport } from './routes/(app)/observability/index'
 import { Route as appObservabilityObservabilityRouteImport } from './routes/(app)/observability/_observability'
-import { Route as appPlaygroundsIdRouteRouteImport } from './routes/(app)/playgrounds/$id/route'
-import { Route as appDatasetsIdRouteRouteImport } from './routes/(app)/datasets/$id/route'
-import { Route as appPlaygroundsIdIndexRouteImport } from './routes/(app)/playgrounds/$id/index'
-import { Route as appDatasetsIdIndexRouteImport } from './routes/(app)/datasets/$id/index'
 import { Route as appObservabilityObservabilityTracesRouteImport } from './routes/(app)/observability/_observability/traces'
 import { Route as appObservabilityObservabilityRequestsRouteImport } from './routes/(app)/observability/_observability/requests'
 import { Route as appObservabilityObservabilityOverviewRouteImport } from './routes/(app)/observability/_observability/overview'
 import { Route as appObservabilityObservabilityCostsRouteImport } from './routes/(app)/observability/_observability/costs'
-import { Route as appPlaygroundsIdRowRowIdRouteImport } from './routes/(app)/playgrounds/$id/row/$rowId'
 import { Route as appObservabilityObservabilityTracesTraceIdRouteImport } from './routes/(app)/observability/_observability/traces/$traceId'
-import { Route as appDatasetsIdRecordsRecordIdRouteImport } from './routes/(app)/datasets/$id/records/$recordId'
 
 const appRouteRoute = appRouteRouteImport.update({
   id: '/(app)',
@@ -35,16 +27,6 @@ const appRouteRoute = appRouteRouteImport.update({
 const appIndexRoute = appIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const appPlaygroundsRoute = appPlaygroundsRouteImport.update({
-  id: '/playgrounds',
-  path: '/playgrounds',
-  getParentRoute: () => appRouteRoute,
-} as any)
-const appDatasetsRoute = appDatasetsRouteImport.update({
-  id: '/datasets',
-  path: '/datasets',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appObservabilityRouteRoute = appObservabilityRouteRouteImport.update({
@@ -62,26 +44,6 @@ const appObservabilityObservabilityRoute =
     id: '/_observability',
     getParentRoute: () => appObservabilityRouteRoute,
   } as any)
-const appPlaygroundsIdRouteRoute = appPlaygroundsIdRouteRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => appPlaygroundsRoute,
-} as any)
-const appDatasetsIdRouteRoute = appDatasetsIdRouteRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => appDatasetsRoute,
-} as any)
-const appPlaygroundsIdIndexRoute = appPlaygroundsIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => appPlaygroundsIdRouteRoute,
-} as any)
-const appDatasetsIdIndexRoute = appDatasetsIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => appDatasetsIdRouteRoute,
-} as any)
 const appObservabilityObservabilityTracesRoute =
   appObservabilityObservabilityTracesRouteImport.update({
     id: '/traces',
@@ -106,133 +68,77 @@ const appObservabilityObservabilityCostsRoute =
     path: '/costs',
     getParentRoute: () => appObservabilityObservabilityRoute,
   } as any)
-const appPlaygroundsIdRowRowIdRoute =
-  appPlaygroundsIdRowRowIdRouteImport.update({
-    id: '/row/$rowId',
-    path: '/row/$rowId',
-    getParentRoute: () => appPlaygroundsIdRouteRoute,
-  } as any)
 const appObservabilityObservabilityTracesTraceIdRoute =
   appObservabilityObservabilityTracesTraceIdRouteImport.update({
     id: '/$traceId',
     path: '/$traceId',
     getParentRoute: () => appObservabilityObservabilityTracesRoute,
   } as any)
-const appDatasetsIdRecordsRecordIdRoute =
-  appDatasetsIdRecordsRecordIdRouteImport.update({
-    id: '/records/$recordId',
-    path: '/records/$recordId',
-    getParentRoute: () => appDatasetsIdRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/observability': typeof appObservabilityObservabilityRouteWithChildren
-  '/datasets': typeof appDatasetsRouteWithChildren
-  '/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/': typeof appIndexRoute
-  '/datasets/$id': typeof appDatasetsIdRouteRouteWithChildren
-  '/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
   '/observability/': typeof appObservabilityIndexRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
-  '/datasets/$id/': typeof appDatasetsIdIndexRoute
-  '/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
-  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
-  '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
 }
 export interface FileRoutesByTo {
-  '/datasets': typeof appDatasetsRouteWithChildren
-  '/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/': typeof appIndexRoute
   '/observability': typeof appObservabilityIndexRoute
   '/observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
-  '/datasets/$id': typeof appDatasetsIdIndexRoute
-  '/playgrounds/$id': typeof appPlaygroundsIdIndexRoute
-  '/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
-  '/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)': typeof appRouteRouteWithChildren
   '/(app)/observability': typeof appObservabilityRouteRouteWithChildren
-  '/(app)/datasets': typeof appDatasetsRouteWithChildren
-  '/(app)/playgrounds': typeof appPlaygroundsRouteWithChildren
   '/(app)/': typeof appIndexRoute
-  '/(app)/datasets/$id': typeof appDatasetsIdRouteRouteWithChildren
-  '/(app)/playgrounds/$id': typeof appPlaygroundsIdRouteRouteWithChildren
   '/(app)/observability/_observability': typeof appObservabilityObservabilityRouteWithChildren
   '/(app)/observability/': typeof appObservabilityIndexRoute
   '/(app)/observability/_observability/costs': typeof appObservabilityObservabilityCostsRoute
   '/(app)/observability/_observability/overview': typeof appObservabilityObservabilityOverviewRoute
   '/(app)/observability/_observability/requests': typeof appObservabilityObservabilityRequestsRoute
   '/(app)/observability/_observability/traces': typeof appObservabilityObservabilityTracesRouteWithChildren
-  '/(app)/datasets/$id/': typeof appDatasetsIdIndexRoute
-  '/(app)/playgrounds/$id/': typeof appPlaygroundsIdIndexRoute
-  '/(app)/datasets/$id/records/$recordId': typeof appDatasetsIdRecordsRecordIdRoute
   '/(app)/observability/_observability/traces/$traceId': typeof appObservabilityObservabilityTracesTraceIdRoute
-  '/(app)/playgrounds/$id/row/$rowId': typeof appPlaygroundsIdRowRowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/observability'
-    | '/datasets'
-    | '/playgrounds'
     | '/'
-    | '/datasets/$id'
-    | '/playgrounds/$id'
     | '/observability/'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
     | '/observability/traces'
-    | '/datasets/$id/'
-    | '/playgrounds/$id/'
-    | '/datasets/$id/records/$recordId'
     | '/observability/traces/$traceId'
-    | '/playgrounds/$id/row/$rowId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/datasets'
-    | '/playgrounds'
     | '/'
     | '/observability'
     | '/observability/costs'
     | '/observability/overview'
     | '/observability/requests'
     | '/observability/traces'
-    | '/datasets/$id'
-    | '/playgrounds/$id'
-    | '/datasets/$id/records/$recordId'
     | '/observability/traces/$traceId'
-    | '/playgrounds/$id/row/$rowId'
   id:
     | '__root__'
     | '/(app)'
     | '/(app)/observability'
-    | '/(app)/datasets'
-    | '/(app)/playgrounds'
     | '/(app)/'
-    | '/(app)/datasets/$id'
-    | '/(app)/playgrounds/$id'
     | '/(app)/observability/_observability'
     | '/(app)/observability/'
     | '/(app)/observability/_observability/costs'
     | '/(app)/observability/_observability/overview'
     | '/(app)/observability/_observability/requests'
     | '/(app)/observability/_observability/traces'
-    | '/(app)/datasets/$id/'
-    | '/(app)/playgrounds/$id/'
-    | '/(app)/datasets/$id/records/$recordId'
     | '/(app)/observability/_observability/traces/$traceId'
-    | '/(app)/playgrounds/$id/row/$rowId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -255,20 +161,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/playgrounds': {
-      id: '/(app)/playgrounds'
-      path: '/playgrounds'
-      fullPath: '/playgrounds'
-      preLoaderRoute: typeof appPlaygroundsRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/(app)/datasets': {
-      id: '/(app)/datasets'
-      path: '/datasets'
-      fullPath: '/datasets'
-      preLoaderRoute: typeof appDatasetsRouteImport
-      parentRoute: typeof appRouteRoute
-    }
     '/(app)/observability': {
       id: '/(app)/observability'
       path: '/observability'
@@ -289,34 +181,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/observability'
       preLoaderRoute: typeof appObservabilityObservabilityRouteImport
       parentRoute: typeof appObservabilityRouteRoute
-    }
-    '/(app)/playgrounds/$id': {
-      id: '/(app)/playgrounds/$id'
-      path: '/$id'
-      fullPath: '/playgrounds/$id'
-      preLoaderRoute: typeof appPlaygroundsIdRouteRouteImport
-      parentRoute: typeof appPlaygroundsRoute
-    }
-    '/(app)/datasets/$id': {
-      id: '/(app)/datasets/$id'
-      path: '/$id'
-      fullPath: '/datasets/$id'
-      preLoaderRoute: typeof appDatasetsIdRouteRouteImport
-      parentRoute: typeof appDatasetsRoute
-    }
-    '/(app)/playgrounds/$id/': {
-      id: '/(app)/playgrounds/$id/'
-      path: '/'
-      fullPath: '/playgrounds/$id/'
-      preLoaderRoute: typeof appPlaygroundsIdIndexRouteImport
-      parentRoute: typeof appPlaygroundsIdRouteRoute
-    }
-    '/(app)/datasets/$id/': {
-      id: '/(app)/datasets/$id/'
-      path: '/'
-      fullPath: '/datasets/$id/'
-      preLoaderRoute: typeof appDatasetsIdIndexRouteImport
-      parentRoute: typeof appDatasetsIdRouteRoute
     }
     '/(app)/observability/_observability/traces': {
       id: '/(app)/observability/_observability/traces'
@@ -346,26 +210,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appObservabilityObservabilityCostsRouteImport
       parentRoute: typeof appObservabilityObservabilityRoute
     }
-    '/(app)/playgrounds/$id/row/$rowId': {
-      id: '/(app)/playgrounds/$id/row/$rowId'
-      path: '/row/$rowId'
-      fullPath: '/playgrounds/$id/row/$rowId'
-      preLoaderRoute: typeof appPlaygroundsIdRowRowIdRouteImport
-      parentRoute: typeof appPlaygroundsIdRouteRoute
-    }
     '/(app)/observability/_observability/traces/$traceId': {
       id: '/(app)/observability/_observability/traces/$traceId'
       path: '/$traceId'
       fullPath: '/observability/traces/$traceId'
       preLoaderRoute: typeof appObservabilityObservabilityTracesTraceIdRouteImport
       parentRoute: typeof appObservabilityObservabilityTracesRoute
-    }
-    '/(app)/datasets/$id/records/$recordId': {
-      id: '/(app)/datasets/$id/records/$recordId'
-      path: '/records/$recordId'
-      fullPath: '/datasets/$id/records/$recordId'
-      preLoaderRoute: typeof appDatasetsIdRecordsRecordIdRouteImport
-      parentRoute: typeof appDatasetsIdRouteRoute
     }
   }
 }
@@ -425,69 +275,13 @@ const appObservabilityRouteRouteWithChildren =
     appObservabilityRouteRouteChildren,
   )
 
-interface appDatasetsIdRouteRouteChildren {
-  appDatasetsIdIndexRoute: typeof appDatasetsIdIndexRoute
-  appDatasetsIdRecordsRecordIdRoute: typeof appDatasetsIdRecordsRecordIdRoute
-}
-
-const appDatasetsIdRouteRouteChildren: appDatasetsIdRouteRouteChildren = {
-  appDatasetsIdIndexRoute: appDatasetsIdIndexRoute,
-  appDatasetsIdRecordsRecordIdRoute: appDatasetsIdRecordsRecordIdRoute,
-}
-
-const appDatasetsIdRouteRouteWithChildren =
-  appDatasetsIdRouteRoute._addFileChildren(appDatasetsIdRouteRouteChildren)
-
-interface appDatasetsRouteChildren {
-  appDatasetsIdRouteRoute: typeof appDatasetsIdRouteRouteWithChildren
-}
-
-const appDatasetsRouteChildren: appDatasetsRouteChildren = {
-  appDatasetsIdRouteRoute: appDatasetsIdRouteRouteWithChildren,
-}
-
-const appDatasetsRouteWithChildren = appDatasetsRoute._addFileChildren(
-  appDatasetsRouteChildren,
-)
-
-interface appPlaygroundsIdRouteRouteChildren {
-  appPlaygroundsIdIndexRoute: typeof appPlaygroundsIdIndexRoute
-  appPlaygroundsIdRowRowIdRoute: typeof appPlaygroundsIdRowRowIdRoute
-}
-
-const appPlaygroundsIdRouteRouteChildren: appPlaygroundsIdRouteRouteChildren = {
-  appPlaygroundsIdIndexRoute: appPlaygroundsIdIndexRoute,
-  appPlaygroundsIdRowRowIdRoute: appPlaygroundsIdRowRowIdRoute,
-}
-
-const appPlaygroundsIdRouteRouteWithChildren =
-  appPlaygroundsIdRouteRoute._addFileChildren(
-    appPlaygroundsIdRouteRouteChildren,
-  )
-
-interface appPlaygroundsRouteChildren {
-  appPlaygroundsIdRouteRoute: typeof appPlaygroundsIdRouteRouteWithChildren
-}
-
-const appPlaygroundsRouteChildren: appPlaygroundsRouteChildren = {
-  appPlaygroundsIdRouteRoute: appPlaygroundsIdRouteRouteWithChildren,
-}
-
-const appPlaygroundsRouteWithChildren = appPlaygroundsRoute._addFileChildren(
-  appPlaygroundsRouteChildren,
-)
-
 interface appRouteRouteChildren {
   appObservabilityRouteRoute: typeof appObservabilityRouteRouteWithChildren
-  appDatasetsRoute: typeof appDatasetsRouteWithChildren
-  appPlaygroundsRoute: typeof appPlaygroundsRouteWithChildren
   appIndexRoute: typeof appIndexRoute
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
   appObservabilityRouteRoute: appObservabilityRouteRouteWithChildren,
-  appDatasetsRoute: appDatasetsRouteWithChildren,
-  appPlaygroundsRoute: appPlaygroundsRouteWithChildren,
   appIndexRoute: appIndexRoute,
 }
 

@@ -31,16 +31,6 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./db": {
-      "import": {
-        "types": "./dist/db/index.d.mts",
-        "default": "./dist/db/index.mjs"
-      },
-      "require": {
-        "types": "./dist/db/index.d.cts",
-        "default": "./dist/db/index.cjs"
-      }
-    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -55,15 +45,10 @@
   },
   "dependencies": {
     "@llmops/gateway": "workspace:^",
-    "@neondatabase/serverless": "^1.0.2",
     "hono": "^4.10.7",
-    "json-logic-js": "^2.0.5",
-    "kysely": "^0.28.8",
-    "kysely-neon": "^2.0.2",
     "pino": "^10.1.0"
   },
   "devDependencies": {
-    "@types/json-logic-js": "^2.0.8",
     "@types/ws": "^8.18.1"
   }
 }
