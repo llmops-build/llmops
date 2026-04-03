@@ -114,6 +114,12 @@
     "@llmops/app": "workspace:^",
     "@llmops/core": "workspace:^"
   },
+  "peerDependencies": {
+    "pg": "*"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true }
+  },
   "devDependencies": {
     "@tsqx/cli": "^0.0.4",
     "@tsqx/kit": "^0.0.4",

@@ -29,7 +29,7 @@ export type {
   GetRequestByRequestIdParams,
 } from './queries';
 
-// Re-export generated param schemas
+// Re-export generated param JSON Schemas
 export {
   GetTotalCostParamsSchema,
   GetCostByModelParamsSchema,

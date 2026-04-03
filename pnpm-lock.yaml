@@ -627,6 +627,9 @@ importers:
       '@llmops/core':
         specifier: workspace:^
         version: link:../core
+      pg:
+        specifier: '*'
+        version: 8.16.3
     devDependencies:
       '@tsqx/cli':
         specifier: ^0.0.4
