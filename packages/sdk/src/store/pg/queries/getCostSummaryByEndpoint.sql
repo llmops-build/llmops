@@ -1,4 +1,3 @@
--- @name GetCostSummaryByEndpoint :many
 SELECT
   COALESCE("endpoint", 'unknown')          AS "groupKey",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",

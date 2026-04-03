@@ -1,12 +1,12 @@
 import type { MiddlewareHandler } from 'hono';
 import type { LLMOpsConfig } from '@llmops/core';
+import type { Pool } from 'pg';
 
 /**
  * Creates a middleware that handles auto-migration on startup.
  *
- * This middleware runs once on application startup and automatically
- * runs database migrations if needed. It uses the telemetry store's
- * internal Kysely instance.
+ * Runs once on the first request. Uses the pgStore's pool and
+ * the SDK's migration runner (plain SQL, no Kysely).
  */
 export const createMigrationMiddleware = (
   config: LLMOpsConfig,
@@ -15,48 +15,43 @@ export const createMigrationMiddleware = (
   let migrationPromise: Promise<void> | null = null;
 
   return async (c, next) => {
-    // Skip if migrations already complete
     if (migrationComplete) {
       await next();
       return;
     }
 
-    // Use a single promise to prevent race conditions with concurrent requests
     if (!migrationPromise) {
       migrationPromise = (async () => {
         try {
-          // Resolve telemetry store from config
           const telemetry = config.telemetry;
           const store = Array.isArray(telemetry) ? telemetry[0] : telemetry;
 
-          if (!store || !store._db) {
+          if (!store || !store._pool) {
             console.warn(
-              '[Migration] No telemetry store with database, skipping auto-migration',
+              '[Migration] No telemetry store with pool, skipping auto-migration',
             );
             return;
           }
 
-          const { runAutoMigrations } = await import('@llmops/core/db');
+          const { runMigrations } = await import('@llmops/sdk/store/pg');
+          const { applied } = await runMigrations(
+            store._pool as Pool,
+            store._schema ?? 'llmops',
+          );
 
-          const result = await runAutoMigrations(store._db, 'postgres', {
-            schema: 'llmops',
-          });
-
-          if (result.ran) {
+          if (applied.length > 0) {
             console.log(
-              `[Migration] Auto-migration completed: ${result.tables.length} table(s) created, ${result.fields.length} field(s) added`,
+              `[Migration] Applied ${applied.length} migration(s): ${applied.join(', ')}`,
             );
           }
         } catch (error) {
           console.error('[Migration] Auto-migration failed:', error);
-          // Don't throw - allow the app to continue
         } finally {
           migrationComplete = true;
         }
       })();
     }
 
-    // Wait for migration to complete before proceeding
     await migrationPromise;
     await next();
   };

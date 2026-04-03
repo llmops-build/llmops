@@ -1,4 +1,3 @@
--- @name GetCostByProvider :many
 SELECT
   "provider",
   COALESCE(SUM("cost"), 0)::int           AS "totalCost",

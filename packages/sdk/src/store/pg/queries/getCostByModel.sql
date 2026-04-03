@@ -1,4 +1,3 @@
--- @name GetCostByModel :many
 SELECT
   "provider",
   "model",
