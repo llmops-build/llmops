@@ -1,9 +1,5 @@
-import { Kysely as KyselyClass, PostgresDialect, CompiledQuery } from 'kysely';
-import type { Kysely } from 'kysely';
-import { sql } from 'kysely';
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
-import type { Database } from '../db/schema';
 import { LLMOpsError } from '../error';
 import { logger } from '../utils/logger';
 
@@ -55,29 +51,6 @@ const insertLLMRequestSchema = z.object({
 
 export type LLMRequestInsert = z.infer<typeof insertLLMRequestSchema>;
 
-const listRequestsSchema = z.object({
-  limit: z.number().int().positive().max(1000).default(100),
-  offset: z.number().int().nonnegative().default(0),
-  configId: z.string().uuid().optional(),
-  variantId: z.string().uuid().optional(),
-  environmentId: z.string().uuid().optional(),
-  providerConfigId: z.string().uuid().optional(),
-  provider: z.string().optional(),
-  model: z.string().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  tags: z.record(z.string(), z.array(z.string())).optional(),
-});
-
-const dateRangeSchema = z.object({
-  startDate: z.date(),
-  endDate: z.date(),
-  configId: z.string().uuid().optional(),
-  variantId: z.string().uuid().optional(),
-  environmentId: z.string().uuid().optional(),
-  tags: z.record(z.string(), z.array(z.string())).optional(),
-});
-
 export const COST_SUMMARY_GROUP_BY = [
   'day',
   'hour',
@@ -88,17 +61,6 @@ export const COST_SUMMARY_GROUP_BY = [
 ] as const;
 
 export type CostSummaryGroupBy = (typeof COST_SUMMARY_GROUP_BY)[number];
-
-const costSummarySchema = z.object({
-  startDate: z.date(),
-  endDate: z.date(),
-  configId: z.string().uuid().optional(),
-  variantId: z.string().uuid().optional(),
-  environmentId: z.string().uuid().optional(),
-  tags: z.record(z.string(), z.array(z.string())).optional(),
-  groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
-  tagKeys: z.array(z.string()).optional(),
-});
 
 // ─── Traces schemas ─────────────────────────────────────────────────────────
 
@@ -162,635 +124,385 @@ const insertSpanEventSchema = z.object({
 
 export type SpanEventInsert = z.infer<typeof insertSpanEventSchema>;
 
-const listTracesSchema = z.object({
-  limit: z.number().int().positive().max(1000).default(50),
-  offset: z.number().int().nonnegative().default(0),
-  sessionId: z.string().optional(),
-  userId: z.string().optional(),
-  status: z.enum(['unset', 'ok', 'error']).optional(),
-  name: z.string().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  tags: z.record(z.string(), z.array(z.string())).optional(),
-});
+// ─── Tag filter helper ──────────────────────────────────────────────────────
 
-const traceStatsSchema = z.object({
-  startDate: z.date(),
-  endDate: z.date(),
-  sessionId: z.string().optional(),
-  userId: z.string().optional(),
-});
+function buildTagFilters(
+  tags: Record<string, string[]> | undefined,
+  paramOffset: number,
+): { conditions: string[]; params: unknown[] } {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  if (!tags) return { conditions, params };
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-const col = (name: string) => sql.ref(name);
+  for (const [key, values] of Object.entries(tags)) {
+    if (values.length === 0) continue;
+    if (values.length === 1) {
+      conditions.push(`"tags"->>'${key}' = $${paramOffset + params.length + 1}`);
+      params.push(values[0]);
+    } else {
+      const placeholders = values
+        .map((_, i) => `$${paramOffset + params.length + i + 1}`)
+        .join(', ');
+      conditions.push(`"tags"->>'${key}' IN (${placeholders})`);
+      params.push(...values);
+    }
+  }
+  return { conditions, params };
+}
 
 // ─── LLM Requests store ────────────────────────────────────────────────────
 
-function createLLMRequestsStore(db: Kysely<Database>) {
+function createLLMRequestsStore(pool: any) {
   return {
     batchInsertRequests: async (requests: LLMRequestInsert[]) => {
       if (requests.length === 0) return { count: 0 };
 
-      const validatedRequests = await Promise.all(
-        requests.map(async (req) => {
-          const result = await insertLLMRequestSchema.safeParseAsync(req);
-          if (!result.success) {
-            throw new LLMOpsError(
-              `Invalid request data: ${result.error.message}`,
-            );
-          }
-          return result.data;
-        }),
-      );
-
       const now = new Date().toISOString();
-      const values = validatedRequests.map((req) => ({
-        id: randomUUID(),
-        requestId: req.requestId,
-        configId: req.configId ?? null,
-        variantId: req.variantId ?? null,
-        environmentId: req.environmentId ?? null,
-        providerConfigId: req.providerConfigId ?? null,
-        provider: req.provider,
-        model: req.model,
-        promptTokens: req.promptTokens,
-        completionTokens: req.completionTokens,
-        totalTokens: req.totalTokens,
-        cachedTokens: req.cachedTokens,
-        cacheCreationTokens: req.cacheCreationTokens,
-        cost: req.cost,
-        cacheSavings: req.cacheSavings,
-        inputCost: req.inputCost,
-        outputCost: req.outputCost,
-        endpoint: req.endpoint,
-        statusCode: req.statusCode,
-        latencyMs: req.latencyMs,
-        isStreaming: req.isStreaming,
-        userId: req.userId ?? null,
-        tags: JSON.stringify(req.tags),
-        guardrailResults: req.guardrailResults
-          ? JSON.stringify(req.guardrailResults)
-          : null,
-        traceId: req.traceId ?? null,
-        spanId: req.spanId ?? null,
-        parentSpanId: req.parentSpanId ?? null,
-        sessionId: req.sessionId ?? null,
-        createdAt: now,
-        updatedAt: now,
-      }));
+      const columns = [
+        'id', 'requestId', 'configId', 'variantId', 'environmentId',
+        'providerConfigId', 'provider', 'model', 'promptTokens',
+        'completionTokens', 'totalTokens', 'cachedTokens',
+        'cacheCreationTokens', 'cost', 'cacheSavings', 'inputCost',
+        'outputCost', 'endpoint', 'statusCode', 'latencyMs', 'isStreaming',
+        'userId', 'tags', 'guardrailResults', 'traceId', 'spanId',
+        'parentSpanId', 'sessionId', 'createdAt', 'updatedAt',
+      ];
+      const colNames = columns.map((c) => `"${c}"`).join(', ');
+      const params: unknown[] = [];
+      const valueRows: string[] = [];
 
-      await db.insertInto('llm_requests').values(values).execute();
-      return { count: values.length };
+      for (const req of requests) {
+        const result = insertLLMRequestSchema.safeParse(req);
+        if (!result.success) {
+          logger.warn(`[batchInsertRequests] Skipping invalid request: ${result.error.message}`);
+          continue;
+        }
+        const r = result.data;
+        const offset = params.length;
+        const placeholders = columns.map((_, i) => `$${offset + i + 1}`).join(', ');
+        valueRows.push(`(${placeholders})`);
+        params.push(
+          randomUUID(), r.requestId, r.configId ?? null,
+          r.variantId ?? null, r.environmentId ?? null,
+          r.providerConfigId ?? null, r.provider, r.model,
+          r.promptTokens, r.completionTokens, r.totalTokens,
+          r.cachedTokens, r.cacheCreationTokens, r.cost,
+          r.cacheSavings, r.inputCost, r.outputCost, r.endpoint,
+          r.statusCode, r.latencyMs, r.isStreaming,
+          r.userId ?? null, JSON.stringify(r.tags),
+          r.guardrailResults ? JSON.stringify(r.guardrailResults) : null,
+          r.traceId ?? null, r.spanId ?? null,
+          r.parentSpanId ?? null, r.sessionId ?? null, now, now,
+        );
+      }
+
+      if (valueRows.length === 0) return { count: 0 };
+      await pool.query(`INSERT INTO "llm_requests" (${colNames}) VALUES ${valueRows.join(', ')}`, params);
+      return { count: valueRows.length };
     },
 
     insertRequest: async (request: LLMRequestInsert) => {
-      const result = await insertLLMRequestSchema.safeParseAsync(request);
+      const result = insertLLMRequestSchema.safeParse(request);
       if (!result.success) {
         throw new LLMOpsError(`Invalid request data: ${result.error.message}`);
       }
-
-      const req = result.data;
+      const r = result.data;
       const now = new Date().toISOString();
-
-      return db
-        .insertInto('llm_requests')
-        .values({
-          id: randomUUID(),
-          requestId: req.requestId,
-          configId: req.configId ?? null,
-          variantId: req.variantId ?? null,
-          environmentId: req.environmentId ?? null,
-          providerConfigId: req.providerConfigId ?? null,
-          provider: req.provider,
-          model: req.model,
-          promptTokens: req.promptTokens,
-          completionTokens: req.completionTokens,
-          totalTokens: req.totalTokens,
-          cachedTokens: req.cachedTokens,
-          cacheCreationTokens: req.cacheCreationTokens,
-          cost: req.cost,
-          cacheSavings: req.cacheSavings,
-          inputCost: req.inputCost,
-          outputCost: req.outputCost,
-          endpoint: req.endpoint,
-          statusCode: req.statusCode,
-          latencyMs: req.latencyMs,
-          isStreaming: req.isStreaming,
-          userId: req.userId ?? null,
-          tags: JSON.stringify(req.tags),
-          guardrailResults: req.guardrailResults
-            ? JSON.stringify(req.guardrailResults)
-            : null,
-          traceId: req.traceId ?? null,
-          spanId: req.spanId ?? null,
-          parentSpanId: req.parentSpanId ?? null,
-          sessionId: req.sessionId ?? null,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returningAll()
-        .executeTakeFirst();
+      const { rows } = await pool.query(
+        `INSERT INTO "llm_requests" (
+          "id", "requestId", "configId", "variantId", "environmentId",
+          "providerConfigId", "provider", "model", "promptTokens",
+          "completionTokens", "totalTokens", "cachedTokens",
+          "cacheCreationTokens", "cost", "cacheSavings", "inputCost",
+          "outputCost", "endpoint", "statusCode", "latencyMs", "isStreaming",
+          "userId", "tags", "guardrailResults", "traceId", "spanId",
+          "parentSpanId", "sessionId", "createdAt", "updatedAt"
+        ) VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+          $16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
+        ) RETURNING *`,
+        [
+          randomUUID(), r.requestId, r.configId ?? null,
+          r.variantId ?? null, r.environmentId ?? null,
+          r.providerConfigId ?? null, r.provider, r.model,
+          r.promptTokens, r.completionTokens, r.totalTokens,
+          r.cachedTokens, r.cacheCreationTokens, r.cost,
+          r.cacheSavings, r.inputCost, r.outputCost, r.endpoint,
+          r.statusCode, r.latencyMs, r.isStreaming,
+          r.userId ?? null, JSON.stringify(r.tags),
+          r.guardrailResults ? JSON.stringify(r.guardrailResults) : null,
+          r.traceId ?? null, r.spanId ?? null,
+          r.parentSpanId ?? null, r.sessionId ?? null, now, now,
+        ],
+      );
+      return rows[0] ?? null;
     },
 
-    listRequests: async (params?: z.infer<typeof listRequestsSchema>) => {
-      const result = await listRequestsSchema.safeParseAsync(params || {});
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
-
+    listRequests: async (params?: {
+      limit?: number; offset?: number;
+      configId?: string; variantId?: string; environmentId?: string;
+      providerConfigId?: string; provider?: string; model?: string;
+      startDate?: Date; endDate?: Date; tags?: Record<string, string[]>;
+    }) => {
       const {
-        limit,
-        offset,
-        configId,
-        variantId,
-        environmentId,
-        providerConfigId,
-        provider,
-        model,
-        startDate,
-        endDate,
-        tags,
-      } = result.data;
+        limit = 100, offset = 0,
+        configId, variantId, environmentId, providerConfigId,
+        provider, model, startDate, endDate, tags,
+      } = params ?? {};
 
-      let baseQuery = db.selectFrom('llm_requests');
+      const conditions: string[] = ['TRUE'];
+      const queryParams: unknown[] = [];
+      let idx = 0;
 
-      if (configId) baseQuery = baseQuery.where('configId', '=', configId);
-      if (variantId) baseQuery = baseQuery.where('variantId', '=', variantId);
-      if (environmentId)
-        baseQuery = baseQuery.where('environmentId', '=', environmentId);
-      if (providerConfigId)
-        baseQuery = baseQuery.where('providerConfigId', '=', providerConfigId);
-      if (provider) baseQuery = baseQuery.where('provider', '=', provider);
-      if (model) baseQuery = baseQuery.where('model', '=', model);
-      if (startDate)
-        baseQuery = baseQuery.where(
-          sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`,
-        );
-      if (endDate)
-        baseQuery = baseQuery.where(
-          sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`,
-        );
-      if (tags && Object.keys(tags).length > 0) {
-        for (const [key, values] of Object.entries(tags)) {
-          if (values.length === 0) continue;
-          if (values.length === 1) {
-            baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
-            );
-          } else {
-            const valueList = sql.join(values.map((v) => sql`${v}`));
-            baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
-            );
-          }
-        }
-      }
+      if (configId) { conditions.push(`"configId" = $${++idx}`); queryParams.push(configId); }
+      if (variantId) { conditions.push(`"variantId" = $${++idx}`); queryParams.push(variantId); }
+      if (environmentId) { conditions.push(`"environmentId" = $${++idx}`); queryParams.push(environmentId); }
+      if (providerConfigId) { conditions.push(`"providerConfigId" = $${++idx}`); queryParams.push(providerConfigId); }
+      if (provider) { conditions.push(`"provider" = $${++idx}`); queryParams.push(provider); }
+      if (model) { conditions.push(`"model" = $${++idx}`); queryParams.push(model); }
+      if (startDate) { conditions.push(`"createdAt" >= $${++idx}`); queryParams.push(startDate.toISOString()); }
+      if (endDate) { conditions.push(`"createdAt" <= $${++idx}`); queryParams.push(endDate.toISOString()); }
 
-      const countResult = await baseQuery
-        .select(sql<number>`COUNT(*)`.as('total'))
-        .executeTakeFirst();
-      const total = Number(countResult?.total ?? 0);
+      const tagFilter = buildTagFilters(tags, idx);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+      idx += tagFilter.params.length;
 
-      const data = await baseQuery
-        .selectAll()
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      const where = conditions.join(' AND ');
 
-      return { data, total, limit, offset };
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS "total" FROM "llm_requests" WHERE ${where}`,
+        queryParams,
+      );
+      const total = countResult.rows[0]?.total ?? 0;
+
+      const data = await pool.query(
+        `SELECT * FROM "llm_requests" WHERE ${where} ORDER BY "createdAt" DESC LIMIT $${++idx} OFFSET $${++idx}`,
+        [...queryParams, limit, offset],
+      );
+
+      return { data: data.rows, total, limit, offset };
     },
 
     getRequestByRequestId: async (requestId: string) => {
-      return db
-        .selectFrom('llm_requests')
-        .selectAll()
-        .where('requestId', '=', requestId)
-        .executeTakeFirst();
+      const { rows } = await pool.query(
+        `SELECT * FROM "llm_requests" WHERE "requestId" = $1`,
+        [requestId],
+      );
+      return rows[0] ?? undefined;
     },
 
-    getTotalCost: async (params: z.infer<typeof dateRangeSchema>) => {
-      const result = await dateRangeSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
+    getTotalCost: async (params: { startDate: Date; endDate: Date; configId?: string; variantId?: string; environmentId?: string; tags?: Record<string, string[]> }) => {
+      const { startDate, endDate, configId, variantId, environmentId, tags } = params;
 
-      const { startDate, endDate, configId, variantId, environmentId, tags } =
-        result.data;
+      const conditions = [
+        `"createdAt" >= $1`,
+        `"createdAt" <= $2`,
+      ];
+      const queryParams: unknown[] = [startDate.toISOString(), endDate.toISOString()];
+      let idx = 2;
 
-      let query = db
-        .selectFrom('llm_requests')
-        .select([
-          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('promptTokens')}), 0)`.as(
-            'totalPromptTokens',
-          ),
-          sql<number>`COALESCE(SUM(${col('completionTokens')}), 0)`.as(
-            'totalCompletionTokens',
-          ),
-          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens',
-          ),
-          sql<number>`COALESCE(SUM(${col('cachedTokens')}), 0)`.as(
-            'totalCachedTokens',
-          ),
-          sql<number>`COALESCE(SUM(${col('cacheSavings')}), 0)`.as(
-            'totalCacheSavings',
-          ),
-          sql<number>`COUNT(*)`.as('requestCount'),
-        ])
-        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
+      if (configId) { conditions.push(`"configId" = $${++idx}`); queryParams.push(configId); }
+      if (variantId) { conditions.push(`"variantId" = $${++idx}`); queryParams.push(variantId); }
+      if (environmentId) { conditions.push(`"environmentId" = $${++idx}`); queryParams.push(environmentId); }
 
-      if (configId) query = query.where('configId', '=', configId);
-      if (variantId) query = query.where('variantId', '=', variantId);
-      if (environmentId)
-        query = query.where('environmentId', '=', environmentId);
-      if (tags && Object.keys(tags).length > 0) {
-        for (const [key, values] of Object.entries(tags)) {
-          if (values.length === 0) continue;
-          if (values.length === 1) {
-            query = query.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
-            );
-          } else {
-            const valueList = sql.join(values.map((v) => sql`${v}`));
-            query = query.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
-            );
-          }
-        }
-      }
+      const tagFilter = buildTagFilters(tags, idx);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
 
-      return query.executeTakeFirst();
+      const where = conditions.join(' AND ');
+      const { rows } = await pool.query(
+        `SELECT
+          COALESCE(SUM("cost"), 0)::int AS "totalCost",
+          COALESCE(SUM("inputCost"), 0)::int AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0)::int AS "totalOutputCost",
+          COALESCE(SUM("promptTokens"), 0)::int AS "totalPromptTokens",
+          COALESCE(SUM("completionTokens"), 0)::int AS "totalCompletionTokens",
+          COALESCE(SUM("totalTokens"), 0)::int AS "totalTokens",
+          COALESCE(SUM("cachedTokens"), 0)::int AS "totalCachedTokens",
+          COALESCE(SUM("cacheSavings"), 0)::int AS "totalCacheSavings",
+          COUNT(*)::int AS "requestCount"
+        FROM "llm_requests" WHERE ${where}`,
+        queryParams,
+      );
+      return rows[0];
     },
 
-    getCostByModel: async (params: z.infer<typeof dateRangeSchema>) => {
-      const result = await dateRangeSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
-
-      const { startDate, endDate } = result.data;
-
-      return db
-        .selectFrom('llm_requests')
-        .select([
-          'provider',
-          'model',
-          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens',
-          ),
-          sql<number>`COUNT(*)`.as('requestCount'),
-          sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
-        ])
-        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
-        .groupBy(['provider', 'model'])
-        .orderBy(sql`SUM(${col('cost')})`, 'desc')
-        .execute();
+    getCostByModel: async (params: { startDate: Date; endDate: Date }) => {
+      const { rows } = await pool.query(
+        `SELECT "provider", "model",
+          COALESCE(SUM("cost"), 0)::int AS "totalCost",
+          COALESCE(SUM("inputCost"), 0)::int AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0)::int AS "totalOutputCost",
+          COALESCE(SUM("totalTokens"), 0)::int AS "totalTokens",
+          COUNT(*)::int AS "requestCount",
+          AVG("latencyMs") AS "avgLatencyMs"
+        FROM "llm_requests"
+        WHERE "createdAt" >= $1 AND "createdAt" <= $2
+        GROUP BY "provider", "model"
+        ORDER BY SUM("cost") DESC`,
+        [params.startDate.toISOString(), params.endDate.toISOString()],
+      );
+      return rows;
     },
 
-    getCostByProvider: async (params: z.infer<typeof dateRangeSchema>) => {
-      const result = await dateRangeSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
-
-      const { startDate, endDate } = result.data;
-
-      return db
-        .selectFrom('llm_requests')
-        .select([
-          'provider',
-          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens',
-          ),
-          sql<number>`COUNT(*)`.as('requestCount'),
-          sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
-        ])
-        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
-        .groupBy('provider')
-        .orderBy(sql`SUM(${col('cost')})`, 'desc')
-        .execute();
+    getCostByProvider: async (params: { startDate: Date; endDate: Date }) => {
+      const { rows } = await pool.query(
+        `SELECT "provider",
+          COALESCE(SUM("cost"), 0)::int AS "totalCost",
+          COALESCE(SUM("inputCost"), 0)::int AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0)::int AS "totalOutputCost",
+          COALESCE(SUM("totalTokens"), 0)::int AS "totalTokens",
+          COUNT(*)::int AS "requestCount",
+          AVG("latencyMs") AS "avgLatencyMs"
+        FROM "llm_requests"
+        WHERE "createdAt" >= $1 AND "createdAt" <= $2
+        GROUP BY "provider"
+        ORDER BY SUM("cost") DESC`,
+        [params.startDate.toISOString(), params.endDate.toISOString()],
+      );
+      return rows;
     },
 
-    getDailyCosts: async (params: z.infer<typeof dateRangeSchema>) => {
-      const result = await dateRangeSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
-
-      const { startDate, endDate } = result.data;
-
-      return db
-        .selectFrom('llm_requests')
-        .select([
-          sql<string>`DATE(${col('createdAt')})`.as('date'),
-          sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(${col('inputCost')}), 0)`.as(
-            'totalInputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('outputCost')}), 0)`.as(
-            'totalOutputCost',
-          ),
-          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens',
-          ),
-          sql<number>`COUNT(*)`.as('requestCount'),
-        ])
-        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`)
-        .groupBy(sql`DATE(${col('createdAt')})`)
-        .orderBy(sql`DATE(${col('createdAt')})`, 'asc')
-        .execute();
+    getDailyCosts: async (params: { startDate: Date; endDate: Date }) => {
+      const { rows } = await pool.query(
+        `SELECT DATE("createdAt")::text AS "date",
+          COALESCE(SUM("cost"), 0)::int AS "totalCost",
+          COALESCE(SUM("inputCost"), 0)::int AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0)::int AS "totalOutputCost",
+          COALESCE(SUM("totalTokens"), 0)::int AS "totalTokens",
+          COUNT(*)::int AS "requestCount"
+        FROM "llm_requests"
+        WHERE "createdAt" >= $1 AND "createdAt" <= $2
+        GROUP BY DATE("createdAt")
+        ORDER BY DATE("createdAt") ASC`,
+        [params.startDate.toISOString(), params.endDate.toISOString()],
+      );
+      return rows;
     },
 
-    getCostSummary: async (params: z.infer<typeof costSummarySchema>) => {
-      const result = await costSummarySchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
+    getCostSummary: async (params: {
+      startDate: Date; endDate: Date;
+      configId?: string; variantId?: string; environmentId?: string;
+      groupBy?: CostSummaryGroupBy; tags?: Record<string, string[]>;
+      tagKeys?: string[];
+    }) => {
+      const { startDate, endDate, groupBy, configId, variantId, environmentId, tags, tagKeys } = params;
 
-      const {
-        startDate,
-        endDate,
-        groupBy,
-        configId,
-        variantId,
-        environmentId,
-        tags,
-        tagKeys,
-      } = result.data;
+      const baseParams = [startDate.toISOString(), endDate.toISOString(), configId ?? null, variantId ?? null, environmentId ?? null];
 
-      let baseQuery = db
-        .selectFrom('llm_requests')
-        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
+      if (groupBy === 'tags') {
+        const conditions = [
+          `"createdAt" >= $1`, `"createdAt" <= $2`,
+          `($3::uuid IS NULL OR "configId" = $3)`,
+          `($4::uuid IS NULL OR "variantId" = $4)`,
+          `($5::uuid IS NULL OR "environmentId" = $5)`,
+        ];
+        const queryParams: unknown[] = [...baseParams];
+        let idx = 5;
 
-      if (configId) baseQuery = baseQuery.where('configId', '=', configId);
-      if (variantId) baseQuery = baseQuery.where('variantId', '=', variantId);
-      if (environmentId)
-        baseQuery = baseQuery.where('environmentId', '=', environmentId);
-      if (tags && Object.keys(tags).length > 0) {
-        for (const [key, values] of Object.entries(tags)) {
-          if (values.length === 0) continue;
-          if (values.length === 1) {
-            baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
-            );
-          } else {
-            const valueList = sql.join(values.map((v) => sql`${v}`));
-            baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
-            );
-          }
-        }
-      }
+        const tagFilter = buildTagFilters(tags, idx);
+        conditions.push(...tagFilter.conditions);
+        queryParams.push(...tagFilter.params);
+        idx += tagFilter.params.length;
 
-      switch (groupBy) {
-        case 'day':
-          return baseQuery
-            .select([
-              sql<string>`DATE(${col('createdAt')})`.as('groupKey'),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-              sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-                'totalTokens',
-              ),
-            ])
-            .groupBy(sql`DATE(${col('createdAt')})`)
-            .orderBy(sql`DATE(${col('createdAt')})`, 'asc')
-            .execute();
-
-        case 'hour':
-          return baseQuery
-            .select([
-              sql<string>`DATE_TRUNC('hour', ${col('createdAt')})`.as(
-                'groupKey',
-              ),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-              sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-                'totalTokens',
-              ),
-            ])
-            .groupBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`)
-            .orderBy(sql`DATE_TRUNC('hour', ${col('createdAt')})`, 'asc')
-            .execute();
-
-        case 'model':
-          return baseQuery
-            .select([
-              sql<string>`${col('provider')} || '/' || ${col('model')}`.as(
-                'groupKey',
-              ),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-            ])
-            .groupBy(['provider', 'model'])
-            .orderBy(sql`SUM(${col('cost')})`, 'desc')
-            .execute();
-
-        case 'provider':
-          return baseQuery
-            .select([
-              sql<string>`${col('provider')}`.as('groupKey'),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-            ])
-            .groupBy('provider')
-            .orderBy(sql`SUM(${col('cost')})`, 'desc')
-            .execute();
-
-        case 'endpoint':
-          return baseQuery
-            .select([
-              sql<string>`COALESCE(${col('endpoint')}, 'unknown')`.as(
-                'groupKey',
-              ),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-            ])
-            .groupBy('endpoint')
-            .orderBy(sql`SUM(${col('cost')})`, 'desc')
-            .execute();
-
-        case 'tags': {
-          const conditions = [
-            sql`${col('createdAt')} >= ${startDate.toISOString()}`,
-            sql`${col('createdAt')} <= ${endDate.toISOString()}`,
-          ];
-          if (configId)
-            conditions.push(sql`${col('configId')} = ${configId}`);
-          if (variantId)
-            conditions.push(sql`${col('variantId')} = ${variantId}`);
-          if (environmentId)
-            conditions.push(sql`${col('environmentId')} = ${environmentId}`);
-          if (tags && Object.keys(tags).length > 0) {
-            for (const [key, values] of Object.entries(tags)) {
-              if (values.length === 0) continue;
-              if (values.length === 1) {
-                conditions.push(sql`${col('tags')}->>${key} = ${values[0]}`);
-              } else {
-                const valueList = sql.join(values.map((v) => sql`${v}`));
-                conditions.push(
-                  sql`${col('tags')}->>${key} IN (${valueList})`,
-                );
-              }
-            }
-          }
-          if (tagKeys && tagKeys.length > 0) {
-            const tagKeyList = sql.join(
-              tagKeys.map((k) => sql`${k}`),
-              sql`, `,
-            );
-            conditions.push(sql`t.key IN (${tagKeyList})`);
-          }
-          const whereClause = sql.join(conditions, sql` AND `);
-          const tagResult = await sql<{
-            groupKey: string;
-            totalCost: number;
-            requestCount: number;
-          }>`
-            SELECT t.key || ':' || t.value as "groupKey",
-                   COALESCE(SUM(${col('cost')}), 0) as "totalCost",
-                   COUNT(*) as "requestCount"
-            FROM "llm_requests", jsonb_each_text(${col('tags')}) t
-            WHERE ${whereClause}
-            GROUP BY t.key, t.value
-            ORDER BY SUM(${col('cost')}) DESC
-          `.execute(db);
-          return tagResult.rows;
+        if (tagKeys && tagKeys.length > 0) {
+          const keyPlaceholders = tagKeys.map((_, i) => `$${idx + i + 1}`).join(', ');
+          conditions.push(`t.key IN (${keyPlaceholders})`);
+          queryParams.push(...tagKeys);
         }
 
-        default:
-          return baseQuery
-            .select([
-              sql<string>`'total'`.as('groupKey'),
-              sql<number>`COALESCE(SUM(${col('cost')}), 0)`.as('totalCost'),
-              sql<number>`COUNT(*)`.as('requestCount'),
-            ])
-            .execute();
+        const where = conditions.join(' AND ');
+        const { rows } = await pool.query(
+          `SELECT t.key || ':' || t.value AS "groupKey",
+                  COALESCE(SUM("cost"), 0)::int AS "totalCost",
+                  COUNT(*)::int AS "requestCount"
+           FROM "llm_requests", jsonb_each_text("tags") t
+           WHERE ${where}
+           GROUP BY t.key, t.value
+           ORDER BY SUM("cost") DESC`,
+          queryParams,
+        );
+        return rows;
       }
+
+      const sqlMap: Record<string, string> = {
+        day: `SELECT DATE("createdAt")::text AS "groupKey", COALESCE(SUM("cost"),0)::int AS "totalCost", COUNT(*)::int AS "requestCount", COALESCE(SUM("totalTokens"),0)::int AS "totalTokens" FROM "llm_requests" WHERE "createdAt">=$1 AND "createdAt"<=$2 AND ($3::uuid IS NULL OR "configId"=$3) AND ($4::uuid IS NULL OR "variantId"=$4) AND ($5::uuid IS NULL OR "environmentId"=$5) GROUP BY DATE("createdAt") ORDER BY DATE("createdAt") ASC`,
+        hour: `SELECT DATE_TRUNC('hour',"createdAt")::text AS "groupKey", COALESCE(SUM("cost"),0)::int AS "totalCost", COUNT(*)::int AS "requestCount", COALESCE(SUM("totalTokens"),0)::int AS "totalTokens" FROM "llm_requests" WHERE "createdAt">=$1 AND "createdAt"<=$2 AND ($3::uuid IS NULL OR "configId"=$3) AND ($4::uuid IS NULL OR "variantId"=$4) AND ($5::uuid IS NULL OR "environmentId"=$5) GROUP BY DATE_TRUNC('hour',"createdAt") ORDER BY DATE_TRUNC('hour',"createdAt") ASC`,
+        model: `SELECT "provider"||'/'||"model" AS "groupKey", COALESCE(SUM("cost"),0)::int AS "totalCost", COUNT(*)::int AS "requestCount" FROM "llm_requests" WHERE "createdAt">=$1 AND "createdAt"<=$2 AND ($3::uuid IS NULL OR "configId"=$3) AND ($4::uuid IS NULL OR "variantId"=$4) AND ($5::uuid IS NULL OR "environmentId"=$5) GROUP BY "provider","model" ORDER BY SUM("cost") DESC`,
+        provider: `SELECT "provider" AS "groupKey", COALESCE(SUM("cost"),0)::int AS "totalCost", COUNT(*)::int AS "requestCount" FROM "llm_requests" WHERE "createdAt">=$1 AND "createdAt"<=$2 AND ($3::uuid IS NULL OR "configId"=$3) AND ($4::uuid IS NULL OR "variantId"=$4) AND ($5::uuid IS NULL OR "environmentId"=$5) GROUP BY "provider" ORDER BY SUM("cost") DESC`,
+        endpoint: `SELECT COALESCE("endpoint",'unknown') AS "groupKey", COALESCE(SUM("cost"),0)::int AS "totalCost", COUNT(*)::int AS "requestCount" FROM "llm_requests" WHERE "createdAt">=$1 AND "createdAt"<=$2 AND ($3::uuid IS NULL OR "configId"=$3) AND ($4::uuid IS NULL OR "variantId"=$4) AND ($5::uuid IS NULL OR "environmentId"=$5) GROUP BY "endpoint" ORDER BY SUM("cost") DESC`,
+      };
+
+      const totalSql = `SELECT 'total' AS "groupKey", COALESCE(SUM("cost"),0)::int AS "totalCost", COUNT(*)::int AS "requestCount" FROM "llm_requests" WHERE "createdAt">=$1 AND "createdAt"<=$2 AND ($3::uuid IS NULL OR "configId"=$3) AND ($4::uuid IS NULL OR "variantId"=$4) AND ($5::uuid IS NULL OR "environmentId"=$5)`;
+
+      const sql = groupBy ? (sqlMap[groupBy] ?? totalSql) : totalSql;
+      const { rows } = await pool.query(sql, baseParams);
+      return rows;
     },
 
-    getRequestStats: async (params: z.infer<typeof dateRangeSchema>) => {
-      const result = await dateRangeSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
+    getRequestStats: async (params: { startDate: Date; endDate: Date; configId?: string; variantId?: string; environmentId?: string; tags?: Record<string, string[]> }) => {
+      const { startDate, endDate, configId, variantId, environmentId, tags } = params;
 
-      const { startDate, endDate, configId, variantId, environmentId, tags } =
-        result.data;
+      const conditions = [`"createdAt" >= $1`, `"createdAt" <= $2`];
+      const queryParams: unknown[] = [startDate.toISOString(), endDate.toISOString()];
+      let idx = 2;
 
-      let query = db
-        .selectFrom('llm_requests')
-        .select([
-          sql<number>`COUNT(*)`.as('totalRequests'),
-          sql<number>`COUNT(CASE WHEN ${col('statusCode')} >= 200 AND ${col('statusCode')} < 300 THEN 1 END)`.as(
-            'successfulRequests',
-          ),
-          sql<number>`COUNT(CASE WHEN ${col('statusCode')} >= 400 THEN 1 END)`.as(
-            'failedRequests',
-          ),
-          sql<number>`COUNT(CASE WHEN ${col('isStreaming')} = true THEN 1 END)`.as(
-            'streamingRequests',
-          ),
-          sql<number>`AVG(${col('latencyMs')})`.as('avgLatencyMs'),
-          sql<number>`MAX(${col('latencyMs')})`.as('maxLatencyMs'),
-          sql<number>`MIN(${col('latencyMs')})`.as('minLatencyMs'),
-        ])
-        .where(sql<boolean>`${col('createdAt')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('createdAt')} <= ${endDate.toISOString()}`);
+      if (configId) { conditions.push(`"configId" = $${++idx}`); queryParams.push(configId); }
+      if (variantId) { conditions.push(`"variantId" = $${++idx}`); queryParams.push(variantId); }
+      if (environmentId) { conditions.push(`"environmentId" = $${++idx}`); queryParams.push(environmentId); }
 
-      if (configId) query = query.where('configId', '=', configId);
-      if (variantId) query = query.where('variantId', '=', variantId);
-      if (environmentId)
-        query = query.where('environmentId', '=', environmentId);
-      if (tags && Object.keys(tags).length > 0) {
-        for (const [key, values] of Object.entries(tags)) {
-          if (values.length === 0) continue;
-          if (values.length === 1) {
-            query = query.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
-            );
-          } else {
-            const valueList = sql.join(values.map((v) => sql`${v}`));
-            query = query.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
-            );
-          }
-        }
-      }
+      const tagFilter = buildTagFilters(tags, idx);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
 
-      return query.executeTakeFirst();
+      const where = conditions.join(' AND ');
+      const { rows } = await pool.query(
+        `SELECT
+          COUNT(*)::int AS "totalRequests",
+          COUNT(CASE WHEN "statusCode">=200 AND "statusCode"<300 THEN 1 END)::int AS "successfulRequests",
+          COUNT(CASE WHEN "statusCode">=400 THEN 1 END)::int AS "failedRequests",
+          COUNT(CASE WHEN "isStreaming"=true THEN 1 END)::int AS "streamingRequests",
+          AVG("latencyMs") AS "avgLatencyMs",
+          MAX("latencyMs")::int AS "maxLatencyMs",
+          MIN("latencyMs")::int AS "minLatencyMs"
+        FROM "llm_requests" WHERE ${where}`,
+        queryParams,
+      );
+      return rows[0];
     },
 
     getDistinctTags: async () => {
-      const data = await sql<{ key: string; value: string }>`
-        SELECT DISTINCT key, value
-        FROM llm_requests, jsonb_each_text(tags) AS t(key, value)
-        WHERE tags != '{}'::jsonb
-        ORDER BY key, value
-      `.execute(db);
-
-      return data.rows;
+      const { rows } = await pool.query(
+        `SELECT DISTINCT key, value
+         FROM "llm_requests", jsonb_each_text("tags") AS t(key, value)
+         WHERE "tags" != '{}'::jsonb
+         ORDER BY key, value`,
+      );
+      return rows;
     },
   };
 }
 
 // ─── Traces store ───────────────────────────────────────────────────────────
 
-function createTracesStore(db: Kysely<Database>) {
+function createTracesStore(pool: any) {
   return {
     upsertTrace: async (data: TraceUpsert) => {
-      const result = await upsertTraceSchema.safeParseAsync(data);
+      const result = upsertTraceSchema.safeParse(data);
       if (!result.success) {
         throw new LLMOpsError(`Invalid trace data: ${result.error.message}`);
       }
-
       const trace = result.data;
       const now = new Date().toISOString();
 
-      await sql`
-        INSERT INTO "traces" (
-          "id", "traceId", "name", "sessionId", "userId", "status",
-          "startTime", "endTime", "durationMs", "spanCount",
-          "totalInputTokens", "totalOutputTokens", "totalTokens", "totalCost",
-          "tags", "metadata", "createdAt", "updatedAt"
-        ) VALUES (
-          ${randomUUID()}, ${trace.traceId}, ${trace.name ?? null}, ${trace.sessionId ?? null},
-          ${trace.userId ?? null}, ${trace.status},
-          ${trace.startTime.toISOString()}, ${trace.endTime?.toISOString() ?? null},
-          ${trace.durationMs ?? null}, ${trace.spanCount},
-          ${trace.totalInputTokens}, ${trace.totalOutputTokens},
-          ${trace.totalTokens}, ${trace.totalCost},
-          ${JSON.stringify(trace.tags)}::jsonb, ${JSON.stringify(trace.metadata)}::jsonb,
-          ${now}, ${now}
-        )
+      await pool.query(
+        `INSERT INTO "traces" (
+          "id","traceId","name","sessionId","userId","status",
+          "startTime","endTime","durationMs","spanCount",
+          "totalInputTokens","totalOutputTokens","totalTokens","totalCost",
+          "tags","metadata","createdAt","updatedAt"
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb,$16::jsonb,$17,$17)
         ON CONFLICT ("traceId") DO UPDATE SET
           "name" = COALESCE(EXCLUDED."name", "traces"."name"),
           "sessionId" = COALESCE(EXCLUDED."sessionId", "traces"."sessionId"),
@@ -806,10 +518,7 @@ function createTracesStore(db: Kysely<Database>) {
             COALESCE(EXCLUDED."endTime", "traces"."endTime")
           ),
           "durationMs" = EXTRACT(EPOCH FROM (
-            GREATEST(
-              COALESCE("traces"."endTime", EXCLUDED."endTime"),
-              COALESCE(EXCLUDED."endTime", "traces"."endTime")
-            ) -
+            GREATEST(COALESCE("traces"."endTime",EXCLUDED."endTime"),COALESCE(EXCLUDED."endTime","traces"."endTime")) -
             LEAST("traces"."startTime", EXCLUDED."startTime")
           ))::integer * 1000,
           "spanCount" = "traces"."spanCount" + EXCLUDED."spanCount",
@@ -819,223 +528,174 @@ function createTracesStore(db: Kysely<Database>) {
           "totalCost" = "traces"."totalCost" + EXCLUDED."totalCost",
           "tags" = "traces"."tags" || EXCLUDED."tags",
           "metadata" = "traces"."metadata" || EXCLUDED."metadata",
-          "updatedAt" = ${now}
-      `.execute(db);
+          "updatedAt" = $17`,
+        [
+          randomUUID(), trace.traceId, trace.name ?? null,
+          trace.sessionId ?? null, trace.userId ?? null, trace.status,
+          trace.startTime.toISOString(), trace.endTime?.toISOString() ?? null,
+          trace.durationMs ?? null, trace.spanCount,
+          trace.totalInputTokens, trace.totalOutputTokens,
+          trace.totalTokens, trace.totalCost,
+          JSON.stringify(trace.tags), JSON.stringify(trace.metadata), now,
+        ],
+      );
     },
 
     batchInsertSpans: async (spans: SpanInsert[]) => {
       if (spans.length === 0) return { count: 0 };
 
-      const validatedSpans: z.infer<typeof insertSpanSchema>[] = [];
+      const now = new Date().toISOString();
+      const columns = [
+        'id', 'traceId', 'spanId', 'parentSpanId', 'name', 'kind',
+        'status', 'statusMessage', 'startTime', 'endTime', 'durationMs',
+        'provider', 'model', 'promptTokens', 'completionTokens',
+        'totalTokens', 'cost', 'configId', 'variantId', 'environmentId',
+        'providerConfigId', 'requestId', 'source', 'input', 'output',
+        'attributes', 'createdAt', 'updatedAt',
+      ];
+      const colNames = columns.map((c) => `"${c}"`).join(', ');
+      const params: unknown[] = [];
+      const valueRows: string[] = [];
+
       for (const span of spans) {
-        const result = await insertSpanSchema.safeParseAsync(span);
+        const result = insertSpanSchema.safeParse(span);
         if (!result.success) {
-          logger.warn(
-            `[batchInsertSpans] Skipping invalid span ${span.spanId}: ${result.error.message}`,
-          );
+          logger.warn(`[batchInsertSpans] Skipping invalid span ${span.spanId}: ${result.error.message}`);
           continue;
         }
-        validatedSpans.push(result.data);
+        const s = result.data;
+        const offset = params.length;
+        const placeholders = columns.map((_, i) => `$${offset + i + 1}`).join(', ');
+        valueRows.push(`(${placeholders})`);
+        params.push(
+          randomUUID(), s.traceId, s.spanId,
+          s.parentSpanId ?? null, s.name, s.kind,
+          s.status, s.statusMessage ?? null,
+          s.startTime.toISOString(), s.endTime?.toISOString() ?? null,
+          s.durationMs ?? null, s.provider ?? null,
+          s.model ?? null, s.promptTokens,
+          s.completionTokens, s.totalTokens,
+          s.cost, s.configId ?? null,
+          s.variantId ?? null, s.environmentId ?? null,
+          s.providerConfigId ?? null, s.requestId ?? null,
+          s.source,
+          s.input != null ? JSON.stringify(s.input) : null,
+          s.output != null ? JSON.stringify(s.output) : null,
+          JSON.stringify(s.attributes), now, now,
+        );
       }
 
-      if (validatedSpans.length === 0) return { count: 0 };
-
-      const now = new Date().toISOString();
-      const values = validatedSpans.map((span) => ({
-        id: randomUUID(),
-        traceId: span.traceId,
-        spanId: span.spanId,
-        parentSpanId: span.parentSpanId ?? null,
-        name: span.name,
-        kind: span.kind,
-        status: span.status,
-        statusMessage: span.statusMessage ?? null,
-        startTime: span.startTime.toISOString(),
-        endTime: span.endTime?.toISOString() ?? null,
-        durationMs: span.durationMs ?? null,
-        provider: span.provider ?? null,
-        model: span.model ?? null,
-        promptTokens: span.promptTokens,
-        completionTokens: span.completionTokens,
-        totalTokens: span.totalTokens,
-        cost: span.cost,
-        configId: span.configId ?? null,
-        variantId: span.variantId ?? null,
-        environmentId: span.environmentId ?? null,
-        providerConfigId: span.providerConfigId ?? null,
-        requestId: span.requestId ?? null,
-        source: span.source,
-        input: span.input != null ? JSON.stringify(span.input) : null,
-        output: span.output != null ? JSON.stringify(span.output) : null,
-        attributes: JSON.stringify(span.attributes),
-        createdAt: now,
-        updatedAt: now,
-      }));
-
-      await db
-        .insertInto('spans')
-        .values(values)
-        .onConflict((oc) => oc.column('spanId').doNothing())
-        .execute();
-
-      return { count: values.length };
+      if (valueRows.length === 0) return { count: 0 };
+      await pool.query(
+        `INSERT INTO "spans" (${colNames}) VALUES ${valueRows.join(', ')} ON CONFLICT ("spanId") DO NOTHING`,
+        params,
+      );
+      return { count: valueRows.length };
     },
 
     batchInsertSpanEvents: async (events: SpanEventInsert[]) => {
       if (events.length === 0) return { count: 0 };
 
-      const validatedEvents: z.infer<typeof insertSpanEventSchema>[] = [];
+      const now = new Date().toISOString();
+      const columns = ['id', 'traceId', 'spanId', 'name', 'timestamp', 'attributes', 'createdAt'];
+      const colNames = columns.map((c) => `"${c}"`).join(', ');
+      const params: unknown[] = [];
+      const valueRows: string[] = [];
+
       for (const event of events) {
-        const result = await insertSpanEventSchema.safeParseAsync(event);
+        const result = insertSpanEventSchema.safeParse(event);
         if (!result.success) {
-          logger.warn(
-            `[batchInsertSpanEvents] Skipping invalid event: ${result.error.message}`,
-          );
+          logger.warn(`[batchInsertSpanEvents] Skipping invalid event: ${result.error.message}`);
           continue;
         }
-        validatedEvents.push(result.data);
+        const e = result.data;
+        const offset = params.length;
+        const placeholders = columns.map((_, i) => `$${offset + i + 1}`).join(', ');
+        valueRows.push(`(${placeholders})`);
+        params.push(
+          randomUUID(), e.traceId, e.spanId,
+          e.name, e.timestamp.toISOString(),
+          JSON.stringify(e.attributes), now,
+        );
       }
 
-      if (validatedEvents.length === 0) return { count: 0 };
-
-      const now = new Date().toISOString();
-      const values = validatedEvents.map((event) => ({
-        id: randomUUID(),
-        traceId: event.traceId,
-        spanId: event.spanId,
-        name: event.name,
-        timestamp: event.timestamp.toISOString(),
-        attributes: JSON.stringify(event.attributes),
-        createdAt: now,
-      }));
-
-      await db.insertInto('span_events').values(values).execute();
-      return { count: values.length };
+      if (valueRows.length === 0) return { count: 0 };
+      await pool.query(
+        `INSERT INTO "span_events" (${colNames}) VALUES ${valueRows.join(', ')}`,
+        params,
+      );
+      return { count: valueRows.length };
     },
 
-    listTraces: async (params?: z.infer<typeof listTracesSchema>) => {
-      const result = await listTracesSchema.safeParseAsync(params || {});
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
+    listTraces: async (params?: {
+      limit?: number; offset?: number;
+      sessionId?: string; userId?: string; status?: string;
+      name?: string; startDate?: Date; endDate?: Date;
+      tags?: Record<string, string[]>;
+    }) => {
+      const { limit = 50, offset = 0, sessionId, userId, status, name, startDate, endDate, tags } = params ?? {};
 
-      const {
-        limit,
-        offset,
-        sessionId,
-        userId,
-        status,
-        name,
-        startDate,
-        endDate,
-        tags,
-      } = result.data;
+      const conditions: string[] = ['TRUE'];
+      const queryParams: unknown[] = [];
+      let idx = 0;
 
-      let baseQuery = db.selectFrom('traces');
+      if (sessionId) { conditions.push(`"sessionId" = $${++idx}`); queryParams.push(sessionId); }
+      if (userId) { conditions.push(`"userId" = $${++idx}`); queryParams.push(userId); }
+      if (status) { conditions.push(`"status" = $${++idx}`); queryParams.push(status); }
+      if (name) { conditions.push(`"name" ILIKE $${++idx}`); queryParams.push(`%${name}%`); }
+      if (startDate) { conditions.push(`"startTime" >= $${++idx}`); queryParams.push(startDate.toISOString()); }
+      if (endDate) { conditions.push(`"startTime" <= $${++idx}`); queryParams.push(endDate.toISOString()); }
 
-      if (sessionId) baseQuery = baseQuery.where('sessionId', '=', sessionId);
-      if (userId) baseQuery = baseQuery.where('userId', '=', userId);
-      if (status) baseQuery = baseQuery.where('status', '=', status);
-      if (name)
-        baseQuery = baseQuery.where(
-          sql<boolean>`${col('name')} ILIKE ${'%' + name + '%'}`,
-        );
-      if (startDate)
-        baseQuery = baseQuery.where(
-          sql<boolean>`${col('startTime')} >= ${startDate.toISOString()}`,
-        );
-      if (endDate)
-        baseQuery = baseQuery.where(
-          sql<boolean>`${col('startTime')} <= ${endDate.toISOString()}`,
-        );
-      if (tags && Object.keys(tags).length > 0) {
-        for (const [key, values] of Object.entries(tags)) {
-          if (values.length === 0) continue;
-          if (values.length === 1) {
-            baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} = ${values[0]}`,
-            );
-          } else {
-            const valueList = sql.join(values.map((v) => sql`${v}`));
-            baseQuery = baseQuery.where(
-              sql<boolean>`${col('tags')}->>${key} IN (${valueList})`,
-            );
-          }
-        }
-      }
+      const tagFilter = buildTagFilters(tags, idx);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+      idx += tagFilter.params.length;
 
-      const countResult = await baseQuery
-        .select(sql<number>`COUNT(*)`.as('total'))
-        .executeTakeFirst();
-      const total = Number(countResult?.total ?? 0);
+      const where = conditions.join(' AND ');
 
-      const data = await baseQuery
-        .selectAll()
-        .orderBy('startTime', 'desc')
-        .limit(limit)
-        .offset(offset)
-        .execute();
+      const countResult = await pool.query(
+        `SELECT COUNT(*)::int AS "total" FROM "traces" WHERE ${where}`,
+        queryParams,
+      );
+      const total = countResult.rows[0]?.total ?? 0;
 
-      return { data, total, limit, offset };
+      const data = await pool.query(
+        `SELECT * FROM "traces" WHERE ${where} ORDER BY "startTime" DESC LIMIT $${++idx} OFFSET $${++idx}`,
+        [...queryParams, limit, offset],
+      );
+
+      return { data: data.rows, total, limit, offset };
     },
 
     getTraceWithSpans: async (traceId: string) => {
-      const trace = await db
-        .selectFrom('traces')
-        .selectAll()
-        .where('traceId', '=', traceId)
-        .executeTakeFirst();
-
+      const traceResult = await pool.query(`SELECT * FROM "traces" WHERE "traceId" = $1`, [traceId]);
+      const trace = traceResult.rows[0];
       if (!trace) return undefined;
 
-      const spans = await db
-        .selectFrom('spans')
-        .selectAll()
-        .where('traceId', '=', traceId)
-        .orderBy('startTime', 'asc')
-        .execute();
+      const [spanResult, eventResult] = await Promise.all([
+        pool.query(`SELECT * FROM "spans" WHERE "traceId" = $1 ORDER BY "startTime" ASC`, [traceId]),
+        pool.query(`SELECT * FROM "span_events" WHERE "traceId" = $1 ORDER BY "timestamp" ASC`, [traceId]),
+      ]);
 
-      const events = await db
-        .selectFrom('span_events')
-        .selectAll()
-        .where('traceId', '=', traceId)
-        .orderBy('timestamp', 'asc')
-        .execute();
-
-      return { trace, spans, events };
+      return { trace, spans: spanResult.rows, events: eventResult.rows };
     },
 
-    getTraceStats: async (params: z.infer<typeof traceStatsSchema>) => {
-      const result = await traceStatsSchema.safeParseAsync(params);
-      if (!result.success) {
-        throw new LLMOpsError(`Invalid parameters: ${result.error.message}`);
-      }
-
-      const { startDate, endDate, sessionId, userId } = result.data;
-
-      let query = db
-        .selectFrom('traces')
-        .select([
-          sql<number>`COUNT(*)`.as('totalTraces'),
-          sql<number>`COALESCE(AVG(${col('durationMs')}), 0)`.as(
-            'avgDurationMs',
-          ),
-          sql<number>`COUNT(CASE WHEN ${col('status')} = 'error' THEN 1 END)`.as(
-            'errorCount',
-          ),
-          sql<number>`COALESCE(SUM(${col('totalCost')}), 0)`.as('totalCost'),
-          sql<number>`COALESCE(SUM(${col('totalTokens')}), 0)`.as(
-            'totalTokens',
-          ),
-          sql<number>`COALESCE(SUM(${col('spanCount')}), 0)`.as('totalSpans'),
-        ])
-        .where(sql<boolean>`${col('startTime')} >= ${startDate.toISOString()}`)
-        .where(sql<boolean>`${col('startTime')} <= ${endDate.toISOString()}`);
-
-      if (sessionId) query = query.where('sessionId', '=', sessionId);
-      if (userId) query = query.where('userId', '=', userId);
-
-      return query.executeTakeFirst();
+    getTraceStats: async (params: { startDate: Date; endDate: Date; sessionId?: string; userId?: string }) => {
+      const { rows } = await pool.query(
+        `SELECT
+          COUNT(*)::int AS "totalTraces",
+          COALESCE(AVG("durationMs"), 0) AS "avgDurationMs",
+          COUNT(CASE WHEN "status" = 'error' THEN 1 END)::int AS "errorCount",
+          COALESCE(SUM("totalCost"), 0)::int AS "totalCost",
+          COALESCE(SUM("totalTokens"), 0)::int AS "totalTokens",
+          COALESCE(SUM("spanCount"), 0)::int AS "totalSpans"
+        FROM "traces"
+        WHERE "startTime" >= $1 AND "startTime" <= $2
+          AND ($3::varchar IS NULL OR "sessionId" = $3)
+          AND ($4::varchar IS NULL OR "userId" = $4)`,
+        [params.startDate.toISOString(), params.endDate.toISOString(), params.sessionId ?? null, params.userId ?? null],
+      );
+      return rows[0];
     },
   };
 }
@@ -1044,10 +704,13 @@ function createTracesStore(db: Kysely<Database>) {
 
 export type PgStore = ReturnType<typeof createLLMRequestsStore> &
   ReturnType<typeof createTracesStore> & {
-    _db: Kysely<Database>;
     _pool: unknown;
     _schema: string;
   };
+
+const pgStoreOptionsSchema = z.object({
+  schema: z.string().default('llmops'),
+});
 
 /**
  * Create a PostgreSQL-backed telemetry store.
@@ -1062,10 +725,6 @@ export type PgStore = ReturnType<typeof createLLMRequestsStore> &
  * })
  * ```
  */
-const pgStoreOptionsSchema = z.object({
-  schema: z.string().default('llmops'),
-});
-
 export function createPgStore(
   connectionString: string,
   options?: { schema?: string },
@@ -1081,7 +740,6 @@ export function createPgStore(
 
   let pool: any;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pg = require('pg');
     pool = new pg.Pool({ connectionString });
   } catch {
@@ -1090,23 +748,16 @@ export function createPgStore(
     );
   }
 
-  const dialect = new PostgresDialect({
-    pool,
-    onCreateConnection: async (connection) => {
-      await connection.executeQuery(
-        CompiledQuery.raw(`SET search_path TO "${schema}"`),
-      );
-    },
+  // Set search_path for all connections
+  pool.on('connect', (client: any) => {
+    client.query(`SET search_path TO "${schema}"`);
   });
-
-  const db = new KyselyClass<Database>({ dialect });
 
   logger.debug(`pgStore: initialized with schema "${schema}"`);
 
   return {
-    ...createLLMRequestsStore(db),
-    ...createTracesStore(db),
-    _db: db,
+    ...createLLMRequestsStore(pool),
+    ...createTracesStore(pool),
     _pool: pool,
     _schema: schema,
   };
