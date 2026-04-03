@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TABLE llm_requests (
+CREATE TABLE IF NOT EXISTS llm_requests (
   id UUID PRIMARY KEY,
   "requestId" UUID NOT NULL,
   "configId" UUID,
@@ -33,7 +33,7 @@ CREATE TABLE llm_requests (
   "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE span_events (
+CREATE TABLE IF NOT EXISTS span_events (
   id UUID PRIMARY KEY,
   "traceId" VARCHAR(255) NOT NULL,
   "spanId" VARCHAR(255) NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE span_events (
   "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE spans (
+CREATE TABLE IF NOT EXISTS spans (
   id UUID PRIMARY KEY,
   "traceId" VARCHAR(255) NOT NULL,
   "spanId" VARCHAR(255) NOT NULL UNIQUE,
@@ -74,7 +74,7 @@ CREATE TABLE spans (
   "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE traces (
+CREATE TABLE IF NOT EXISTS traces (
   id UUID PRIMARY KEY,
   "traceId" VARCHAR(255) NOT NULL UNIQUE,
   name VARCHAR(255),
