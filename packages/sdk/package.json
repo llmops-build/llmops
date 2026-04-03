@@ -116,6 +116,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/pg": "^8.15.6",
     "hono": "^4.7.0"
   }
 }
