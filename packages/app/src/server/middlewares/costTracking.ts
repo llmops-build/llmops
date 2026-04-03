@@ -5,7 +5,6 @@ import {
   LLMOPS_REQUEST_ID_HEADER,
   LLMOPS_TRACE_ID_HEADER,
   LLMOPS_SPAN_ID_HEADER,
-  LLMOPS_INTERNAL_HEADER,
   getDefaultPricingProvider,
   calculateCacheAwareCost,
 } from '@llmops/core';
@@ -325,23 +324,17 @@ export function createCostTrackingMiddleware(
       log('Failed to parse request body');
     }
 
-    // Internal SDK requests handle tracing via the OTLP exporter,
-    // so we skip gateway-level trace/span creation to avoid duplicates.
-    const isInternalRequest = c.req.header(LLMOPS_INTERNAL_HEADER) === '1';
-
     // Resolve trace context from headers
     const traceContext = resolveTraceContext(c.req);
     c.set('__traceContext', traceContext);
 
-    // Set trace response headers (skip for internal requests)
-    if (!isInternalRequest) {
-      c.header(LLMOPS_TRACE_ID_HEADER, traceContext.traceId);
-      c.header(LLMOPS_SPAN_ID_HEADER, traceContext.spanId);
-      c.header(
-        'traceparent',
-        formatTraceparent(traceContext.traceId, traceContext.spanId),
-      );
-    }
+    // Set trace response headers
+    c.header(LLMOPS_TRACE_ID_HEADER, traceContext.traceId);
+    c.header(LLMOPS_SPAN_ID_HEADER, traceContext.spanId);
+    c.header(
+      'traceparent',
+      formatTraceparent(traceContext.traceId, traceContext.spanId),
+    );
 
     // Create request context
     const context: RequestContext = {
@@ -415,18 +408,14 @@ export function createCostTrackingMiddleware(
       { flushIntervalMs, debug },
     );
 
-    // Skip trace batch writer for internal SDK requests — tracing is handled
-    // by the agents/OTLP exporter to avoid creating duplicate traces.
-    const traceBatchWriter = isInternalRequest
-      ? undefined
-      : getGlobalTraceBatchWriter(
-          {
-            upsertTrace: (data) => db.upsertTrace(data),
-            batchInsertSpans: (spans) => db.batchInsertSpans(spans),
-            batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
-          },
-          { flushIntervalMs, debug },
-        );
+    const traceBatchWriter = getGlobalTraceBatchWriter(
+      {
+        upsertTrace: (data) => db.upsertTrace(data),
+        batchInsertSpans: (spans) => db.batchInsertSpans(spans),
+        batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
+      },
+      { flushIntervalMs, debug },
+    );
 
     // Handle streaming vs non-streaming responses
     if (isStreaming && response.body) {
@@ -829,7 +818,7 @@ async function processUsageAndLog(params: {
 
     const traceData: TraceUpsert = {
       traceId: traceContext.traceId,
-      name: traceContext.traceName,
+      name: traceContext.traceName || `${provider}/${model}`,
       sessionId: traceContext.sessionId,
       userId: traceContext.userId,
       status: traceStatus as 'unset' | 'ok' | 'error',
