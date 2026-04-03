@@ -1060,11 +1060,22 @@ export type PgStore = ReturnType<typeof createLLMRequestsStore> &
  * })
  * ```
  */
+const pgStoreOptionsSchema = z.object({
+  schema: z.string().default('llmops'),
+});
+
 export function createPgStore(
   connectionString: string,
   options?: { schema?: string },
 ): PgStore {
-  const schema = options?.schema ?? 'llmops';
+  const parsed = z.string().url().safeParse(connectionString);
+  if (!parsed.success) {
+    throw new Error(
+      `pgStore: invalid connection string — ${parsed.error.issues[0]?.message ?? 'expected a postgres:// URL'}`,
+    );
+  }
+
+  const { schema } = pgStoreOptionsSchema.parse(options ?? {});
 
   let pool: any;
   try {

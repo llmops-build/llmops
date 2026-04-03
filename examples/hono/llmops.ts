@@ -4,7 +4,7 @@ import { env } from 'node:process';
 
 export default llmops({
   basePath: '/llmops',
-  telemetry: pgStore(env.POSTGRES_URL || ''),
+  telemetry: env.POSTGRES_URL ? pgStore(env.POSTGRES_URL) : undefined,
 
   // Providers are auto-detected from environment variables!
   // If OPENAI_API_KEY is set, @openai/model works automatically.
