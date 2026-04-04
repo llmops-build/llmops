@@ -6,4 +6,3 @@ export * from './cache';
 export * from './utils/logger';
 export * from './utils/id';
 export * from './pricing';
-export * from './telemetry';

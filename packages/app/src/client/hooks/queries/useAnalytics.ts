@@ -1,6 +1,6 @@
 import { hc } from '@client/lib/hc';
 import { useQuery } from '@tanstack/react-query';
-import type { CostSummaryGroupBy } from '@llmops/core';
+import type { CostSummaryGroupBy } from '@llmops/sdk';
 
 export interface DateRange {
   startDate: string;

@@ -9,6 +9,7 @@ export default defineConfig({
     hono: 'src/lib/hono/index.ts',
     nextjs: 'src/lib/nextjs/index.ts',
     'store/pg': 'src/store/pg.ts',
+    'store/d1': 'src/store/d1.ts',
     types: 'src/types/index.ts',
   },
   format: ['esm', 'cjs'],

@@ -3,8 +3,8 @@ import {
   logger,
   getDefaultPricingProvider,
   calculateCacheAwareCost,
-} from '@llmops/core';
-import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
+} from '@llmops/sdk';
+import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 import {
   getGlobalTraceBatchWriter,
   type TraceQueueItem,

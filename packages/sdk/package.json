@@ -88,6 +88,16 @@
         "default": "./dist/store/pg.cjs"
       }
     },
+    "./store/d1": {
+      "import": {
+        "types": "./dist/store/d1.d.mts",
+        "default": "./dist/store/d1.mjs"
+      },
+      "require": {
+        "types": "./dist/store/d1.d.cts",
+        "default": "./dist/store/d1.cjs"
+      }
+    },
     "./types": {
       "import": {
         "types": "./dist/types.d.mts",
@@ -118,11 +128,13 @@
     "pg": "*"
   },
   "peerDependenciesMeta": {
-    "pg": { "optional": true }
+    "pg": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@tsqx/cli": "^0.0.4",
-    "@tsqx/kit": "^0.0.4",
+    "@tsqx/cli": "^0.0.5",
+    "@tsqx/kit": "^0.0.5",
     "@types/express": "^5.0.6",
     "@types/pg": "^8.15.6",
     "hono": "^4.7.0"

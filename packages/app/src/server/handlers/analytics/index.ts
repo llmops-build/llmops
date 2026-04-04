@@ -2,7 +2,7 @@ import { zv } from '@server/lib/zv';
 import { internalServerError, successResponse } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
-import { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from '@llmops/core';
+import { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from '@llmops/sdk';
 
 /**
  * Convert micro-dollars to formatted dollar string

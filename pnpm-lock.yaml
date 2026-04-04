@@ -344,6 +344,9 @@ importers:
       '@llmops/gateway':
         specifier: workspace:^
         version: link:../gateway
+      '@llmops/sdk':
+        specifier: workspace:^
+        version: link:../sdk
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.2.4(@types/react@19.2.7)(react@19.2.4)
@@ -617,11 +620,11 @@ importers:
         version: 8.16.3
     devDependencies:
       '@tsqx/cli':
-        specifier: ^0.0.4
-        version: 0.0.4
+        specifier: ^0.0.5
+        version: 0.0.5
       '@tsqx/kit':
-        specifier: ^0.0.4
-        version: 0.0.4
+        specifier: ^0.0.5
+        version: 0.0.5
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
@@ -4106,15 +4109,15 @@ packages:
     resolution: {integrity: sha512-9PImF1d1tovTUIpjFVa0W7Fwj/MHif7BaaczgJJfbv3sDt1Gh+oW9W9uCw9M3ndEJynnp5ZD/TTs0RGubH5ssg==}
     engines: {node: '>=12'}
 
-  '@tsqx/cli@0.0.4':
-    resolution: {integrity: sha512-tBOcx/i+RmhJElXbJ8JckQhlbH4O9PuCnh24LHbQE35LOkq29vNucU2w50QgoI/BaQNoydPnvMFYxnTWwtXyRA==}
+  '@tsqx/cli@0.0.5':
+    resolution: {integrity: sha512-s6tNys+XOtrC5pdrC6g24iABR7A6g+GpnaEbZv7/nzHC9hhAMZn8/PEdi1meKehyeSxbE8DLXQe5LLKJiv69ig==}
     hasBin: true
 
-  '@tsqx/core@0.0.4':
-    resolution: {integrity: sha512-A5Wv2Nsx1zLXpNiG10wjaLsIhBQ/Jx+OOkZmAhp4YoGH/lTOgq9Fakvxk2I0BjPn7kREQPcZlMh0wAtsQ5xB/g==}
+  '@tsqx/core@0.0.5':
+    resolution: {integrity: sha512-sFGcQjwFEdCPwn/WnVKF0FFmT6EgMuxBZ7W157v20i72O6D3SJuK2cv/WahfEr1pXZxvCaNFIc1RQO3mtZx45Q==}
 
-  '@tsqx/kit@0.0.4':
-    resolution: {integrity: sha512-qV3+/V1Qc5uwmkD8FdXBc3AP/kgFThxloKmcFJvcQud8a5OX32/t5rb19qv3+kwrge1wlZIoz4eTXEMdjbyvRQ==}
+  '@tsqx/kit@0.0.5':
+    resolution: {integrity: sha512-xUwvPH3WGTive6Elb1Bq0MaT39bnwji6EzMzo6J4D3J01Z3awauo4Y/uViL+kNIjbekZ+gsSCpQpIHa1SJgTvg==}
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -12047,19 +12050,18 @@ snapshots:
 
   '@tanstack/virtual-file-routes@1.139.0': {}
 
-  '@tsqx/cli@0.0.4':
+  '@tsqx/cli@0.0.5':
     dependencies:
-      '@tsqx/core': 0.0.4
+      '@tsqx/core': 0.0.5
       citty: 0.2.2
 
-  '@tsqx/core@0.0.4':
+  '@tsqx/core@0.0.5':
     dependencies:
       neverthrow: 8.2.0
-      zod: 4.3.6
 
-  '@tsqx/kit@0.0.4':
+  '@tsqx/kit@0.0.5':
     dependencies:
-      '@tsqx/core': 0.0.4
+      '@tsqx/core': 0.0.5
       neverthrow: 8.2.0
 
   '@tybys/wasm-util@0.10.1':

@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import z from 'zod';
-import { LLMOpsError } from '../error';
-import { logger } from '../utils/logger';
+import { logger } from '@llmops/core';
 
 // ─── LLM Requests schemas ──────────────────────────────────────────────────
 
@@ -204,7 +203,7 @@ function createLLMRequestsStore(pool: any) {
     insertRequest: async (request: LLMRequestInsert) => {
       const result = insertLLMRequestSchema.safeParse(request);
       if (!result.success) {
-        throw new LLMOpsError(`Invalid request data: ${result.error.message}`);
+        throw new Error(`Invalid request data: ${result.error.message}`);
       }
       const r = result.data;
       const now = new Date().toISOString();
@@ -491,7 +490,7 @@ function createTracesStore(pool: any) {
     upsertTrace: async (data: TraceUpsert) => {
       const result = upsertTraceSchema.safeParse(data);
       if (!result.success) {
-        throw new LLMOpsError(`Invalid trace data: ${result.error.message}`);
+        throw new Error(`Invalid trace data: ${result.error.message}`);
       }
       const trace = result.data;
       const now = new Date().toISOString();
@@ -702,11 +701,12 @@ function createTracesStore(pool: any) {
 
 // ─── PgStore ────────────────────────────────────────────────────────────────
 
-export type PgStore = ReturnType<typeof createLLMRequestsStore> &
-  ReturnType<typeof createTracesStore> & {
-    _pool: unknown;
-    _schema: string;
-  };
+import type { TelemetryStore } from './interface';
+
+export type PgStore = TelemetryStore & {
+  _pool: unknown;
+  _schema: string;
+};
 
 const pgStoreOptionsSchema = z.object({
   schema: z.string().default('llmops'),

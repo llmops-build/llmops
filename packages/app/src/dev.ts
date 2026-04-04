@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { createApp } from './index';
 import { env } from 'node:process';
-import { createPgStore } from '@llmops/core';
+import { pgStore } from '@llmops/sdk/store/pg';
 
 const { app } = createApp({
-  telemetry: createPgStore(env.POSTGRES_URL || ''),
+  telemetry: env.POSTGRES_URL ? pgStore(env.POSTGRES_URL) : undefined,
   basePath: '/',
 });
 
