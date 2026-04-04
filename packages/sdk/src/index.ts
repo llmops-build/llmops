@@ -21,15 +21,13 @@ export {
   type LangChainTracingClient,
 } from './telemetry/langchain-client';
 
-// Telemetry store interface and types
+// Telemetry store types (runtime stores are subpath exports: @llmops/sdk/store/pg, @llmops/sdk/store/d1)
 export type { TelemetryStore } from './telemetry/interface';
-export {
-  createPgStore as pgStore,
-  type PgStore,
-  type LLMRequestInsert,
-  type TraceUpsert,
-  type SpanInsert,
-  type SpanEventInsert,
-  type CostSummaryGroupBy,
-  COST_SUMMARY_GROUP_BY,
-} from './telemetry/pg-store';
+export type {
+  LLMRequestInsert,
+  TraceUpsert,
+  SpanInsert,
+  SpanEventInsert,
+  CostSummaryGroupBy,
+} from './telemetry/types';
+export { COST_SUMMARY_GROUP_BY } from './telemetry/types';

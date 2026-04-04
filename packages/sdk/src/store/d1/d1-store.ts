@@ -7,7 +7,7 @@ import type {
   SpanInsert,
   SpanEventInsert,
   CostSummaryGroupBy,
-} from '../../telemetry/pg-store';
+} from '../../telemetry/types';
 
 // ─── Tag filter helper (D1 uses ? placeholders) ────────────────────────────
 
