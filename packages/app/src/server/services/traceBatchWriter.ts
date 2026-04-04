@@ -1,4 +1,4 @@
-import { logger } from '@llmops/sdk';
+import { logger } from '@llmops/core';
 import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 
 /**
