@@ -4,7 +4,7 @@ import type {
   SpanInsert,
   SpanEventInsert,
   CostSummaryGroupBy,
-} from './pg-store';
+} from './types';
 
 /**
  * TelemetryStore provides read + write access to telemetry data.
