@@ -1,5 +1,5 @@
-import { logger } from '@llmops/core';
-import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
+import { logger } from '@llmops/sdk';
+import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 
 /**
  * A queued trace item contains span data plus optional events and trace-level info

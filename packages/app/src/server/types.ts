@@ -1,8 +1,8 @@
 import {
   type ValidatedLLMOpsConfig,
   type InlineProvidersConfig,
-  type TelemetryStore,
 } from '@llmops/core';
+import type { TelemetryStore } from '@llmops/sdk';
 
 declare module 'hono' {
   interface ContextVariableMap {
