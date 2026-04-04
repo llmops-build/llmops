@@ -1,23 +1,15 @@
 import nunjucks from 'nunjucks';
 import client from '@client/index?url';
 import styles from '@client/styles/styles.css?url';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-import { existsSync, readFileSync } from 'node:fs';
 import type { Manifest } from 'vite';
 import { manifest as embeddedManifest } from '../generated/embedded-assets';
 
-const thisDirectory = dirname(fileURLToPath(import.meta.url));
-const manifestPath = join(thisDirectory, './.vite/manifest.json');
-
-// Use embedded manifest if available (production single-file mode),
-// otherwise try to read from filesystem
+// Use embedded manifest in production. In dev mode, Vite handles asset serving
+// so the manifest isn't needed — the ?url imports provide the correct paths.
 const manifest: Manifest =
   Object.keys(embeddedManifest).length > 0
     ? (embeddedManifest as unknown as Manifest)
-    : existsSync(manifestPath)
-      ? JSON.parse(readFileSync(manifestPath, 'utf-8'))
-      : {};
+    : {};
 
 // Configure nunjucks to not escape HTML by default for this template
 const env = new nunjucks.Environment(null, { autoescape: false });
