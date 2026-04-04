@@ -1,4 +1,5 @@
-export * from './lib/express';
+// Express middleware is a subpath export: @llmops/sdk/express
+// Not re-exported here to avoid pulling Node.js built-ins into Workers bundles.
 export {
   createLLMOps as llmops,
   type LLMOpsClient,
