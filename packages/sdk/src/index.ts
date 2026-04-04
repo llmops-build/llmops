@@ -28,6 +28,5 @@ export type {
   TraceUpsert,
   SpanInsert,
   SpanEventInsert,
-  CostSummaryGroupBy,
 } from './telemetry/types';
-export { COST_SUMMARY_GROUP_BY } from './telemetry/types';
+export { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from './telemetry/constants';

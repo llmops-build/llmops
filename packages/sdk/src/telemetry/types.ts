@@ -52,16 +52,7 @@ export type LLMRequestInsert = z.infer<typeof insertLLMRequestSchema>;
 
 // ─── Cost summary ───────────────────────────────────────────────────────────
 
-export const COST_SUMMARY_GROUP_BY = [
-  'day',
-  'hour',
-  'model',
-  'provider',
-  'endpoint',
-  'tags',
-] as const;
-
-export type CostSummaryGroupBy = (typeof COST_SUMMARY_GROUP_BY)[number];
+export { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from './constants';
 
 // ─── Trace schemas ──────────────────────────────────────────────────────────
 
