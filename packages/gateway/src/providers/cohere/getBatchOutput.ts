@@ -92,7 +92,7 @@ export const CohereGetBatchOutputHandler = async ({
           });
           const arrayBuffer = await filePartResponse.arrayBuffer();
           const buf = Buffer.from(arrayBuffer);
-          const avro = require('avsc');
+          const avro = await import('avsc');
           const decoder = new avro.streams.BlockDecoder({
             parseHook: (schema: any) => {
               return avro.Type.forSchema(schema, { wrapUnions: true });
