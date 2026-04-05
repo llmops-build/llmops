@@ -135,12 +135,12 @@
     "@llmops/core": "workspace:^"
   },
   "peerDependencies": {
-    "pg": "*"
+    "pg": "*",
+    "better-sqlite3": "*"
   },
   "peerDependenciesMeta": {
-    "pg": {
-      "optional": true
-    }
+    "pg": { "optional": true },
+    "better-sqlite3": { "optional": true }
   },
   "devDependencies": {
     "@tsqx/cli": "^0.0.5",
