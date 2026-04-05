@@ -197,17 +197,7 @@ export function createBatchWriter(
       `[BatchWriter] Enqueued request ${request.requestId}, queue size: ${queue.length}`,
     );
 
-    // In edge runtimes (Workers), setInterval doesn't persist between requests.
-    // Flush immediately instead of batching.
-    if (typeof globalThis.process === 'undefined' || !globalThis.process?.versions?.node) {
-      flush().catch((err) => {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        logger.error(`[BatchWriter] Edge flush error: ${errorMsg}`);
-      });
-      return;
-    }
-
-    // Auto-start on first enqueue (Node.js only)
+    // Auto-start on first enqueue
     if (!running) {
       start();
     }

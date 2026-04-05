@@ -401,6 +401,10 @@ export function createCostTrackingMiddleware(
       return;
     }
 
+    // Get waitUntil from config (for edge runtimes like Cloudflare Workers)
+    const llmopsConfig = c.get('llmopsConfig');
+    const waitUntil = llmopsConfig?.waitUntil as ((promise: Promise<unknown>) => void) | undefined;
+
     // Initialize batch writers lazily
     // Cast db to include batchInsertRequests (added by createLLMRequestsDataLayer)
     const batchWriter = getGlobalBatchWriter(
@@ -466,6 +470,7 @@ export function createCostTrackingMiddleware(
             traceContext,
             batchWriter,
             traceBatchWriter,
+            waitUntil,
             trackErrors,
             log,
           });
@@ -582,6 +587,7 @@ export function createCostTrackingMiddleware(
         traceContext,
         batchWriter,
         traceBatchWriter,
+        waitUntil,
         trackErrors,
         log,
       });
@@ -618,6 +624,7 @@ async function processUsageAndLog(params: {
   traceContext?: TraceContext;
   batchWriter: ReturnType<typeof getGlobalBatchWriter>;
   traceBatchWriter?: ReturnType<typeof getGlobalTraceBatchWriter>;
+  waitUntil?: (promise: Promise<unknown>) => void;
   trackErrors: boolean;
   log: (msg: string) => void;
 }): Promise<void> {
@@ -641,6 +648,7 @@ async function processUsageAndLog(params: {
     traceContext,
     batchWriter,
     traceBatchWriter,
+    waitUntil,
     trackErrors,
     log,
   } = params;
@@ -746,12 +754,6 @@ async function processUsageAndLog(params: {
   batchWriter.enqueue(requestData);
   log(`Enqueued request ${requestId} for logging`);
 
-  // In edge runtimes, await flush to ensure data is written before Worker exits
-  const isEdge = typeof globalThis.process === 'undefined' || !globalThis.process?.versions?.node;
-  if (isEdge) {
-    await batchWriter.flush();
-  }
-
   // Enqueue trace data if trace batch writer is available
   if (traceBatchWriter && traceContext) {
     const now = new Date();
@@ -847,9 +849,16 @@ async function processUsageAndLog(params: {
     log(
       `Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`,
     );
+  }
 
-    if (isEdge) {
-      await traceBatchWriter.flush();
-    }
+  // If waitUntil is provided (edge runtimes), flush in the background.
+  // The response returns immediately while the Worker stays alive for writes.
+  if (waitUntil) {
+    waitUntil(
+      Promise.all([
+        batchWriter.flush(),
+        traceBatchWriter ? traceBatchWriter.flush() : Promise.resolve(),
+      ]),
+    );
   }
 }

@@ -36,6 +36,14 @@ const llmopsConfigBaseSchema = z.object({
    * ```
    */
   telemetry: z.any().optional(),
+  /**
+   * Background work handler for edge runtimes (Cloudflare Workers, Vercel Edge).
+   * Pass `ctx.waitUntil.bind(ctx)` to ensure telemetry flushes complete
+   * after the response is returned.
+   *
+   * Not needed in Node.js — batching uses setInterval by default.
+   */
+  waitUntil: z.any().optional(),
   basePath: z
     .string()
     .min(1, 'Base path cannot be empty')
@@ -79,6 +87,7 @@ export type ValidatedLLMOpsConfig = {
   telemetry?: unknown;
   basePath: string;
   providers?: InlineProvidersConfig;
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 /**
@@ -88,6 +97,7 @@ export type LLMOpsConfigInput = {
   telemetry?: unknown;
   basePath?: string;
   providers?: InlineProvidersConfig;
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 export function validateLLMOpsConfig(config?: unknown): ValidatedLLMOpsConfig {

@@ -181,16 +181,6 @@ export function createTraceBatchWriter(
       `[TraceBatchWriter] Enqueued span ${item.span.spanId}, queue size: ${queue.length}`,
     );
 
-    // In edge runtimes (Workers), setInterval doesn't persist between requests.
-    // Flush immediately instead of batching.
-    if (typeof globalThis.process === 'undefined' || !globalThis.process?.versions?.node) {
-      flush().catch((err) => {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        logger.error(`[TraceBatchWriter] Edge flush error: ${errorMsg}`);
-      });
-      return;
-    }
-
     if (!running) {
       start();
     }
