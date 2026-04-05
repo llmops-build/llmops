@@ -746,6 +746,12 @@ async function processUsageAndLog(params: {
   batchWriter.enqueue(requestData);
   log(`Enqueued request ${requestId} for logging`);
 
+  // In edge runtimes, await flush to ensure data is written before Worker exits
+  const isEdge = typeof globalThis.process === 'undefined' || !globalThis.process?.versions?.node;
+  if (isEdge) {
+    await batchWriter.flush();
+  }
+
   // Enqueue trace data if trace batch writer is available
   if (traceBatchWriter && traceContext) {
     const now = new Date();
@@ -841,5 +847,9 @@ async function processUsageAndLog(params: {
     log(
       `Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`,
     );
+
+    if (isEdge) {
+      await traceBatchWriter.flush();
+    }
   }
 }
