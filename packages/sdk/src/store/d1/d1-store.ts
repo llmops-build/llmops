@@ -9,6 +9,32 @@ import type {
   CostSummaryGroupBy,
 } from '../../telemetry/types';
 
+// ─── JSON column parser ─────────────────────────────────────────────────────
+
+/** JSON columns stored as TEXT in D1 — parse them back to objects on read */
+const JSON_COLUMNS = new Set([
+  'tags', 'metadata', 'attributes', 'guardrailResults', 'input', 'output',
+]);
+
+function parseJsonColumns<T>(row: T): T {
+  if (!row || typeof row !== 'object') return row;
+  const parsed = { ...row } as Record<string, unknown>;
+  for (const key of Object.keys(parsed)) {
+    if (JSON_COLUMNS.has(key) && typeof parsed[key] === 'string') {
+      try {
+        parsed[key] = JSON.parse(parsed[key] as string);
+      } catch {
+        // leave as-is if not valid JSON
+      }
+    }
+  }
+  return parsed as T;
+}
+
+function parseJsonRows<T>(rows: T[]): T[] {
+  return rows.map(parseJsonColumns);
+}
+
 // ─── Tag filter helper (D1 uses ? placeholders) ────────────────────────────
 
 function buildTagFilters(
@@ -104,6 +130,7 @@ function createD1LLMRequestsStore(db: D1Database) {
         req.traceId ?? null, req.spanId ?? null,
         req.parentSpanId ?? null, req.sessionId ?? null, now, now,
       ).first();
+      return result ? parseJsonColumns(result) : null;
     },
 
     listRequests: async (params?: {
@@ -141,17 +168,18 @@ function createD1LLMRequestsStore(db: D1Database) {
       ).bind(...queryParams).first<{ total: number }>();
       const total = countResult?.total ?? 0;
 
-      const { results: data } = await db.prepare(
+      const { results } = await db.prepare(
         `SELECT * FROM "llm_requests" WHERE ${where} ORDER BY "createdAt" DESC LIMIT ? OFFSET ?`,
       ).bind(...queryParams, limit, offset).all();
 
-      return { data, total, limit, offset };
+      return { data: parseJsonRows(results), total, limit, offset };
     },
 
     getRequestByRequestId: async (requestId: string) => {
-      return db.prepare(
+      const row = await db.prepare(
         `SELECT * FROM "llm_requests" WHERE "requestId" = ?`,
       ).bind(requestId).first();
+      return row ? parseJsonColumns(row) : undefined;
     },
 
     getTotalCost: async (params: {
@@ -477,11 +505,11 @@ function createD1TracesStore(db: D1Database) {
       ).bind(...queryParams).first<{ total: number }>();
       const total = countResult?.total ?? 0;
 
-      const { results: data } = await db.prepare(
+      const { results } = await db.prepare(
         `SELECT * FROM "traces" WHERE ${where} ORDER BY "startTime" DESC LIMIT ? OFFSET ?`,
       ).bind(...queryParams, limit, offset).all();
 
-      return { data, total, limit, offset };
+      return { data: parseJsonRows(results), total, limit, offset };
     },
 
     getTraceWithSpans: async (traceId: string) => {
@@ -497,9 +525,9 @@ function createD1TracesStore(db: D1Database) {
       ]);
 
       return {
-        trace,
-        spans: (spanResult as any).results ?? [],
-        events: (eventResult as any).results ?? [],
+        trace: parseJsonColumns(trace),
+        spans: parseJsonRows((spanResult as any).results ?? []),
+        events: parseJsonRows((eventResult as any).results ?? []),
       };
     },
 
