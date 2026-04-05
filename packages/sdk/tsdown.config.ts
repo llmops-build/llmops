@@ -10,6 +10,7 @@ export default defineConfig({
     nextjs: 'src/lib/nextjs/index.ts',
     'store/pg': 'src/store/pg.ts',
     'store/d1': 'src/store/d1.ts',
+    'store/sqlite': 'src/store/sqlite.ts',
     types: 'src/types/index.ts',
   },
   format: ['esm', 'cjs'],
