@@ -83,8 +83,23 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
  * Note: schema is optional in input but always present after validation
  * Either database or providers must be present (enforced by schema)
  */
+/**
+ * A telemetry store or sink that can receive LLM request/trace data.
+ * Implemented by pgStore, d1Store, and future store backends.
+ */
+export type TelemetryDestination = Record<string, unknown>;
+
+/**
+ * Telemetry config accepts a single store, an array of stores/sinks,
+ * or undefined (inline-only mode, no persistence).
+ */
+export type TelemetryConfig =
+  | TelemetryDestination
+  | TelemetryDestination[]
+  | undefined;
+
 export type ValidatedLLMOpsConfig = {
-  telemetry?: unknown;
+  telemetry?: TelemetryConfig;
   basePath: string;
   providers?: InlineProvidersConfig;
   waitUntil?: (promise: Promise<unknown>) => void;
@@ -94,7 +109,7 @@ export type ValidatedLLMOpsConfig = {
  * Input type for LLMOps configuration (before validation)
  */
 export type LLMOpsConfigInput = {
-  telemetry?: unknown;
+  telemetry?: TelemetryConfig;
   basePath?: string;
   providers?: InlineProvidersConfig;
   waitUntil?: (promise: Promise<unknown>) => void;
