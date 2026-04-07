@@ -1,7 +1,12 @@
 import type { LLMOpsConfig } from '@llmops/core';
-import { loadConfig } from 'c12';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+type ConfigModule = {
+  config?: LLMOpsConfig;
+  default?: LLMOpsConfig | { config?: LLMOpsConfig };
+};
 
 export const getConfig = async ({
   cwd,
@@ -9,18 +14,37 @@ export const getConfig = async ({
 }: {
   cwd: string;
   configPath: string;
-}) => {
-  if (configPath) {
-    let resolvedPath = path.join(cwd, configPath);
-    if (existsSync(configPath)) resolvedPath = configPath;
+}): Promise<LLMOpsConfig | undefined> => {
+  if (!configPath) return undefined;
 
-    const { config: loadedConfig } = await loadConfig<{
-      config: LLMOpsConfig;
-    }>({
-      configFile: resolvedPath,
-    });
-    const config = loadedConfig.config;
+  const resolvedPath = existsSync(configPath)
+    ? path.resolve(configPath)
+    : path.resolve(cwd, configPath);
 
-    return config;
+  if (!existsSync(resolvedPath)) {
+    throw new Error(`Config file not found: ${resolvedPath}`);
   }
+
+  const mod = (await import(
+    pathToFileURL(resolvedPath).href
+  )) as ConfigModule;
+
+  // Support several common shapes:
+  //   export const config = llmops({...})
+  //   export default llmops({...})
+  //   export default { config: llmops({...}) }
+  if (mod.config) return mod.config;
+  if (mod.default) {
+    if (
+      typeof mod.default === 'object' &&
+      mod.default !== null &&
+      'config' in mod.default &&
+      mod.default.config
+    ) {
+      return mod.default.config;
+    }
+    return mod.default as LLMOpsConfig;
+  }
+
+  return undefined;
 };
