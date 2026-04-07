@@ -2,8 +2,9 @@
 
 import { run } from '@drizzle-team/brocli';
 import { migrateCommand } from './commands/migrate';
+import { tuiCommand } from './commands/tui';
 
-const commands = [migrateCommand];
+const commands = [migrateCommand, tuiCommand];
 
 run(commands, {
   name: 'llmops',
