@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { InlineDataset, type EvaluationDataset } from './dataset';
 import type {
   Datapoint,
@@ -144,7 +144,7 @@ function printSummary(result: EvaluateResult) {
 function saveResult(result: EvaluateResult, outputDir: string) {
   const dir = join(outputDir, result.name);
   mkdirSync(dir, { recursive: true });
-  const filePath = join(dir, `${result.runId}.json`);
+  const filePath = join(dir, `${Date.now()}.json`);
   writeFileSync(filePath, JSON.stringify(result, null, 2));
 }
 

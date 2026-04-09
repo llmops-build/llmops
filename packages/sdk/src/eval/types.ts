@@ -111,12 +111,8 @@ export interface VariantEvaluateResult<D = unknown, O = unknown> {
  * Options for compare().
  */
 export interface CompareOptions {
-  /** Run IDs to compare. First is baseline. */
-  runs: string[];
-  /** Directory where eval results are stored. Default: './llmops-evals' */
-  outputDir?: string;
-  /** Eval name to search within. Required. */
-  name: string;
+  /** Paths to eval result JSON files. First is baseline, second is candidate. */
+  files: [string, string];
 }
 
 /**
