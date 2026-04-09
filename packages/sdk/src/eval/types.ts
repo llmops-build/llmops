@@ -151,10 +151,43 @@ export interface CompareResult {
 export interface JudgeScorerOptions {
   /** Model identifier — routed through the gateway. e.g. '@openai/gpt-4o' */
   model: string;
-  /** Prompt template. Supports {{output}}, {{target}}, {{target.*}} placeholders. */
+
+  /**
+   * Grading prompt. Supports {{output}}, {{target}}, {{target.*}},
+   * {{data}}, {{data.*}} placeholders.
+   *
+   * This becomes the user message. A system message is added automatically
+   * that instructs the LLM to return a JSON score.
+   */
   prompt: string;
-  /** The llmops client instance. Judge call routed through gateway. */
-  ops: import('../client').LLMOpsClient;
-  /** Custom parser for extracting score from LLM response. */
+
+  /**
+   * The llmops client instance. The judge call is routed through the
+   * gateway and traced like any other LLM call.
+   *
+   * ```ts
+   * const client = llmops({ telemetry: pgStore(url) })
+   * judgeScorer({ model: '@openai/gpt-4o', prompt: '...', client })
+   * ```
+   */
+  client: import('../client').LLMOpsClient;
+
+  /**
+   * Custom system message. Overrides the default grading instructions.
+   * If omitted, a default system message is used that instructs
+   * the LLM to return JSON with a "score" field (0-1).
+   */
+  system?: string;
+
+  /** Temperature for the judge LLM. Default: 0 (deterministic). */
+  temperature?: number;
+
+  /** Max retries on parse failure. Default: 1. */
+  maxRetries?: number;
+
+  /**
+   * Custom parser for extracting score from LLM response.
+   * Default: expects JSON with a `score` field.
+   */
   parse?: (response: string) => number | Record<string, number>;
 }

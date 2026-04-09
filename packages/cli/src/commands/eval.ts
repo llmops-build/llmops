@@ -77,6 +77,8 @@ async function bundleAndRun(
         'openai',
         'esbuild',
         'fsevents',
+        'dotenv',
+        'dotenv/*',
       ],
       treeShaking: true,
       sourcemap: false,

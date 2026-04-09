@@ -1,8 +1,7 @@
 import type { Evaluator, JudgeScorerOptions } from './types';
 
-/**
- * Simple mustache-style template interpolation.
- */
+// ─── Template interpolation ─────────────────────────────────────────────────
+
 function interpolate(
   template: string,
   vars: Record<string, unknown>,
@@ -13,104 +12,198 @@ function interpolate(
       const value = path
         .split('.')
         .reduce((obj: any, key: string) => obj?.[key], vars);
-      return typeof value === 'string' ? value : JSON.stringify(value);
+      if (value === undefined || value === null) return '';
+      return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
     },
   );
 }
 
-/**
- * Default parser: expects JSON with a `score` field, a bare number,
- * or an object of number values (multi-score).
- */
-function defaultParse(
-  response: string,
-): number | Record<string, number> {
-  const cleaned = response.replace(/```json\n?|```/g, '').trim();
+function buildVars(output: unknown, target?: unknown, data?: unknown): Record<string, unknown> {
+  const vars: Record<string, unknown> = {
+    output: typeof output === 'string' ? output : JSON.stringify(output, null, 2),
+    target: typeof target === 'string' ? target : JSON.stringify(target, null, 2),
+    data: typeof data === 'string' ? data : JSON.stringify(data, null, 2),
+  };
+
+  if (target && typeof target === 'object') {
+    for (const [k, v] of Object.entries(target)) {
+      vars[`target.${k}`] = v;
+    }
+  }
+
+  if (data && typeof data === 'object') {
+    for (const [k, v] of Object.entries(data)) {
+      vars[`data.${k}`] = v;
+    }
+  }
+
+  return vars;
+}
+
+// ─── Default system message ─────────────────────────────────────────────────
+
+const DEFAULT_SYSTEM = `You are an expert evaluator. Your job is to grade an AI system's output.
+
+Instructions:
+- Read the grading criteria in the user message carefully.
+- Evaluate the output objectively.
+- Return ONLY valid JSON. No markdown, no explanation outside the JSON.
+- The JSON must contain a "score" field with a number between 0.0 and 1.0.
+- You may optionally include a "reasoning" field with a brief explanation.
+
+Example response:
+{"score": 0.85, "reasoning": "The response is mostly accurate but misses one detail."}`;
+
+// ─── Response parser ────────────────────────────────────────────────────────
+
+function defaultParse(response: string): number | Record<string, number> {
+  // Strip markdown code fences if present
+  let cleaned = response.replace(/```(?:json)?\n?/g, '').replace(/```$/g, '').trim();
+
+  // Try to extract JSON from the response (handle LLMs that add text around it)
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    cleaned = jsonMatch[0];
+  }
+
   const parsed = JSON.parse(cleaned);
 
-  if (typeof parsed === 'number') return parsed;
-  if (typeof parsed?.score === 'number') return parsed.score;
+  // Single score: { "score": 0.8 } or { "score": 0.8, "reasoning": "..." }
+  if (typeof parsed?.score === 'number') {
+    return Math.max(0, Math.min(1, parsed.score));
+  }
+
+  // Bare number
+  if (typeof parsed === 'number') {
+    return Math.max(0, Math.min(1, parsed));
+  }
+
+  // Multi-score: { "accuracy": 0.8, "relevance": 0.9, "reasoning": "..." }
   if (typeof parsed === 'object' && parsed !== null) {
     const entries = Object.entries(parsed).filter(
-      ([, v]) => typeof v === 'number',
+      ([k, v]) => typeof v === 'number' && k !== 'reasoning',
     );
     if (entries.length > 0) {
-      return Object.fromEntries(entries) as Record<string, number>;
+      return Object.fromEntries(
+        entries.map(([k, v]) => [k, Math.max(0, Math.min(1, v as number))]),
+      ) as Record<string, number>;
     }
   }
 
   throw new Error(
-    `Could not extract score from judge response: ${response.slice(0, 200)}`,
+    `Could not extract score from judge response: ${response.slice(0, 300)}`,
   );
 }
+
+// ─── LLM call ───────────────────────────────────────────────────────────────
+
+async function callLLM(
+  client: JudgeScorerOptions['client'],
+  model: string,
+  system: string,
+  userMessage: string,
+  temperature: number,
+): Promise<string> {
+  const providerConfig = client.provider();
+
+  const response = await providerConfig.fetch(
+    `${providerConfig.baseURL}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${providerConfig.apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userMessage },
+        ],
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'unknown error');
+    throw new Error(`Judge LLM call failed (${response.status}): ${errorBody.slice(0, 300)}`);
+  }
+
+  const body = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const content = body.choices?.[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('Judge LLM returned empty response');
+  }
+
+  return content;
+}
+
+// ─── judgeScorer ────────────────────────────────────────────────────────────
 
 /**
  * Factory that returns an Evaluator which uses an LLM to score output.
  *
+ * The judge:
+ * - Uses a system message that instructs the LLM to return JSON scores
+ * - Interpolates {{output}}, {{target}}, {{data}} and their fields in the prompt
+ * - Uses temperature 0 by default for deterministic scoring
+ * - Retries on parse failure (configurable)
+ * - Clamps scores to [0, 1]
+ *
  * Usage:
  * ```ts
+ * import { llmops } from '@llmops/sdk'
+ *
+ * const client = llmops()
  * const accuracy = judgeScorer({
  *   model: '@openai/gpt-4o',
- *   prompt: 'Rate accuracy 0-1. Expected: {{target.answer}} Actual: {{output}}',
- *   ops,
+ *   prompt: `Rate the accuracy of this response.
+ * Expected: {{target.answer}}
+ * Actual: {{output}}`,
+ *   client,
  * })
  * ```
  */
 export function judgeScorer(options: JudgeScorerOptions): Evaluator {
-  const { model, prompt, ops, parse = defaultParse } = options;
+  const {
+    model,
+    prompt,
+    client,
+    system = DEFAULT_SYSTEM,
+    temperature = 0,
+    maxRetries = 1,
+    parse = defaultParse,
+  } = options;
 
   return async (
     output: unknown,
     target?: unknown,
+    data?: unknown,
   ): Promise<number | Record<string, number>> => {
-    // Build template variables
-    const vars: Record<string, unknown> = {
-      output: typeof output === 'string' ? output : JSON.stringify(output),
-      target,
-    };
+    const vars = buildVars(output, target, data);
+    const userMessage = interpolate(prompt, vars);
 
-    // Spread target fields for {{target.fieldName}} access
-    if (target && typeof target === 'object') {
-      for (const [k, v] of Object.entries(target)) {
-        vars[`target.${k}`] = v;
+    let lastError: Error | null = null;
+    const attempts = 1 + maxRetries;
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        const content = await callLLM(client, model, system, userMessage, temperature);
+        return parse(content);
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+
+        // Only retry on parse errors, not on HTTP/network errors
+        if (lastError.message.includes('Judge LLM call failed')) {
+          throw lastError;
+        }
       }
     }
 
-    const renderedPrompt = interpolate(prompt, vars);
-
-    // Call LLM via the gateway
-    const providerConfig = ops.provider();
-    const response = await providerConfig.fetch(
-      `${providerConfig.baseURL}/chat/completions`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${providerConfig.apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: renderedPrompt }],
-          response_format: { type: 'json_object' },
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Judge LLM call failed: ${response.status} ${await response.text()}`,
-      );
-    }
-
-    const body = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const content = body.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error('Judge LLM returned empty response');
-    }
-
-    return parse(content);
+    throw lastError ?? new Error('Judge scoring failed');
   };
 }

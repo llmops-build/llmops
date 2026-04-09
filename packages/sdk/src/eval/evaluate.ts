@@ -92,8 +92,10 @@ async function runSingleExecutor<D, T, O>(
               scores[`${name}.${subKey}`] = subScore;
             }
           }
-        } catch {
+        } catch (evalErr) {
           scores[name] = NaN;
+          const msg = evalErr instanceof Error ? evalErr.message : String(evalErr);
+          process.stderr.write(`  ⚠ evaluator "${name}" failed: ${msg}\n`);
         }
       }
     }
