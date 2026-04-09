@@ -1,0 +1,13 @@
+{
+  "name": "eval-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "npx @llmops/cli eval",
+    "eval:json": "npx @llmops/cli eval --json"
+  },
+  "dependencies": {
+    "@llmops/sdk": "workspace:^",
+    "@llmops/cli": "workspace:^"
+  }
+}

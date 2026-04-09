@@ -107,7 +107,8 @@ export const evalCommand = command({
   options: {
     target: string()
       .default('./evals')
-      .desc('File or directory to run. Default: ./evals'),
+      .desc('File or directory to run. Default: ./evals')
+      .alias('t'),
     outputDir: string()
       .default('./llmops-evals')
       .desc('Output directory for results')

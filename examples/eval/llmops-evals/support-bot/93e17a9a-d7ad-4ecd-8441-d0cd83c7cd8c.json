@@ -1,0 +1,103 @@
+{
+  "name": "support-bot",
+  "runId": "93e17a9a-d7ad-4ecd-8441-d0cd83c7cd8c",
+  "scores": {
+    "exactMatch": {
+      "mean": 0,
+      "min": 0,
+      "max": 0,
+      "median": 0,
+      "count": 4
+    },
+    "keywordOverlap": {
+      "mean": 0.5873015873015873,
+      "min": 0.5555555555555556,
+      "max": 0.6666666666666666,
+      "median": 0.5634920634920635,
+      "count": 4
+    },
+    "adequateLength": {
+      "mean": 1,
+      "min": 1,
+      "max": 1,
+      "median": 1,
+      "count": 4
+    },
+    "mentionsContext": {
+      "mean": 0.125,
+      "min": 0,
+      "max": 0.5,
+      "median": 0,
+      "count": 4
+    }
+  },
+  "durationMs": 0,
+  "count": 4,
+  "errors": 0,
+  "results": [
+    {
+      "data": {
+        "question": "How do I reset my password?"
+      },
+      "target": {
+        "answer": "Go to settings, then security, and click reset password."
+      },
+      "output": "Navigate to Settings > Security and click Reset Password.",
+      "scores": {
+        "exactMatch": 0,
+        "keywordOverlap": 0.5555555555555556,
+        "adequateLength": 1,
+        "mentionsContext": 0.5
+      },
+      "durationMs": 0
+    },
+    {
+      "data": {
+        "question": "What are your hours?"
+      },
+      "target": {
+        "answer": "We are open 9am to 5pm, Monday through Friday."
+      },
+      "output": "Our hours are 9am-5pm Monday to Friday.",
+      "scores": {
+        "exactMatch": 0,
+        "keywordOverlap": 0.5555555555555556,
+        "adequateLength": 1,
+        "mentionsContext": 0
+      },
+      "durationMs": 0
+    },
+    {
+      "data": {
+        "question": "Can I get a refund?"
+      },
+      "target": {
+        "answer": "Yes, refunds are available within 30 days of purchase."
+      },
+      "output": "Refunds are available within 30 days.",
+      "scores": {
+        "exactMatch": 0,
+        "keywordOverlap": 0.6666666666666666,
+        "adequateLength": 1,
+        "mentionsContext": 0
+      },
+      "durationMs": 0
+    },
+    {
+      "data": {
+        "question": "How do I contact support?"
+      },
+      "target": {
+        "answer": "Email us at support@example.com or call 1-800-EXAMPLE."
+      },
+      "output": "Reach us at support@example.com.",
+      "scores": {
+        "exactMatch": 0,
+        "keywordOverlap": 0.5714285714285714,
+        "adequateLength": 1,
+        "mentionsContext": 0
+      },
+      "durationMs": 0
+    }
+  ]
+}
