@@ -137,6 +137,15 @@ importers:
         specifier: ^4.56.0
         version: 4.56.0(@cloudflare/workers-types@4.20251221.0)
 
+  examples/eval:
+    dependencies:
+      '@llmops/cli':
+        specifier: workspace:^
+        version: link:../../packages/cli
+      '@llmops/sdk':
+        specifier: workspace:^
+        version: link:../../packages/sdk
+
   examples/express:
     dependencies:
       '@llmops/sdk':
