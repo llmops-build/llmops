@@ -14,13 +14,17 @@
     "directory": "packages/cli"
   },
   "author": "chtushar",
-  "private": true,
+  "bin": {
+    "llmops": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.mjs",
   "scripts": {
-    "dev": "bun run --conditions=browser ./src/index.ts",
-    "build": "bun run script/build.ts",
-    "build:single": "bun run script/build.ts --single",
-    "publish:dry": "bun run script/publish.ts --dry",
+    "build": "tsdown",
     "clean": "rm -rf dist",
+    "dev": "tsx src/index.ts",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
@@ -31,19 +35,19 @@
     "llm",
     "typescript"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@drizzle-team/brocli": "^0.11.0",
     "@llmops/core": "workspace:^",
     "@llmops/sdk": "workspace:^",
-    "@opentui/core": "^0.1.97",
     "chalk": "^5.6.2",
     "esbuild": "^0.25.0",
-    "kysely": "^0.28.8",
     "prompts": "^2.4.2",
     "yocto-spinner": "^1.0.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.11",
     "@types/pg": "^8.15.6",
     "@types/prompts": "^2.4.9",
     "pg": "^8.16.3"
