@@ -145,6 +145,9 @@ importers:
       '@llmops/sdk':
         specifier: workspace:^
         version: link:../../packages/sdk
+      dotenv:
+        specifier: ^17.0.0
+        version: 17.2.3
 
   examples/express:
     dependencies:

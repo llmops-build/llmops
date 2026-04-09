@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@llmops/sdk": "workspace:^",
-    "@llmops/cli": "workspace:^"
+    "@llmops/cli": "workspace:^",
+    "dotenv": "^17.0.0"
   }
 }
