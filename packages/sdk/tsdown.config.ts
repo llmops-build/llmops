@@ -11,6 +11,7 @@ export default defineConfig({
     'store/pg': 'src/store/pg.ts',
     'store/d1': 'src/store/d1.ts',
     'store/sqlite': 'src/store/sqlite.ts',
+    eval: 'src/eval/index.ts',
     types: 'src/types/index.ts',
   },
   format: ['esm', 'cjs'],

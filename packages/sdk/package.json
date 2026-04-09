@@ -108,6 +108,16 @@
         "default": "./dist/store/sqlite.cjs"
       }
     },
+    "./eval": {
+      "import": {
+        "types": "./dist/eval.d.mts",
+        "default": "./dist/eval.mjs"
+      },
+      "require": {
+        "types": "./dist/eval.d.cts",
+        "default": "./dist/eval.cjs"
+      }
+    },
     "./types": {
       "import": {
         "types": "./dist/types.d.mts",
