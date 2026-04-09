@@ -103,56 +103,63 @@ export async function compare(options: CompareOptions): Promise<CompareResult> {
   };
 
   // Print summary to stderr
-  const lines: string[] = [];
-  lines.push('');
-  lines.push(` compare: ${baselineRun.name} → ${candidateRun.name}`);
-  lines.push('');
-  lines.push(' Scores:');
+  const w = process.stderr;
+  const RESET = '\x1b[0m';
+  const DIM = '\x1b[2m';
+  const BOLD = '\x1b[1m';
+  const GREEN = '\x1b[32m';
+  const RED = '\x1b[31m';
+  const CYAN = '\x1b[36m';
 
-  for (const [scoreName, delta] of Object.entries(scores)) {
-    const sign = delta.delta >= 0 ? '+' : '';
-    const marker = delta.delta >= 0 ? '✓' : '✗';
-    lines.push(
-      `   ${scoreName.padEnd(16)} ${delta.baseline.toFixed(2)} → ${delta.candidate.toFixed(2)}  (${sign}${delta.delta.toFixed(2)}) ${marker}`,
-    );
+  w.write('\n');
+  w.write(`  ${BOLD}Compare${RESET}  ${DIM}${baselineRun.name} → ${candidateRun.name}${RESET}\n`);
+  w.write(`  ${DIM}${'─'.repeat(50)}${RESET}\n\n`);
+
+  const scoreEntries = Object.entries(scores);
+  if (scoreEntries.length > 0) {
+    const maxNameLen = Math.max(...scoreEntries.map(([n]) => n.length), 10);
+
+    w.write(`  ${DIM}${'Evaluator'.padEnd(maxNameLen)}  ${'Base'.padStart(6)}    ${'New'.padStart(6)}  ${'Delta'.padStart(7)}${RESET}\n`);
+    w.write(`  ${DIM}${'─'.repeat(maxNameLen + 30)}${RESET}\n`);
+
+    for (const [scoreName, delta] of scoreEntries) {
+      const sign = delta.delta >= 0 ? '+' : '';
+      const color = delta.delta >= 0 ? GREEN : RED;
+      const icon = delta.delta > 0 ? '▲' : delta.delta < 0 ? '▼' : '=';
+      w.write(
+        `  ${scoreName.padEnd(maxNameLen)}  ${delta.baseline.toFixed(2).padStart(6)}  ${DIM}→${RESET}  ${delta.candidate.toFixed(2).padStart(6)}  ${color}${sign}${delta.delta.toFixed(2).padStart(5)} ${icon}${RESET}\n`,
+      );
+    }
+    w.write('\n');
   }
 
   if (regressions.length > 0) {
-    lines.push('');
-    lines.push(` Regressions (${regressions.length}):`);
+    w.write(`  ${RED}▼ ${regressions.length} regression${regressions.length > 1 ? 's' : ''}${RESET}\n`);
     for (const r of regressions.slice(0, 5)) {
-      const dataStr =
-        typeof r.data === 'string'
-          ? r.data
-          : JSON.stringify(r.data).slice(0, 60);
-      lines.push(
-        `   "${dataStr}"  ${r.evaluator}: ${r.baselineScore.toFixed(2)} → ${r.candidateScore.toFixed(2)}`,
-      );
+      const dataStr = typeof r.data === 'string' ? r.data : JSON.stringify(r.data).slice(0, 50);
+      w.write(`    ${DIM}${dataStr}${RESET}  ${r.evaluator}: ${r.baselineScore.toFixed(2)} → ${RED}${r.candidateScore.toFixed(2)}${RESET}\n`);
     }
     if (regressions.length > 5) {
-      lines.push(`   ... and ${regressions.length - 5} more`);
+      w.write(`    ${DIM}... and ${regressions.length - 5} more${RESET}\n`);
     }
+    w.write('\n');
   }
 
   if (improvements.length > 0) {
-    lines.push('');
-    lines.push(` Improvements (${improvements.length}):`);
+    w.write(`  ${GREEN}▲ ${improvements.length} improvement${improvements.length > 1 ? 's' : ''}${RESET}\n`);
     for (const imp of improvements.slice(0, 5)) {
-      const dataStr =
-        typeof imp.data === 'string'
-          ? imp.data
-          : JSON.stringify(imp.data).slice(0, 60);
-      lines.push(
-        `   "${dataStr}"  ${imp.evaluator}: ${imp.baselineScore.toFixed(2)} → ${imp.candidateScore.toFixed(2)}`,
-      );
+      const dataStr = typeof imp.data === 'string' ? imp.data : JSON.stringify(imp.data).slice(0, 50);
+      w.write(`    ${DIM}${dataStr}${RESET}  ${imp.evaluator}: ${imp.baselineScore.toFixed(2)} → ${GREEN}${imp.candidateScore.toFixed(2)}${RESET}\n`);
     }
     if (improvements.length > 5) {
-      lines.push(`   ... and ${improvements.length - 5} more`);
+      w.write(`    ${DIM}... and ${improvements.length - 5} more${RESET}\n`);
     }
+    w.write('\n');
   }
 
-  lines.push('');
-  process.stderr.write(lines.join('\n'));
+  if (regressions.length === 0 && improvements.length === 0) {
+    w.write(`  ${CYAN}No changes between runs${RESET}\n\n`);
+  }
 
   return result;
 }
