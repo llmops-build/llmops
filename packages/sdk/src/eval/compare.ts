@@ -1,5 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import type {
   CompareOptions,
   CompareResult,
@@ -8,58 +7,38 @@ import type {
 } from './types';
 
 /**
- * Load an eval run from the filesystem.
+ * Load an eval result from a JSON file.
  */
-function loadRun(
-  outputDir: string,
-  name: string,
-  runId: string,
-): EvaluateResult {
-  const dir = join(outputDir, name);
-  const filePath = join(dir, `${runId}.json`);
-
+function loadResult(filePath: string): EvaluateResult {
   try {
     const content = readFileSync(filePath, 'utf-8');
     return JSON.parse(content) as EvaluateResult;
   } catch {
-    // Try to find by prefix match (partial runId)
-    try {
-      const files = readdirSync(dir);
-      const match = files.find((f) => f.startsWith(runId) && f.endsWith('.json'));
-      if (match) {
-        const content = readFileSync(join(dir, match), 'utf-8');
-        return JSON.parse(content) as EvaluateResult;
-      }
-    } catch {
-      // dir doesn't exist
-    }
-    throw new Error(
-      `Eval run "${runId}" not found for "${name}" in ${outputDir}. ` +
-        `Expected file: ${filePath}`,
-    );
+    throw new Error(`Could not read eval result: ${filePath}`);
   }
 }
 
 /**
- * Compare two eval runs. First run ID is the baseline.
+ * Compare two eval result files. First file is the baseline.
  *
- * Usage:
+ * Usage with version control:
+ * 1. Run eval → results saved to ./llmops-evals/my-eval.eval.json
+ * 2. Commit the file
+ * 3. Make changes, re-run eval
+ * 4. Compare: git stash the new result, compare old vs new
+ *
+ * Or compare two named eval files:
  * ```ts
  * const diff = await compare({
- *   name: 'support-bot',
- *   runs: [run1.runId, run2.runId],
+ *   files: ['./llmops-evals/baseline.eval.json', './llmops-evals/candidate.eval.json'],
  * })
  * ```
  */
 export async function compare(options: CompareOptions): Promise<CompareResult> {
-  const { runs, name, outputDir = './llmops-evals' } = options;
+  const { files } = options;
 
-  if (runs.length < 2) {
-    throw new Error('compare() requires at least 2 run IDs');
-  }
-
-  const baselineRun = loadRun(outputDir, name, runs[0]);
-  const candidateRun = loadRun(outputDir, name, runs[1]);
+  const baselineRun = loadResult(files[0]);
+  const candidateRun = loadResult(files[1]);
 
   // Compute per-evaluator deltas
   const allScoreNames = new Set([
@@ -116,8 +95,8 @@ export async function compare(options: CompareOptions): Promise<CompareResult> {
   }
 
   const result: CompareResult = {
-    baseline: runs[0],
-    candidate: runs[1],
+    baseline: baselineRun.runId,
+    candidate: candidateRun.runId,
     scores,
     regressions,
     improvements,
@@ -126,7 +105,7 @@ export async function compare(options: CompareOptions): Promise<CompareResult> {
   // Print summary to stderr
   const lines: string[] = [];
   lines.push('');
-  lines.push(` compare: ${runs[0].slice(0, 8)} → ${runs[1].slice(0, 8)}`);
+  lines.push(` compare: ${baselineRun.name} → ${candidateRun.name}`);
   lines.push('');
   lines.push(' Scores:');
 
