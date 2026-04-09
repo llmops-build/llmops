@@ -13,6 +13,16 @@ import type {
   VariantEvaluateResult,
 } from './types';
 
+// ─── ANSI codes ─────────────────────────────────────────────────────────────
+
+const RESET = '\x1b[0m';
+const DIM = '\x1b[2m';
+const BOLD = '\x1b[1m';
+const CYAN = '\x1b[36m';
+const GREEN = '\x1b[32m';
+const RED = '\x1b[31m';
+const YELLOW = '\x1b[33m';
+
 // ─── Concurrency pool ───────────────────────────────────────────────────────
 
 async function pool<T>(
@@ -55,9 +65,102 @@ function computeStats(values: number[]): ScoreStats {
   };
 }
 
+// ─── Live output ────────────────────────────────────────────────────────────
+
+const isSilent = process.env.LLMOPS_EVAL_OUTPUT === 'json';
+const w = process.stderr;
+
+function printHeader(name: string, total: number) {
+  if (isSilent) return;
+  w.write('\n');
+  w.write(`  ${BOLD}${name}${RESET}  ${DIM}(${total} datapoints)${RESET}\n`);
+  w.write(`  ${DIM}${'─'.repeat(50)}${RESET}\n`);
+}
+
+function printDatapointResult(
+  idx: number,
+  total: number,
+  dp: DatapointResult,
+) {
+  if (isSilent) return;
+
+  const label = typeof dp.data === 'object' && dp.data !== null
+    ? JSON.stringify(dp.data).slice(0, 50)
+    : String(dp.data).slice(0, 50);
+
+  if (dp.error) {
+    w.write(`  ${RED}✗${RESET} ${DIM}[${idx + 1}/${total}]${RESET} ${label}  ${RED}ERROR${RESET} ${DIM}${dp.error.slice(0, 60)}${RESET}\n`);
+    return;
+  }
+
+  const scoreStr = Object.entries(dp.scores)
+    .map(([name, val]) => {
+      if (Number.isNaN(val)) return `${DIM}${name}=NaN${RESET}`;
+      const color = val >= 0.8 ? GREEN : val >= 0.5 ? YELLOW : RED;
+      return `${color}${name}=${val.toFixed(2)}${RESET}`;
+    })
+    .join('  ');
+
+  w.write(`  ${GREEN}✓${RESET} ${DIM}[${idx + 1}/${total}]${RESET} ${label}  ${scoreStr}  ${DIM}${dp.durationMs}ms${RESET}\n`);
+}
+
+function scoreBar(score: number, width = 20): string {
+  const filled = Math.round(score * width);
+  const empty = width - filled;
+  return '█'.repeat(filled) + '░'.repeat(empty);
+}
+
+function scoreColor(score: number): string {
+  if (score >= 0.8) return GREEN;
+  if (score >= 0.5) return YELLOW;
+  return RED;
+}
+
+function printSummary(result: EvaluateResult) {
+  if (isSilent) return;
+
+  w.write('\n');
+
+  const entries = Object.entries(result.scores);
+  if (entries.length > 0) {
+    const maxNameLen = Math.max(...entries.map(([n]) => n.length), 10);
+
+    w.write(`  ${DIM}${'Evaluator'.padEnd(maxNameLen)}  ${'Mean'.padStart(6)}  ${'Bar'.padEnd(20)}  ${'Min'.padStart(5)}  ${'Max'.padStart(5)}  ${'Med'.padStart(5)}${RESET}\n`);
+    w.write(`  ${DIM}${'─'.repeat(maxNameLen + 50)}${RESET}\n`);
+
+    for (const [name, stats] of entries) {
+      const color = scoreColor(stats.mean);
+      const bar = scoreBar(stats.mean);
+      w.write(
+        `  ${name.padEnd(maxNameLen)}  ${color}${stats.mean.toFixed(2).padStart(6)}${RESET}  ${DIM}${bar}${RESET}  ${stats.min.toFixed(2).padStart(5)}  ${stats.max.toFixed(2).padStart(5)}  ${stats.median.toFixed(2).padStart(5)}\n`,
+      );
+    }
+  }
+
+  const completed = result.count - result.errors;
+  w.write('\n');
+  w.write(`  ${DIM}Duration${RESET} ${(result.durationMs / 1000).toFixed(1)}s`);
+  w.write(`    ${DIM}Passed${RESET} ${completed}/${result.count}`);
+  if (result.errors > 0) {
+    w.write(`    ${RED}Failed ${result.errors}${RESET}`);
+  }
+  w.write(`    ${DIM}Run${RESET} ${CYAN}${result.runId.slice(0, 8)}${RESET}`);
+  w.write('\n\n');
+}
+
+// ─── Save ───────────────────────────────────────────────────────────────────
+
+function saveResult(result: EvaluateResult, outputDir: string) {
+  const dir = join(outputDir, result.name);
+  mkdirSync(dir, { recursive: true });
+  const filePath = join(dir, `${Date.now()}.json`);
+  writeFileSync(filePath, JSON.stringify(result, null, 2));
+}
+
 // ─── Single executor flow ───────────────────────────────────────────────────
 
 async function runSingleExecutor<D, T, O>(
+  name: string,
   dataset: EvaluationDataset<D, T>,
   executor: Executor<D, O>,
   evaluators: Record<string, Evaluator<O, T>>,
@@ -67,6 +170,8 @@ async function runSingleExecutor<D, T, O>(
   const datapoints = await dataset.slice(0, size);
   const results: DatapointResult<D, O>[] = new Array(datapoints.length);
   const startTime = Date.now();
+
+  printHeader(name, datapoints.length);
 
   await pool(datapoints, concurrency, async (dp) => {
     const idx = datapoints.indexOf(dp);
@@ -82,25 +187,27 @@ async function runSingleExecutor<D, T, O>(
     }
 
     if (!error && output !== null) {
-      for (const [name, evaluator] of Object.entries(evaluators)) {
+      for (const [evalName, evaluator] of Object.entries(evaluators)) {
         try {
           const result = await evaluator(output, dp.target, dp.data);
           if (typeof result === 'number') {
-            scores[name] = result;
+            scores[evalName] = result;
           } else {
             for (const [subKey, subScore] of Object.entries(result)) {
-              scores[`${name}.${subKey}`] = subScore;
+              scores[`${evalName}.${subKey}`] = subScore;
             }
           }
         } catch (evalErr) {
-          scores[name] = NaN;
+          scores[evalName] = NaN;
           const msg = evalErr instanceof Error ? evalErr.message : String(evalErr);
-          process.stderr.write(`  ⚠ evaluator "${name}" failed: ${msg}\n`);
+          if (!isSilent) {
+            w.write(`  ${YELLOW}⚠${RESET} ${DIM}evaluator "${evalName}":${RESET} ${msg.slice(0, 80)}\n`);
+          }
         }
       }
     }
 
-    results[idx] = {
+    const dpResult: DatapointResult<D, O> = {
       data: dp.data,
       target: dp.target,
       metadata: dp.metadata,
@@ -109,45 +216,12 @@ async function runSingleExecutor<D, T, O>(
       durationMs: Date.now() - dpStart,
       error,
     };
+
+    results[idx] = dpResult;
+    printDatapointResult(idx, datapoints.length, dpResult as DatapointResult);
   });
 
   return { results, durationMs: Date.now() - startTime };
-}
-
-// ─── Output ─────────────────────────────────────────────────────────────────
-
-function printSummary(result: EvaluateResult) {
-  const lines: string[] = [];
-  lines.push('');
-  lines.push(` ${result.name}`);
-  lines.push('');
-
-  const completed = result.count - result.errors;
-  lines.push(
-    ` ✓ ${completed}/${result.count} completed${result.errors > 0 ? `  ✗ ${result.errors} errors` : ''}`,
-  );
-  lines.push('');
-  lines.push(' Scores:');
-
-  for (const [name, stats] of Object.entries(result.scores)) {
-    lines.push(
-      `   ${name.padEnd(16)} mean=${stats.mean.toFixed(2)}  min=${stats.min.toFixed(2)}  max=${stats.max.toFixed(2)}  median=${stats.median.toFixed(2)}`,
-    );
-  }
-
-  lines.push('');
-  lines.push(` Duration: ${(result.durationMs / 1000).toFixed(1)}s`);
-  lines.push(` Run ID:   ${result.runId}`);
-  lines.push('');
-
-  process.stderr.write(lines.join('\n'));
-}
-
-function saveResult(result: EvaluateResult, outputDir: string) {
-  const dir = join(outputDir, result.name);
-  mkdirSync(dir, { recursive: true });
-  const filePath = join(dir, `${Date.now()}.json`);
-  writeFileSync(filePath, JSON.stringify(result, null, 2));
 }
 
 // ─── evaluate() ─────────────────────────────────────────────────────────────
@@ -189,13 +263,13 @@ export async function evaluate<
   // ── Single executor ───────────────────────────────────────────────────
   if (executor) {
     const { results, durationMs } = await runSingleExecutor(
+      name,
       dataset,
       executor,
       evaluators,
       concurrency,
     );
 
-    // Aggregate scores
     const scoreNames = new Set<string>();
     for (const r of results) {
       for (const key of Object.keys(r.scores)) scoreNames.add(key);
@@ -220,7 +294,7 @@ export async function evaluate<
       results,
     };
 
-    if (process.env.LLMOPS_EVAL_OUTPUT === 'json') {
+    if (isSilent) {
       process.stdout.write(JSON.stringify(result, null, 2));
     } else {
       printSummary(result);
@@ -236,6 +310,7 @@ export async function evaluate<
 
   for (const [variantName, variantExecutor] of Object.entries(variants!)) {
     const { results, durationMs } = await runSingleExecutor(
+      `${name}/${variantName}`,
       dataset,
       variantExecutor,
       evaluators,
@@ -268,7 +343,7 @@ export async function evaluate<
 
     variantResults[variantName] = variantResult;
 
-    if (process.env.LLMOPS_EVAL_OUTPUT !== 'json') {
+    if (!isSilent) {
       printSummary(variantResult);
     }
 
@@ -284,7 +359,7 @@ export async function evaluate<
     variants: variantResults,
   };
 
-  if (process.env.LLMOPS_EVAL_OUTPUT === 'json') {
+  if (isSilent) {
     process.stdout.write(JSON.stringify(variantEvalResult, null, 2));
   }
 
