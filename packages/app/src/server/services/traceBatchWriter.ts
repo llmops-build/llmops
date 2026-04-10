@@ -7,7 +7,8 @@ import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 export interface TraceQueueItem {
   span: SpanInsert;
   events?: SpanEventInsert[];
-  trace: TraceUpsert;
+  /** Optional — omit for internal SDK requests where the OTLP exporter handles the trace */
+  trace?: TraceUpsert;
 }
 
 export interface TraceBatchWriterDeps {
@@ -56,10 +57,11 @@ export function createTraceBatchWriter(
       logger.debug(`[TraceBatchWriter] Flushing ${batch.length} items`);
       log(`[TraceBatchWriter] Flushing ${batch.length} items`);
 
-      // Group by traceId and upsert each trace
+      // Group by traceId and upsert each trace (skip items without trace data)
       const traceMap = new Map<string, TraceUpsert>();
       for (const item of batch) {
-        // Merge trace upserts: accumulate spans, tokens, cost
+        if (!item.trace) continue;
+
         const existing = traceMap.get(item.trace.traceId);
         if (existing) {
           existing.spanCount =
@@ -74,7 +76,6 @@ export function createTraceBatchWriter(
             (existing.totalTokens ?? 0) + (item.trace.totalTokens ?? 0);
           existing.totalCost =
             (existing.totalCost ?? 0) + (item.trace.totalCost ?? 0);
-          // Use earliest start, latest end
           if (item.trace.startTime < existing.startTime) {
             existing.startTime = item.trace.startTime;
           }
@@ -84,7 +85,6 @@ export function createTraceBatchWriter(
           ) {
             existing.endTime = item.trace.endTime;
           }
-          // Escalate status: error > ok > unset
           if (item.trace.status === 'error') {
             existing.status = 'error';
           } else if (
@@ -93,11 +93,9 @@ export function createTraceBatchWriter(
           ) {
             existing.status = 'ok';
           }
-          // Merge name, sessionId, userId (prefer non-null)
           existing.name = existing.name ?? item.trace.name;
           existing.sessionId = existing.sessionId ?? item.trace.sessionId;
           existing.userId = existing.userId ?? item.trace.userId;
-          // Merge tags
           existing.tags = { ...existing.tags, ...item.trace.tags };
           existing.metadata = { ...existing.metadata, ...item.trace.metadata };
         } else {
