@@ -84,19 +84,11 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
  * Either database or providers must be present (enforced by schema)
  */
 /**
- * A telemetry store or sink that can receive LLM request/trace data.
- * Implemented by pgStore, d1Store, and future store backends.
- */
-export type TelemetryDestination = Record<string, unknown>;
-
-/**
  * Telemetry config accepts a single store, an array of stores/sinks,
  * or undefined (inline-only mode, no persistence).
  */
-export type TelemetryConfig =
-  | TelemetryDestination
-  | TelemetryDestination[]
-  | undefined;
+// biome-ignore lint: telemetry accepts any store implementation
+export type TelemetryConfig = any;
 
 export type ValidatedLLMOpsConfig = {
   telemetry?: TelemetryConfig;
