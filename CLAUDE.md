@@ -13,49 +13,61 @@ License: Apache 2.0
 packages/
 ├── sdk/              → @llmops/sdk — Public API. Entry point for everything.
 │   └── src/
-│       ├── index.ts          → llmops() client, provider config, telemetry bus
+│       ├── index.ts          → llmops() client, provider config
+│       ├── telemetry/
+│       │   ├── interface.ts  → TelemetryStore interface
+│       │   ├── pg-store.ts   → pgStore() — Postgres store (raw pg, no ORM)
+│       │   ├── types.ts      → Zod schemas for inserts (LLMRequestInsert, TraceUpsert, etc.)
+│       │   └── constants.ts  → COST_SUMMARY_GROUP_BY
 │       ├── store/
-│       │   ├── pg.ts         → pgStore() — Postgres adapter. Implements Store.
-│       │   └── sqlite.ts     → [Planned] sqliteStore() — SQLite adapter. Implements Store.
-│       ├── sink/
-│       │   └── otel.ts       → [Planned] otelSink() — OTel exporter. Implements Sink.
-│       ├── eval/             → [Planned] scorer, dataset, experiment primitives
-│       │   ├── index.ts      → [Planned] exports: scorer, dataset, experiment
-│       │   └── judge.ts      → [Planned] exports: judgeScorer (LLM-as-judge)
-│       ├── types/            → [Planned] Store, Sink, TelemetryEvent interfaces
-│       │   └── index.ts
-│       └── middleware/
-│           ├── hono.ts       → createLLMOpsMiddleware for Hono
-│           └── express.ts    → [Planned] Express middleware
+│       │   ├── pg.ts         → pgStore() barrel export + migration runner
+│       │   ├── pg/           → Postgres schema files (.sql), tsqx config, migrations
+│       │   ├── d1.ts         → d1Store() barrel export — Cloudflare D1
+│       │   ├── d1/           → D1 store implementation, SQLite schema, migrations
+│       │   ├── sqlite.ts     → sqliteStore() barrel export — local SQLite
+│       │   └── sqlite/       → SQLite store implementation, migrations
+│       ├── eval/
+│       │   ├── index.ts      → exports: evaluate, compare, judgeScorer
+│       │   ├── evaluate.ts   → evaluate() — run evaluators against datasets
+│       │   ├── judge.ts      → judgeScorer() — LLM-as-judge evaluator factory
+│       │   ├── compare.ts    → compare() — diff two eval runs
+│       │   ├── dataset.ts    → EvaluationDataset interface + InlineDataset
+│       │   └── types.ts      → Datapoint, Evaluator, Executor, EvaluateResult types
+│       ├── types/
+│       │   └── index.ts      → TelemetryStore type export
+│       └── lib/
+│           ├── hono/         → createLLMOpsMiddleware for Hono
+│           ├── express/      → createLLMOpsMiddleware for Express
+│           └── nextjs/       → toNextJsHandler adapter
 │
 ├── core/             → @llmops/core — Shared types, Zod schemas, provider registry.
-│   └── src/
-│       ├── datalayer/        → ⚠️ BEING DECOMPOSED — Postgres-specific, moving to sdk/store/pg
-│       └── ...
+│                       Zero database code. Zero SQL. 223KB bundle.
 │
 ├── gateway/          → @llmops/gateway — AI Gateway. OpenAI-compatible proxy.
-│                       Routes to 70+ providers. Emits TelemetryEvents.
+│                       Routes to 70+ providers. Workers-compatible (no createRequire).
 │
 ├── app/              → @llmops/app — Dashboard UI (React + Hono).
-│                       Reads from Store interface. Served at /llmops.
+│                       Workers-compatible (no top-level Node.js imports).
+│                       Reads from TelemetryStore. Served at /llmops.
 │
-├── cli/              → @llmops/cli — CLI for migrations and utilities.
+├── cli/              → @llmops/cli — CLI for migrations and evals.
+│                       `npx @llmops/cli eval` / `npx @llmops/cli migrate`
 
 docs/                 → Fumadocs site (https://llmops.build/docs)
-examples/             → Example apps
+examples/             → Example apps (hono, express, nextjs, langchain, eval, cloudflare-worker)
 ```
 
 ## Tech Stack
 
 - **Language:** TypeScript (strict mode)
-- **Runtime:** Node.js
+- **Runtime:** Node.js + Cloudflare Workers
 - **Package manager:** pnpm (workspace monorepo)
-- **Build:** tsconfig with project references
-- **Framework compatibility:** Hono (primary), Express (planned)
-- **Dashboard:** React
+- **Build:** tsdown (rolldown-based bundler)
+- **Linting/Formatting:** Biome
+- **Framework compatibility:** Hono, Express, Next.js
+- **Dashboard:** React + Vanilla Extract CSS
 - **Docs:** Fumadocs
-- **Linting:** ESLint (see eslint.config.js)
-- **Formatting:** Prettier (see .prettierrc)
+- **SQL:** Raw pg/SQLite (no ORM). Schema managed by tsqx.
 - **Versioning:** bump.config.ts
 
 ## How to Work on This Project
@@ -64,21 +76,22 @@ examples/             → Example apps
 pnpm install                    # Install all workspace dependencies
 pnpm build                      # Build all packages
 pnpm dev                        # Dev mode
-pnpm lint                       # Lint
-pnpm format                     # Format with Prettier
 ```
 
 Test changes by running the examples in `examples/`.
+
+Run evals: `cd examples/eval && npx @llmops/cli eval`
 
 ## Architecture Principles
 
 1. **UNIX philosophy.** Each package does one thing. Compose via interfaces, not inheritance.
 2. **Adoption-first.** `llmops()` with zero args must work. Every feature is opt-in.
 3. **TypeScript-first.** Strict generics. Compile-time enforcement. No `any`.
-4. **Store vs Sink.** A `Store` reads and writes (powers the dashboard). A `Sink` only writes (ships telemetry elsewhere). Both implement `emit()`.
+4. **Code-first.** Everything configurable from code. No database-managed configs.
 5. **Framework-agnostic.** The SDK doesn't depend on Hono or Express. Middleware adapters are subpath exports.
-6. **No Postgres in core.** All SQL lives in `sdk/src/store/`. `@llmops/core` has zero database imports.
-7. **One SDK, many entrypoints.** Stores, sinks, evals, and middleware are subpath exports of `@llmops/sdk`, not separate packages. Heavy deps (pg, better-sqlite3, @opentelemetry) are peerDependencies.
+6. **No database code in core.** All SQL lives in `sdk/src/telemetry/` and `sdk/src/store/`. `@llmops/core` has zero database imports. Zero Kysely.
+7. **One SDK, many entrypoints.** Stores, evals, and middleware are subpath exports of `@llmops/sdk`, not separate packages. Heavy deps (pg, better-sqlite3) are peerDependencies.
+8. **Edge-compatible.** The main SDK bundle has no `require()`, no `fileURLToPath`, no `node:fs`. Store subpaths are isolated — Workers never load the pg store.
 
 ---
 
@@ -89,30 +102,19 @@ Test changes by running the examples in `examples/`.
 **Status:** Shipped
 **Package:** `@llmops/gateway`
 
-OpenAI-compatible API that routes to 70+ LLM providers. Drop-in replacement — change the base URL and it works with any OpenAI SDK client.
+OpenAI-compatible API that routes to 70+ LLM providers. Drop-in replacement — change the base URL and it works with any OpenAI SDK client. Providers auto-detected from environment variables.
 
 ```ts
 import { llmops } from '@llmops/sdk'
-import { createOpenAI } from '@ai-sdk/openai'
+import OpenAI from 'openai'
 
-const ops = llmops()
-const openai = createOpenAI(ops.provider())
+const client = llmops()
+const openai = new OpenAI(client.provider())
 
-// Routes to any provider: @google/gemini-2.5-flash, anthropic/claude-sonnet, etc.
-const result = await streamText({
-  model: openai.chat('@google/gemini-2.5-flash'),
-  prompt: 'Hello',
-})
-```
-
-Provider config with custom slugs:
-
-```ts
-const ops = llmops({
-  providers: {
-    'openai-prod': { type: 'openai', apiKey: process.env.OPENAI_API_KEY },
-    'anthropic-dev': { type: 'anthropic', apiKey: process.env.ANTHROPIC_API_KEY },
-  },
+// Routes to any provider: @openai/gpt-4o, @anthropic/claude-sonnet, @google/gemini-2.5-flash
+const response = await openai.chat.completions.create({
+  model: '@openai/gpt-4o',
+  messages: [{ role: 'user', content: 'Hello' }],
 })
 ```
 
@@ -121,105 +123,141 @@ const ops = llmops({
 **Status:** Shipped
 **Package:** `@llmops/app`
 
-Auto-served React dashboard at `/llmops`. Shows request logs, cost tracking (per-model breakdown), latency, token usage. Currently reads from the datalayer in `@llmops/core` — being refactored to read from the `Store` interface.
+Auto-served React dashboard at `/llmops`. Shows request logs, cost tracking (per-model breakdown), latency, token usage, and traces. Workers-compatible — no top-level Node.js imports. Uses embedded assets in production (no filesystem I/O).
 
 ```ts
 import { createLLMOpsMiddleware } from '@llmops/sdk/hono'
-// or
-import { createLLMOpsMiddleware } from '@llmops/sdk/express'
 
-const middleware = createLLMOpsMiddleware(llmopsClient)
-app.use('/llmops', middleware)
+const middleware = createLLMOpsMiddleware(client)
+app.use('/llmops/*', middleware)
 ```
 
-The middleware receives the `llmopsClient` instance, which carries the telemetry config. The dashboard reads from whatever `Store` is configured in `telemetry` — it calls `store.queryRequests()`, `store.queryCosts()`, `store.queryTimeseries()`. It does NOT import any database driver directly.
+### Telemetry Store
 
-### Telemetry Bus [Planned]
+**Status:** Shipped
+**Package:** `@llmops/sdk/telemetry`
 
-**Status:** Planned — Stage 3 of decoupling
-**Package:** `@llmops/sdk` (internal)
-
-Fan-out emitter. When `telemetry` is an array, every event is sent to all destinations via `Promise.allSettled`. One sink failing does not block others.
+The `TelemetryStore` interface defines read + write methods for telemetry data. Every LLM call through the gateway automatically creates a trace with a single span.
 
 ```ts
-import { pgStore } from '@llmops/sdk/store/pg'
-import { otelSink } from '@llmops/sdk/sink/otel'
-
-const ops = llmops({
-  telemetry: [
-    pgStore(process.env.DATABASE_URL),
-    otelSink({ endpoint: 'http://collector:4318' }),
-  ]
-})
-```
-
-The bus exposes `getStore()` which returns the first `Store` in the array — this is what the dashboard reads from.
-
-### Store Interface [Planned]
-
-**Status:** Planned — Stage 1 of decoupling
-**Package:** `@llmops/sdk/types`
-
-Read + write contract. Implementations power the dashboard.
-
-```ts
-interface Sink {
-  emit(event: TelemetryEvent): Promise<void>
-  flush?(): Promise<void>
-  shutdown?(): Promise<void>
+interface TelemetryStore {
+  batchInsertRequests(requests: LLMRequestInsert[]): Promise<{ count: number }>
+  listRequests(params?: ...): Promise<{ data; total; limit; offset }>
+  getTotalCost(params: ...): Promise<...>
+  getCostSummary(params: ...): Promise<...>
+  upsertTrace(data: TraceUpsert): Promise<void>
+  batchInsertSpans(spans: SpanInsert[]): Promise<{ count: number }>
+  listTraces(params?: ...): Promise<{ data; total; limit; offset }>
+  getTraceWithSpans(traceId: string): Promise<...>
+  // ... and more
 }
-
-interface Store extends Sink {
-  queryRequests(filters: RequestFilters): Promise<RequestLog[]>
-  queryCosts(filters: CostFilters): Promise<CostSummary>
-  queryTimeseries(filters: TimeseriesFilters): Promise<TimeseriesPoint[]>
-  migrate(): Promise<void>
-}
-```
-
-Type guard:
-
-```ts
-function isStore(dest: Store | Sink): dest is Store {
-  return 'queryRequests' in dest
-}
-```
-
-Config type:
-
-```ts
-type TelemetryConfig = Store | Sink | Array<Store | Sink>
 ```
 
 ### Postgres Store
 
-**Status:** Shipped (extracted from `@llmops/core/datalayer`)
+**Status:** Shipped
 **Import:** `@llmops/sdk/store/pg`
 **Peer dep:** `pg`
 
-All Postgres-specific SQL lives here. Implements `Store`. Handles migrations.
+Raw SQL with `pg.Pool` — no Kysely, no ORM. Schema managed by tsqx. Connection string validated with Zod. Migrations run automatically or via CLI.
 
 ```ts
 import { pgStore } from '@llmops/sdk/store/pg'
 
-const ops = llmops({
-  telemetry: pgStore(process.env.DATABASE_URL)
+const client = llmops({
+  telemetry: pgStore(process.env.DATABASE_URL),
 })
 ```
 
-### SQLite Store [Planned]
+### SQLite Store
 
-**Status:** Planned
+**Status:** Shipped
 **Import:** `@llmops/sdk/store/sqlite`
-**Peer dep:** `better-sqlite3`
+**Peer dep:** `better-sqlite3` (optional, falls back to `node:sqlite` on Node 22+)
 
-Local dev story. Zero external infrastructure. Same `Store` interface, SQLite dialect.
+Zero-config local dev. Same SQL dialect as D1. WAL mode enabled automatically.
 
 ```ts
 import { sqliteStore } from '@llmops/sdk/store/sqlite'
 
-const ops = llmops({
-  telemetry: sqliteStore('./llmops.db')
+const client = llmops({
+  telemetry: sqliteStore('./llmops.db'),
+})
+```
+
+### Cloudflare D1 Store
+
+**Status:** Shipped
+**Import:** `@llmops/sdk/store/d1`
+
+For Cloudflare Workers. Uses D1 binding API. Batch operations chunked at 100 statements. JSON columns parsed on read.
+
+```ts
+import { d1Store } from '@llmops/sdk/store/d1'
+
+export default {
+  async fetch(request, env, ctx) {
+    const client = llmops({
+      telemetry: d1Store(env.DB),
+      waitUntil: ctx.waitUntil.bind(ctx),
+    })
+  }
+}
+```
+
+### Edge Runtime Support
+
+**Status:** Shipped
+
+The `waitUntil` config option enables background telemetry flushing on edge runtimes (Cloudflare Workers, Vercel Edge). Without it, `setInterval`-based batching is used (Node.js default).
+
+```ts
+const client = llmops({
+  telemetry: d1Store(env.DB),
+  waitUntil: ctx.waitUntil.bind(ctx),  // Workers: flush after response
+})
+```
+
+### Evals
+
+**Status:** Shipped
+**Import:** `@llmops/sdk/eval`
+
+Code-first evals. Three primitives: `evaluate()`, `judgeScorer()`, `compare()`. Results stored as JSON files in the project — version-controllable, diffable.
+
+```ts
+import { evaluate, judgeScorer } from '@llmops/sdk/eval'
+
+const result = await evaluate({
+  name: 'support-bot',
+  data: [
+    { data: { question: 'Reset password?' }, target: { answer: 'Go to settings...' } },
+  ],
+  executor: async (data) => { /* your LLM call */ },
+  evaluators: {
+    exact: (output, target) => output === target?.answer ? 1 : 0,
+    accuracy: judgeScorer({
+      model: '@openai/gpt-4o',
+      prompt: 'Rate accuracy. Expected: {{target.answer}} Actual: {{output}}',
+      client,
+    }),
+  },
+})
+```
+
+**CLI runner:** `npx @llmops/cli eval` finds and runs `*.eval.ts` files. Bundles with esbuild, streams results as each datapoint completes.
+
+**judgeScorer features:**
+- System/user message separation (default system message instructs JSON scoring)
+- Temperature 0 by default for deterministic scoring
+- Retry on parse failure (`maxRetries` option)
+- Score clamping to [0, 1]
+- `{{output}}`, `{{target.*}}`, `{{data.*}}` template interpolation
+
+**compare()** diffs two eval result JSON files:
+```ts
+const diff = await compare({
+  files: ['./llmops-evals/v1.json', './llmops-evals/v2.json'],
 })
 ```
 
@@ -227,185 +265,43 @@ const ops = llmops({
 
 **Status:** Planned
 **Import:** `@llmops/sdk/sink/otel`
-**Peer dep:** `@opentelemetry/*`
 
-Write-only. Ships telemetry to any OpenTelemetry collector. Buffers and batch-exports via OTLP/HTTP. Maps `TelemetryEvent` to OTel spans following GenAI semantic conventions.
-
-```ts
-import { pgStore } from '@llmops/sdk/store/pg'
-import { otelSink } from '@llmops/sdk/sink/otel'
-
-const ops = llmops({
-  telemetry: [
-    pgStore(process.env.DATABASE_URL),
-    otelSink({ endpoint: 'http://collector:4318' }),
-  ]
-})
-```
-
-### Scorer [Planned]
-
-**Status:** Planned
-**Package:** `@llmops/sdk/eval`
-
-A scorer is a pure function that takes an input/output pair and returns a numeric score. No framework coupling. No side effects beyond the score.
-
-```ts
-import { scorer } from '@llmops/sdk/eval'
-
-const tone = scorer({
-  name: 'tone-check',
-  score: async (input, output) => {
-    return output.includes('sorry') ? 0.2 : 0.9
-  }
-})
-```
-
-Scorers are typed with generics. The `input` and `output` types are inferred from the dataset/task they're used with. Each scorer invocation emits a telemetry event (spans flow through the telemetry bus).
-
-### Judge Scorer [Planned]
-
-**Status:** Planned
-**Package:** `@llmops/sdk/eval/judge`
-
-LLM-as-judge. Uses the llmops gateway to call an LLM that scores the output. The judge call itself is traced through the same telemetry pipeline.
-
-```ts
-import { judgeScorer } from '@llmops/sdk/eval/judge'
-
-const accuracy = judgeScorer({
-  name: 'factual-accuracy',
-  model: 'openai/gpt-4o',
-  prompt: `Rate factual accuracy of this response: {{output}}
-           Given this input: {{input}}
-           Score 0-1.`,
-  ops  // llmops instance — judge call is routed through the gateway and traced
-})
-```
-
-### Dataset [Planned]
-
-**Status:** Planned
-**Package:** `@llmops/sdk/eval`
-
-A typed collection of test cases. Just data — no behavior.
-
-```ts
-import { dataset } from '@llmops/sdk/eval'
-
-const ds = dataset({
-  name: 'support-bot-v2',
-  items: [
-    { input: 'How do I reset my password?', expected: 'Go to settings...' },
-    { input: 'What are your hours?', expected: 'We are open 9-5...' },
-  ]
-})
-```
-
-Datasets can also be loaded from CSV, JSONL, or fetched from a Store.
-
-### Experiment [Planned]
-
-**Status:** Planned
-**Package:** `@llmops/sdk/eval`
-
-Runs scorers against a dataset using a task function. Results flow through the telemetry bus to whatever stores/sinks are configured. The dashboard visualizes experiment results.
-
-```ts
-import { experiment } from '@llmops/sdk/eval'
-
-const results = await experiment({
-  name: 'support-bot-march',
-  dataset: ds,
-  scorers: [tone, accuracy],
-  task: async (item) => {
-    const res = await generateText({ model: openai.chat('gpt-4o'), prompt: item.input })
-    return res.text
-  },
-  telemetry: ops.telemetry
-})
-```
-
-Supports `variants` for side-by-side model/prompt comparison:
-
-```ts
-await experiment({
-  name: 'model-comparison',
-  dataset: ds,
-  scorers: [latency, cost, accuracy],
-  variants: [
-    { name: 'gpt-4o', task: (item) => generateText({ model: openai('gpt-4o'), prompt: item.input }) },
-    { name: 'claude-sonnet', task: (item) => generateText({ model: anthropic('claude-sonnet'), prompt: item.input }) },
-  ],
-  telemetry: ops.telemetry
-})
-```
-
-This is the code-first replacement for the playground UI. The playground becomes a visual experiment builder on top of these same primitives.
+Write-only. Ships telemetry to any OpenTelemetry collector.
 
 ---
 
-## Deprecations
+## SQL & Migrations
 
-### Prompt Management — Deprecated
+All SQL is raw — no ORM, no query builder. Schema files managed by tsqx for migration diffing.
 
-The prompt versioning system (`x-llmops-prompt` header, prompt tables, prompt UI in dashboard) is being removed. Prompts belong in code, not in a database.
+**Postgres:** Raw `pg.Pool.query()` with inline SQL in `sdk/src/telemetry/pg-store.ts`.
 
-Do NOT build new features on top of prompt management. Do NOT add new prompt-related tables or queries. The playground UI will be refactored into an experiment runner once `@llmops/sdk/eval` ships.
+**SQLite/D1:** Same SQL dialect. `.sql` query files in `sdk/src/store/pg/queries/` inlined at build time by a rolldown plugin.
 
----
+**tsqx:** Dev-only tool (`@tsqx/kit`, `@tsqx/cli`) for schema diffing and migration generation. Schema files in `store/*/schema/*.sql`, migrations in `store/*/migrations/`. Generated files (types, query functions) are gitignored — only schema and migrations are committed.
 
-## Active Refactor: Datalayer Decomposition
-
-The `packages/core/src/datalayer/` directory contains Postgres-specific SQL that handles both writes (gateway logging) and reads (dashboard queries). This is being decomposed:
-
-1. **All INSERT/write logic** → moves to `sdk/src/store/pg.ts` `emit()` method
-2. **All SELECT/read logic** → moves to `sdk/src/store/pg.ts` query methods (queryRequests, queryCosts, queryTimeseries)
-3. **Migration DDL** → moves to `sdk/src/store/pg.ts` `migrate()` method
-4. **`@llmops/core`** retains only types, Zod schemas, and provider registry. Zero SQL. Zero `pg` imports.
-
-The `database` config option in `llmops()` is deprecated. Use `telemetry: pgStore(...)` instead.
-
-When working on the datalayer:
-- Do NOT add new SQL to `@llmops/core`
-- Do NOT add new direct database imports to `@llmops/gateway` or `@llmops/app`
-- Every database interaction goes through the `Store` or `Sink` interface
+**Migration runner:** Each store has its own: `runMigrations(pool, schema)` for Postgres, `runD1Migrations(db)` for D1, `runSQLiteMigrations(db)` for SQLite. Tracks applied migrations in `_llmops_migrations` table.
 
 ---
 
 ## Subpath Exports
 
-Everything ships from `@llmops/sdk`. One package, multiple entrypoints via package.json `exports` map:
-
-```json
-{
-  "exports": {
-    ".":            "./dist/index.js",
-    "./store/pg":   "./dist/store/pg.js",
-    "./store/sqlite": "./dist/store/sqlite.js",
-    "./sink/otel":  "./dist/sink/otel.js",
-    "./eval":       "./dist/eval/index.js",
-    "./eval/judge": "./dist/eval/judge.js",
-    "./types":      "./dist/types/index.js",
-    "./hono":       "./dist/middleware/hono.js",
-    "./express":    "./dist/middleware/express.js"
-  }
-}
-```
+Everything ships from `@llmops/sdk`. One package, multiple entrypoints:
 
 ```
-@llmops/sdk              → Main entry: llmops(), provider config
+@llmops/sdk              → Main entry: llmops(), provider config, telemetry types
 @llmops/sdk/store/pg     → pgStore() — peer dep: pg
-@llmops/sdk/store/sqlite → [Planned] sqliteStore() — peer dep: better-sqlite3
-@llmops/sdk/sink/otel    → [Planned] otelSink() — peer dep: @opentelemetry/*
-@llmops/sdk/eval         → [Planned] scorer, dataset, experiment
-@llmops/sdk/eval/judge   → [Planned] judgeScorer
-@llmops/sdk/types        → [Planned] Store, Sink, TelemetryEvent
+@llmops/sdk/store/sqlite → sqliteStore() — peer dep: better-sqlite3
+@llmops/sdk/store/d1     → d1Store() — Cloudflare D1 (no peer dep)
+@llmops/sdk/eval         → evaluate(), judgeScorer(), compare()
+@llmops/sdk/types        → TelemetryStore type
 @llmops/sdk/hono         → Hono middleware
-@llmops/sdk/express      → [Planned] Express middleware
+@llmops/sdk/express      → Express middleware
+@llmops/sdk/nextjs       → Next.js route handler adapter
+@llmops/sdk/agents       → OpenAI Agents SDK tracing exporter
 ```
 
-Stores and sinks use `peerDependencies` for their heavy deps (`pg`, `better-sqlite3`, `@opentelemetry/*`). This way importing `@llmops/sdk/store/pg` requires the user to have `pg` installed, but `@llmops/sdk` alone pulls in nothing extra.
+Stores use `peerDependencies` for heavy deps. The main SDK entry has zero Node.js built-ins — safe for Workers bundling.
 
 ---
 
@@ -416,4 +312,6 @@ Stores and sinks use `peerDependencies` for their heavy deps (`pg`, `better-sqli
 - Prefer `interface` for contracts, `type` for unions and intersections.
 - Named exports only. No default exports.
 - Error handling: use `Promise.allSettled` for fan-out. Never let one sink crash the gateway.
-- Tests: colocate test files as `*.test.ts` next to source.
+- No `require()` in any bundle that may run on edge. Use dynamic `import()` for Node-only modules.
+- No `fileURLToPath` or `node:fs` at module level in app/SDK. Use lazy loading for dev-only paths.
+- `.sql` files inlined at build time via rolldown plugin. No runtime file I/O.
