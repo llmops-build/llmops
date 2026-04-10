@@ -5,6 +5,7 @@ import {
   LLMOPS_REQUEST_ID_HEADER,
   LLMOPS_TRACE_ID_HEADER,
   LLMOPS_SPAN_ID_HEADER,
+  LLMOPS_INTERNAL_HEADER,
   getDefaultPricingProvider,
   calculateCacheAwareCost,
 } from '@llmops/core';
@@ -405,6 +406,10 @@ export function createCostTrackingMiddleware(
     const llmopsConfig = c.get('llmopsConfig');
     const waitUntil = llmopsConfig?.waitUntil as ((promise: Promise<unknown>) => void) | undefined;
 
+    // Internal SDK requests already have a parent trace from the OTLP exporter.
+    // We still create spans for them but skip creating a duplicate top-level trace.
+    const isInternalRequest = c.req.header(LLMOPS_INTERNAL_HEADER) === '1';
+
     // Initialize batch writers lazily
     // Cast db to include batchInsertRequests (added by createLLMRequestsDataLayer)
     const batchWriter = getGlobalBatchWriter(
@@ -470,6 +475,7 @@ export function createCostTrackingMiddleware(
             traceContext,
             batchWriter,
             traceBatchWriter,
+            isInternalRequest,
             waitUntil,
             trackErrors,
             log,
@@ -587,6 +593,7 @@ export function createCostTrackingMiddleware(
         traceContext,
         batchWriter,
         traceBatchWriter,
+        isInternalRequest,
         waitUntil,
         trackErrors,
         log,
@@ -624,6 +631,7 @@ async function processUsageAndLog(params: {
   traceContext?: TraceContext;
   batchWriter: ReturnType<typeof getGlobalBatchWriter>;
   traceBatchWriter?: ReturnType<typeof getGlobalTraceBatchWriter>;
+  isInternalRequest?: boolean;
   waitUntil?: (promise: Promise<unknown>) => void;
   trackErrors: boolean;
   log: (msg: string) => void;
@@ -648,6 +656,7 @@ async function processUsageAndLog(params: {
     traceContext,
     batchWriter,
     traceBatchWriter,
+    isInternalRequest = false,
     waitUntil,
     trackErrors,
     log,
@@ -842,10 +851,20 @@ async function processUsageAndLog(params: {
       metadata: {},
     };
 
-    traceBatchWriter.enqueue({
-      span: spanData,
-      trace: traceData,
-    });
+    if (isInternalRequest) {
+      // Internal SDK requests: only insert the span — the OTLP/agents exporter
+      // handles the parent trace. Skipping trace upsert prevents duplicate
+      // top-level traces in the traces table.
+      traceBatchWriter.enqueue({
+        span: spanData,
+      });
+    } else {
+      // External requests: create both trace and span
+      traceBatchWriter.enqueue({
+        span: spanData,
+        trace: traceData,
+      });
+    }
     log(
       `Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`,
     );
