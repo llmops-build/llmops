@@ -75,7 +75,7 @@ function Home() {
               </p>
               <div className="flex gap-4 mt-6">
                 <a
-                  href="https://github.com/nicepkg/llmops"
+                  href="https://github.com/llmops-build/llmops"
                   className="text-xs font-mono text-gray-9 hover:text-gray-12 transition-colors"
                 >
                   GitHub
