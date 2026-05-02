@@ -1,5 +1,10 @@
 import { zv } from '@server/lib/zv';
 import { internalServerError, successResponse } from '@shared/responses';
+import {
+  createOtlpQueryClient,
+  type OtlpQueryClient,
+} from '@server/services/otlpQueryClient';
+import type { OtlpConfig } from '@llmops/core';
 import { Hono } from 'hono';
 import z from 'zod';
 
@@ -34,6 +39,21 @@ interface DbWithTraces {
     sessionId?: string;
     userId?: string;
   }) => Promise<unknown | undefined>;
+}
+
+/**
+ * Cached OTLP query client singleton (created once per endpoint config)
+ */
+let cachedOtlpClient: OtlpQueryClient | null = null;
+let cachedOtlpEndpoint: string | null = null;
+
+function getOtlpClient(otlp: OtlpConfig): OtlpQueryClient {
+  if (cachedOtlpClient && cachedOtlpEndpoint === otlp.endpoint) {
+    return cachedOtlpClient;
+  }
+  cachedOtlpClient = createOtlpQueryClient(otlp);
+  cachedOtlpEndpoint = otlp.endpoint;
+  return cachedOtlpClient;
 }
 
 /**
@@ -99,24 +119,32 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const otlp = c.get('llmopsConfig')?.otlp;
       const query = c.req.valid('query');
 
-      try {
-        const result = await db.listTraces({
-          limit: query.limit,
-          offset: query.offset,
-          sessionId: query.sessionId,
-          userId: query.userId,
-          status: query.status,
-          name: query.name,
-          startDate: query.startDate
-            ? parseStartDate(query.startDate)
-            : undefined,
-          endDate: query.endDate ? parseEndDate(query.endDate) : undefined,
-          tags: parseTags(query.tags),
-        });
+      const params = {
+        limit: query.limit,
+        offset: query.offset,
+        sessionId: query.sessionId,
+        userId: query.userId,
+        status: query.status,
+        name: query.name,
+        startDate: query.startDate
+          ? parseStartDate(query.startDate)
+          : undefined,
+        endDate: query.endDate ? parseEndDate(query.endDate) : undefined,
+        tags: parseTags(query.tags),
+      };
 
+      try {
+        if (otlp) {
+          const client = getOtlpClient(otlp);
+          const result = await client.listTraces(params);
+          return c.json(successResponse(result, 200));
+        }
+
+        const db = c.get('db') as unknown as DbWithTraces;
+        const result = await db.listTraces(params);
         return c.json(successResponse(result, 200));
       } catch (error) {
         console.error('Error fetching traces:', error);
@@ -141,10 +169,20 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const otlp = c.get('llmopsConfig')?.otlp;
       const { traceId } = c.req.valid('param');
 
       try {
+        if (otlp) {
+          const client = getOtlpClient(otlp);
+          const result = await client.getTraceWithSpans(traceId);
+          if (!result) {
+            return c.json({ error: 'Trace not found' }, 404);
+          }
+          return c.json(successResponse(result, 200));
+        }
+
+        const db = c.get('db') as unknown as DbWithTraces;
         const result = await db.getTraceWithSpans(traceId);
         if (!result) {
           return c.json({ error: 'Trace not found' }, 404);
@@ -174,10 +212,22 @@ const app = new Hono()
       })
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const otlp = c.get('llmopsConfig')?.otlp;
       const { startDate, endDate, sessionId, userId } = c.req.valid('query');
 
       try {
+        if (otlp) {
+          const client = getOtlpClient(otlp);
+          const data = await client.getTraceStats({
+            startDate,
+            endDate,
+            sessionId,
+            userId,
+          });
+          return c.json(successResponse(data, 200));
+        }
+
+        const db = c.get('db') as unknown as DbWithTraces;
         const data = await db.getTraceStats({
           startDate,
           endDate,

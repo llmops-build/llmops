@@ -22,6 +22,31 @@ const inlineProviderConfigSchema = z
 const providersConfigSchema = z.array(inlineProviderConfigSchema).optional();
 
 /**
+ * Schema for OTLP endpoint configuration.
+ * When configured, trace/span data is forwarded to this endpoint
+ * instead of being stored in PostgreSQL.
+ */
+const otlpConfigSchema = z
+  .object({
+    /** OTLP HTTP endpoint URL (e.g., "http://localhost:4318") */
+    endpoint: z
+      .string()
+      .url('OTLP endpoint must be a valid URL')
+      .refine(
+        (url) => url.startsWith('http://') || url.startsWith('https://'),
+        'OTLP endpoint must use http:// or https://'
+      ),
+    /** Optional headers sent with every OTLP request (e.g., auth tokens) */
+    headers: z.record(z.string(), z.string()).optional(),
+    /** Export protocol. Defaults to "http/protobuf". */
+    protocol: z
+      .enum(['http/protobuf', 'http/json'])
+      .optional()
+      .default('http/protobuf'),
+  })
+  .optional();
+
+/**
  * Base schema without refinements (used for transform)
  */
 const llmopsConfigBaseSchema = z.object({
@@ -59,6 +84,12 @@ const llmopsConfigBaseSchema = z.object({
    * - And many more...
    */
   providers: providersConfigSchema,
+  /**
+   * OTLP endpoint configuration for exporting traces.
+   * When set, trace/span data is forwarded to this endpoint
+   * instead of being written to PostgreSQL.
+   */
+  otlp: otlpConfigSchema,
 });
 
 export const llmopsConfigSchema = llmopsConfigBaseSchema
@@ -77,11 +108,18 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
  * Note: schema is optional in input but always present after validation
  * Either database or providers must be present (enforced by schema)
  */
+export type OtlpConfig = {
+  endpoint: string;
+  headers?: Record<string, string>;
+  protocol: 'http/protobuf' | 'http/json';
+};
+
 export type ValidatedLLMOpsConfig = {
   database?: unknown;
   basePath: string;
   schema: string;
   providers?: InlineProvidersConfig;
+  otlp?: OtlpConfig;
 };
 
 /**
@@ -94,6 +132,11 @@ export type LLMOpsConfigInput = {
   basePath?: string;
   schema?: string;
   providers?: InlineProvidersConfig;
+  otlp?: {
+    endpoint: string;
+    headers?: Record<string, string>;
+    protocol?: 'http/protobuf' | 'http/json';
+  };
 };
 
 export function validateLLMOpsConfig(
