@@ -106,7 +106,7 @@ jobs:
           tags: |
             type=ref,event=tag
             type=raw,value=beta,enable=${{ steps.check_beta.outputs.is_beta == 'true' }}
-            type=raw,value=latest,enable=${{ steps.check_beta.outputs.is_beta == 'false' }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
