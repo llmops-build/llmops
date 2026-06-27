@@ -1,11 +1,8 @@
-/**
- * A single datapoint in a dataset.
- */
-export interface Datapoint<D = Record<string, unknown>, T = Record<string, unknown>> {
-  data: D;
-  target?: T;
-  metadata?: Record<string, unknown>;
-}
+import type { Datapoint } from '@llmops/core';
+
+// `Datapoint` now lives in @llmops/core (the shared spine). Re-exported here so
+// existing `@llmops/sdk/eval` type imports keep resolving from one source.
+export type { Datapoint };
 
 /**
  * An evaluator scores executor output.

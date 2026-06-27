@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import { InlineDataset, type EvaluationDataset } from './dataset';
 import type {
-  Datapoint,
   DatapointResult,
   EvaluateOptions,
   EvaluateResult,

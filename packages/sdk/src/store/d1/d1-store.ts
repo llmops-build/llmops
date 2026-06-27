@@ -105,7 +105,7 @@ function createD1LLMRequestsStore(db: D1Database) {
 
     insertRequest: async (req: LLMRequestInsert) => {
       const now = new Date().toISOString();
-      return db.prepare(`
+      const result = await db.prepare(`
         INSERT INTO "llm_requests" (
           "id","requestId","configId","variantId","environmentId",
           "providerConfigId","provider","model","promptTokens",
