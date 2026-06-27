@@ -7,6 +7,13 @@ import {
   insertSpanEventSchema,
   upsertTraceSchema,
 } from './types';
+import type {
+  LLMRequestInsert,
+  TraceUpsert,
+  SpanInsert,
+  SpanEventInsert,
+  CostSummaryGroupBy,
+} from './types';
 
 export type {
   LLMRequestInsert,
