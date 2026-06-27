@@ -15,6 +15,10 @@ import {
   createLLMOpsLangChainClient,
   type LangChainTracingClient,
 } from '../telemetry/langchain-client';
+import { createStoreSink } from '../telemetry/store-sink';
+import { noopSink, observe, type Observation } from '../telemetry/observe';
+import type { TelemetrySink } from '@llmops/core';
+import type { TelemetryStore } from '../telemetry/interface';
 
 export type ProviderConfig = {
   baseURL: string;
@@ -32,18 +36,39 @@ export type ProviderOptions = {
   traceContext?: () => TraceContext | null;
 };
 
+function resolveTelemetryStore(telemetry: unknown) {
+  if (!telemetry) return null;
+  if (Array.isArray(telemetry)) return telemetry[0] ?? null;
+  return telemetry;
+}
+
 export type LLMOpsClient = {
   handler: (request: Request) => Promise<Response>;
   config: ValidatedLLMOpsConfig;
   provider: (options?: ProviderOptions) => ProviderConfig;
   agentsExporter: () => AgentsTracingExporter;
   langchainTracer: () => LangChainTracingClient;
+  telemetry: TelemetrySink;
+  observe: (params: {
+    provider: string;
+    model: string;
+    traceId?: string;
+    tags?: Record<string, string>;
+  }) => Observation;
 };
 
 export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
   const { app, config: validatedConfig } = createApp(config);
   const handler = async (req: Request) => app.fetch(req, undefined, undefined);
   const basePath = validatedConfig.basePath;
+
+  // Build telemetry sink from configured store (headless — works without the HTTP app)
+  const store = resolveTelemetryStore(validatedConfig.telemetry);
+  const sink = store
+    ? createStoreSink(store as TelemetryStore, {
+        flushIntervalMs: 2000,
+      })
+    : noopSink;
 
   const createInternalFetch = (
     getTraceContext?: () => TraceContext | null,
@@ -108,5 +133,7 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
         apiKey: 'llmops',
         fetch: createInternalFetch(),
       }),
+    telemetry: sink,
+    observe: (params) => observe(sink, params),
   };
 };
