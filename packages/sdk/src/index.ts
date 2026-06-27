@@ -31,3 +31,18 @@ export type {
   SpanEventInsert,
 } from './telemetry/types';
 export { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from './telemetry/constants';
+
+// Telemetry spine contracts (from @llmops/core). Producers (the gateway, evals)
+// emit through TelemetrySink; the dashboard and dataset-bridge read through
+// TelemetryReader. NB: core also defines TelemetryStore = Sink & Reader; the
+// concrete store interface above will converge onto it when the stores are
+// reworked (see DESIGN.md, step 3).
+export type {
+  TelemetrySink,
+  TelemetryEvent,
+  TelemetryReader,
+  LLMRequestRecord,
+  SpanRecord,
+  TraceRecord,
+  TokenUsage,
+} from '@llmops/core';

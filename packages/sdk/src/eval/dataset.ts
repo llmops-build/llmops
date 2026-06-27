@@ -1,15 +1,9 @@
-import type { Datapoint } from './types';
+import type { Datapoint, EvaluationDataset } from '@llmops/core';
 
-/**
- * Interface for custom dataset sources.
- * Built-in: inline arrays are wrapped in InlineDataset automatically.
- * Future: CSVDataset, JSONLDataset, S3Dataset.
- */
-export interface EvaluationDataset<D = Record<string, unknown>, T = Record<string, unknown>> {
-  size(): number | Promise<number>;
-  get(index: number): Datapoint<D, T> | Promise<Datapoint<D, T>>;
-  slice(start: number, end: number): Datapoint<D, T>[] | Promise<Datapoint<D, T>[]>;
-}
+// `EvaluationDataset` and `Datapoint` are defined in @llmops/core (the shared
+// spine), so a telemetry-backed dataset and an inline array satisfy the same
+// contract. Re-exported here so existing `@llmops/sdk/eval` imports resolve.
+export type { EvaluationDataset };
 
 /**
  * Wraps a plain array as an EvaluationDataset.
