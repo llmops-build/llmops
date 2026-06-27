@@ -48,3 +48,7 @@ export type {
   TraceRecord,
   TokenUsage,
 } from '@llmops/core';
+
+// Sink + observe — headless telemetry primitives
+export { createStoreSink, type StoreSinkConfig, type StoreSink } from './telemetry/store-sink';
+export { noopSink, observe, type Observation } from './telemetry/observe';
