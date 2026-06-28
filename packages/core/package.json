@@ -44,7 +44,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@llmops/gateway": "workspace:^",
     "hono": "^4.10.7",
     "pino": "^10.1.0"
   },

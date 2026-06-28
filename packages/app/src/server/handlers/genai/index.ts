@@ -2,13 +2,9 @@ import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
 import { createRequestGuardMiddleware } from './requestGuard';
-import { createGatewayAdapterMiddleware } from './gatewayAdapter';
-import { createCostTrackingMiddleware } from '@server/middlewares/costTracking';
-import gateway from '@llmops/gateway';
 
 const app = new Hono();
 
-// Middleware
 app
   .use('*', prettyJSON())
   // Health check endpoint
@@ -17,12 +13,20 @@ app
   })
   // Request guard (CORS handling)
   .use('*', createRequestGuardMiddleware())
-  // Cost tracking middleware (captures usage and costs from responses)
-  .use('*', createCostTrackingMiddleware())
-  // Adapter: translates @provider/model to Portkey gateway format
-  .use('*', createGatewayAdapterMiddleware())
-  // Mount the gateway at root - gateway routes already have /v1 prefix
-  .route('/', gateway)
+  // The gateway is being rewritten as an in-process "plug" (@llmops/gateway).
+  // Until the new plug is wired in, the inference endpoints return 503.
+  .all('/v1/*', (c) =>
+    c.json(
+      {
+        error: {
+          message:
+            'Gateway under reconstruction — the new in-process plug is being implemented.',
+          type: 'api_error',
+        },
+      },
+      503,
+    ),
+  )
   // Error handling
   .notFound((c) =>
     c.json(

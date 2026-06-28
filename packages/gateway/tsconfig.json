@@ -7,10 +7,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": ["esnext"],
-    "types": ["@cloudflare/workers-types", "node"],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "resolveJsonModule": true,
+    "types": ["@cloudflare/workers-types", "node"]
   },
-  "exclude": ["**/*.test.ts", "cookbook"],
+  "exclude": ["**/*.test.ts"]
 }
