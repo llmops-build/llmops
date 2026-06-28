@@ -67,6 +67,7 @@ export const createLLMOps = (config?: LLMOpsConfig): LLMOpsClient => {
   const sink = store
     ? createStoreSink(store as TelemetryStore, {
         flushIntervalMs: 2000,
+        waitUntil: validatedConfig.waitUntil,
       })
     : noopSink;
 
