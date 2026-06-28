@@ -5,13 +5,20 @@ import type {
   SpanRecord,
   TraceRecord,
 } from '@llmops/core';
-import { dollarsToMicroDollars } from '@llmops/core';
+import { dollarsToMicroDollars, logger } from '@llmops/core';
 import type { LLMRequestInsert, SpanInsert, TraceUpsert } from './types';
 import type { TelemetryStore } from './interface';
 
 export interface StoreSinkConfig {
   flushIntervalMs?: number;
   maxBatchSize?: number;
+  /**
+   * Edge runtimes (Cloudflare Workers, Vercel Edge): pass
+   * `ctx.waitUntil.bind(ctx)`. When provided, the sink flushes in the
+   * background tied to the request lifecycle instead of starting a
+   * `setInterval` — which does not run between requests on Workers.
+   */
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 export type StoreSink = TelemetrySink;
@@ -20,17 +27,19 @@ export function createStoreSink(
   store: TelemetryStore,
   config: StoreSinkConfig = {},
 ): StoreSink {
-  const { flushIntervalMs = 2000, maxBatchSize = 100 } = config;
+  const { flushIntervalMs = 2000, maxBatchSize = 100, waitUntil } = config;
 
   let queue: TelemetryEvent[] = [];
-  let started = false;
+  let timer: ReturnType<typeof setInterval> | null = null;
 
-  function ensureStarted(): void {
-    if (started) return;
-    started = true;
-    setInterval(() => {
-      flush().catch(() => {});
+  function ensureTimer(): void {
+    // Edge path uses waitUntil (in emit); no background timer needed there.
+    if (waitUntil || timer) return;
+    timer = setInterval(() => {
+      flush().catch(logFlushError);
     }, flushIntervalMs);
+    // Never keep a short-lived process (e.g. the eval CLI) alive just to flush.
+    (timer as { unref?: () => void }).unref?.();
   }
 
   async function flush(): Promise<void> {
@@ -58,15 +67,34 @@ export function createStoreSink(
     if (spans.length > 0) tasks.push(store.batchInsertSpans(spans));
     for (const trace of traces) tasks.push(store.upsertTrace(trace));
 
-    await Promise.allSettled(tasks);
+    // Telemetry is best-effort: surface failures, never throw into the caller.
+    const results = await Promise.allSettled(tasks);
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      logger.warn(
+        `[StoreSink] ${failed}/${tasks.length} telemetry write(s) failed; ${batch.length} event(s) dropped`,
+      );
+    }
   }
 
   function emit(events: TelemetryEvent[]): void {
+    if (events.length === 0) return;
     queue.push(...events);
-    ensureStarted();
-    if (queue.length >= maxBatchSize) {
-      flush().catch(() => {});
+    if (waitUntil) {
+      // Edge: persist in the background, bound to the request's lifetime.
+      waitUntil(flush().catch(logFlushError));
+      return;
     }
+    ensureTimer();
+    if (queue.length >= maxBatchSize) {
+      flush().catch(logFlushError);
+    }
+  }
+
+  function logFlushError(err: unknown): void {
+    logger.warn(
+      `[StoreSink] flush failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   return { emit, flush };
