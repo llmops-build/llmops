@@ -16,7 +16,7 @@ import {
   type LangChainTracingClient,
 } from '../telemetry/langchain-client';
 
-type ProviderConfig = {
+export type ProviderConfig = {
   baseURL: string;
   apiKey: string;
   fetch: typeof globalThis.fetch;

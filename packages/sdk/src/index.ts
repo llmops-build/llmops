@@ -5,7 +5,9 @@ export {
   type LLMOpsClient,
   type TraceContext,
   type ProviderOptions,
+  type ProviderConfig,
 } from './client';
+export { createOpenAIProvider } from './providers/openai';
 export {
   createLLMOpsSpanExporter,
   type LLMOpsExporterConfig,
