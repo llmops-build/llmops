@@ -1,7 +1,7 @@
 {
   "name": "@llmops/gateway",
   "version": "1.0.0-beta.25",
-  "description": "AI gateway for LLMOps (forked from Portkey)",
+  "description": "A tiny in-process AI gateway — a plug, not a proxy",
   "type": "module",
   "license": "Apache-2.0",
   "homepage": "https://llmops.build",
@@ -21,8 +21,7 @@
     "OpenAI"
   ],
   "files": [
-    "dist",
-    "plugins/default/manifest.json"
+    "dist"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -38,7 +37,6 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./plugins/default/manifest.json": "./plugins/default/manifest.json",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -49,36 +47,12 @@
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
     "test": "vitest",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package"
+    "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@aws-crypto/sha256-js": "^5.2.0",
-    "@cfworker/json-schema": "^4.0.3",
-    "@smithy/signature-v4": "^2.1.1",
-    "async-retry": "^1.3.3",
-    "avsc": "^5.7.7",
-    "ioredis": "^5.8.0",
-    "hono": "^4.10.7",
-    "jose": "^6.0.11",
-    "patch-package": "^8.0.1",
-    "ws": "^8.18.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230518.0",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@types/async-retry": "^1.4.5",
     "@types/node": "20.8.3",
-    "@types/ws": "^8.5.12",
-    "portkey-ai": "^1.9.1",
-    "prettier": "3.2.5",
-    "rollup": "^4.9.1",
-    "rollup-plugin-copy": "^3.5.0",
-    "tsx": "^4.7.0",
-    "typescript-eslint": "^8.1.0",
-    "vitest": "^3.1.4",
-    "wrangler": "^3.97.0"
+    "vitest": "^3.1.4"
   }
 }
