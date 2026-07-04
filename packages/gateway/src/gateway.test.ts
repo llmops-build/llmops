@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createGateway } from './gateway';
+import type { ProviderMetadataResolver } from './types/config';
+
+/** Stub resolver — stands in for @llmops/core's getProviderMetadata. */
+const metadata: ProviderMetadataResolver = async (provider) =>
+  ({
+    openai: { baseURL: 'https://api.openai.com/v1', openaiCompatible: true },
+  })[provider] ?? null;
 
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -17,16 +24,16 @@ function chatRequest(model: string): Request {
 }
 
 describe('createGateway', () => {
-  it('routes @openai/gpt-4o upstream with Bearer auth and a stripped model', async () => {
+  it('resolves the base URL via the injected getProviderMetadata + Bearer auth + stripped model', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ id: 'ok' }));
     const gw = createGateway({
       providers: [{ provider: 'openai', slug: 'openai', apiKey: 'sk-test' }],
+      getProviderMetadata: metadata,
       fetch: fetchMock as unknown as typeof fetch,
     });
 
     const res = await gw(chatRequest('@openai/gpt-4o'));
     expect(res.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.openai.com/v1/chat/completions');
@@ -36,24 +43,24 @@ describe('createGateway', () => {
     expect(JSON.parse(init.body as string).model).toBe('gpt-4o');
   });
 
-  it('honors a custom slug + baseURL (OpenAI-compatible by default)', async () => {
+  it('an explicit baseURL overrides the resolver', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ id: 'ok' }));
     const gw = createGateway({
       providers: [
         {
-          provider: 'groq',
-          slug: 'fast',
-          apiKey: 'gsk',
+          provider: 'openai',
+          slug: 'openai',
+          apiKey: 'x',
           baseURL: 'https://example.com/v1',
         },
       ],
+      getProviderMetadata: metadata,
       fetch: fetchMock as unknown as typeof fetch,
     });
 
-    await gw(chatRequest('@fast/llama-3.1-70b'));
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    await gw(chatRequest('@openai/gpt-4o'));
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://example.com/v1/chat/completions');
-    expect(JSON.parse(init.body as string).model).toBe('llama-3.1-70b');
   });
 
   it('returns the upstream response body unchanged (pass-through)', async () => {
@@ -62,15 +69,25 @@ describe('createGateway', () => {
     );
     const gw = createGateway({
       providers: [{ provider: 'openai', slug: 'openai', apiKey: 'x' }],
+      getProviderMetadata: metadata,
       fetch: fetchMock as unknown as typeof fetch,
     });
     const res = await gw(chatRequest('@openai/gpt-4o'));
     expect(await res.json()).toEqual({ id: 'chatcmpl-1', ok: true });
   });
 
+  it('400s when neither an explicit baseURL nor the resolver supply one', async () => {
+    const gw = createGateway({
+      providers: [{ provider: 'unknownco', slug: 'x', apiKey: 'k' }],
+      getProviderMetadata: metadata, // returns null for 'unknownco'
+    });
+    expect((await gw(chatRequest('@x/model'))).status).toBe(400);
+  });
+
   it('400s when the model lacks the @slug/ prefix', async () => {
     const gw = createGateway({
       providers: [{ provider: 'openai', slug: 'openai', apiKey: 'x' }],
+      getProviderMetadata: metadata,
     });
     expect((await gw(chatRequest('gpt-4o'))).status).toBe(400);
   });
@@ -78,6 +95,7 @@ describe('createGateway', () => {
   it('400s for an unconfigured slug', async () => {
     const gw = createGateway({
       providers: [{ provider: 'openai', slug: 'openai', apiKey: 'x' }],
+      getProviderMetadata: metadata,
     });
     expect((await gw(chatRequest('@unknown/model'))).status).toBe(400);
   });

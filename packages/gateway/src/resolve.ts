@@ -1,7 +1,10 @@
+import { getAdapter } from './providers/registry';
 import type { ProviderAdapter } from './providers/types';
-import { DEFAULT_BASE_URLS, getAdapter } from './providers/registry';
 import { ok, type Result } from './result';
-import type { ProviderInput } from './types/config';
+import type {
+  ProviderInput,
+  ProviderMetadataResolver,
+} from './types/config';
 import type { ProviderConfig } from './types/provider';
 import { type GatewayError, invalidRequest } from './utils/responses';
 
@@ -31,20 +34,26 @@ export function parseModel(
 }
 
 /** Resolve a slug to a provider target (adapter + config) using the gateway config. */
-export function resolveTarget(
+export async function resolveTarget(
   slug: string,
   model: string,
   providers: Map<string, ProviderInput>,
-  adapters?: Record<string, ProviderAdapter>,
-): Result<ResolvedTarget, GatewayError> {
+  options: {
+    getProviderMetadata?: ProviderMetadataResolver;
+    adapters?: Record<string, ProviderAdapter>;
+  } = {},
+): Promise<Result<ResolvedTarget, GatewayError>> {
   const input = providers.get(slug);
   if (!input) {
     return invalidRequest(`No provider configured for slug "@${slug}".`);
   }
-  const baseURL = input.baseURL ?? DEFAULT_BASE_URLS[input.provider];
+  const meta = options.getProviderMetadata
+    ? await options.getProviderMetadata(input.provider)
+    : null;
+  const baseURL = input.baseURL ?? meta?.baseURL;
   if (!baseURL) {
     return invalidRequest(
-      `No base URL known for provider "${input.provider}" — pass "baseURL".`,
+      `No base URL for provider "${input.provider}" — pass "baseURL" or a getProviderMetadata resolver.`,
     );
   }
   const config: ProviderConfig = {
@@ -53,5 +62,9 @@ export function resolveTarget(
     baseURL,
     forwardHeaders: input.forwardHeaders,
   };
-  return ok({ adapter: getAdapter(input.provider, adapters), config, model });
+  return ok({
+    adapter: getAdapter(input.provider, options.adapters),
+    config,
+    model,
+  });
 }

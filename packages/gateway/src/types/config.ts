@@ -18,6 +18,21 @@ export interface ProviderInput {
   forwardHeaders?: string[];
 }
 
+/** Provider routing metadata resolved for a request. */
+export interface ResolvedProviderMetadata {
+  baseURL?: string;
+  openaiCompatible?: boolean;
+}
+
+/**
+ * Resolves a provider's routing metadata (base URL + compatibility) by id.
+ * Injected so the gateway stays zero-dependency — the composition root passes
+ * `@llmops/core`'s `getProviderMetadata` (or a user override).
+ */
+export type ProviderMetadataResolver = (
+  provider: string,
+) => Promise<ResolvedProviderMetadata | null>;
+
 export interface GatewayConfig {
   /** Providers this gateway can route to, resolved by slug from `@slug/model`. */
   providers?: ProviderInput[];
@@ -25,4 +40,10 @@ export interface GatewayConfig {
   fetch?: typeof globalThis.fetch;
   /** Custom adapters for non-OpenAI-compliant providers, keyed by provider id. */
   adapters?: Record<string, ProviderAdapter>;
+  /**
+   * Resolve a provider's base URL + compatibility. Injected (e.g.
+   * `@llmops/core`'s `getProviderMetadata`). Without it, a provider needs an
+   * explicit `baseURL`.
+   */
+  getProviderMetadata?: ProviderMetadataResolver;
 }

@@ -1,6 +1,8 @@
+import { getProviderMetadata } from '@llmops/core';
+import { createGateway } from '@llmops/gateway';
 import { Hono } from 'hono';
-import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
+import { prettyJSON } from 'hono/pretty-json';
 import { createRequestGuardMiddleware } from './requestGuard';
 
 const app = new Hono();
@@ -13,20 +15,22 @@ app
   })
   // Request guard (CORS handling)
   .use('*', createRequestGuardMiddleware())
-  // The gateway is being rewritten as an in-process "plug" (@llmops/gateway).
-  // Until the new plug is wired in, the inference endpoints return 503.
-  .all('/v1/*', (c) =>
-    c.json(
-      {
-        error: {
-          message:
-            'Gateway under reconstruction — the new in-process plug is being implemented.',
-          type: 'api_error',
-        },
-      },
-      503,
-    ),
-  )
+  // Mount the in-process gateway plug. Providers come from the llmops() config
+  // (set on the context in createApp); base URLs + compat come from core's
+  // getProviderMetadata (the bundled default). Built per request for now —
+  // cheap, and can be memoized by config later.
+  .all('/v1/*', (c) => {
+    const gateway = createGateway({
+      providers: (c.var.inlineProviders ?? []).map((p) => ({
+        provider: p.provider,
+        slug: p.slug,
+        apiKey: p.apiKey,
+        baseURL: p.customHost,
+      })),
+      getProviderMetadata,
+    });
+    return gateway(c.req.raw);
+  })
   // Error handling
   .notFound((c) =>
     c.json(
