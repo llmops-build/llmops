@@ -45,11 +45,14 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
     const parsed = parseModel(payload.model);
     if (!parsed.ok) return errorResponse(parsed.error);
 
-    const resolved = resolveTarget(
+    const resolved = await resolveTarget(
       parsed.value.slug,
       parsed.value.model,
       providers,
-      config.adapters,
+      {
+        getProviderMetadata: config.getProviderMetadata,
+        adapters: config.adapters,
+      },
     );
     if (!resolved.ok) return errorResponse(resolved.error);
 
