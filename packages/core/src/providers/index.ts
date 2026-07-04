@@ -32,3 +32,10 @@ export {
   mergeWithDefaultProviders,
   DEFAULT_PROVIDER_ENV_VARS,
 } from './default-providers';
+
+// Provider routing metadata + default resolver (config-overridable via getProviderMetadata)
+export {
+  getProviderMetadata,
+  PROVIDER_METADATA,
+  type ProviderMetadata,
+} from './metadata';

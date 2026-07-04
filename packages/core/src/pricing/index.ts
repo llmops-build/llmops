@@ -49,3 +49,6 @@ export {
   LLMOpsPricingProvider,
   getDefaultPricingProvider,
 } from './provider';
+
+// Default model-pricing resolver (config-overridable via getModelPricing)
+export { getModelPricing } from './resolver';
