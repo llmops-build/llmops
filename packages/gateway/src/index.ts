@@ -6,7 +6,12 @@
 // Providers that diverge from OpenAI plug in via custom adapters.
 
 export { createGateway, type GatewayHandler } from './gateway';
-export type { GatewayConfig, ProviderInput } from './types/config';
+export type {
+  GatewayConfig,
+  ProviderInput,
+  ProviderMetadataResolver,
+  ResolvedProviderMetadata,
+} from './types/config';
 
 // Routing + resolution (exported for testing / advanced composition).
 export { executeRequest } from './execute';
@@ -15,7 +20,7 @@ export { matchRoute } from './router';
 
 // Providers.
 export { openaiCompatible } from './providers/openai-compatible';
-export { DEFAULT_BASE_URLS, getAdapter } from './providers/registry';
+export { getAdapter } from './providers/registry';
 
 // Foundation.
 export { err, isErr, isOk, ok, type Result } from './result';
