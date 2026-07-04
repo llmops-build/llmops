@@ -19,7 +19,7 @@ app
   // (set on the context in createApp); base URLs + compat come from core's
   // getProviderMetadata (the bundled default). Built per request for now —
   // cheap, and can be memoized by config later.
-  .all('/v1/*', (c) => {
+  .all('/v1/*', async (c) => {
     const gateway = createGateway({
       providers: (c.var.inlineProviders ?? []).map((p) => ({
         provider: p.provider,
@@ -29,7 +29,17 @@ app
       })),
       getProviderMetadata,
     });
-    return gateway(c.req.raw);
+    const upstream = await gateway(c.req.raw);
+    // The gateway returns a frozen Response; Hono's downstream middleware
+    // (cors etc.) mutates c.res.headers, so re-wrap into a mutable body that
+    // preserves status + (copied) headers + the streaming body.
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: new Headers(upstream.headers),
+      // @ts-expect-error - duplex is a stable RequestInit option in Node 18+.
+      duplex: 'half',
+    });
   })
   // Error handling
   .notFound((c) =>
