@@ -1,4 +1,4 @@
-import { getProviderMetadata } from '@llmops/core';
+import { getModelPricing, getProviderMetadata } from '@llmops/core';
 import { createGateway } from '@llmops/gateway';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
@@ -17,8 +17,11 @@ app
   .use('*', createRequestGuardMiddleware())
   // Mount the in-process gateway plug. Providers come from the llmops() config
   // (set on the context in createApp); base URLs + compat come from core's
-  // getProviderMetadata (the bundled default). Built per request for now —
-  // cheap, and can be memoized by config later.
+  // bundled getProviderMetadata; pricing comes from core's getModelPricing
+  // (live fetch from models.llmops.build, cached). Telemetry sink is built once
+  // in createApp and set on the context; the gateway streams usage/cost events
+  // to it (fire-and-forget via the stream-tee instrument). Built per request for
+  // now — cheap, and can be memoized by config later.
   .all('/v1/*', async (c) => {
     const gateway = createGateway({
       providers: (c.var.inlineProviders ?? []).map((p) => ({
@@ -28,6 +31,9 @@ app
         baseURL: p.customHost,
       })),
       getProviderMetadata,
+      getModelPricing,
+      telemetry: c.get('telemetrySink'),
+      waitUntil: c.get('llmopsConfig').waitUntil,
     });
     const upstream = await gateway(c.req.raw);
     // The gateway returns a frozen Response; Hono's downstream middleware
