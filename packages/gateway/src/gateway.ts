@@ -1,4 +1,5 @@
 import { executeRequest } from './execute';
+import { instrumentResponse } from './instrument';
 import { parseModel, resolveTarget } from './resolve';
 import { matchRoute } from './router';
 import type { GatewayConfig, ProviderInput } from './types/config';
@@ -21,6 +22,7 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
   const fetchImpl = config.fetch ?? globalThis.fetch;
 
   return async (req) => {
+    const startMs = Date.now();
     const pathname = new URL(req.url).pathname;
     const requestType = matchRoute(pathname);
     if (!requestType) {
@@ -57,7 +59,19 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
     if (!resolved.ok) return errorResponse(resolved.error);
 
     // Strip the `@slug/` prefix so the upstream sees its own bare model id.
-    const body = JSON.stringify({ ...payload, model: parsed.value.model });
+    // When metering a stream, ask OpenAI-compatible providers to include usage
+    // in the final SSE chunk so cost can be computed without buffering.
+    const rewritten: Record<string, unknown> = {
+      ...payload,
+      model: parsed.value.model,
+    };
+    if (config.telemetry && rewritten.stream === true) {
+      rewritten.stream_options = {
+        ...(rewritten.stream_options as Record<string, unknown> | undefined),
+        include_usage: true,
+      };
+    }
+    const body = JSON.stringify(rewritten);
 
     const result = await executeRequest(
       resolved.value.adapter,
@@ -67,6 +81,19 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
       body,
       fetchImpl,
     );
-    return result.ok ? result.value : errorResponse(result.error);
+    if (!result.ok) return errorResponse(result.error);
+    if (!config.telemetry) return result.value;
+
+    return instrumentResponse(result.value, {
+      telemetry: config.telemetry,
+      getModelPricing: config.getModelPricing,
+      waitUntil: config.waitUntil,
+      requestId: crypto.randomUUID(),
+      provider: resolved.value.config.provider,
+      model: parsed.value.model,
+      input: payload,
+      startedAt: new Date(startMs).toISOString(),
+      startMs,
+    });
   };
 }

@@ -1,3 +1,4 @@
+import type { ModelPricing, TelemetrySink } from '@llmops/core';
 import type { ProviderAdapter } from '../providers/types';
 
 /**
@@ -46,4 +47,22 @@ export interface GatewayConfig {
    * explicit `baseURL`.
    */
   getProviderMetadata?: ProviderMetadataResolver;
+  /**
+   * Where usage/cost telemetry is emitted. When absent, the gateway is a pure
+   * proxy — no clone, no tee, zero added latency.
+   */
+  telemetry?: TelemetrySink;
+  /**
+   * Resolve model pricing so cost can be attached to telemetry. Injected (e.g.
+   * `@llmops/core`'s `getModelPricing`).
+   */
+  getModelPricing?: (
+    provider: string,
+    model: string,
+  ) => Promise<ModelPricing | null>;
+  /**
+   * Edge background-work hook (`ctx.waitUntil`). Keeps the worker alive while
+   * telemetry is metered off-band after the response is returned.
+   */
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
