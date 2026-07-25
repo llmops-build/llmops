@@ -1,9 +1,15 @@
 import type {
   LLMRequestRecord,
   ModelPricing,
+  SpanRecord,
   TelemetrySink,
   TokenUsage,
+  TraceRecord,
 } from '@llmops/core';
+import {
+  applyTraceHeaders,
+  type GatewayTraceContext,
+} from './trace-context';
 
 export interface InstrumentContext {
   telemetry: TelemetrySink;
@@ -13,11 +19,13 @@ export interface InstrumentContext {
   ) => Promise<ModelPricing | null>;
   waitUntil?: (promise: Promise<unknown>) => void;
   requestId: string;
+  trace: GatewayTraceContext;
   provider: string;
   model: string;
   input: unknown;
   startedAt: string;
   startMs: number;
+  isStreaming: boolean;
 }
 
 /**
@@ -35,7 +43,7 @@ export function instrumentResponse(
       ctx,
       emit(ctx, undefined, undefined, 'error', `upstream ${upstream.status}`),
     );
-    return upstream;
+    return withTraceHeaders(upstream, ctx);
   }
 
   const contentType = upstream.headers.get('content-type') ?? '';
@@ -44,21 +52,31 @@ export function instrumentResponse(
   if (contentType.includes('text/event-stream') && upstream.body) {
     const [toCaller, toMeter] = upstream.body.tee();
     schedule(ctx, meterStream(ctx, toMeter));
-    return new Response(toCaller, {
+    return withTraceHeaders(new Response(toCaller, {
       status: upstream.status,
       statusText: upstream.statusText,
       headers: upstream.headers,
-    });
+    }), ctx);
   }
 
   // Non-streaming JSON: parse usage off a clone.
   if (contentType.includes('application/json')) {
     schedule(ctx, meterJson(ctx, upstream.clone()));
-    return upstream;
+    return withTraceHeaders(upstream, ctx);
   }
 
   // Multipart / binary (audio, images) — not instrumentable; pass through.
-  return upstream;
+  return withTraceHeaders(upstream, ctx);
+}
+
+function withTraceHeaders(response: Response, ctx: InstrumentContext): Response {
+  const headers = new Headers(response.headers);
+  applyTraceHeaders(headers, ctx.requestId, ctx.trace);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 function schedule(ctx: InstrumentContext, work: Promise<unknown>): void {
@@ -96,6 +114,9 @@ async function emit(
   status: 'success' | 'error',
   error?: string,
 ): Promise<void> {
+  const endedAt = new Date().toISOString();
+  const latencyMs = Date.now() - ctx.startMs;
+  const cost = usage ? await computeCostDollars(ctx, usage) : undefined;
   const request: LLMRequestRecord = {
     requestId: ctx.requestId,
     provider: ctx.provider,
@@ -103,13 +124,50 @@ async function emit(
     input: ctx.input,
     output: output ?? null,
     usage,
-    cost: usage ? await computeCostDollars(ctx, usage) : undefined,
-    latencyMs: Date.now() - ctx.startMs,
+    cost,
+    latencyMs,
+    isStreaming: ctx.isStreaming,
+    traceId: ctx.trace.traceId,
+    spanId: ctx.trace.spanId,
     status,
     error,
     startedAt: ctx.startedAt,
   };
-  ctx.telemetry.emit([{ type: 'llm_request', request }]);
+  const span: SpanRecord = {
+    traceId: ctx.trace.traceId,
+    spanId: ctx.trace.spanId,
+    parentSpanId: ctx.trace.parentSpanId,
+    name: ctx.trace.spanName ?? `${ctx.provider}/${ctx.model}`,
+    kind: 'server',
+    input: ctx.input,
+    output: output ?? null,
+    usage,
+    cost,
+    status: status === 'success' ? 'ok' : 'error',
+    error,
+    attributes: {
+      'gen_ai.operation.name': 'chat',
+      'gen_ai.provider.name': ctx.provider,
+      'gen_ai.request.model': ctx.model,
+      'llmops.request.id': ctx.requestId,
+      'llmops.is_streaming': ctx.isStreaming,
+    },
+    startedAt: ctx.startedAt,
+    endedAt,
+  };
+  const trace: TraceRecord = {
+    traceId: ctx.trace.traceId,
+    name: ctx.trace.traceName ?? `${ctx.provider}/${ctx.model}`,
+    sessionId: ctx.trace.sessionId,
+    userId: ctx.trace.userId,
+    status: status === 'success' ? 'ok' : 'error',
+    startedAt: ctx.startedAt,
+    endedAt,
+  };
+  ctx.telemetry.emit([
+    { type: 'llm_request', request },
+    { type: 'span', span, trace },
+  ]);
 }
 
 /**

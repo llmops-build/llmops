@@ -1,13 +1,13 @@
 import type {
-  TelemetrySink,
-  TelemetryEvent,
   LLMRequestRecord,
   SpanRecord,
+  TelemetryEvent,
+  TelemetrySink,
   TraceRecord,
 } from '@llmops/core';
 import { dollarsToMicroDollars, logger } from '@llmops/core';
-import type { LLMRequestInsert, SpanInsert, TraceUpsert } from './types';
 import type { TelemetryStore } from './interface';
+import type { LLMRequestInsert, SpanInsert, TraceUpsert } from './types';
 
 export interface StoreSinkConfig {
   flushIntervalMs?: number;
@@ -57,7 +57,7 @@ export function createStoreSink(
       } else {
         spans.push(convertSpan(event.span));
         if (event.trace) {
-          traces.push(convertTrace(event.trace));
+          traces.push(convertTrace(event.trace, event.span));
         }
       }
     }
@@ -119,7 +119,7 @@ function convertRequest(r: LLMRequestRecord): LLMRequestInsert {
     endpoint: '/chat/completions',
     statusCode: r.status === 'error' ? 500 : 200,
     latencyMs: r.latencyMs ?? 0,
-    isStreaming: false,
+    isStreaming: r.isStreaming ?? false,
     tags: r.tags ?? {},
     traceId: r.traceId ?? null,
     spanId: r.spanId ?? null,
@@ -159,8 +159,7 @@ function convertSpan(span: SpanRecord): SpanInsert {
     startTime,
     endTime,
     durationMs,
-    provider:
-      (span.attributes?.['gen_ai.provider.name'] as string) ?? null,
+    provider: (span.attributes?.['gen_ai.provider.name'] as string) ?? null,
     model: (span.attributes?.['gen_ai.request.model'] as string) ?? null,
     promptTokens,
     completionTokens,
@@ -173,11 +172,13 @@ function convertSpan(span: SpanRecord): SpanInsert {
   };
 }
 
-function convertTrace(trace: TraceRecord): TraceUpsert {
+function convertTrace(trace: TraceRecord, span?: SpanRecord): TraceUpsert {
   const startTime = new Date(trace.startedAt);
   const endTime = trace.endedAt ? new Date(trace.endedAt) : null;
   const durationMs =
     endTime != null ? endTime.getTime() - startTime.getTime() : null;
+  const totalInputTokens = span?.usage?.inputTokens ?? 0;
+  const totalOutputTokens = span?.usage?.outputTokens ?? 0;
 
   return {
     traceId: trace.traceId,
@@ -188,11 +189,11 @@ function convertTrace(trace: TraceRecord): TraceUpsert {
     startTime,
     endTime,
     durationMs,
-    spanCount: 1,
-    totalInputTokens: 0,
-    totalOutputTokens: 0,
-    totalTokens: 0,
-    totalCost: 0,
+    spanCount: span ? 1 : 0,
+    totalInputTokens,
+    totalOutputTokens,
+    totalTokens: totalInputTokens + totalOutputTokens,
+    totalCost: span?.cost != null ? dollarsToMicroDollars(span.cost) : 0,
     tags: {},
     metadata: trace.metadata ?? {},
   };

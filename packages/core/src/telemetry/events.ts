@@ -36,6 +36,8 @@ export interface LLMRequestRecord {
   /** Computed cost in USD. */
   cost?: number;
   latencyMs?: number;
+  /** Whether the upstream response was delivered as a stream. */
+  isStreaming?: boolean;
   status: 'success' | 'error';
   error?: string;
   tags?: Record<string, string>;
