@@ -77,7 +77,7 @@ describe('gateway telemetry', () => {
     expect((await res.json()).choices[0].message.content).toBe('hey');
 
     await h.settle();
-    expect(h.events).toHaveLength(1);
+    expect(h.events).toHaveLength(2);
     const { type, request } = h.events[0];
     expect(type).toBe('llm_request');
     expect(request.provider).toBe('openai');
@@ -87,6 +87,23 @@ describe('gateway telemetry', () => {
     expect(request.cost).toBeCloseTo(0.0075);
     expect(request.status).toBe('success');
     expect(typeof request.latencyMs).toBe('number');
+    expect(request.traceId).toMatch(/^[0-9a-f]{32}$/);
+    expect(request.spanId).toMatch(/^[0-9a-f]{16}$/);
+    expect(res.headers.get('x-llmops-trace-id')).toBe(request.traceId);
+    expect(res.headers.get('x-llmops-span-id')).toBe(request.spanId);
+
+    const spanEvent = h.events[1];
+    expect(spanEvent.type).toBe('span');
+    expect(spanEvent.span).toMatchObject({
+      traceId: request.traceId,
+      spanId: request.spanId,
+      status: 'ok',
+      kind: 'server',
+    });
+    expect(spanEvent.trace).toMatchObject({
+      traceId: request.traceId,
+      status: 'ok',
+    });
   });
 
   it('streaming: caller gets the full stream, one event from the terminal usage chunk', async () => {
@@ -118,13 +135,15 @@ describe('gateway telemetry', () => {
     expect(await res.text()).toBe(chunks.join('')); // caller received every byte
 
     await h.settle();
-    expect(h.events).toHaveLength(1);
+    expect(h.events).toHaveLength(2);
     expect(h.events[0].request.usage).toMatchObject({
       inputTokens: 100,
       outputTokens: 50,
     });
     // (100*2.5 + 50*10)/1e6 = 750/1e6 = 0.00075
     expect(h.events[0].request.cost).toBeCloseTo(0.00075);
+    expect(h.events[0].request.isStreaming).toBe(true);
+    expect(h.events[1].span.attributes['llmops.is_streaming']).toBe(true);
 
     // the forwarded request opted into usage
     const init = fetchMock.mock.calls[0][1] as RequestInit;
@@ -172,7 +191,53 @@ describe('gateway telemetry', () => {
     expect((await res.json()).error).toBe('nope');
 
     await h.settle();
-    expect(h.events).toHaveLength(1);
+    expect(h.events).toHaveLength(2);
     expect(h.events[0].request.status).toBe('error');
+    expect(h.events[1].span.status).toBe('error');
+  });
+
+  it('continues incoming W3C trace context and applies trace names', async () => {
+    const h = harness();
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { role: 'assistant', content: 'hey' } }],
+            usage: { prompt_tokens: 1, completion_tokens: 1 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+    );
+    const traceId = '11111111111111111111111111111111';
+    const parentSpanId = '2222222222222222';
+    const req = chatRequest('@openai/gpt-4o');
+    req.headers.set('traceparent', `00-${traceId}-${parentSpanId}-01`);
+    req.headers.set('x-llmops-trace-name', 'checkout-agent');
+    req.headers.set('x-llmops-span-name', 'generate-answer');
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(req);
+    await res.text();
+    await h.settle();
+
+    const spanEvent = h.events[1];
+    expect(spanEvent.span).toMatchObject({
+      traceId,
+      parentSpanId,
+      name: 'generate-answer',
+    });
+    expect(spanEvent.trace).toMatchObject({
+      traceId,
+      name: 'checkout-agent',
+    });
+    expect(res.headers.get('traceparent')).toMatch(
+      new RegExp(`^00-${traceId}-[0-9a-f]{16}-01$`),
+    );
   });
 });

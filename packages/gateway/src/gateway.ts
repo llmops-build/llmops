@@ -2,6 +2,7 @@ import { executeRequest } from './execute';
 import { instrumentResponse } from './instrument';
 import { parseModel, resolveTarget } from './resolve';
 import { matchRoute } from './router';
+import { resolveGatewayTraceContext } from './trace-context';
 import type { GatewayConfig, ProviderInput } from './types/config';
 import { errorResponse } from './utils/responses';
 
@@ -23,6 +24,8 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
 
   return async (req) => {
     const startMs = Date.now();
+    const requestId = crypto.randomUUID();
+    const trace = resolveGatewayTraceContext(req.headers);
     const pathname = new URL(req.url).pathname;
     const requestType = matchRoute(pathname);
     if (!requestType) {
@@ -88,12 +91,14 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
       telemetry: config.telemetry,
       getModelPricing: config.getModelPricing,
       waitUntil: config.waitUntil,
-      requestId: crypto.randomUUID(),
+      requestId,
+      trace,
       provider: resolved.value.config.provider,
       model: parsed.value.model,
       input: payload,
       startedAt: new Date(startMs).toISOString(),
       startMs,
+      isStreaming: rewritten.stream === true,
     });
   };
 }
