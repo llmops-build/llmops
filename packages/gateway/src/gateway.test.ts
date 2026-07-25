@@ -6,6 +6,10 @@ import type { ProviderMetadataResolver } from './types/config';
 const metadata: ProviderMetadataResolver = async (provider) =>
   ({
     openai: { baseURL: 'https://api.openai.com/v1', openaiCompatible: true },
+    google: {
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      openaiCompatible: true,
+    },
   })[provider] ?? null;
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -61,6 +65,33 @@ describe('createGateway', () => {
     await gw(chatRequest('@openai/gpt-4o'));
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://example.com/v1/chat/completions');
+  });
+
+  it('routes Gemini through Google OpenAI compatibility with Bearer auth', async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({
+        id: 'gemini-ok',
+        choices: [{ message: { role: 'assistant', content: 'hello' } }],
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'google', slug: 'google', apiKey: 'google-key' }],
+      getProviderMetadata: metadata,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@google/gemini-2.5-flash'));
+    expect(res.status).toBe(200);
+    expect((await res.json()).id).toBe('gemini-ok');
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    );
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      'Bearer google-key',
+    );
+    expect(JSON.parse(init.body as string).model).toBe('gemini-2.5-flash');
   });
 
   it('returns the upstream response body unchanged (pass-through)', async () => {

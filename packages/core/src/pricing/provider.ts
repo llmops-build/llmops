@@ -1,5 +1,5 @@
-import type { ModelPricing, PricingProvider } from './types';
 import { logger } from '../utils/logger';
+import type { ModelPricing, PricingProvider } from './types';
 
 const LLMOPS_MODELS_API = 'https://models.llmops.build';
 
@@ -178,9 +178,26 @@ export class LLMOpsPricingProvider implements PricingProvider {
   async getModelPricing(
     provider: string,
     model: string,
+    inputTokens?: number,
   ): Promise<ModelPricing | null> {
     const pricing = await this.getCachedPricing(provider, model);
     if (pricing) return pricing;
+
+    // Some catalog entries are split by context window even though the
+    // upstream API uses one bare model id (for example gemini-2.5-flash).
+    // Resolve that catalog tier after the canonical lookup so providers with a
+    // direct entry remain untouched.
+    if (
+      provider.toLowerCase() === 'google' &&
+      !/(?:-lte-128k|-gt-128k)$/.test(model)
+    ) {
+      const tier = (inputTokens ?? 0) > 128_000 ? 'gt' : 'lte';
+      const tiered = await this.getCachedPricing(
+        provider,
+        `${model}-${tier}-128k`,
+      );
+      if (tiered) return tiered;
+    }
 
     // Model names with slashes (e.g. "google/gemini-2.5-flash") are OpenRouter
     // model IDs. When the caller's provider (often "openai" from gen_ai.system)

@@ -16,6 +16,7 @@ export interface InstrumentContext {
   getModelPricing?: (
     provider: string,
     model: string,
+    inputTokens?: number,
   ) => Promise<ModelPricing | null>;
   waitUntil?: (promise: Promise<unknown>) => void;
   requestId: string;
@@ -182,7 +183,11 @@ async function computeCostDollars(
   const input = usage.inputTokens ?? 0;
   const output = usage.outputTokens ?? 0;
   if (input + output === 0 || !ctx.getModelPricing) return undefined;
-  const pricing = await ctx.getModelPricing(ctx.provider, ctx.model);
+  const pricing = await ctx.getModelPricing(
+    ctx.provider,
+    ctx.model,
+    usage.inputTokens,
+  );
   if (!pricing) return undefined;
   const microDollars =
     input * pricing.inputCostPer1M +
@@ -196,14 +201,20 @@ async function computeCostDollars(
 interface OpenAIUsage {
   prompt_tokens?: number;
   completion_tokens?: number;
+  total_tokens?: number;
   prompt_tokens_details?: { cached_tokens?: number };
 }
 
 function toTokenUsage(u: OpenAIUsage | undefined): TokenUsage | undefined {
   if (!u) return undefined;
+  const inputTokens = u.prompt_tokens ?? 0;
+  const outputTokens = Math.max(
+    u.completion_tokens ?? 0,
+    (u.total_tokens ?? 0) - inputTokens,
+  );
   return {
-    inputTokens: u.prompt_tokens,
-    outputTokens: u.completion_tokens,
+    inputTokens,
+    outputTokens,
     cacheReadTokens: u.prompt_tokens_details?.cached_tokens,
   };
 }

@@ -152,6 +152,64 @@ describe('gateway telemetry', () => {
     });
   });
 
+  it('meters and traces a Google Gemini compatibility stream', async () => {
+    const h = harness();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"hello"}}]}\n\n',
+      'data: {"choices":[],"usage":{"prompt_tokens":20,"completion_tokens":5,"total_tokens":30}}\n\n',
+      'data: [DONE]\n\n',
+    ];
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(sseStream(chunks), {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+    );
+    const googleMetadata: ProviderMetadataResolver = async () => ({
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      openaiCompatible: true,
+    });
+    const gw = createGateway({
+      providers: [{ provider: 'google', slug: 'google', apiKey: 'google-key' }],
+      getProviderMetadata: googleMetadata,
+      getModelPricing: pricing,
+      // biome-ignore lint/suspicious/noExplicitAny: minimal test sink
+      telemetry: h.telemetry as any,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@google/gemini-2.5-flash', true));
+    expect(await res.text()).toBe(chunks.join(''));
+    await h.settle();
+
+    expect(h.events[0].request).toMatchObject({
+      provider: 'google',
+      model: 'gemini-2.5-flash',
+      usage: { inputTokens: 20, outputTokens: 10 },
+      isStreaming: true,
+      status: 'success',
+    });
+    expect(h.events[1].span).toMatchObject({
+      traceId: h.events[0].request.traceId,
+      spanId: h.events[0].request.spanId,
+      status: 'ok',
+    });
+    expect(res.headers.get('x-llmops-trace-id')).toBe(
+      h.events[0].request.traceId,
+    );
+    expect(h.events[0].request.cost).toBeCloseTo(0.00015);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    );
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      'Bearer google-key',
+    );
+  });
+
   it('no telemetry configured → same Response, nothing metered', async () => {
     const fetchMock = vi.fn(
       async () =>

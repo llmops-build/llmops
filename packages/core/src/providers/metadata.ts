@@ -34,8 +34,14 @@ export const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
   // ── OpenAI-compatible (pass-through) ─────────────────────────────────
   openai: { baseURL: 'https://api.openai.com/v1', openaiCompatible: true },
   groq: { baseURL: 'https://api.groq.com/openai/v1', openaiCompatible: true },
-  'mistral-ai': { baseURL: 'https://api.mistral.ai/v1', openaiCompatible: true },
-  'together-ai': { baseURL: 'https://api.together.xyz/v1', openaiCompatible: true },
+  'mistral-ai': {
+    baseURL: 'https://api.mistral.ai/v1',
+    openaiCompatible: true,
+  },
+  'together-ai': {
+    baseURL: 'https://api.together.xyz/v1',
+    openaiCompatible: true,
+  },
   'fireworks-ai': {
     baseURL: 'https://api.fireworks.ai/inference/v1',
     openaiCompatible: true,
@@ -83,9 +89,12 @@ export const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
 
   // ── Divergent — need a dedicated adapter (not OpenAI wire format) ─────
   anthropic: { baseURL: 'https://api.anthropic.com', openaiCompatible: false },
+  // Gemini Developer API's official OpenAI compatibility surface. Native
+  // generateContent / streamGenerateContent support belongs in a separate
+  // adapter so Google-specific features can be preserved without translation.
   google: {
-    baseURL: 'https://generativelanguage.googleapis.com',
-    openaiCompatible: false,
+    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    openaiCompatible: true,
   },
   cohere: { baseURL: 'https://api.cohere.com', openaiCompatible: false },
   palm: { openaiCompatible: false },

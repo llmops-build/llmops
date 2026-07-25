@@ -13,7 +13,16 @@ describe('getProviderMetadata', () => {
     expect((await getProviderMetadata('anthropic'))?.openaiCompatible).toBe(
       false,
     );
-    expect((await getProviderMetadata('bedrock'))?.openaiCompatible).toBe(false);
+    expect((await getProviderMetadata('bedrock'))?.openaiCompatible).toBe(
+      false,
+    );
+  });
+
+  it('routes Google Gemini through its official OpenAI compatibility API', async () => {
+    expect(await getProviderMetadata('google')).toEqual({
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      openaiCompatible: true,
+    });
   });
 
   it('returns null for an uncurated / unknown provider', async () => {
