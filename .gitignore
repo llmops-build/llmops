@@ -6,3 +6,4 @@ _ralph
 .mcp.json
 .context
 bin
+.DS_Store
