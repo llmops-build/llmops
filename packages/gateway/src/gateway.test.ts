@@ -27,6 +27,19 @@ function chatRequest(model: string): Request {
   });
 }
 
+function imageRequest(model: string): Request {
+  return new Request('http://gateway/api/genai/v1/images/generations', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      prompt: 'A tiny robot tending a rooftop garden',
+      response_format: 'b64_json',
+      n: 1,
+    }),
+  });
+}
+
 describe('createGateway', () => {
   it('resolves the base URL via the injected getProviderMetadata + Bearer auth + stripped model', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ id: 'ok' }));
@@ -92,6 +105,37 @@ describe('createGateway', () => {
       'Bearer google-key',
     );
     expect(JSON.parse(init.body as string).model).toBe('gemini-2.5-flash');
+  });
+
+  it('routes Gemini image generation through the compatibility endpoint unchanged', async () => {
+    const upstreamBody = {
+      created: 1,
+      data: [{ b64_json: 'image-bytes', revised_prompt: 'A tiny robot' }],
+    };
+    const fetchMock = vi.fn(async () => jsonResponse(upstreamBody));
+    const gw = createGateway({
+      providers: [{ provider: 'google', slug: 'google', apiKey: 'google-key' }],
+      getProviderMetadata: metadata,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(
+      imageRequest('@google/gemini-2.5-flash-image'),
+    );
+    expect(await res.json()).toEqual(upstreamBody);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/openai/images/generations',
+    );
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      'Bearer google-key',
+    );
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      model: 'gemini-2.5-flash-image',
+      response_format: 'b64_json',
+      n: 1,
+    });
   });
 
   it('returns the upstream response body unchanged (pass-through)', async () => {

@@ -10,6 +10,7 @@ import {
   applyTraceHeaders,
   type GatewayTraceContext,
 } from './trace-context';
+import { RequestType } from './types/requests';
 
 export interface InstrumentContext {
   telemetry: TelemetrySink;
@@ -27,6 +28,7 @@ export interface InstrumentContext {
   startedAt: string;
   startMs: number;
   isStreaming: boolean;
+  requestType: RequestType;
 }
 
 /**
@@ -42,7 +44,14 @@ export function instrumentResponse(
   if (!upstream.ok) {
     schedule(
       ctx,
-      emit(ctx, undefined, undefined, 'error', `upstream ${upstream.status}`),
+      emit(
+        ctx,
+        undefined,
+        undefined,
+        'error',
+        upstream.status,
+        `upstream ${upstream.status}`,
+      ),
     );
     return withTraceHeaders(upstream, ctx);
   }
@@ -52,7 +61,7 @@ export function instrumentResponse(
   // Streaming: tee — one branch to the caller now, the other drained for usage.
   if (contentType.includes('text/event-stream') && upstream.body) {
     const [toCaller, toMeter] = upstream.body.tee();
-    schedule(ctx, meterStream(ctx, toMeter));
+    schedule(ctx, meterStream(ctx, toMeter, upstream.status));
     return withTraceHeaders(new Response(toCaller, {
       status: upstream.status,
       statusText: upstream.statusText,
@@ -62,7 +71,7 @@ export function instrumentResponse(
 
   // Non-streaming JSON: parse usage off a clone.
   if (contentType.includes('application/json')) {
-    schedule(ctx, meterJson(ctx, upstream.clone()));
+    schedule(ctx, meterJson(ctx, upstream.clone(), upstream.status));
     return withTraceHeaders(upstream, ctx);
   }
 
@@ -88,24 +97,61 @@ function schedule(ctx: InstrumentContext, work: Promise<unknown>): void {
 async function meterJson(
   ctx: InstrumentContext,
   cloned: Response,
+  statusCode: number,
 ): Promise<void> {
   const body = (await cloned.json()) as {
     usage?: OpenAIUsage;
     choices?: Array<{ message?: unknown }>;
+    data?: Array<{
+      b64_json?: string;
+      url?: string;
+      revised_prompt?: string;
+    }>;
   };
   await emit(
     ctx,
     toTokenUsage(body.usage),
-    body.choices?.[0]?.message,
+    extractJsonOutput(body),
     'success',
+    statusCode,
   );
+}
+
+function extractJsonOutput(body: {
+  choices?: Array<{ message?: unknown }>;
+  data?: Array<{
+    b64_json?: string;
+    url?: string;
+    revised_prompt?: string;
+  }>;
+}): unknown {
+  const message = body.choices?.[0]?.message;
+  if (message !== undefined) return message;
+  if (!body.data) return null;
+
+  // Never duplicate large base64 image payloads into telemetry. Preserve only
+  // enough metadata for the dashboard to explain what the provider returned.
+  return {
+    imageCount: body.data.length,
+    images: body.data.map((image) => ({
+      format: image.b64_json ? 'b64_json' : image.url ? 'url' : 'unknown',
+      revisedPrompt: image.revised_prompt,
+    })),
+  };
 }
 
 async function meterStream(
   ctx: InstrumentContext,
   stream: ReadableStream<Uint8Array>,
+  statusCode: number,
 ): Promise<void> {
-  await emit(ctx, await drainSSEUsage(stream), undefined, 'success');
+  await emit(
+    ctx,
+    await drainSSEUsage(stream),
+    undefined,
+    'success',
+    statusCode,
+  );
 }
 
 async function emit(
@@ -113,6 +159,7 @@ async function emit(
   usage: TokenUsage | undefined,
   output: unknown,
   status: 'success' | 'error',
+  statusCode: number,
   error?: string,
 ): Promise<void> {
   const endedAt = new Date().toISOString();
@@ -128,6 +175,8 @@ async function emit(
     cost,
     latencyMs,
     isStreaming: ctx.isStreaming,
+    endpoint: ctx.requestType,
+    statusCode,
     traceId: ctx.trace.traceId,
     spanId: ctx.trace.spanId,
     status,
@@ -147,9 +196,10 @@ async function emit(
     status: status === 'success' ? 'ok' : 'error',
     error,
     attributes: {
-      'gen_ai.operation.name': 'chat',
+      'gen_ai.operation.name': operationName(ctx.requestType),
       'gen_ai.provider.name': ctx.provider,
       'gen_ai.request.model': ctx.model,
+      'gen_ai.request.endpoint': ctx.requestType,
       'llmops.request.id': ctx.requestId,
       'llmops.is_streaming': ctx.isStreaming,
     },
@@ -169,6 +219,24 @@ async function emit(
     { type: 'llm_request', request },
     { type: 'span', span, trace },
   ]);
+}
+
+function operationName(requestType: RequestType): string {
+  switch (requestType) {
+    case RequestType.ImageGeneration:
+    case RequestType.ImageEdit:
+    case RequestType.ImageVariation:
+      return 'image_generation';
+    case RequestType.Embedding:
+      return 'embeddings';
+    case RequestType.AudioSpeech:
+      return 'speech';
+    case RequestType.AudioTranscription:
+    case RequestType.AudioTranslation:
+      return 'transcription';
+    default:
+      return 'chat';
+  }
 }
 
 /**
