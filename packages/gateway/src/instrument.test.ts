@@ -40,6 +40,19 @@ function chatRequest(model: string, stream = false): Request {
   });
 }
 
+function imageRequest(model: string): Request {
+  return new Request('http://gw/api/genai/v1/images/generations', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      prompt: 'A tiny robot tending a rooftop garden',
+      response_format: 'b64_json',
+      n: 1,
+    }),
+  });
+}
+
 function sseStream(chunks: string[]): ReadableStream<Uint8Array> {
   const enc = new TextEncoder();
   return new ReadableStream({
@@ -152,6 +165,122 @@ describe('gateway telemetry', () => {
     });
   });
 
+  it('meters and traces a Google Gemini compatibility stream', async () => {
+    const h = harness();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"hello"}}]}\n\n',
+      'data: {"choices":[],"usage":{"prompt_tokens":20,"completion_tokens":5,"total_tokens":30}}\n\n',
+      'data: [DONE]\n\n',
+    ];
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(sseStream(chunks), {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+    );
+    const googleMetadata: ProviderMetadataResolver = async () => ({
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      openaiCompatible: true,
+    });
+    const gw = createGateway({
+      providers: [{ provider: 'google', slug: 'google', apiKey: 'google-key' }],
+      getProviderMetadata: googleMetadata,
+      getModelPricing: pricing,
+      // biome-ignore lint/suspicious/noExplicitAny: minimal test sink
+      telemetry: h.telemetry as any,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@google/gemini-2.5-flash', true));
+    expect(await res.text()).toBe(chunks.join(''));
+    await h.settle();
+
+    expect(h.events[0].request).toMatchObject({
+      provider: 'google',
+      model: 'gemini-2.5-flash',
+      usage: { inputTokens: 20, outputTokens: 10 },
+      isStreaming: true,
+      status: 'success',
+    });
+    expect(h.events[1].span).toMatchObject({
+      traceId: h.events[0].request.traceId,
+      spanId: h.events[0].request.spanId,
+      status: 'ok',
+    });
+    expect(res.headers.get('x-llmops-trace-id')).toBe(
+      h.events[0].request.traceId,
+    );
+    expect(h.events[0].request.cost).toBeCloseTo(0.00015);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    );
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      'Bearer google-key',
+    );
+  });
+
+  it('traces image generation without copying base64 output into telemetry', async () => {
+    const h = harness();
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          created: 1,
+          data: [
+            {
+              b64_json: 'very-large-image-bytes',
+              revised_prompt: 'A tiny helpful robot',
+            },
+          ],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const googleMetadata: ProviderMetadataResolver = async () => ({
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      openaiCompatible: true,
+    });
+    const gw = createGateway({
+      providers: [{ provider: 'google', slug: 'google', apiKey: 'google-key' }],
+      getProviderMetadata: googleMetadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(
+      imageRequest('@google/gemini-2.5-flash-image'),
+    );
+    expect((await res.json()).data[0].b64_json).toBe(
+      'very-large-image-bytes',
+    );
+    await h.settle();
+
+    expect(h.events[0].request).toMatchObject({
+      provider: 'google',
+      model: 'gemini-2.5-flash-image',
+      endpoint: '/images/generations',
+      output: {
+        imageCount: 1,
+        images: [
+          {
+            format: 'b64_json',
+            revisedPrompt: 'A tiny helpful robot',
+          },
+        ],
+      },
+      status: 'success',
+    });
+    expect(JSON.stringify(h.events)).not.toContain('very-large-image-bytes');
+    expect(h.events[1].span.attributes).toMatchObject({
+      'gen_ai.operation.name': 'image_generation',
+      'gen_ai.request.endpoint': '/images/generations',
+    });
+  });
+
   it('no telemetry configured → same Response, nothing metered', async () => {
     const fetchMock = vi.fn(
       async () =>
@@ -193,6 +322,7 @@ describe('gateway telemetry', () => {
     await h.settle();
     expect(h.events).toHaveLength(2);
     expect(h.events[0].request.status).toBe('error');
+    expect(h.events[0].request.statusCode).toBe(401);
     expect(h.events[1].span.status).toBe('error');
   });
 

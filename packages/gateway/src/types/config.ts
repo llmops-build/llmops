@@ -59,6 +59,7 @@ export interface GatewayConfig {
   getModelPricing?: (
     provider: string,
     model: string,
+    inputTokens?: number,
   ) => Promise<ModelPricing | null>;
   /**
    * Edge background-work hook (`ctx.waitUntil`). Keeps the worker alive while

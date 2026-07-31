@@ -99,6 +99,7 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
       startedAt: new Date(startMs).toISOString(),
       startMs,
       isStreaming: rewritten.stream === true,
+      requestType,
     });
   };
 }

@@ -36,6 +36,71 @@ describe('createStoreSink', () => {
     expect(batchInsertRequests.mock.calls[0]?.[0][0]?.isStreaming).toBe(true);
   });
 
+  it('preserves the gateway endpoint on LLM request records', async () => {
+    const batchInsertRequests = vi.fn(
+      async (_requests: LLMRequestInsert[]) => ({ count: 1 }),
+    );
+    const store = {
+      batchInsertRequests,
+      batchInsertSpans: vi.fn(async () => ({ count: 0 })),
+      upsertTrace: vi.fn(async () => null),
+    } as unknown as TelemetryStore;
+    const sink = createStoreSink(store);
+
+    sink.emit([
+      {
+        type: 'llm_request',
+        request: {
+          requestId: crypto.randomUUID(),
+          provider: 'google',
+          model: 'gemini-2.5-flash-image',
+          input: {},
+          output: { imageCount: 1 },
+          endpoint: '/images/generations',
+          status: 'success',
+          startedAt: new Date().toISOString(),
+        },
+      },
+    ]);
+    await sink.flush();
+
+    expect(batchInsertRequests.mock.calls[0]?.[0][0]?.endpoint).toBe(
+      '/images/generations',
+    );
+  });
+
+  it('preserves the upstream status code on failed requests', async () => {
+    const batchInsertRequests = vi.fn(
+      async (_requests: LLMRequestInsert[]) => ({ count: 1 }),
+    );
+    const store = {
+      batchInsertRequests,
+      batchInsertSpans: vi.fn(async () => ({ count: 0 })),
+      upsertTrace: vi.fn(async () => null),
+    } as unknown as TelemetryStore;
+    const sink = createStoreSink(store);
+
+    sink.emit([
+      {
+        type: 'llm_request',
+        request: {
+          requestId: crypto.randomUUID(),
+          provider: 'google',
+          model: 'gemini-2.5-flash-image',
+          input: {},
+          output: null,
+          endpoint: '/images/generations',
+          statusCode: 429,
+          status: 'error',
+          startedAt: new Date().toISOString(),
+        },
+      },
+    ]);
+    await sink.flush();
+
+    expect(batchInsertRequests.mock.calls[0]?.[0][0]?.statusCode).toBe(429);
+  });
+
   it('persists linked span and trace events', async () => {
     const batchInsertSpans = vi.fn(async (_spans: SpanInsert[]) => ({
       count: 1,

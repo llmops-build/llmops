@@ -12,6 +12,11 @@ import type { ModelPricing } from './types';
 export function getModelPricing(
   provider: string,
   model: string,
+  inputTokens?: number,
 ): Promise<ModelPricing | null> {
-  return getDefaultPricingProvider().getModelPricing(provider, model);
+  return getDefaultPricingProvider().getModelPricing(
+    provider,
+    model,
+    inputTokens,
+  );
 }

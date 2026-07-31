@@ -38,6 +38,10 @@ export interface LLMRequestRecord {
   latencyMs?: number;
   /** Whether the upstream response was delivered as a stream. */
   isStreaming?: boolean;
+  /** Gateway endpoint that produced this request (for example `/images/generations`). */
+  endpoint?: string;
+  /** Actual upstream HTTP status code. */
+  statusCode?: number;
   status: 'success' | 'error';
   error?: string;
   tags?: Record<string, string>;
