@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { InlineDataset, type EvaluationDataset } from './dataset';
+import { type EvaluationDataset, InlineDataset } from './dataset';
 import type {
   DatapointResult,
   EvaluateOptions,
@@ -27,11 +27,11 @@ const YELLOW = '\x1b[33m';
 async function pool<T>(
   items: T[],
   concurrency: number,
-  fn: (item: T) => Promise<void>,
+  fn: (item: T, index: number) => Promise<void>,
 ) {
   const executing: Promise<void>[] = [];
-  for (const item of items) {
-    const p = fn(item).then(() => {
+  for (const [index, item] of items.entries()) {
+    const p = fn(item, index).then(() => {
       executing.splice(executing.indexOf(p), 1);
     });
     executing.push(p);
@@ -51,9 +51,7 @@ function computeStats(values: number[]): ScoreStats {
   const sum = sorted.reduce((a, b) => a + b, 0);
   const mid = Math.floor(sorted.length / 2);
   const median =
-    sorted.length % 2 === 0
-      ? (sorted[mid - 1] + sorted[mid]) / 2
-      : sorted[mid];
+    sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 
   return {
     mean: sum / sorted.length,
@@ -76,19 +74,18 @@ function printHeader(name: string, total: number) {
   w.write(`  ${DIM}${'─'.repeat(50)}${RESET}\n`);
 }
 
-function printDatapointResult(
-  idx: number,
-  total: number,
-  dp: DatapointResult,
-) {
+function printDatapointResult(idx: number, total: number, dp: DatapointResult) {
   if (isSilent) return;
 
-  const label = typeof dp.data === 'object' && dp.data !== null
-    ? JSON.stringify(dp.data).slice(0, 50)
-    : String(dp.data).slice(0, 50);
+  const label =
+    typeof dp.data === 'object' && dp.data !== null
+      ? JSON.stringify(dp.data).slice(0, 50)
+      : String(dp.data).slice(0, 50);
 
   if (dp.error) {
-    w.write(`  ${RED}✗${RESET} ${DIM}[${idx + 1}/${total}]${RESET} ${label}  ${RED}ERROR${RESET} ${DIM}${dp.error.slice(0, 60)}${RESET}\n`);
+    w.write(
+      `  ${RED}✗${RESET} ${DIM}[${idx + 1}/${total}]${RESET} ${label}  ${RED}ERROR${RESET} ${DIM}${dp.error.slice(0, 60)}${RESET}\n`,
+    );
     return;
   }
 
@@ -100,7 +97,9 @@ function printDatapointResult(
     })
     .join('  ');
 
-  w.write(`  ${GREEN}✓${RESET} ${DIM}[${idx + 1}/${total}]${RESET} ${label}  ${scoreStr}  ${DIM}${dp.durationMs}ms${RESET}\n`);
+  w.write(
+    `  ${GREEN}✓${RESET} ${DIM}[${idx + 1}/${total}]${RESET} ${label}  ${scoreStr}  ${DIM}${dp.durationMs}ms${RESET}\n`,
+  );
 }
 
 function scoreBar(score: number, width = 20): string {
@@ -124,7 +123,9 @@ function printSummary(result: EvaluateResult) {
   if (entries.length > 0) {
     const maxNameLen = Math.max(...entries.map(([n]) => n.length), 10);
 
-    w.write(`  ${DIM}${'Evaluator'.padEnd(maxNameLen)}  ${'Mean'.padStart(6)}  ${'Bar'.padEnd(20)}  ${'Min'.padStart(5)}  ${'Max'.padStart(5)}  ${'Med'.padStart(5)}${RESET}\n`);
+    w.write(
+      `  ${DIM}${'Evaluator'.padEnd(maxNameLen)}  ${'Mean'.padStart(6)}  ${'Bar'.padEnd(20)}  ${'Min'.padStart(5)}  ${'Max'.padStart(5)}  ${'Med'.padStart(5)}${RESET}\n`,
+    );
     w.write(`  ${DIM}${'─'.repeat(maxNameLen + 50)}${RESET}\n`);
 
     for (const [name, stats] of entries) {
@@ -172,23 +173,25 @@ async function runSingleExecutor<D, T, O>(
 
   printHeader(name, datapoints.length);
 
-  await pool(datapoints, concurrency, async (dp) => {
-    const idx = datapoints.indexOf(dp);
+  await pool(datapoints, concurrency, async (dp, idx) => {
     const dpStart = Date.now();
-    let output: O | null = null;
+    let output: O | undefined;
     let error: string | undefined;
+    let executed = false;
+    const evaluatorErrors: string[] = [];
     const scores: Record<string, number> = {};
 
     try {
       output = await executor(dp.data);
+      executed = true;
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
     }
 
-    if (!error && output !== null) {
+    if (!error && executed) {
       for (const [evalName, evaluator] of Object.entries(evaluators)) {
         try {
-          const result = await evaluator(output, dp.target, dp.data);
+          const result = await evaluator(output as O, dp.target, dp.data);
           if (typeof result === 'number') {
             scores[evalName] = result;
           } else {
@@ -198,12 +201,20 @@ async function runSingleExecutor<D, T, O>(
           }
         } catch (evalErr) {
           scores[evalName] = NaN;
-          const msg = evalErr instanceof Error ? evalErr.message : String(evalErr);
+          const msg =
+            evalErr instanceof Error ? evalErr.message : String(evalErr);
+          evaluatorErrors.push(`evaluator "${evalName}": ${msg}`);
           if (!isSilent) {
-            w.write(`  ${YELLOW}⚠${RESET} ${DIM}evaluator "${evalName}":${RESET} ${msg.slice(0, 80)}\n`);
+            w.write(
+              `  ${YELLOW}⚠${RESET} ${DIM}evaluator "${evalName}":${RESET} ${msg.slice(0, 80)}\n`,
+            );
           }
         }
       }
+    }
+
+    if (!error && evaluatorErrors.length > 0) {
+      error = evaluatorErrors.join('; ');
     }
 
     const dpResult: DatapointResult<D, O> = {
@@ -246,15 +257,17 @@ export async function evaluate<
 
   const runId = randomUUID();
 
+  if (!Number.isInteger(concurrency) || concurrency < 1) {
+    throw new Error('evaluate(): concurrency must be a positive integer');
+  }
+
   if (executor && variants) {
     throw new Error(
       'evaluate(): provide either executor or variants, not both',
     );
   }
   if (!executor && !variants) {
-    throw new Error(
-      'evaluate(): provide either executor or variants',
-    );
+    throw new Error('evaluate(): provide either executor or variants');
   }
 
   const dataset = Array.isArray(data) ? new InlineDataset(data) : data;

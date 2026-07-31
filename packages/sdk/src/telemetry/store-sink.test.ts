@@ -1,9 +1,44 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TelemetryStore } from './interface';
 import { createStoreSink } from './store-sink';
 import type { LLMRequestInsert, SpanInsert, TraceUpsert } from './types';
 
 describe('createStoreSink', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('flushes the final Node batch with a one-shot timer', async () => {
+    vi.useFakeTimers();
+    const batchInsertRequests = vi.fn(async () => ({ count: 1 }));
+    const store = {
+      batchInsertRequests,
+      batchInsertSpans: vi.fn(async () => ({ count: 0 })),
+      upsertTrace: vi.fn(async () => null),
+    } as unknown as TelemetryStore;
+    const sink = createStoreSink(store, { flushIntervalMs: 25 });
+
+    sink.emit([
+      {
+        type: 'llm_request',
+        request: {
+          requestId: crypto.randomUUID(),
+          provider: 'openai',
+          model: 'gpt-4o-mini',
+          input: {},
+          output: null,
+          status: 'success',
+          startedAt: new Date().toISOString(),
+        },
+      },
+    ]);
+
+    expect(batchInsertRequests).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(25);
+    expect(batchInsertRequests).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('preserves the streaming flag on LLM request records', async () => {
     const batchInsertRequests = vi.fn(
       async (_requests: LLMRequestInsert[]) => ({ count: 1 }),

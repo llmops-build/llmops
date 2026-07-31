@@ -1,9 +1,10 @@
+import type { DatasetQuery, EvaluationDataset } from '@llmops/core';
 import type {
-  LLMRequestInsert,
-  TraceUpsert,
-  SpanInsert,
-  SpanEventInsert,
   CostSummaryGroupBy,
+  LLMRequestInsert,
+  SpanEventInsert,
+  SpanInsert,
+  TraceUpsert,
 } from './types';
 
 /**
@@ -11,6 +12,11 @@ import type {
  * Implemented by pgStore, d1Store, and future store backends.
  */
 export interface TelemetryStore {
+  /** Turn stored production requests into an evaluation dataset. */
+  dataset<D = Record<string, unknown>, T = Record<string, unknown>>(
+    query: DatasetQuery<D, T>,
+  ): EvaluationDataset<D, T>;
+
   // ── LLM Requests: writes ──────────────────────────────────────────
   batchInsertRequests(requests: LLMRequestInsert[]): Promise<{ count: number }>;
   insertRequest(request: LLMRequestInsert): Promise<unknown>;
@@ -28,7 +34,12 @@ export interface TelemetryStore {
     startDate?: Date;
     endDate?: Date;
     tags?: Record<string, string[]>;
-  }): Promise<{ data: unknown[]; total: number; limit: number; offset: number }>;
+  }): Promise<{
+    data: unknown[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>;
 
   getRequestByRequestId(requestId: string): Promise<unknown | undefined>;
 
@@ -41,8 +52,14 @@ export interface TelemetryStore {
     tags?: Record<string, string[]>;
   }): Promise<unknown>;
 
-  getCostByModel(params: { startDate: Date; endDate: Date }): Promise<unknown[]>;
-  getCostByProvider(params: { startDate: Date; endDate: Date }): Promise<unknown[]>;
+  getCostByModel(params: {
+    startDate: Date;
+    endDate: Date;
+  }): Promise<unknown[]>;
+  getCostByProvider(params: {
+    startDate: Date;
+    endDate: Date;
+  }): Promise<unknown[]>;
   getDailyCosts(params: { startDate: Date; endDate: Date }): Promise<unknown[]>;
 
   getCostSummary(params: {
@@ -83,9 +100,16 @@ export interface TelemetryStore {
     startDate?: Date;
     endDate?: Date;
     tags?: Record<string, string[]>;
-  }): Promise<{ data: unknown[]; total: number; limit: number; offset: number }>;
+  }): Promise<{
+    data: unknown[];
+    total: number;
+    limit: number;
+    offset: number;
+  }>;
 
-  getTraceWithSpans(traceId: string): Promise<
+  getTraceWithSpans(
+    traceId: string,
+  ): Promise<
     { trace: unknown; spans: unknown[]; events: unknown[] } | undefined
   >;
 

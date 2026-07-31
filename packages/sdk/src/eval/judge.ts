@@ -2,42 +2,22 @@ import type { Evaluator, JudgeScorerOptions } from './types';
 
 // ─── Template interpolation ─────────────────────────────────────────────────
 
-function interpolate(
-  template: string,
-  vars: Record<string, unknown>,
-): string {
-  return template.replace(
-    /\{\{(\w+(?:\.\w+)*)\}\}/g,
-    (_, path: string) => {
-      const value = path
-        .split('.')
-        .reduce((obj: any, key: string) => obj?.[key], vars);
-      if (value === undefined || value === null) return '';
-      return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-    },
-  );
+function interpolate(template: string, vars: Record<string, unknown>): string {
+  return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (_, path: string) => {
+    const value = path
+      .split('.')
+      .reduce((obj: any, key: string) => obj?.[key], vars);
+    if (value === undefined || value === null) return '';
+    return typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  });
 }
 
-function buildVars(output: unknown, target?: unknown, data?: unknown): Record<string, unknown> {
-  const vars: Record<string, unknown> = {
-    output: typeof output === 'string' ? output : JSON.stringify(output, null, 2),
-    target: typeof target === 'string' ? target : JSON.stringify(target, null, 2),
-    data: typeof data === 'string' ? data : JSON.stringify(data, null, 2),
-  };
-
-  if (target && typeof target === 'object') {
-    for (const [k, v] of Object.entries(target)) {
-      vars[`target.${k}`] = v;
-    }
-  }
-
-  if (data && typeof data === 'object') {
-    for (const [k, v] of Object.entries(data)) {
-      vars[`data.${k}`] = v;
-    }
-  }
-
-  return vars;
+function buildVars(
+  output: unknown,
+  target?: unknown,
+  data?: unknown,
+): Record<string, unknown> {
+  return { output, target, data };
 }
 
 // ─── Default system message ─────────────────────────────────────────────────
@@ -58,7 +38,10 @@ Example response:
 
 function defaultParse(response: string): number | Record<string, number> {
   // Strip markdown code fences if present
-  let cleaned = response.replace(/```(?:json)?\n?/g, '').replace(/```$/g, '').trim();
+  let cleaned = response
+    .replace(/```(?:json)?\n?/g, '')
+    .replace(/```$/g, '')
+    .trim();
 
   // Try to extract JSON from the response (handle LLMs that add text around it)
   const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
@@ -127,7 +110,9 @@ async function callLLM(
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => 'unknown error');
-    throw new Error(`Judge LLM call failed (${response.status}): ${errorBody.slice(0, 300)}`);
+    throw new Error(
+      `Judge LLM call failed (${response.status}): ${errorBody.slice(0, 300)}`,
+    );
   }
 
   const body = (await response.json()) as {
@@ -192,7 +177,13 @@ export function judgeScorer(options: JudgeScorerOptions): Evaluator {
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
-        const content = await callLLM(client, model, system, userMessage, temperature);
+        const content = await callLLM(
+          client,
+          model,
+          system,
+          userMessage,
+          temperature,
+        );
         return parse(content);
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));

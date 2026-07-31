@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import type { D1Database } from './types';
+import { createTelemetryDataset } from '../../telemetry/dataset';
 import type { TelemetryStore } from '../../telemetry/interface';
 import type {
-  LLMRequestInsert,
-  TraceUpsert,
-  SpanInsert,
-  SpanEventInsert,
   CostSummaryGroupBy,
+  LLMRequestInsert,
+  SpanEventInsert,
+  SpanInsert,
+  TraceUpsert,
 } from '../../telemetry/types';
+import type { D1Database } from './types';
 
 // ─── JSON column parser ─────────────────────────────────────────────────────
 
@@ -576,9 +577,14 @@ export type D1Store = TelemetryStore & {
  * ```
  */
 export function createD1Store(db: D1Database): D1Store {
+  const requests = createD1LLMRequestsStore(db);
+  const traces = createD1TracesStore(db);
+
   return {
-    ...createD1LLMRequestsStore(db),
-    ...createD1TracesStore(db),
+    ...requests,
+    ...traces,
+    dataset: (query) =>
+      createTelemetryDataset({ ...requests, ...traces }, query),
     _db: db,
   };
 }
