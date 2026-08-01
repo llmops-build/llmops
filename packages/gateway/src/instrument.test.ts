@@ -7,6 +7,8 @@ const metadata: ProviderMetadataResolver = async () => ({
   openaiCompatible: true,
 });
 
+const RESPONSES_URL = 'http://gw/api/genai/v1/responses';
+
 // biome-ignore lint/suspicious/noExplicitAny: test stub
 const pricing = async (): Promise<any> => ({
   inputCostPer1M: 2.5,
@@ -49,6 +51,18 @@ function imageRequest(model: string): Request {
       prompt: 'A tiny robot tending a rooftop garden',
       response_format: 'b64_json',
       n: 1,
+    }),
+  });
+}
+
+function responsesRequest(model: string, stream = false): Request {
+  return new Request(RESPONSES_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      stream,
+      input: [{ role: 'user', content: 'Use the weather tool for Paris' }],
     }),
   });
 }
@@ -278,6 +292,281 @@ describe('gateway telemetry', () => {
     expect(h.events[1].span.attributes).toMatchObject({
       'gen_ai.operation.name': 'image_generation',
       'gen_ai.request.endpoint': '/images/generations',
+    });
+  });
+
+  it('meters Responses usage and preserves tool-call linkage without opaque payloads', async () => {
+    const h = harness();
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          id: 'resp_123',
+          status: 'completed',
+          output: [
+            {
+              id: 'rs_1',
+              type: 'reasoning',
+              encrypted_content: 'opaque-reasoning-payload',
+              summary: [{ type: 'summary_text', text: 'Check weather' }],
+            },
+            {
+              id: 'fc_1',
+              type: 'function_call',
+              call_id: 'call_weather_1',
+              name: 'get_weather',
+              arguments: '{"city":"Paris"}',
+              status: 'completed',
+            },
+            {
+              id: 'ig_1',
+              type: 'image_generation_call',
+              status: 'completed',
+              result: 'large-base64-image',
+            },
+          ],
+          usage: {
+            input_tokens: 20,
+            output_tokens: 10,
+            total_tokens: 30,
+            input_tokens_details: { cached_tokens: 5 },
+            output_tokens_details: { reasoning_tokens: 4 },
+          },
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      getModelPricing: pricing,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(responsesRequest('@openai/gpt-5.4'));
+    expect((await res.json()).id).toBe('resp_123');
+    await h.settle();
+
+    expect(h.events[0].request).toMatchObject({
+      endpoint: '/responses',
+      usage: {
+        inputTokens: 20,
+        outputTokens: 10,
+        cacheReadTokens: 5,
+        reasoningTokens: 4,
+      },
+      output: {
+        responseId: 'resp_123',
+        status: 'completed',
+        output: [
+          {
+            id: 'rs_1',
+            type: 'reasoning',
+            summary: [{ type: 'summary_text', text: 'Check weather' }],
+          },
+          {
+            id: 'fc_1',
+            type: 'function_call',
+            call_id: 'call_weather_1',
+            name: 'get_weather',
+            arguments: '{"city":"Paris"}',
+          },
+          {
+            id: 'ig_1',
+            type: 'image_generation_call',
+            result: '[image omitted]',
+          },
+        ],
+      },
+    });
+    expect(JSON.stringify(h.events)).not.toContain('opaque-reasoning-payload');
+    expect(JSON.stringify(h.events)).not.toContain('large-base64-image');
+    expect(h.events[0].request.cost).toBeCloseTo(0.00015);
+    expect(h.events[1].span.attributes).toMatchObject({
+      'gen_ai.operation.name': 'generate_content',
+      'gen_ai.usage.input_tokens': 20,
+      'gen_ai.usage.output_tokens': 10,
+      'llmops.usage.reasoning_tokens': 4,
+    });
+  });
+
+  it('meters typed Responses SSE from response.completed without changing bytes', async () => {
+    const h = harness();
+    const chunks = [
+      'event: response.created\ndata: {"type":"response.created","response":{"id":"resp_stream","status":"in_progress","output":[]}}\n\n',
+      'event: response.output_text.delta\ndata: {"type":"response.output_text.delta","delta":"hello"}\n\n',
+      'event: response.completed\ndata: {"type":"response.completed","response":{"id":"resp_stream","status":"completed","output":[{"id":"msg_1","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"hello"}]}],"usage":{"input_tokens":12,"output_tokens":3,"total_tokens":15,"output_tokens_details":{"reasoning_tokens":1}}}}\n\n',
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(sseStream(chunks), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      getModelPricing: pricing,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(responsesRequest('@openai/gpt-5.4', true));
+    expect(await res.text()).toBe(chunks.join(''));
+    await h.settle();
+
+    expect(h.events[0].request).toMatchObject({
+      endpoint: '/responses',
+      isStreaming: true,
+      usage: { inputTokens: 12, outputTokens: 3, reasoningTokens: 1 },
+      output: {
+        responseId: 'resp_stream',
+        status: 'completed',
+        output: [
+          {
+            id: 'msg_1',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'output_text', text: 'hello' }],
+          },
+        ],
+      },
+    });
+    expect(h.events[0].request.cost).toBeCloseTo(0.00006);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(init.body as string).stream_options).toBeUndefined();
+  });
+
+  it('records a typed response.failed stream as an error', async () => {
+    const h = harness();
+    const chunks = [
+      'event: response.failed\ndata: {"type":"response.failed","response":{"id":"resp_failed","status":"failed","output":[],"error":{"code":"server_error","message":"model execution failed"},"usage":null}}\n\n',
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(sseStream(chunks), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(responsesRequest('@openai/gpt-5.4', true));
+    expect(await res.text()).toBe(chunks.join(''));
+    await h.settle();
+
+    expect(h.events[0].request).toMatchObject({
+      endpoint: '/responses',
+      status: 'error',
+      statusCode: 200,
+      error: 'model execution failed',
+    });
+    expect(h.events[1].span).toMatchObject({
+      status: 'error',
+      error: 'model execution failed',
+    });
+    expect(h.events[1].trace.status).toBe('error');
+  });
+
+  it('meters a non-streaming body with unexpected shapes without throwing (guards narrow, never cast)', async () => {
+    const h = harness();
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          id: 42, // wrong type — should be a string
+          data: { not: 'an-array' }, // malformed images payload
+          usage: 'not-an-object',
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@openai/gpt-4o'));
+    expect(res.status).toBe(200);
+    await h.settle();
+
+    expect(h.events).toHaveLength(2);
+    expect(h.events[0].request).toMatchObject({
+      status: 'success',
+      output: null,
+    });
+    expect(h.events[0].request.usage).toBeUndefined();
+  });
+
+  it('skips a malformed SSE data frame without throwing and still meters the valid one', async () => {
+    const h = harness();
+    const chunks = [
+      'data: {not valid json at all\n\n',
+      'data: {"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":5}}\n\n',
+      'data: [DONE]\n\n',
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(sseStream(chunks), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@openai/gpt-4o', true));
+    expect(await res.text()).toBe(chunks.join('')); // caller received every byte
+    await h.settle();
+
+    expect(h.events[0].request.usage).toMatchObject({
+      inputTokens: 10,
+      outputTokens: 5,
+    });
+    expect(h.events[0].request.status).toBe('success');
+  });
+
+  it('meters usage from an incomplete final SSE frame (no trailing blank line)', async () => {
+    const h = harness();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"hi"}}]}\n\n',
+      'data: {"choices":[],"usage":{"prompt_tokens":7,"completion_tokens":3}}',
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(sseStream(chunks), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@openai/gpt-4o', true));
+    expect(await res.text()).toBe(chunks.join(''));
+    await h.settle();
+
+    expect(h.events[0].request.usage).toMatchObject({
+      inputTokens: 7,
+      outputTokens: 3,
     });
   });
 

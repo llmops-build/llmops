@@ -40,6 +40,19 @@ function imageRequest(model: string): Request {
   });
 }
 
+function responsesRequest(model: string): Request {
+  return new Request('http://gateway/api/genai/v1/responses', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      input: 'Say hello',
+      stream: true,
+      stream_options: { include_obfuscation: false },
+    }),
+  });
+}
+
 describe('createGateway', () => {
   it('resolves the base URL via the injected getProviderMetadata + Bearer auth + stripped model', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ id: 'ok' }));
@@ -136,6 +149,37 @@ describe('createGateway', () => {
       response_format: 'b64_json',
       n: 1,
     });
+  });
+
+  it('does not inject Chat Completions stream options into Responses requests', async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({
+        id: 'resp_1',
+        status: 'completed',
+        output: [],
+        usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'sk-test' }],
+      getProviderMetadata: metadata,
+      telemetry: { emit: () => {}, flush: async () => {} },
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(responsesRequest('@openai/gpt-5.4'));
+    expect(res.status).toBe(200);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.openai.com/v1/responses');
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      model: 'gpt-5.4',
+      stream: true,
+      stream_options: { include_obfuscation: false },
+    });
+    expect(JSON.parse(init.body as string).stream_options).not.toHaveProperty(
+      'include_usage',
+    );
   });
 
   it('returns the upstream response body unchanged (pass-through)', async () => {

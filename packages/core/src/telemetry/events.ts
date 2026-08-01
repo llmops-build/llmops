@@ -18,6 +18,8 @@ export interface TokenUsage {
   outputTokens?: number;
   cacheReadTokens?: number;
   cacheWriteTokens?: number;
+  /** Output tokens used for reasoning (included in outputTokens). */
+  reasoningTokens?: number;
 }
 
 /** A single LLM call — the unit behind the request log and cost tracking. */
