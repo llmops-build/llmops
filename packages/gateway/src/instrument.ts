@@ -99,32 +99,42 @@ async function meterJson(
   cloned: Response,
   statusCode: number,
 ): Promise<void> {
-  const body = (await cloned.json()) as {
-    usage?: OpenAIUsage;
-    choices?: Array<{ message?: unknown }>;
-    data?: Array<{
-      b64_json?: string;
-      url?: string;
-      revised_prompt?: string;
-    }>;
-  };
+  const body = (await cloned.json()) as OpenAIResponseBody;
+  const failed =
+    ctx.requestType === RequestType.Responses && body.status === 'failed';
   await emit(
     ctx,
     toTokenUsage(body.usage),
     extractJsonOutput(body),
-    'success',
+    failed ? 'error' : 'success',
     statusCode,
+    failed ? responseErrorMessage(body) : undefined,
   );
 }
 
-function extractJsonOutput(body: {
+interface OpenAIResponseBody {
+  id?: string;
+  status?: string;
+  error?: { message?: string; code?: string } | null;
+  usage?: OpenAIUsage | null;
   choices?: Array<{ message?: unknown }>;
   data?: Array<{
     b64_json?: string;
     url?: string;
     revised_prompt?: string;
   }>;
-}): unknown {
+  output?: unknown[];
+}
+
+function extractJsonOutput(body: OpenAIResponseBody): unknown {
+  if (body.output) {
+    return {
+      responseId: body.id,
+      status: body.status,
+      output: sanitizeResponseOutput(body.output),
+    };
+  }
+
   const message = body.choices?.[0]?.message;
   if (message !== undefined) return message;
   if (!body.data) return null;
@@ -140,17 +150,48 @@ function extractJsonOutput(body: {
   };
 }
 
+/** Preserve agent/tool linkage while excluding opaque or binary payloads. */
+function sanitizeResponseOutput(value: unknown, parentType?: string): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeResponseOutput(item, parentType));
+  }
+  if (!value || typeof value !== 'object') return value;
+
+  const source = value as Record<string, unknown>;
+  const type = typeof source.type === 'string' ? source.type : parentType;
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(source)) {
+    if (key === 'encrypted_content') continue;
+    if (key === 'b64_json' || key === 'screenshot') {
+      sanitized[key] = '[binary omitted]';
+      continue;
+    }
+    if (key === 'result' && type === 'image_generation_call') {
+      sanitized[key] = '[image omitted]';
+      continue;
+    }
+    sanitized[key] = sanitizeResponseOutput(entry, type);
+  }
+  return sanitized;
+}
+
+function responseErrorMessage(body: OpenAIResponseBody): string {
+  return body.error?.message ?? body.error?.code ?? 'response failed';
+}
+
 async function meterStream(
   ctx: InstrumentContext,
   stream: ReadableStream<Uint8Array>,
   statusCode: number,
 ): Promise<void> {
+  const metered = await drainSSE(stream);
   await emit(
     ctx,
-    await drainSSEUsage(stream),
-    undefined,
-    'success',
+    metered.usage,
+    metered.output,
+    metered.status,
     statusCode,
+    metered.error,
   );
 }
 
@@ -183,6 +224,24 @@ async function emit(
     error,
     startedAt: ctx.startedAt,
   };
+  const attributes: Record<string, unknown> = {
+    'gen_ai.operation.name': operationName(ctx.requestType),
+    'gen_ai.provider.name': ctx.provider,
+    'gen_ai.request.model': ctx.model,
+    'gen_ai.request.endpoint': ctx.requestType,
+    'llmops.request.id': ctx.requestId,
+    'llmops.is_streaming': ctx.isStreaming,
+  };
+  if (usage?.inputTokens != null) {
+    attributes['gen_ai.usage.input_tokens'] = usage.inputTokens;
+  }
+  if (usage?.outputTokens != null) {
+    attributes['gen_ai.usage.output_tokens'] = usage.outputTokens;
+  }
+  if (usage?.reasoningTokens != null) {
+    attributes['llmops.usage.reasoning_tokens'] = usage.reasoningTokens;
+  }
+
   const span: SpanRecord = {
     traceId: ctx.trace.traceId,
     spanId: ctx.trace.spanId,
@@ -195,14 +254,7 @@ async function emit(
     cost,
     status: status === 'success' ? 'ok' : 'error',
     error,
-    attributes: {
-      'gen_ai.operation.name': operationName(ctx.requestType),
-      'gen_ai.provider.name': ctx.provider,
-      'gen_ai.request.model': ctx.model,
-      'gen_ai.request.endpoint': ctx.requestType,
-      'llmops.request.id': ctx.requestId,
-      'llmops.is_streaming': ctx.isStreaming,
-    },
+    attributes,
     startedAt: ctx.startedAt,
     endedAt,
   };
@@ -223,6 +275,8 @@ async function emit(
 
 function operationName(requestType: RequestType): string {
   switch (requestType) {
+    case RequestType.Responses:
+      return 'generate_content';
     case RequestType.ImageGeneration:
     case RequestType.ImageEdit:
     case RequestType.ImageVariation:
@@ -269,35 +323,62 @@ async function computeCostDollars(
 interface OpenAIUsage {
   prompt_tokens?: number;
   completion_tokens?: number;
+  input_tokens?: number;
+  output_tokens?: number;
   total_tokens?: number;
   prompt_tokens_details?: { cached_tokens?: number };
+  input_tokens_details?: { cached_tokens?: number };
+  output_tokens_details?: { reasoning_tokens?: number };
 }
 
-function toTokenUsage(u: OpenAIUsage | undefined): TokenUsage | undefined {
+function toTokenUsage(
+  u: OpenAIUsage | null | undefined,
+): TokenUsage | undefined {
   if (!u) return undefined;
-  const inputTokens = u.prompt_tokens ?? 0;
+  const inputTokens = u.input_tokens ?? u.prompt_tokens ?? 0;
+  const reportedOutput = u.output_tokens ?? u.completion_tokens ?? 0;
   const outputTokens = Math.max(
-    u.completion_tokens ?? 0,
+    reportedOutput,
     (u.total_tokens ?? 0) - inputTokens,
   );
   return {
     inputTokens,
     outputTokens,
-    cacheReadTokens: u.prompt_tokens_details?.cached_tokens,
+    cacheReadTokens:
+      u.input_tokens_details?.cached_tokens ??
+      u.prompt_tokens_details?.cached_tokens,
+    reasoningTokens: u.output_tokens_details?.reasoning_tokens,
   };
 }
 
 /**
- * Drain an OpenAI SSE stream and return usage from the terminal chunk (present
- * when `stream_options.include_usage` was set). Frames are `\n\n`-delimited.
+ * Drain an OpenAI SSE stream. Chat Completions exposes top-level usage in its
+ * terminal chunk; Responses exposes a full response (usage + output items) in
+ * the typed `response.completed` event. Frames are `\n\n`-delimited.
  */
-async function drainSSEUsage(
+interface StreamMeteringResult {
+  usage?: TokenUsage;
+  output?: unknown;
+  status: 'success' | 'error';
+  error?: string;
+}
+
+async function drainSSE(
   stream: ReadableStream<Uint8Array>,
-): Promise<TokenUsage | undefined> {
+): Promise<StreamMeteringResult> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
-  let usage: TokenUsage | undefined;
+  const result: StreamMeteringResult = { status: 'success' };
+
+  const consumeFrame = (frame: string) => {
+    const found = parseMeteringFrame(frame);
+    if (found.usage) result.usage = found.usage;
+    if (found.output !== undefined) result.output = found.output;
+    if (found.status === 'error') result.status = 'error';
+    if (found.error) result.error = found.error;
+  };
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -305,30 +386,49 @@ async function drainSSEUsage(
       buffer += decoder.decode(value, { stream: true });
       let sep = buffer.indexOf('\n\n');
       while (sep !== -1) {
-        const found = parseUsageFrame(buffer.slice(0, sep));
-        if (found) usage = found;
+        consumeFrame(buffer.slice(0, sep));
         buffer = buffer.slice(sep + 2);
         sep = buffer.indexOf('\n\n');
       }
     }
+    buffer += decoder.decode();
+    if (buffer.trim()) consumeFrame(buffer);
   } finally {
     reader.releaseLock();
   }
-  return usage;
+  return result;
 }
 
-function parseUsageFrame(frame: string): TokenUsage | undefined {
+function parseMeteringFrame(frame: string): StreamMeteringResult {
+  const result: StreamMeteringResult = { status: 'success' };
   for (const line of frame.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed.startsWith('data:')) continue;
     const data = trimmed.slice(5).trim();
     if (data === '' || data === '[DONE]') continue;
     try {
-      const json = JSON.parse(data) as { usage?: OpenAIUsage };
-      if (json.usage) return toTokenUsage(json.usage);
+      const json = JSON.parse(data) as {
+        type?: string;
+        message?: string;
+        error?: { message?: string; code?: string };
+        usage?: OpenAIUsage;
+        response?: OpenAIResponseBody;
+      };
+      const response = json.response;
+      const usage = toTokenUsage(response?.usage ?? json.usage);
+      if (usage) result.usage = usage;
+      if (response?.output) result.output = extractJsonOutput(response);
+      if (json.type === 'response.failed' || json.type === 'error') {
+        result.status = 'error';
+        result.error =
+          response?.error?.message ??
+          json.error?.message ??
+          json.message ??
+          'response stream failed';
+      }
     } catch {
       // not JSON — skip
     }
   }
-  return undefined;
+  return result;
 }

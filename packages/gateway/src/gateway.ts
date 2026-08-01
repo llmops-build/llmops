@@ -4,6 +4,7 @@ import { parseModel, resolveTarget } from './resolve';
 import { matchRoute } from './router';
 import { resolveGatewayTraceContext } from './trace-context';
 import type { GatewayConfig, ProviderInput } from './types/config';
+import { RequestType } from './types/requests';
 import { errorResponse } from './utils/responses';
 
 /** The in-process gateway handler — a plug you mount, not a proxy you route to. */
@@ -62,13 +63,18 @@ export function createGateway(config: GatewayConfig = {}): GatewayHandler {
     if (!resolved.ok) return errorResponse(resolved.error);
 
     // Strip the `@slug/` prefix so the upstream sees its own bare model id.
-    // When metering a stream, ask OpenAI-compatible providers to include usage
-    // in the final SSE chunk so cost can be computed without buffering.
+    // Chat Completions omits streaming usage unless explicitly requested.
+    // Responses streams carry usage on `response.completed` and define a
+    // different stream_options contract, so never inject include_usage there.
     const rewritten: Record<string, unknown> = {
       ...payload,
       model: parsed.value.model,
     };
-    if (config.telemetry && rewritten.stream === true) {
+    if (
+      config.telemetry &&
+      rewritten.stream === true &&
+      requestType === RequestType.ChatCompletion
+    ) {
       rewritten.stream_options = {
         ...(rewritten.stream_options as Record<string, unknown> | undefined),
         include_usage: true,
