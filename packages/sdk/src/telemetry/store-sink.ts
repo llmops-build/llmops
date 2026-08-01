@@ -16,7 +16,7 @@ export interface StoreSinkConfig {
    * Edge runtimes (Cloudflare Workers, Vercel Edge): pass
    * `ctx.waitUntil.bind(ctx)`. When provided, the sink flushes in the
    * background tied to the request lifecycle instead of starting a
-   * `setInterval` — which does not run between requests on Workers.
+   * timer — which does not run between requests on Workers.
    */
   waitUntil?: (promise: Promise<unknown>) => void;
 }
@@ -30,19 +30,24 @@ export function createStoreSink(
   const { flushIntervalMs = 2000, maxBatchSize = 100, waitUntil } = config;
 
   let queue: TelemetryEvent[] = [];
-  let timer: ReturnType<typeof setInterval> | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
 
   function ensureTimer(): void {
     // Edge path uses waitUntil (in emit); no background timer needed there.
     if (waitUntil || timer) return;
-    timer = setInterval(() => {
+    // A one-shot, referenced timer lets short-lived Node processes (notably the
+    // eval CLI) persist their last batch before exiting. `flush()` clears it,
+    // so there is no perpetual interval keeping the process alive afterward.
+    timer = setTimeout(() => {
       flush().catch(logFlushError);
     }, flushIntervalMs);
-    // Never keep a short-lived process (e.g. the eval CLI) alive just to flush.
-    (timer as { unref?: () => void }).unref?.();
   }
 
   async function flush(): Promise<void> {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
     if (queue.length === 0) return;
     const batch = queue;
     queue = [];

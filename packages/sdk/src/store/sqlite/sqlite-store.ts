@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import type { SQLiteDatabase } from './types';
+import { createTelemetryDataset } from '../../telemetry/dataset';
 import type { TelemetryStore } from '../../telemetry/interface';
 import type {
-  LLMRequestInsert,
-  TraceUpsert,
-  SpanInsert,
-  SpanEventInsert,
   CostSummaryGroupBy,
+  LLMRequestInsert,
+  SpanEventInsert,
+  SpanInsert,
+  TraceUpsert,
 } from '../../telemetry/types';
+import type { SQLiteDatabase } from './types';
 
 // ─── JSON column parser (shared with D1 store) ─────────────────────────────
 
@@ -566,9 +567,14 @@ export function createSQLiteStore(path: string): SQLiteStore {
   // Enable WAL mode for better concurrent read performance
   db.exec('PRAGMA journal_mode = WAL');
 
+  const requests = createSQLiteLLMRequestsStore(db);
+  const traces = createSQLiteTracesStore(db);
+
   return {
-    ...createSQLiteLLMRequestsStore(db),
-    ...createSQLiteTracesStore(db),
+    ...requests,
+    ...traces,
+    dataset: (query) =>
+      createTelemetryDataset({ ...requests, ...traces }, query),
     _db: db,
   };
 }

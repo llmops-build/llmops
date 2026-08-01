@@ -1,7 +1,18 @@
-import { command, string, boolean as booleanOption } from '@drizzle-team/brocli';
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
-import { resolve, join, basename } from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
+import { basename, join, resolve } from 'node:path';
+import {
+  boolean as booleanOption,
+  command,
+  string,
+} from '@drizzle-team/brocli';
 import chalk from 'chalk';
 
 /**
@@ -35,7 +46,11 @@ function collectEvalFiles(dir: string): string[] {
 
   for (const entry of entries) {
     const fullPath = join(dir, entry.name);
-    if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+    if (
+      entry.isDirectory() &&
+      !entry.name.startsWith('.') &&
+      entry.name !== 'node_modules'
+    ) {
       files.push(...collectEvalFiles(fullPath));
     } else if (
       entry.isFile() &&
@@ -55,12 +70,16 @@ function collectEvalFiles(dir: string): string[] {
 async function bundleAndRun(
   file: string,
   env: Record<string, string | undefined>,
-): Promise<void> {
+  jsonOutput: boolean,
+): Promise<string | undefined> {
   const esbuild = await import('esbuild');
 
   const tmpDir = join(process.cwd(), '.llmops-eval-tmp');
   mkdirSync(tmpDir, { recursive: true });
-  const outFile = join(tmpDir, `${basename(file, '.ts').replace('.eval', '')}_eval.mjs`);
+  const outFile = join(
+    tmpDir,
+    `${basename(file, '.ts').replace('.eval', '')}_eval.mjs`,
+  );
 
   try {
     await esbuild.build({
@@ -88,11 +107,21 @@ async function bundleAndRun(
       },
     });
 
-    execSync(`node ${outFile}`, {
+    if (jsonOutput) {
+      return execFileSync(process.execPath, [outFile], {
+        stdio: ['ignore', 'pipe', 'inherit'],
+        encoding: 'utf8',
+        env: env as Record<string, string>,
+        cwd: process.cwd(),
+      });
+    }
+
+    execFileSync(process.execPath, [outFile], {
       stdio: 'inherit',
       env: env as Record<string, string>,
       cwd: process.cwd(),
     });
+    return undefined;
   } finally {
     // Clean up temp files
     try {
@@ -115,12 +144,11 @@ export const evalCommand = command({
       .default('./llmops-evals')
       .desc('Output directory for results')
       .alias('o'),
-    json: booleanOption()
-      .desc('Output results as JSON to stdout')
-      .alias('j'),
+    json: booleanOption().desc('Output results as JSON to stdout').alias('j'),
   },
   handler: async (opts) => {
     const target = opts.target;
+    const jsonOutput = opts.json === true;
     const files = findEvalFiles(target);
 
     if (files.length === 0) {
@@ -132,24 +160,34 @@ export const evalCommand = command({
       process.exit(1);
     }
 
-    console.log(
-      chalk.dim(`Found ${files.length} eval file${files.length > 1 ? 's' : ''}`),
-    );
+    if (!jsonOutput) {
+      console.log(
+        chalk.dim(
+          `Found ${files.length} eval file${files.length > 1 ? 's' : ''}`,
+        ),
+      );
+    }
 
     const env: Record<string, string | undefined> = {
       ...process.env,
       LLMOPS_EVAL_OUTPUT_DIR: resolve(opts.outputDir),
-      ...(opts.json ? { LLMOPS_EVAL_OUTPUT: 'json' } : {}),
+      ...(jsonOutput ? { LLMOPS_EVAL_OUTPUT: 'json' } : {}),
     };
 
     let hasErrors = false;
+    const jsonResults: unknown[] = [];
 
     for (const file of files) {
       const name = basename(file);
-      console.log(chalk.dim(`\nRunning ${name}...`));
+      if (!jsonOutput) {
+        console.log(chalk.dim(`\nRunning ${name}...`));
+      }
 
       try {
-        await bundleAndRun(file, env);
+        const output = await bundleAndRun(file, env, jsonOutput);
+        if (jsonOutput && output) {
+          jsonResults.push(JSON.parse(output));
+        }
       } catch (err) {
         hasErrors = true;
         console.error(chalk.red(`\n✗ ${name} failed`));
@@ -159,9 +197,14 @@ export const evalCommand = command({
       }
     }
 
+    if (jsonOutput) {
+      const output = jsonResults.length === 1 ? jsonResults[0] : jsonResults;
+      process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
+    }
+
     // Print summary
     const outputDir = resolve(opts.outputDir);
-    if (existsSync(outputDir) && !opts.json) {
+    if (existsSync(outputDir) && !jsonOutput) {
       const evalDirs = readdirSync(outputDir, { withFileTypes: true })
         .filter((d) => d.isDirectory())
         .map((d) => d.name);
@@ -187,7 +230,9 @@ export const evalCommand = command({
                 .join('  ');
               console.log(`  ${chalk.white(evalDir)}  ${chalk.cyan(scoreStr)}`);
             } catch {
-              console.log(`  ${chalk.white(evalDir)}  ${chalk.dim(resultFiles[0])}`);
+              console.log(
+                `  ${chalk.white(evalDir)}  ${chalk.dim(resultFiles[0])}`,
+              );
             }
           }
         }

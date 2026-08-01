@@ -1,26 +1,28 @@
 import { randomUUID } from 'node:crypto';
-import z from 'zod';
 import { logger } from '@llmops/core';
+import z from 'zod';
+import { createTelemetryDataset } from './dataset';
+import type { TelemetryStore } from './interface';
+import type {
+  CostSummaryGroupBy,
+  LLMRequestInsert,
+  SpanEventInsert,
+  SpanInsert,
+  TraceUpsert,
+} from './types';
 import {
   insertLLMRequestSchema,
-  insertSpanSchema,
   insertSpanEventSchema,
+  insertSpanSchema,
   upsertTraceSchema,
-} from './types';
-import type {
-  LLMRequestInsert,
-  TraceUpsert,
-  SpanInsert,
-  SpanEventInsert,
-  CostSummaryGroupBy,
 } from './types';
 
 export type {
-  LLMRequestInsert,
-  TraceUpsert,
-  SpanInsert,
-  SpanEventInsert,
   CostSummaryGroupBy,
+  LLMRequestInsert,
+  SpanEventInsert,
+  SpanInsert,
+  TraceUpsert,
 } from './types';
 export { COST_SUMMARY_GROUP_BY } from './types';
 
@@ -602,8 +604,6 @@ function createTracesStore(pool: any) {
 
 // ─── PgStore ────────────────────────────────────────────────────────────────
 
-import type { TelemetryStore } from './interface';
-
 export type PgStore = TelemetryStore & {
   _pool: unknown;
   _schema: string;
@@ -656,9 +656,14 @@ export function createPgStore(
 
   logger.debug(`pgStore: initialized with schema "${schema}"`);
 
+  const requests = createLLMRequestsStore(pool);
+  const traces = createTracesStore(pool);
+
   return {
-    ...createLLMRequestsStore(pool),
-    ...createTracesStore(pool),
+    ...requests,
+    ...traces,
+    dataset: (query) =>
+      createTelemetryDataset({ ...requests, ...traces }, query),
     _pool: pool,
     _schema: schema,
   };
