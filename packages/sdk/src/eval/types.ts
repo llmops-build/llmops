@@ -143,6 +143,86 @@ export interface CompareResult {
 }
 
 /**
+ * Options for applyGate().
+ */
+export interface GateOptions {
+  /**
+   * Minimum mean score required per evaluator name, keyed by evaluator name
+   * as it appears in `EvaluateResult.scores`. A result whose mean is below
+   * the threshold fails the gate. Thresholds must be finite numbers in [0, 1].
+   *
+   * An evaluator named here that appears in no candidate result fails the
+   * gate rather than being skipped.
+   */
+  minScore?: Record<string, number>;
+
+  /**
+   * Baseline runs to diff against, keyed by `EvaluateResult.name`. Evaluators
+   * present in both the baseline and the candidate are compared. A baseline
+   * eval with no matching candidate, or a baseline evaluator that produced no
+   * score in the candidate, fails the gate rather than being skipped;
+   * evaluators only the candidate has count as new coverage.
+   *
+   * Passing an empty record throws — a regression gate that can compare
+   * nothing must not report success.
+   */
+  baseline?: Record<string, EvaluateResult>;
+
+  /**
+   * Maximum allowed drop in an evaluator's mean score vs its baseline
+   * before failing. Must be a finite number in [0, 1]. Default: 0
+   * (no regression allowed).
+   */
+  maxRegression?: number;
+}
+
+/**
+ * A single check performed by applyGate().
+ *
+ * - `min-score` — an evaluator's mean vs a configured threshold
+ * - `regression` — an evaluator's mean vs its baseline
+ * - `baseline-missing` — a baseline eval absent from the candidate run
+ * - `evaluator-missing` — an evaluator in a matched baseline eval that produced
+ *   no score in the candidate run. Evaluators only the candidate has are new
+ *   coverage and are not reported.
+ * - `errors` — a candidate eval that recorded datapoint/evaluator errors
+ */
+export interface GateCheck {
+  /** `EvaluateResult.name` this check ran against. */
+  eval: string;
+  /** Evaluator name (key in `EvaluateResult.scores`). Absent for whole-eval checks. */
+  evaluator?: string;
+  type:
+    | 'min-score'
+    | 'regression'
+    | 'baseline-missing'
+    | 'evaluator-missing'
+    | 'errors';
+  score?: number;
+  threshold?: number;
+  baseline?: number;
+  candidate?: number;
+  delta?: number;
+  maxRegression?: number;
+  /** Number of failed datapoints, for `errors` checks. */
+  errors?: number;
+  passed: boolean;
+  /** Human-readable reason, set for checks that fail closed rather than on a number. */
+  message?: string;
+}
+
+/**
+ * Result of applyGate(). `passed` is true only when every check passed.
+ *
+ * A gate that produced no checks at all is reported as `passed: false` —
+ * a gate that verified nothing has not been satisfied.
+ */
+export interface GateResult {
+  passed: boolean;
+  checks: GateCheck[];
+}
+
+/**
  * Options for judgeScorer().
  */
 export interface JudgeScorerOptions {

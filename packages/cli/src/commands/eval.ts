@@ -11,9 +11,22 @@ import { basename, join, resolve } from 'node:path';
 import {
   boolean as booleanOption,
   command,
+  number as numberOption,
   string,
 } from '@drizzle-team/brocli';
+import type { EvaluateResult, GateResult } from '@llmops/sdk/eval';
+import { applyGate } from '@llmops/sdk/eval';
 import chalk from 'chalk';
+import {
+  buildJsonOutput,
+  byEvalName,
+  EXIT_EVAL_ERROR,
+  loadLatestResults,
+  parseMaxRegression,
+  parseMinScoreSpec,
+  resolveExitCode,
+} from '../lib/gate';
+import { printGateReport } from '../lib/gate-report';
 
 /**
  * Find eval files from a path (file or directory).
@@ -24,7 +37,7 @@ function findEvalFiles(target: string): string[] {
 
   if (!existsSync(resolved)) {
     console.error(chalk.red(`Path not found: ${target}`));
-    process.exit(1);
+    process.exit(EXIT_EVAL_ERROR);
   }
 
   const stat = statSync(resolved);
@@ -145,10 +158,65 @@ export const evalCommand = command({
       .desc('Output directory for results')
       .alias('o'),
     json: booleanOption().desc('Output results as JSON to stdout').alias('j'),
+    minScore: string()
+      .desc(
+        'Fail if an evaluator\'s mean score is below a threshold. Format: "evaluator=threshold[,evaluator=threshold...]"',
+      )
+      .alias('m'),
+    baseline: string()
+      .desc(
+        "Directory of baseline eval results (e.g. a previous run's --outputDir) to check for score regressions",
+      )
+      .alias('b'),
+    maxRegression: numberOption()
+      .desc(
+        "Max allowed drop in an evaluator's mean score vs --baseline before failing. Requires --baseline. Default: 0",
+      )
+      .alias('r'),
   },
   handler: async (opts) => {
     const target = opts.target;
     const jsonOutput = opts.json === true;
+
+    // Validate gate configuration before touching the filesystem or running
+    // anything, so a misconfigured flag fails immediately rather than after a
+    // full (and potentially paid) eval run.
+    let minScoreThresholds: Record<string, number> | undefined;
+    let maxRegression = 0;
+    let baselineResults: Record<string, EvaluateResult> | undefined;
+
+    try {
+      if (opts.maxRegression !== undefined && !opts.baseline) {
+        throw new Error('--maxRegression requires --baseline to be set.');
+      }
+
+      minScoreThresholds = opts.minScore
+        ? parseMinScoreSpec(opts.minScore)
+        : undefined;
+      maxRegression = parseMaxRegression(opts.maxRegression);
+
+      if (opts.baseline) {
+        const baselineDir = resolve(opts.baseline);
+        if (!existsSync(baselineDir)) {
+          throw new Error(`Baseline directory not found: ${opts.baseline}`);
+        }
+
+        const loaded = loadLatestResults(baselineDir);
+        if (loaded.length === 0) {
+          throw new Error(
+            `Baseline directory contains no eval results: ${opts.baseline}`,
+          );
+        }
+        baselineResults = byEvalName(loaded);
+      }
+    } catch (err) {
+      console.error(
+        chalk.red(err instanceof Error ? err.message : String(err)),
+      );
+      process.exit(EXIT_EVAL_ERROR);
+    }
+
+    const gateEnabled = Boolean(minScoreThresholds || baselineResults);
     const files = findEvalFiles(target);
 
     if (files.length === 0) {
@@ -157,7 +225,7 @@ export const evalCommand = command({
           `No eval files found. Create files matching *.eval.ts or *.eval.js in ${target}`,
         ),
       );
-      process.exit(1);
+      process.exit(EXIT_EVAL_ERROR);
     }
 
     if (!jsonOutput) {
@@ -176,6 +244,7 @@ export const evalCommand = command({
 
     let hasErrors = false;
     const jsonResults: unknown[] = [];
+    const runStartedAt = Date.now();
 
     for (const file of files) {
       const name = basename(file);
@@ -197,8 +266,30 @@ export const evalCommand = command({
       }
     }
 
+    // Run the CI gate against the results this invocation just produced.
+    // Reads back from outputDir (evaluate() always saves there) instead of
+    // requiring --json, so thresholds and baselines work in either mode.
+    let gate: GateResult | undefined;
+    if (gateEnabled && !hasErrors) {
+      try {
+        gate = applyGate(
+          loadLatestResults(resolve(opts.outputDir), runStartedAt),
+          {
+            minScore: minScoreThresholds,
+            baseline: baselineResults,
+            maxRegression,
+          },
+        );
+      } catch (err) {
+        console.error(
+          chalk.red(err instanceof Error ? err.message : String(err)),
+        );
+        process.exit(EXIT_EVAL_ERROR);
+      }
+    }
+
     if (jsonOutput) {
-      const output = jsonResults.length === 1 ? jsonResults[0] : jsonResults;
+      const output = buildJsonOutput(jsonResults, gate);
       process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
     }
 
@@ -239,8 +330,13 @@ export const evalCommand = command({
       }
     }
 
-    if (hasErrors) {
-      process.exit(1);
+    if (gate && !jsonOutput) {
+      printGateReport(gate);
+    }
+
+    const exitCode = resolveExitCode({ hasErrors, gate });
+    if (exitCode !== 0) {
+      process.exit(exitCode);
     }
   },
 });
