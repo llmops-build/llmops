@@ -23,7 +23,7 @@ packages/
 └── cli/              → @llmops/cli — CLI for migrations and evals.
 
 docs/                 → Fumadocs site (https://llmops.build/docs)
-examples/             → Example apps (hono, express, nextjs, langchain, eval, cloudflare-worker)
+examples/             → Example apps (eval, express, hono, langchain, nextjs)
 ```
 
 ## Tech Stack
