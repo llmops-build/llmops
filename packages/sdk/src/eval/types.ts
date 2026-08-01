@@ -143,6 +143,58 @@ export interface CompareResult {
 }
 
 /**
+ * Options for applyGate().
+ */
+export interface GateOptions {
+  /**
+   * Minimum mean score required per evaluator name, keyed by evaluator name
+   * as it appears in `EvaluateResult.scores`. A result whose mean is below
+   * the threshold fails the gate.
+   */
+  minScore?: Record<string, number>;
+
+  /**
+   * Baseline runs to diff against, keyed by `EvaluateResult.name`. Only
+   * evaluators present in both the baseline and the candidate are checked.
+   */
+  baseline?: Record<string, EvaluateResult>;
+
+  /**
+   * Maximum allowed drop in an evaluator's mean score vs its baseline
+   * before failing. Default: 0 (no regression allowed).
+   */
+  maxRegression?: number;
+}
+
+/**
+ * A single threshold or regression check performed by applyGate().
+ */
+export interface GateCheck {
+  /** `EvaluateResult.name` this check ran against. */
+  eval: string;
+  /** Evaluator name (key in `EvaluateResult.scores`). */
+  evaluator: string;
+  type: 'min-score' | 'regression';
+  score?: number;
+  threshold?: number;
+  baseline?: number;
+  candidate?: number;
+  delta?: number;
+  maxRegression?: number;
+  passed: boolean;
+  /** Present when a check could not be evaluated as configured, e.g. an unmatched evaluator name. */
+  message?: string;
+}
+
+/**
+ * Result of applyGate(). `passed` is true only when every check passed.
+ */
+export interface GateResult {
+  passed: boolean;
+  checks: GateCheck[];
+}
+
+/**
  * Options for judgeScorer().
  */
 export interface JudgeScorerOptions {

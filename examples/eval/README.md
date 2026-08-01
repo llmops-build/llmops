@@ -29,6 +29,35 @@ pnpm eval:json
 The command writes only valid JSON to stdout in this mode, so it can be piped
 directly to tools such as `jq`.
 
+## CI regression gates
+
+Use `--minScore` and `--baseline` to turn a run into a pass/fail gate for pull-request CI —
+no LLM API keys required if your evaluators are deterministic (see `support-bot.eval.ts`).
+
+```bash
+# Fail if an evaluator's mean score drops below a threshold
+npx @llmops/cli eval --minScore "exactMatch=0.8"
+
+# Fail if any evaluator regresses vs a checked-in (or artifact-downloaded) baseline
+npx @llmops/cli eval --baseline ./llmops-evals-baseline
+
+# Allow a small tolerance on regressions instead of an exact match
+npx @llmops/cli eval --baseline ./llmops-evals-baseline --maxRegression 0.02
+```
+
+Exit code `0` means every check passed, `2` means a threshold or regression check failed,
+and `1` means an eval file itself failed to run or the flags were misconfigured — a CI step
+can branch on the exit code directly:
+
+```yaml
+- name: Run eval gate
+  run: npx @llmops/cli eval --minScore "exactMatch=0.8" --baseline ./llmops-evals-baseline
+```
+
+With `--json`, the gate result is embedded alongside the eval results as
+`{ "results": ..., "gate": { "passed": true, "checks": [...] } }`, so an agent or script can
+inspect exactly which evaluator failed and by how much instead of only seeing the exit code.
+
 ## Evaluate production traffic
 
 Every telemetry store can turn persisted requests into the same dataset shape

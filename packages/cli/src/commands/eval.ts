@@ -11,9 +11,43 @@ import { basename, join, resolve } from 'node:path';
 import {
   boolean as booleanOption,
   command,
+  number as numberOption,
   string,
 } from '@drizzle-team/brocli';
+import type { GateResult } from '@llmops/sdk/eval';
+import { applyGate } from '@llmops/sdk/eval';
 import chalk from 'chalk';
+import { loadLatestResults, parseMinScoreSpec } from '../lib/gate';
+
+/** Exit codes: 0 = pass, 1 = eval execution error, 2 = gate check failed. */
+const EXIT_EVAL_ERROR = 1;
+const EXIT_GATE_FAILURE = 2;
+
+function printGateReport(gate: GateResult) {
+  const RESET = '\x1b[0m';
+  const DIM = '\x1b[2m';
+  const BOLD = '\x1b[1m';
+  const GREEN = '\x1b[32m';
+  const RED = '\x1b[31m';
+
+  console.log(`\n${BOLD}Gate${RESET}  ${DIM}${'─'.repeat(40)}${RESET}`);
+  for (const check of gate.checks) {
+    const icon = check.passed ? `${GREEN}✓${RESET}` : `${RED}✗${RESET}`;
+    const label = `${check.eval} ${DIM}›${RESET} ${check.evaluator}`;
+    const detail =
+      check.type === 'min-score'
+        ? check.message
+          ? check.message
+          : `score=${check.score?.toFixed(2)} min=${check.threshold}`
+        : `${check.baseline?.toFixed(2)} → ${check.candidate?.toFixed(2)}  ${DIM}(delta ${check.delta && check.delta >= 0 ? '+' : ''}${check.delta?.toFixed(2)}, max regression ${check.maxRegression})${RESET}`;
+    console.log(`  ${icon} ${label}  ${DIM}${detail}${RESET}`);
+  }
+  console.log(
+    gate.passed
+      ? `${GREEN}Gate passed${RESET}`
+      : `${RED}Gate failed${RESET} — ${gate.checks.filter((c) => !c.passed).length} check(s) did not pass`,
+  );
+}
 
 /**
  * Find eval files from a path (file or directory).
@@ -145,11 +179,54 @@ export const evalCommand = command({
       .desc('Output directory for results')
       .alias('o'),
     json: booleanOption().desc('Output results as JSON to stdout').alias('j'),
+    minScore: string()
+      .desc(
+        'Fail if an evaluator\'s mean score is below a threshold. Format: "evaluator=threshold[,evaluator=threshold...]"',
+      )
+      .alias('m'),
+    baseline: string()
+      .desc(
+        "Directory of baseline eval results (e.g. a previous run's --outputDir) to check for score regressions",
+      )
+      .alias('b'),
+    maxRegression: numberOption()
+      .desc(
+        "Max allowed drop in an evaluator's mean score vs --baseline before failing. Requires --baseline. Default: 0",
+      )
+      .alias('r'),
   },
   handler: async (opts) => {
     const target = opts.target;
     const jsonOutput = opts.json === true;
     const files = findEvalFiles(target);
+
+    if (opts.maxRegression !== undefined && !opts.baseline) {
+      console.error(
+        chalk.red('--maxRegression requires --baseline to be set.'),
+      );
+      process.exit(EXIT_EVAL_ERROR);
+    }
+
+    let minScoreThresholds: Record<string, number> | undefined;
+    try {
+      minScoreThresholds = opts.minScore
+        ? parseMinScoreSpec(opts.minScore)
+        : undefined;
+    } catch (err) {
+      console.error(
+        chalk.red(err instanceof Error ? err.message : String(err)),
+      );
+      process.exit(EXIT_EVAL_ERROR);
+    }
+
+    if (opts.baseline && !existsSync(resolve(opts.baseline))) {
+      console.error(
+        chalk.red(`Baseline directory not found: ${opts.baseline}`),
+      );
+      process.exit(EXIT_EVAL_ERROR);
+    }
+
+    const gateEnabled = Boolean(minScoreThresholds || opts.baseline);
 
     if (files.length === 0) {
       console.error(
@@ -176,6 +253,7 @@ export const evalCommand = command({
 
     let hasErrors = false;
     const jsonResults: unknown[] = [];
+    const runStartedAt = Date.now();
 
     for (const file of files) {
       const name = basename(file);
@@ -197,8 +275,29 @@ export const evalCommand = command({
       }
     }
 
+    // Run the CI gate against the results this invocation just produced.
+    // Reads back from outputDir (evaluate() always saves there) instead of
+    // requiring --json, so thresholds and baselines work in either mode.
+    let gate: GateResult | undefined;
+    if (gateEnabled && !hasErrors) {
+      const currentResults = loadLatestResults(
+        resolve(opts.outputDir),
+        runStartedAt,
+      );
+      const baselineResults = opts.baseline
+        ? loadLatestResults(resolve(opts.baseline))
+        : undefined;
+
+      gate = applyGate(Object.values(currentResults), {
+        minScore: minScoreThresholds,
+        baseline: baselineResults,
+        maxRegression: opts.maxRegression ?? 0,
+      });
+    }
+
     if (jsonOutput) {
-      const output = jsonResults.length === 1 ? jsonResults[0] : jsonResults;
+      const results = jsonResults.length === 1 ? jsonResults[0] : jsonResults;
+      const output = gate ? { results, gate } : results;
       process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
     }
 
@@ -239,8 +338,16 @@ export const evalCommand = command({
       }
     }
 
+    if (gate && !jsonOutput) {
+      printGateReport(gate);
+    }
+
     if (hasErrors) {
-      process.exit(1);
+      process.exit(EXIT_EVAL_ERROR);
+    }
+
+    if (gate && !gate.passed) {
+      process.exit(EXIT_GATE_FAILURE);
     }
   },
 });
