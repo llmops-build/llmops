@@ -7,10 +7,19 @@ import type {
   TraceRecord,
 } from '@llmops/core';
 import {
+  type OpenAIResponseBody,
+  type OpenAIUsage,
+  parseOpenAIResponseBody,
+  parseSSEEventPayload,
+} from './openai-protocol';
+import {
   applyTraceHeaders,
   type GatewayTraceContext,
 } from './trace-context';
 import { RequestType } from './types/requests';
+
+/** The status telemetry records for a metered request — never an arbitrary string. */
+type MeteringStatus = 'success' | 'error';
 
 export interface InstrumentContext {
   telemetry: TelemetrySink;
@@ -99,31 +108,21 @@ async function meterJson(
   cloned: Response,
   statusCode: number,
 ): Promise<void> {
-  const body = (await cloned.json()) as OpenAIResponseBody;
+  const body = parseOpenAIResponseBody(await cloned.json());
   const failed =
     ctx.requestType === RequestType.Responses && body.status === 'failed';
   await emit(
     ctx,
     toTokenUsage(body.usage),
     extractJsonOutput(body),
-    failed ? 'error' : 'success',
+    toMeteringStatus(failed),
     statusCode,
     failed ? responseErrorMessage(body) : undefined,
   );
 }
 
-interface OpenAIResponseBody {
-  id?: string;
-  status?: string;
-  error?: { message?: string; code?: string } | null;
-  usage?: OpenAIUsage | null;
-  choices?: Array<{ message?: unknown }>;
-  data?: Array<{
-    b64_json?: string;
-    url?: string;
-    revised_prompt?: string;
-  }>;
-  output?: unknown[];
+function toMeteringStatus(failed: boolean): MeteringStatus {
+  return failed ? 'error' : 'success';
 }
 
 function extractJsonOutput(body: OpenAIResponseBody): unknown {
@@ -150,16 +149,30 @@ function extractJsonOutput(body: OpenAIResponseBody): unknown {
   };
 }
 
+/** Recursive shape of `sanitizeResponseOutput` — mirrors the sanitized subset of
+ * the untyped `output` payload, with binary/opaque fields replaced by markers. */
+type SanitizedOutput =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | SanitizedOutput[]
+  | { [key: string]: SanitizedOutput };
+
 /** Preserve agent/tool linkage while excluding opaque or binary payloads. */
-function sanitizeResponseOutput(value: unknown, parentType?: string): unknown {
+function sanitizeResponseOutput(
+  value: unknown,
+  parentType?: string,
+): SanitizedOutput {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeResponseOutput(item, parentType));
   }
-  if (!value || typeof value !== 'object') return value;
+  if (!value || typeof value !== 'object') return value as SanitizedOutput;
 
   const source = value as Record<string, unknown>;
   const type = typeof source.type === 'string' ? source.type : parentType;
-  const sanitized: Record<string, unknown> = {};
+  const sanitized: Record<string, SanitizedOutput> = {};
   for (const [key, entry] of Object.entries(source)) {
     if (key === 'encrypted_content') continue;
     if (key === 'b64_json' || key === 'screenshot') {
@@ -199,7 +212,7 @@ async function emit(
   ctx: InstrumentContext,
   usage: TokenUsage | undefined,
   output: unknown,
-  status: 'success' | 'error',
+  status: MeteringStatus,
   statusCode: number,
   error?: string,
 ): Promise<void> {
@@ -320,17 +333,6 @@ async function computeCostDollars(
 }
 
 // ── OpenAI usage parsing ────────────────────────────────────────────────────
-interface OpenAIUsage {
-  prompt_tokens?: number;
-  completion_tokens?: number;
-  input_tokens?: number;
-  output_tokens?: number;
-  total_tokens?: number;
-  prompt_tokens_details?: { cached_tokens?: number };
-  input_tokens_details?: { cached_tokens?: number };
-  output_tokens_details?: { reasoning_tokens?: number };
-}
-
 function toTokenUsage(
   u: OpenAIUsage | null | undefined,
 ): TokenUsage | undefined {
@@ -359,8 +361,21 @@ function toTokenUsage(
 interface StreamMeteringResult {
   usage?: TokenUsage;
   output?: unknown;
-  status: 'success' | 'error';
+  status: MeteringStatus;
   error?: string;
+}
+
+/** Fold a per-frame metering result into the running stream total. Later
+ * frames win — the terminal `response.completed` / usage chunk overrides
+ * anything an earlier frame (e.g. a delta) reported. */
+function mergeMeteringResult(
+  target: StreamMeteringResult,
+  found: StreamMeteringResult,
+): void {
+  if (found.usage) target.usage = found.usage;
+  if (found.output !== undefined) target.output = found.output;
+  if (found.status === 'error') target.status = 'error';
+  if (found.error) target.error = found.error;
 }
 
 async function drainSSE(
@@ -371,14 +386,6 @@ async function drainSSE(
   let buffer = '';
   const result: StreamMeteringResult = { status: 'success' };
 
-  const consumeFrame = (frame: string) => {
-    const found = parseMeteringFrame(frame);
-    if (found.usage) result.usage = found.usage;
-    if (found.output !== undefined) result.output = found.output;
-    if (found.status === 'error') result.status = 'error';
-    if (found.error) result.error = found.error;
-  };
-
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -386,13 +393,15 @@ async function drainSSE(
       buffer += decoder.decode(value, { stream: true });
       let sep = buffer.indexOf('\n\n');
       while (sep !== -1) {
-        consumeFrame(buffer.slice(0, sep));
+        mergeMeteringResult(result, parseMeteringFrame(buffer.slice(0, sep)));
         buffer = buffer.slice(sep + 2);
         sep = buffer.indexOf('\n\n');
       }
     }
     buffer += decoder.decode();
-    if (buffer.trim()) consumeFrame(buffer);
+    if (buffer.trim()) {
+      mergeMeteringResult(result, parseMeteringFrame(buffer));
+    }
   } finally {
     reader.releaseLock();
   }
@@ -407,13 +416,7 @@ function parseMeteringFrame(frame: string): StreamMeteringResult {
     const data = trimmed.slice(5).trim();
     if (data === '' || data === '[DONE]') continue;
     try {
-      const json = JSON.parse(data) as {
-        type?: string;
-        message?: string;
-        error?: { message?: string; code?: string };
-        usage?: OpenAIUsage;
-        response?: OpenAIResponseBody;
-      };
+      const json = parseSSEEventPayload(JSON.parse(data));
       const response = json.response;
       const usage = toTokenUsage(response?.usage ?? json.usage);
       if (usage) result.usage = usage;

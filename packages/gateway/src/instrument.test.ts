@@ -7,6 +7,8 @@ const metadata: ProviderMetadataResolver = async () => ({
   openaiCompatible: true,
 });
 
+const RESPONSES_URL = 'http://gw/api/genai/v1/responses';
+
 // biome-ignore lint/suspicious/noExplicitAny: test stub
 const pricing = async (): Promise<any> => ({
   inputCostPer1M: 2.5,
@@ -54,7 +56,7 @@ function imageRequest(model: string): Request {
 }
 
 function responsesRequest(model: string, stream = false): Request {
-  return new Request('http://gw/api/genai/v1/responses', {
+  return new Request(RESPONSES_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -472,6 +474,100 @@ describe('gateway telemetry', () => {
       error: 'model execution failed',
     });
     expect(h.events[1].trace.status).toBe('error');
+  });
+
+  it('meters a non-streaming body with unexpected shapes without throwing (guards narrow, never cast)', async () => {
+    const h = harness();
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          id: 42, // wrong type — should be a string
+          data: { not: 'an-array' }, // malformed images payload
+          usage: 'not-an-object',
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@openai/gpt-4o'));
+    expect(res.status).toBe(200);
+    await h.settle();
+
+    expect(h.events).toHaveLength(2);
+    expect(h.events[0].request).toMatchObject({
+      status: 'success',
+      output: null,
+    });
+    expect(h.events[0].request.usage).toBeUndefined();
+  });
+
+  it('skips a malformed SSE data frame without throwing and still meters the valid one', async () => {
+    const h = harness();
+    const chunks = [
+      'data: {not valid json at all\n\n',
+      'data: {"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":5}}\n\n',
+      'data: [DONE]\n\n',
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(sseStream(chunks), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@openai/gpt-4o', true));
+    expect(await res.text()).toBe(chunks.join('')); // caller received every byte
+    await h.settle();
+
+    expect(h.events[0].request.usage).toMatchObject({
+      inputTokens: 10,
+      outputTokens: 5,
+    });
+    expect(h.events[0].request.status).toBe('success');
+  });
+
+  it('meters usage from an incomplete final SSE frame (no trailing blank line)', async () => {
+    const h = harness();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"hi"}}]}\n\n',
+      'data: {"choices":[],"usage":{"prompt_tokens":7,"completion_tokens":3}}',
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(sseStream(chunks), {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    );
+    const gw = createGateway({
+      providers: [{ provider: 'openai', slug: 'openai', apiKey: 'k' }],
+      getProviderMetadata: metadata,
+      telemetry: h.telemetry as never,
+      waitUntil: h.waitUntil,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+
+    const res = await gw(chatRequest('@openai/gpt-4o', true));
+    expect(await res.text()).toBe(chunks.join(''));
+    await h.settle();
+
+    expect(h.events[0].request.usage).toMatchObject({
+      inputTokens: 7,
+      outputTokens: 3,
+    });
   });
 
   it('no telemetry configured → same Response, nothing metered', async () => {
