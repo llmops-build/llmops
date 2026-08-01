@@ -53,7 +53,7 @@ LLMOps is a comprehensive LLMOps toolkit that provides an AI Gateway, observabil
 - AI Gateway: OpenAI-compatible API that routes to a broad range of LLM providers
 - Observability: Request/response logging, cost tracking, latency metrics, and distributed traces with spans
 - Telemetry Stores: Postgres, SQLite, or Cloudflare D1 with automatic migrations
-- Evals: Code-first evaluation with `evaluate`, `judgeScorer`, and `compare`
+- Evals: Code-first evaluation with \`evaluate\`, \`judgeScorer\`, and \`compare\`
 - Framework Agnostic: Works with Express, Hono, Next.js, and more
 - TypeScript-First: Strict type safe SDK
 - Self-Hosted: Full control over your data and infrastructure
