@@ -44,8 +44,10 @@ function assertUnitInterval(value: number, label: string): void {
  *
  * The gate fails closed. It reports `passed: true` only when it actually
  * performed checks and every one of them passed; anything it could not
- * verify (an evaluator that never ran, a baseline eval with no candidate,
- * an eval that recorded errors) is a failing check, not a skipped one.
+ * verify (an evaluator that never ran, a baseline eval with no candidate, a
+ * baseline evaluator the candidate dropped, an eval that recorded errors) is
+ * a failing check, not a skipped one. Evaluators only the candidate has are
+ * treated as new coverage and pass silently.
  *
  * Throws on misconfiguration — out-of-range thresholds, or a baseline that
  * contains no runs to compare against. Callers should treat a throw as a
@@ -125,6 +127,7 @@ export function applyGate(
 
       for (const [evaluator, candidateStats] of Object.entries(result.scores)) {
         const baselineStats = baselineResult.scores[evaluator];
+        // Evaluators only the candidate has are new coverage, not a regression.
         if (!baselineStats) continue;
 
         const delta = candidateStats.mean - baselineStats.mean;
@@ -137,6 +140,23 @@ export function applyGate(
           delta,
           maxRegression,
           passed: delta >= -maxRegression,
+        });
+      }
+
+      // An evaluator the baseline had and the candidate does not is lost
+      // coverage: comparing only what survived would let a deleted safety
+      // check read as "no regression".
+      for (const [evaluator, baselineStats] of Object.entries(
+        baselineResult.scores,
+      )) {
+        if (result.scores[evaluator]) continue;
+        checks.push({
+          eval: result.name,
+          evaluator,
+          type: 'evaluator-missing',
+          baseline: baselineStats.mean,
+          passed: false,
+          message: `evaluator "${evaluator}" is in the baseline for "${result.name}" but produced no score in this run`,
         });
       }
     }

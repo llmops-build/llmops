@@ -53,13 +53,16 @@ A gate reports success only when it actually verified something. These all **fai
 
 - an evaluator named in `--minScore` that appears in no result (typo, renamed evaluator)
 - a baseline eval with no matching eval in the current run (renamed or deleted eval)
+- an evaluator the baseline scored that the current run does not — deleting a `safety` evaluator must not read as "no regression" just because the evaluators that remain still pass
 - an eval that recorded datapoint or evaluator errors — a failed datapoint scores 0 and can otherwise drag a mean into looking fine, or be excluded and make it look better than it is
 - a gate that ended up performing zero checks
+
+Evaluators that exist only in the current run are treated as new coverage and pass silently, so adding an evaluator never fails a gate.
 
 Invalid configuration is deliberately separated from a failed gate: `1` means "this gate could not be trusted to run", `2` means "it ran and something regressed". Configuration is validated up front, before any eval executes, so a typo does not cost a full (and possibly paid) eval run.
 
 #### JSON output
 
-With `--json`, stdout stays a single parseable JSON document. Without any gate flags it's the eval result(s), unchanged. With `--minScore` and/or `--baseline` set, it's wrapped as `{ "results": ..., "gate": { "passed": boolean, "checks": [...] } }` — safe to pipe to `jq` either way. Each entry in `checks` carries its `type` (`min-score`, `regression`, `baseline-missing`, `errors`), the numbers behind the verdict, and a `message` when it failed closed.
+With `--json`, stdout stays a single parseable JSON document. Without any gate flags it's the eval result(s), unchanged. With `--minScore` and/or `--baseline` set, it's wrapped as `{ "results": ..., "gate": { "passed": boolean, "checks": [...] } }` — safe to pipe to `jq` either way. Each entry in `checks` carries its `type` (`min-score`, `regression`, `baseline-missing`, `evaluator-missing`, `errors`), the numbers behind the verdict, and a `message` when it failed closed.
 
 The gate itself is also available as a plain function for use outside the CLI — see `applyGate()` in `@llmops/sdk/eval`, which throws on invalid configuration and returns the same `checks` array.

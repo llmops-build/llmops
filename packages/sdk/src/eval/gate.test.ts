@@ -101,7 +101,7 @@ describe('applyGate', () => {
     expect(gate.passed).toBe(true);
   });
 
-  it('skips baseline evaluators absent from the candidate scores', () => {
+  it('allows a candidate-only evaluator as new coverage', () => {
     const gate = applyGate(
       [makeResult('new-eval', { accuracy: 0.9, extra: 1 })],
       { baseline: { 'new-eval': makeResult('new-eval', { accuracy: 0.9 }) } },
@@ -109,6 +109,88 @@ describe('applyGate', () => {
 
     expect(gate.passed).toBe(true);
     expect(gate.checks).toHaveLength(1);
+    expect(gate.checks[0]).toMatchObject({
+      evaluator: 'accuracy',
+      type: 'regression',
+    });
+  });
+
+  it('fails when a matched baseline eval loses an evaluator', () => {
+    const gate = applyGate([makeResult('support-bot', { accuracy: 0.9 })], {
+      baseline: {
+        'support-bot': makeResult('support-bot', {
+          accuracy: 0.9,
+          safety: 1,
+        }),
+      },
+    });
+
+    expect(gate.passed).toBe(false);
+    const missing = gate.checks.find((c) => c.type === 'evaluator-missing');
+    expect(missing).toMatchObject({
+      eval: 'support-bot',
+      evaluator: 'safety',
+      baseline: 1,
+      passed: false,
+    });
+    expect(missing?.message).toMatch(/produced no score in this run/);
+  });
+
+  it('still compares the surviving evaluator when another disappears', () => {
+    const gate = applyGate([makeResult('support-bot', { accuracy: 0.95 })], {
+      baseline: {
+        'support-bot': makeResult('support-bot', {
+          accuracy: 0.9,
+          safety: 1,
+        }),
+      },
+    });
+
+    // accuracy improved, so on its own the gate would have passed.
+    const regression = gate.checks.find((c) => c.type === 'regression');
+    expect(regression).toMatchObject({ evaluator: 'accuracy', passed: true });
+    expect(gate.checks.filter((c) => !c.passed)).toHaveLength(1);
+    expect(gate.passed).toBe(false);
+  });
+
+  it('reports every dropped evaluator, and only the dropped ones', () => {
+    const gate = applyGate(
+      [makeResult('support-bot', { accuracy: 0.9, added: 1 })],
+      {
+        baseline: {
+          'support-bot': makeResult('support-bot', {
+            accuracy: 0.9,
+            safety: 1,
+            tone: 0.5,
+          }),
+        },
+      },
+    );
+
+    expect(
+      gate.checks
+        .filter((c) => c.type === 'evaluator-missing')
+        .map((c) => c.evaluator)
+        .sort(),
+    ).toEqual(['safety', 'tone']);
+    expect(gate.passed).toBe(false);
+  });
+
+  it('does not report dropped evaluators for an unmatched baseline eval', () => {
+    // The whole eval is already reported as baseline-missing; listing each of
+    // its evaluators too would just be noise.
+    const gate = applyGate([makeResult('renamed', { accuracy: 0.9 })], {
+      baseline: {
+        'support-bot': makeResult('support-bot', { accuracy: 0.9, safety: 1 }),
+      },
+    });
+
+    expect(
+      gate.checks.filter((c) => c.type === 'evaluator-missing'),
+    ).toHaveLength(0);
+    expect(
+      gate.checks.filter((c) => c.type === 'baseline-missing'),
+    ).toHaveLength(1);
   });
 
   it('combines min-score and regression checks across multiple results', () => {
@@ -173,13 +255,27 @@ describe('applyGate', () => {
   });
 
   it('never reports a pass when it performed no checks', () => {
-    const gate = applyGate([makeResult('unrelated', { other: 1 })], {
-      // matches nothing in the candidate, so no comparison happens
-      baseline: { unrelated: makeResult('unrelated', { missing: 1 }) },
+    // Both sides match by name and neither recorded any evaluator, so nothing
+    // is comparable and no check is produced.
+    const gate = applyGate([makeResult('empty', {})], {
+      baseline: { empty: makeResult('empty', {}) },
     });
 
     expect(gate.checks).toHaveLength(0);
     expect(gate.passed).toBe(false);
+  });
+
+  it('reports a dropped evaluator rather than falling back to the zero-check guard', () => {
+    const gate = applyGate([makeResult('unrelated', { other: 1 })], {
+      baseline: { unrelated: makeResult('unrelated', { missing: 1 }) },
+    });
+
+    expect(gate.passed).toBe(false);
+    expect(gate.checks).toHaveLength(1);
+    expect(gate.checks[0]).toMatchObject({
+      type: 'evaluator-missing',
+      evaluator: 'missing',
+    });
   });
 
   it('fails when a candidate eval recorded datapoint errors, even if means look fine', () => {

@@ -158,8 +158,10 @@ export interface GateOptions {
 
   /**
    * Baseline runs to diff against, keyed by `EvaluateResult.name`. Evaluators
-   * present in both the baseline and the candidate are compared; a baseline
-   * eval with no matching candidate fails the gate rather than being skipped.
+   * present in both the baseline and the candidate are compared. A baseline
+   * eval with no matching candidate, or a baseline evaluator that produced no
+   * score in the candidate, fails the gate rather than being skipped;
+   * evaluators only the candidate has count as new coverage.
    *
    * Passing an empty record throws — a regression gate that can compare
    * nothing must not report success.
@@ -180,6 +182,9 @@ export interface GateOptions {
  * - `min-score` — an evaluator's mean vs a configured threshold
  * - `regression` — an evaluator's mean vs its baseline
  * - `baseline-missing` — a baseline eval absent from the candidate run
+ * - `evaluator-missing` — an evaluator in a matched baseline eval that produced
+ *   no score in the candidate run. Evaluators only the candidate has are new
+ *   coverage and are not reported.
  * - `errors` — a candidate eval that recorded datapoint/evaluator errors
  */
 export interface GateCheck {
@@ -187,7 +192,12 @@ export interface GateCheck {
   eval: string;
   /** Evaluator name (key in `EvaluateResult.scores`). Absent for whole-eval checks. */
   evaluator?: string;
-  type: 'min-score' | 'regression' | 'baseline-missing' | 'errors';
+  type:
+    | 'min-score'
+    | 'regression'
+    | 'baseline-missing'
+    | 'evaluator-missing'
+    | 'errors';
   score?: number;
   threshold?: number;
   baseline?: number;

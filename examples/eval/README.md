@@ -55,9 +55,10 @@ invalid. A CI step can branch on the exit code directly:
 ```
 
 The gate fails closed: a threshold naming an evaluator that never ran, a baseline eval with
-no counterpart in this run, an eval that recorded errors, or a gate that checked nothing all
-fail rather than passing quietly. Thresholds and `--maxRegression` must be finite values in
-`[0, 1]`, and are validated before any eval executes.
+no counterpart in this run, an evaluator the baseline scored that this run dropped, an eval
+that recorded errors, or a gate that checked nothing all fail rather than passing quietly.
+Evaluators that only exist in the current run count as new coverage and pass. Thresholds and
+`--maxRegression` must be finite values in `[0, 1]`, and are validated before any eval executes.
 
 With `--json`, the gate result is embedded alongside the eval results as
 `{ "results": ..., "gate": { "passed": true, "checks": [...] } }`, so an agent or script can
