@@ -18,7 +18,7 @@ packages/
 │   ├── types/        → TelemetryStore type export
 │   └── lib/          → Hono, Express, Next.js middleware adapters
 ├── core/             → @llmops/core — Shared types, Zod schemas, provider registry. Zero database code.
-├── gateway/          → @llmops/gateway — AI Gateway. OpenAI-compatible proxy.
+├── gateway/          → @llmops/gateway — AI Gateway. OpenAI-compatible in-process plug.
 ├── app/              → @llmops/app — Dashboard UI (React + Hono). Workers-compatible.
 └── cli/              → @llmops/cli — CLI for migrations and evals.
 
@@ -55,7 +55,7 @@ Run evals: `cd examples/eval && npx @llmops/cli eval`
 
 1. **UNIX philosophy.** Each package does one thing. Compose via interfaces, not inheritance.
 2. **Adoption-first.** `llmops()` with zero args must work. Every feature is opt-in.
-3. **TypeScript-first.** Strict generics. Compile-time enforcement. No `any`.
+3. **TypeScript-first.** Strict generics. Compile-time enforcement. Prefer `unknown` over `any` in new code; avoid introducing `any` unless an existing package convention requires it.
 4. **Code-first.** Everything configurable from code. No database-managed configs.
 5. **Framework-agnostic.** The SDK doesn't depend on Hono or Express. Middleware adapters are subpath exports.
 6. **No database code in core.** All SQL lives in `sdk/src/telemetry/` and `sdk/src/store/`. `@llmops/core` has zero database imports. Zero Kysely.
@@ -83,10 +83,10 @@ Stores use `peerDependencies` for heavy deps. The main SDK entry has zero Node.j
 
 ## Code Conventions
 
-- Strict TypeScript. No `any`. Use generics and inference.
+- Strict TypeScript. Prefer `unknown` over `any` in new code; avoid introducing `any` unless an existing package convention requires it. Use generics and inference.
 - Functions over classes. Factory functions that return typed objects.
 - Prefer `interface` for contracts, `type` for unions and intersections.
-- Named exports only. No default exports.
+- Prefer named exports. Avoid introducing default exports unless an existing package convention (e.g., Hono app modules, tsqx config files) requires them.
 - Error handling: use `Promise.allSettled` for fan-out. Never let one sink crash the gateway.
 - No `require()` in any bundle that may run on edge. Use dynamic `import()` for Node-only modules.
 - No `fileURLToPath` or `node:fs` at module level in app/SDK. Use lazy loading for dev-only paths.
