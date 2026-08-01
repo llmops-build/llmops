@@ -26,25 +26,32 @@ const providersConfigSchema = z.array(inlineProviderConfigSchema).optional();
  */
 const llmopsConfigBaseSchema = z.object({
   /**
-   * Database connection for storing configs, variants, etc.
-   * Optional when providers are configured inline or env vars are set.
-   * Required for dashboard UI and config management features.
+   * Telemetry store(s) for recording LLM requests, traces, and spans.
+   * Pass a single store or an array of stores/sinks.
+   *
+   * Example:
+   * ```ts
+   * import { llmops, pgStore } from '@llmops/sdk'
+   * const ops = llmops({ telemetry: pgStore(process.env.DATABASE_URL) })
+   * ```
    */
-  database: z.any().optional(),
+  telemetry: z.any().optional(),
+  /**
+   * Background work handler for edge runtimes (Cloudflare Workers, Vercel Edge).
+   * Pass `ctx.waitUntil.bind(ctx)` to ensure telemetry flushes complete
+   * after the response is returned.
+   *
+   * Not needed in Node.js — batching uses setInterval by default.
+   */
+  waitUntil: z.any().optional(),
   basePath: z
     .string()
     .min(1, 'Base path cannot be empty')
     .refine(
       (path) => path.startsWith('/'),
-      'Base path must start with a forward slash'
+      'Base path must start with a forward slash',
     )
     .default('/llmops'),
-  /**
-   * Database schema name for PostgreSQL connections.
-   * This sets the search_path on every connection.
-   * Defaults to 'llmops'. Set to 'public' to use the default PostgreSQL schema.
-   */
-  schema: z.string().optional().default('llmops'),
   /**
    * Inline provider configurations.
    * Each provider has a unique slug for routing via @slug/model format.
@@ -66,10 +73,9 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
   .transform((config) => ({
     ...config,
     providers: mergeWithDefaultProviders(
-      config.providers as InlineProvidersConfig | undefined
+      config.providers as InlineProvidersConfig | undefined,
     ),
-  }))
-;
+  }));
 
 /**
  * Validated LLMOps configuration
@@ -77,28 +83,31 @@ export const llmopsConfigSchema = llmopsConfigBaseSchema
  * Note: schema is optional in input but always present after validation
  * Either database or providers must be present (enforced by schema)
  */
+/**
+ * Telemetry config accepts a single store, an array of stores/sinks,
+ * or undefined (inline-only mode, no persistence).
+ */
+// biome-ignore lint: telemetry accepts any store implementation
+export type TelemetryConfig = any;
+
 export type ValidatedLLMOpsConfig = {
-  database?: unknown;
+  telemetry?: TelemetryConfig;
   basePath: string;
-  schema: string;
   providers?: InlineProvidersConfig;
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 /**
  * Input type for LLMOps configuration (before validation)
- * Users can omit optional fields like schema and providers
- * Either database or providers must be provided
  */
 export type LLMOpsConfigInput = {
-  database?: unknown;
+  telemetry?: TelemetryConfig;
   basePath?: string;
-  schema?: string;
   providers?: InlineProvidersConfig;
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
-export function validateLLMOpsConfig(
-  config?: unknown
-): ValidatedLLMOpsConfig {
+export function validateLLMOpsConfig(config?: unknown): ValidatedLLMOpsConfig {
   const result = llmopsConfigSchema.safeParse(config ?? {});
 
   if (!result.success) {
@@ -107,7 +116,7 @@ export function validateLLMOpsConfig(
       .join('\n');
 
     throw new Error(
-      `LLMOps configuration validation failed:\n${errorMessages}`
+      `LLMOps configuration validation failed:\n${errorMessages}`,
     );
   }
 

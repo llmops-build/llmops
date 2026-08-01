@@ -1,0 +1,643 @@
+{
+  "llm_requests": {
+    "name": "llm_requests",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": true,
+        "unique": false
+      },
+      {
+        "name": "requestId",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "configId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "variantId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "environmentId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "providerConfigId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "provider",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "model",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "promptTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "completionTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "totalTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "cachedTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "cacheCreationTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "cost",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "cacheSavings",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "inputCost",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "outputCost",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "endpoint",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "statusCode",
+        "type": "INTEGER",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "latencyMs",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "isStreaming",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "userId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "tags",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'{}'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "guardrailResults",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "traceId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "spanId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "parentSpanId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "sessionId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "createdAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "updatedAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      }
+    ],
+    "constraints": []
+  },
+  "span_events": {
+    "name": "span_events",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": true,
+        "unique": false
+      },
+      {
+        "name": "traceId",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "spanId",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "timestamp",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "attributes",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'{}'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "createdAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      }
+    ],
+    "constraints": []
+  },
+  "spans": {
+    "name": "spans",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": true,
+        "unique": false
+      },
+      {
+        "name": "traceId",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "spanId",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": true
+      },
+      {
+        "name": "parentSpanId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "kind",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "1",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "status",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "statusMessage",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "startTime",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "endTime",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "durationMs",
+        "type": "INTEGER",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "provider",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "model",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "promptTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "completionTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "totalTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "cost",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "configId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "variantId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "environmentId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "providerConfigId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "requestId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "source",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'gateway'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "input",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "output",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "attributes",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'{}'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "createdAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "updatedAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      }
+    ],
+    "constraints": []
+  },
+  "traces": {
+    "name": "traces",
+    "columns": [
+      {
+        "name": "id",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": true,
+        "unique": false
+      },
+      {
+        "name": "traceId",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": true
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "sessionId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "userId",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'unset'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "startTime",
+        "type": "TEXT",
+        "nullable": false,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "endTime",
+        "type": "TEXT",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "durationMs",
+        "type": "INTEGER",
+        "nullable": true,
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "spanCount",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "totalInputTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "totalOutputTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "totalTokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "totalCost",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": "0",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "tags",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'{}'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "metadata",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "'{}'",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "createdAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      },
+      {
+        "name": "updatedAt",
+        "type": "TEXT",
+        "nullable": false,
+        "default": "(datetime('now'))",
+        "primaryKey": false,
+        "unique": false
+      }
+    ],
+    "constraints": []
+  }
+}

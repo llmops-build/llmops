@@ -1,6 +1,6 @@
 import { hc } from '@client/lib/hc';
 import { useQuery } from '@tanstack/react-query';
-import type { CostSummaryGroupBy } from '@llmops/core';
+import type { CostSummaryGroupBy } from '@llmops/sdk';
 
 export interface DateRange {
   startDate: string;
@@ -167,7 +167,7 @@ export const useCostSummary = (
     groupBy?: CostSummaryGroupBy;
     tagKeys?: string[];
   },
-  enabled = true
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: ['analytics', 'costs', 'summary', params],
@@ -208,7 +208,7 @@ export const useCostSummary = (
  */
 export const useRequestStats = (
   params: DateRangeWithFilters,
-  enabled = true
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: ['analytics', 'stats', params],
@@ -292,7 +292,7 @@ export const useRequestList = (
     endDate?: string;
     tags?: Record<string, string[]>;
   } = {},
-  enabled = true
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: ['analytics', 'requests', params],

@@ -1,5 +1,5 @@
-import type { ModelPricing, PricingProvider } from './types';
 import { logger } from '../utils/logger';
+import type { ModelPricing, PricingProvider } from './types';
 
 const LLMOPS_MODELS_API = 'https://models.llmops.build';
 
@@ -66,22 +66,18 @@ export class LLMOpsPricingProvider implements PricingProvider {
    */
   private async fetchModelPricing(
     provider: string,
-    model: string
+    model: string,
   ): Promise<ModelPricing | null> {
     // Model names can contain slashes (e.g. meta-llama/Llama-3.3-70B-Instruct)
     // The API routing captures them correctly, so don't encode the model
     const url = `${this.baseUrl}/model-configs/pricing/${encodeURIComponent(provider)}/${model}`;
 
     try {
-      logger.debug(
-        `[Pricing] GET ${url}`
-      );
+      logger.debug(`[Pricing] GET ${url}`);
       const startTime = Date.now();
       const response = await fetch(url);
       const elapsed = Date.now() - startTime;
-      logger.debug(
-        `[Pricing] GET ${url} -> ${response.status} (${elapsed}ms)`
-      );
+      logger.debug(`[Pricing] GET ${url} -> ${response.status} (${elapsed}ms)`);
 
       if (response.status === 404) {
         logger.debug(`[Pricing] No pricing found for ${provider}/${model}`);
@@ -103,10 +99,10 @@ export class LLMOpsPricingProvider implements PricingProvider {
 
       const pricing: ModelPricing = {
         inputCostPer1M: centsPerTokenToCostPer1M(
-          payg.request_token?.price ?? 0
+          payg.request_token?.price ?? 0,
         ),
         outputCostPer1M: centsPerTokenToCostPer1M(
-          payg.response_token?.price ?? 0
+          payg.response_token?.price ?? 0,
         ),
         cacheReadCostPer1M:
           payg.cache_read_input_token?.price != null
@@ -119,22 +115,20 @@ export class LLMOpsPricingProvider implements PricingProvider {
       };
 
       logger.debug(
-        `[Pricing] Cached pricing for ${provider}/${model}: input=$${pricing.inputCostPer1M}/1M, output=$${pricing.outputCostPer1M}/1M`
+        `[Pricing] Cached pricing for ${provider}/${model}: input=$${pricing.inputCostPer1M}/1M, output=$${pricing.outputCostPer1M}/1M`,
       );
 
       return pricing;
     } catch (error) {
       logger.error(
-        `[Pricing] Failed to fetch pricing for ${provider}/${model}: ${error instanceof Error ? error.message : String(error)}`
+        `[Pricing] Failed to fetch pricing for ${provider}/${model}: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // Return stale cache if available
       const cacheKey = this.getCacheKey(provider, model);
       const stale = this.cache.get(cacheKey);
       if (stale) {
-        logger.debug(
-          `[Pricing] Using stale cache for ${provider}/${model}`
-        );
+        logger.debug(`[Pricing] Using stale cache for ${provider}/${model}`);
         return stale.pricing;
       }
 
@@ -147,7 +141,7 @@ export class LLMOpsPricingProvider implements PricingProvider {
    */
   private async getCachedPricing(
     provider: string,
-    model: string
+    model: string,
   ): Promise<ModelPricing | null> {
     const cacheKey = this.getCacheKey(provider, model);
 
@@ -183,17 +177,38 @@ export class LLMOpsPricingProvider implements PricingProvider {
    */
   async getModelPricing(
     provider: string,
-    model: string
+    model: string,
+    inputTokens?: number,
   ): Promise<ModelPricing | null> {
     const pricing = await this.getCachedPricing(provider, model);
     if (pricing) return pricing;
 
+    // Some catalog entries are split by context window even though the
+    // upstream API uses one bare model id (for example gemini-2.5-flash).
+    // Resolve that catalog tier after the canonical lookup so providers with a
+    // direct entry remain untouched.
+    if (
+      provider.toLowerCase() === 'google' &&
+      !/(?:-lte-128k|-gt-128k)$/.test(model)
+    ) {
+      const tier = (inputTokens ?? 0) > 128_000 ? 'gt' : 'lte';
+      const tiered = await this.getCachedPricing(
+        provider,
+        `${model}-${tier}-128k`,
+      );
+      if (tiered) return tiered;
+    }
+
     // Model names with slashes (e.g. "google/gemini-2.5-flash") are OpenRouter
     // model IDs. When the caller's provider (often "openai" from gen_ai.system)
     // doesn't match, fall back to openrouter.
-    if (!pricing && model.includes('/') && provider.toLowerCase() !== 'openrouter') {
+    if (
+      !pricing &&
+      model.includes('/') &&
+      provider.toLowerCase() !== 'openrouter'
+    ) {
       logger.debug(
-        `[Pricing] Retrying ${provider}/${model} as openrouter/${model}`
+        `[Pricing] Retrying ${provider}/${model} as openrouter/${model}`,
       );
       return this.getCachedPricing('openrouter', model);
     }

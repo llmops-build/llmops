@@ -1,6 +1,6 @@
 {
   "name": "@llmops/cli",
-  "version": "0.6.10",
+  "version": "1.0.0-beta.25",
   "type": "module",
   "description": "LLMOps CLI - A pluggable LLMOps toolkit for TypeScript teams",
   "license": "Apache-2.0",
@@ -14,28 +14,17 @@
     "directory": "packages/cli"
   },
   "author": "chtushar",
+  "bin": {
+    "llmops": "./dist/index.mjs"
+  },
   "files": [
     "dist"
   ],
   "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "exports": "./dist/index.mjs",
-  "bin": {
-    "cli": "./dist/index.mjs",
-    "llmops": "./dist/index.mjs"
-  },
-  "publishConfig": {
-    "access": "public",
-    "executableFiles": [
-      "./dist/index.mjs"
-    ]
-  },
   "scripts": {
     "build": "tsdown",
-    "start": "node ./dist/index.mjs",
     "clean": "rm -rf dist",
-    "dev": "tsdown --watch",
+    "dev": "tsx src/index.ts",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
@@ -46,13 +35,15 @@
     "llm",
     "typescript"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@drizzle-team/brocli": "^0.11.0",
     "@llmops/core": "workspace:^",
     "@llmops/sdk": "workspace:^",
-    "c12": "^3.3.2",
     "chalk": "^5.6.2",
-    "kysely": "^0.28.8",
+    "esbuild": "^0.25.0",
     "prompts": "^2.4.2",
     "yocto-spinner": "^1.0.0"
   },

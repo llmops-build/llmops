@@ -32,7 +32,7 @@
 export interface AgentsTracingExporter {
   export(
     items: (AgentsTrace | AgentsSpan)[],
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<void>;
 }
 
@@ -254,11 +254,9 @@ function deriveSpanName(data: AgentsSpanData): string {
  */
 function convertSpanDataToAttributes(
   data: AgentsSpanData,
-  error?: AgentsSpanError | null
+  error?: AgentsSpanError | null,
 ): OtlpKeyValue[] {
-  const attrs: OtlpKeyValue[] = [
-    kv('openai.agents.span_type', data.type),
-  ];
+  const attrs: OtlpKeyValue[] = [kv('openai.agents.span_type', data.type)];
 
   switch (data.type) {
     case 'generation':
@@ -281,7 +279,7 @@ function convertSpanDataToAttributes(
       }
       if (data.model_config) {
         attrs.push(
-          kv('gen_ai.request.model_config', JSON.stringify(data.model_config))
+          kv('gen_ai.request.model_config', JSON.stringify(data.model_config)),
         );
       }
       break;
@@ -293,7 +291,7 @@ function convertSpanDataToAttributes(
       }
       if (data.handoffs?.length) {
         attrs.push(
-          kv('openai.agents.agent.handoffs', JSON.stringify(data.handoffs))
+          kv('openai.agents.agent.handoffs', JSON.stringify(data.handoffs)),
         );
       }
       if (data.output_type) {
@@ -325,7 +323,7 @@ function convertSpanDataToAttributes(
 
     case 'guardrail':
       attrs.push(
-        kv('llmops.guardrail.action', data.triggered ? 'triggered' : 'passed')
+        kv('llmops.guardrail.action', data.triggered ? 'triggered' : 'passed'),
       );
       attrs.push(kv('openai.agents.guardrail.name', data.name));
       break;
@@ -355,13 +353,17 @@ function convertSpanDataToAttributes(
         if (resp.output != null) {
           try {
             attrs.push(kv('gen_ai.completion', JSON.stringify(resp.output)));
-          } catch { /* skip non-serializable output */ }
+          } catch {
+            /* skip non-serializable output */
+          }
         }
       }
       if (data._input != null) {
         try {
           attrs.push(kv('ai.prompt.messages', JSON.stringify(data._input)));
-        } catch { /* skip non-serializable input */ }
+        } catch {
+          /* skip non-serializable input */
+        }
       }
       break;
     }
@@ -398,13 +400,9 @@ function convertSpanDataToAttributes(
       break;
 
     case 'mcp_tools':
-      attrs.push(
-        kv('gen_ai.tool.name', `mcp:${data.server ?? 'unknown'}`)
-      );
+      attrs.push(kv('gen_ai.tool.name', `mcp:${data.server ?? 'unknown'}`));
       if (data.result) {
-        attrs.push(
-          kv('openai.agents.mcp.tools', JSON.stringify(data.result))
-        );
+        attrs.push(kv('openai.agents.mcp.tools', JSON.stringify(data.result)));
       }
       break;
   }
@@ -426,11 +424,9 @@ function convertSpanDataToAttributes(
 function buildResourceSpans(
   traceId: string,
   trace: AgentsTrace | undefined,
-  spans: AgentsSpan[]
+  spans: AgentsSpan[],
 ) {
-  const resourceAttrs: OtlpKeyValue[] = [
-    kv('service.name', '@openai/agents'),
-  ];
+  const resourceAttrs: OtlpKeyValue[] = [kv('service.name', '@openai/agents')];
 
   if (trace) {
     resourceAttrs.push(kv('openai.agents.trace.name', trace.name));
@@ -439,7 +435,7 @@ function buildResourceSpans(
     }
     if (trace.metadata && Object.keys(trace.metadata).length > 0) {
       resourceAttrs.push(
-        kv('openai.agents.trace.metadata', JSON.stringify(trace.metadata))
+        kv('openai.agents.trace.metadata', JSON.stringify(trace.metadata)),
       );
     }
   }
@@ -507,7 +503,7 @@ export interface LLMOpsAgentsExporterConfig {
  * ```
  */
 export function createLLMOpsAgentsExporter(
-  config: LLMOpsAgentsExporterConfig
+  config: LLMOpsAgentsExporterConfig,
 ): AgentsTracingExporter {
   const url = `${config.baseURL.replace(/\/$/, '')}/api/otlp/v1/traces`;
   const fetchFn = config.fetch ?? globalThis.fetch;
@@ -515,7 +511,7 @@ export function createLLMOpsAgentsExporter(
   return {
     async export(
       items: (AgentsTrace | AgentsSpan)[],
-      signal?: AbortSignal
+      signal?: AbortSignal,
     ): Promise<void> {
       const traces: AgentsTrace[] = [];
       const spans: AgentsSpan[] = [];

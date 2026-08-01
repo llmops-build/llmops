@@ -1,5 +1,11 @@
 import { Icon } from '@client/components/icons';
-import { createFileRoute, Outlet, useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Outlet,
+  useNavigate,
+  useParams,
+  useSearch,
+} from '@tanstack/react-router';
 import {
   Route as RouteIcon,
   Loader2,
@@ -43,7 +49,7 @@ import { format } from 'date-fns';
 import clsx from 'clsx';
 
 export const Route = createFileRoute(
-  '/(app)/observability/_observability/traces'
+  '/(app)/observability/_observability/traces',
 )({
   component: RouteComponent,
   staticData: {
@@ -153,7 +159,7 @@ function RouteComponent() {
                   ? statusSuccess
                   : status === 'error'
                     ? statusError
-                    : statusUnset
+                    : statusUnset,
               )}
             >
               {status}
@@ -194,7 +200,7 @@ function RouteComponent() {
         ),
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -243,85 +249,85 @@ function RouteComponent() {
   }
 
   return (
-  <>
-    <div className={requestsPageWrapper}>
-      <div className={requestsHeader}>
-        <h3 className={sectionTitle}>Traces</h3>
-      </div>
-      <div className={tableContainer}>
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHeaderCell key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHeaderCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                interactive
-                selected={row.original.traceId === selectedTraceId}
-                onClick={() => handleRowClick(row.original)}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      {total > PAGE_SIZE && (
-        <div className={paginationContainer}>
-          <span className={paginationInfo}>
-            Showing {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of{' '}
-            {total.toLocaleString()} traces
-          </span>
-          <div className={paginationControls}>
-            <Button
-              variant="outline"
-              size="sm"
-              scheme="gray"
-              onClick={goToPrevious}
-              disabled={!canGoPrevious}
-            >
-              <Icon icon={ChevronLeft} size="sm" />
-              Previous
-            </Button>
-            <span className={paginationInfo}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              scheme="gray"
-              onClick={goToNext}
-              disabled={!canGoNext}
-            >
-              Next
-              <Icon icon={ChevronRight} size="sm" />
-            </Button>
-          </div>
+    <>
+      <div className={requestsPageWrapper}>
+        <div className={requestsHeader}>
+          <h3 className={sectionTitle}>Traces</h3>
         </div>
-      )}
-    </div>
-    <Outlet />
-  </>
+        <div className={tableContainer}>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHeaderCell key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHeaderCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  interactive
+                  selected={row.original.traceId === selectedTraceId}
+                  onClick={() => handleRowClick(row.original)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        {total > PAGE_SIZE && (
+          <div className={paginationContainer}>
+            <span className={paginationInfo}>
+              Showing {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} of{' '}
+              {total.toLocaleString()} traces
+            </span>
+            <div className={paginationControls}>
+              <Button
+                variant="outline"
+                size="sm"
+                scheme="gray"
+                onClick={goToPrevious}
+                disabled={!canGoPrevious}
+              >
+                <Icon icon={ChevronLeft} size="sm" />
+                Previous
+              </Button>
+              <span className={paginationInfo}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                scheme="gray"
+                onClick={goToNext}
+                disabled={!canGoNext}
+              >
+                Next
+                <Icon icon={ChevronRight} size="sm" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+      <Outlet />
+    </>
   );
 }

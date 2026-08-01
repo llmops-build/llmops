@@ -38,7 +38,7 @@ export class FileCacheBackend implements CacheBackend {
     dataDir: string = 'data',
     fileName: string = 'cache.json',
     saveIntervalMs: number = 1000,
-    cleanupIntervalMs: number = 60000
+    cleanupIntervalMs: number = 60000,
   ) {
     this.cacheFile = path.join(process.cwd(), dataDir, fileName);
     this.saveInterval = saveIntervalMs;
@@ -128,7 +128,7 @@ export class FileCacheBackend implements CacheBackend {
   }
 
   private getNamespaceData(
-    namespace: string = 'default'
+    namespace: string = 'default',
   ): Record<string, CacheEntry> {
     if (!this.data[namespace]) {
       this.data[namespace] = {};
@@ -138,7 +138,7 @@ export class FileCacheBackend implements CacheBackend {
 
   async get<T = unknown>(
     key: string,
-    namespace?: string
+    namespace?: string,
   ): Promise<CacheEntry<T> | null> {
     await this.ensureLoaded();
 
@@ -165,7 +165,7 @@ export class FileCacheBackend implements CacheBackend {
   async set<T = unknown>(
     key: string,
     value: T,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<void> {
     await this.ensureLoaded();
 
@@ -209,7 +209,7 @@ export class FileCacheBackend implements CacheBackend {
     } else {
       const totalCount = Object.values(this.data).reduce(
         (sum, ns) => sum + Object.keys(ns).length,
-        0
+        0,
       );
       this.data = {};
       this.stats.deletes += totalCount;

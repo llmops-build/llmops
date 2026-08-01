@@ -86,13 +86,6 @@ interface StreamChunkUsage {
 }
 
 /**
- * Hook results SSE event structure
- */
-interface HookResultsEvent {
-  hook_results?: GatewayHookResults;
-}
-
-/**
  * Callback invoked when stream completes with extracted usage
  */
 export type UsageCallback = (usage: StreamingUsage | null) => void;
@@ -163,7 +156,7 @@ export function createStreamingCostExtractor(): {
 
       logger.debug(
         { eventType, hasUsage: !!parsed.usage, keys: Object.keys(parsed) },
-        'Streaming cost extractor: parsed SSE chunk'
+        'Streaming cost extractor: parsed SSE chunk',
       );
 
       // Check for hook_results event (Anthropic messages format)
@@ -188,23 +181,21 @@ export function createStreamingCostExtractor(): {
       // Handle both chat completions format and responses API format
       // For responses API streaming, usage is nested in parsed.response.usage (response.done event)
       const usageData = parsed as StreamChunkUsage;
-      const usage = usageData.usage || (parsed.response as StreamChunkUsage | undefined)?.usage;
+      const usage =
+        usageData.usage ||
+        (parsed.response as StreamChunkUsage | undefined)?.usage;
       if (usage) {
         logger.debug(
           { rawUsage: usage, fromResponseObject: !usageData.usage },
-          'Streaming cost extractor: found usage in chunk'
+          'Streaming cost extractor: found usage in chunk',
         );
-        const promptTokens =
-          usage.prompt_tokens ?? usage.input_tokens ?? 0;
+        const promptTokens = usage.prompt_tokens ?? usage.input_tokens ?? 0;
         const completionTokens =
-          usage.completion_tokens ??
-          usage.output_tokens ??
-          0;
+          usage.completion_tokens ?? usage.output_tokens ?? 0;
         extractedUsage = {
           promptTokens,
           completionTokens,
-          totalTokens:
-            usage.total_tokens ?? promptTokens + completionTokens,
+          totalTokens: usage.total_tokens ?? promptTokens + completionTokens,
           cachedTokens:
             usage.prompt_tokens_details?.cached_tokens ??
             usage.input_tokens_details?.cached_tokens ??
@@ -214,7 +205,7 @@ export function createStreamingCostExtractor(): {
         };
         logger.debug(
           { extractedUsage },
-          'Streaming cost extractor: extracted usage'
+          'Streaming cost extractor: extracted usage',
         );
       }
     } catch {
@@ -270,7 +261,7 @@ export function createStreamingCostExtractor(): {
 
       logger.debug(
         { hasUsage: !!extractedUsage, extractedUsage },
-        'Streaming cost extractor: stream flush complete'
+        'Streaming cost extractor: stream flush complete',
       );
 
       // Resolve the usage promise
@@ -347,7 +338,7 @@ export function isStreamingRequest(body: Record<string, unknown>): boolean {
  * @returns Modified body with include_usage enabled
  */
 export function ensureStreamUsageEnabled(
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
 ): Record<string, unknown> {
   if (body.stream === true) {
     const streamOptions =

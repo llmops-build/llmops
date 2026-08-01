@@ -1,5 +1,5 @@
 import { logger } from '@llmops/core';
-import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
+import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 
 /**
  * A queued trace item contains span data plus optional events and trace-level info
@@ -7,14 +7,15 @@ import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
 export interface TraceQueueItem {
   span: SpanInsert;
   events?: SpanEventInsert[];
-  trace: TraceUpsert;
+  /** Optional — omit for internal SDK requests where the OTLP exporter handles the trace */
+  trace?: TraceUpsert;
 }
 
 export interface TraceBatchWriterDeps {
   upsertTrace: (data: TraceUpsert) => Promise<void>;
   batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
   batchInsertSpanEvents: (
-    events: SpanEventInsert[]
+    events: SpanEventInsert[],
   ) => Promise<{ count: number }>;
 }
 
@@ -34,7 +35,7 @@ export interface TraceBatchWriter {
 
 export function createTraceBatchWriter(
   deps: TraceBatchWriterDeps,
-  config: TraceBatchWriterConfig = {}
+  config: TraceBatchWriterConfig = {},
 ): TraceBatchWriter {
   const { flushIntervalMs = 2000, maxBatchSize = 100, debug = false } = config;
 
@@ -56,22 +57,25 @@ export function createTraceBatchWriter(
       logger.debug(`[TraceBatchWriter] Flushing ${batch.length} items`);
       log(`[TraceBatchWriter] Flushing ${batch.length} items`);
 
-      // Group by traceId and upsert each trace
+      // Group by traceId and upsert each trace (skip items without trace data)
       const traceMap = new Map<string, TraceUpsert>();
       for (const item of batch) {
-        // Merge trace upserts: accumulate spans, tokens, cost
+        if (!item.trace) continue;
+
         const existing = traceMap.get(item.trace.traceId);
         if (existing) {
-          existing.spanCount = (existing.spanCount ?? 0) + (item.trace.spanCount ?? 1);
+          existing.spanCount =
+            (existing.spanCount ?? 0) + (item.trace.spanCount ?? 1);
           existing.totalInputTokens =
-            (existing.totalInputTokens ?? 0) + (item.trace.totalInputTokens ?? 0);
+            (existing.totalInputTokens ?? 0) +
+            (item.trace.totalInputTokens ?? 0);
           existing.totalOutputTokens =
-            (existing.totalOutputTokens ?? 0) + (item.trace.totalOutputTokens ?? 0);
+            (existing.totalOutputTokens ?? 0) +
+            (item.trace.totalOutputTokens ?? 0);
           existing.totalTokens =
             (existing.totalTokens ?? 0) + (item.trace.totalTokens ?? 0);
           existing.totalCost =
             (existing.totalCost ?? 0) + (item.trace.totalCost ?? 0);
-          // Use earliest start, latest end
           if (item.trace.startTime < existing.startTime) {
             existing.startTime = item.trace.startTime;
           }
@@ -81,7 +85,6 @@ export function createTraceBatchWriter(
           ) {
             existing.endTime = item.trace.endTime;
           }
-          // Escalate status: error > ok > unset
           if (item.trace.status === 'error') {
             existing.status = 'error';
           } else if (
@@ -90,11 +93,9 @@ export function createTraceBatchWriter(
           ) {
             existing.status = 'ok';
           }
-          // Merge name, sessionId, userId (prefer non-null)
           existing.name = existing.name ?? item.trace.name;
           existing.sessionId = existing.sessionId ?? item.trace.sessionId;
           existing.userId = existing.userId ?? item.trace.userId;
-          // Merge tags
           existing.tags = { ...existing.tags, ...item.trace.tags };
           existing.metadata = { ...existing.metadata, ...item.trace.metadata };
         } else {
@@ -129,15 +130,15 @@ export function createTraceBatchWriter(
       }
 
       logger.debug(
-        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`
+        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`,
       );
       log(
-        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`
+        `[TraceBatchWriter] Flushed ${traceMap.size} traces, ${allSpans.length} spans, ${allEvents.length} events`,
       );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(
-        `[TraceBatchWriter] Flush failed, re-queuing items: ${errorMsg}`
+        `[TraceBatchWriter] Flush failed, re-queuing items: ${errorMsg}`,
       );
       queue = [...batch, ...queue];
     } finally {
@@ -175,7 +176,7 @@ export function createTraceBatchWriter(
   function enqueue(item: TraceQueueItem): void {
     queue.push(item);
     log(
-      `[TraceBatchWriter] Enqueued span ${item.span.spanId}, queue size: ${queue.length}`
+      `[TraceBatchWriter] Enqueued span ${item.span.spanId}, queue size: ${queue.length}`,
     );
 
     if (!running) {
@@ -207,12 +208,12 @@ let globalWriter: TraceBatchWriter | null = null;
 
 export function getGlobalTraceBatchWriter(
   deps?: TraceBatchWriterDeps,
-  config?: TraceBatchWriterConfig
+  config?: TraceBatchWriterConfig,
 ): TraceBatchWriter {
   if (!globalWriter) {
     if (!deps) {
       throw new Error(
-        'TraceBatchWriter dependencies required on first initialization'
+        'TraceBatchWriter dependencies required on first initialization',
       );
     }
     globalWriter = createTraceBatchWriter(deps, config);

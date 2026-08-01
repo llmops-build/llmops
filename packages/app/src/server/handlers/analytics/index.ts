@@ -2,7 +2,7 @@ import { zv } from '@server/lib/zv';
 import { internalServerError, successResponse } from '@shared/responses';
 import { Hono } from 'hono';
 import z from 'zod';
-import { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from '@llmops/core';
+import { COST_SUMMARY_GROUP_BY, type CostSummaryGroupBy } from '@llmops/sdk';
 
 /**
  * Convert micro-dollars to formatted dollar string
@@ -202,10 +202,10 @@ const app = new Hono()
         startDate: isoDateString.optional(),
         endDate: isoDateString.optional(),
         tags: z.string().optional(), // JSON string of key-value pairs
-      })
+      }),
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithAnalytics;
+      const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
       const query = c.req.valid('query');
 
       // Parse tags from JSON string if provided
@@ -239,10 +239,10 @@ const app = new Hono()
         console.error('Error fetching requests:', error);
         return c.json(
           internalServerError('Failed to fetch requests', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   /**
@@ -255,10 +255,10 @@ const app = new Hono()
       'param',
       z.object({
         requestId: z.string().uuid(),
-      })
+      }),
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithAnalytics;
+      const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
       const { requestId } = c.req.valid('param');
 
       try {
@@ -271,7 +271,7 @@ const app = new Hono()
         console.error('Error fetching request:', error);
         return c.json(internalServerError('Failed to fetch request', 500), 500);
       }
-    }
+    },
   )
 
   /**
@@ -279,7 +279,7 @@ const app = new Hono()
    * Get total costs for a date range with optional filters
    */
   .get('/costs/total', zv('query', dateRangeWithFiltersSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate, configId, variantId, environmentId, tags } =
       c.req.valid('query');
 
@@ -307,8 +307,8 @@ const app = new Hono()
               totalCacheSavings: 0,
               requestCount: 0,
             },
-            200
-          )
+            200,
+          ),
         );
       }
 
@@ -321,14 +321,14 @@ const app = new Hono()
             totalOutputCostFormatted: formatCost(data.totalOutputCost),
             totalCacheSavingsFormatted: formatCost(data.totalCacheSavings),
           },
-          200
-        )
+          200,
+        ),
       );
     } catch (error) {
       console.error('Error fetching total costs:', error);
       return c.json(
         internalServerError('Failed to fetch total costs', 500),
-        500
+        500,
       );
     }
   })
@@ -338,7 +338,7 @@ const app = new Hono()
    * Get cost breakdown by model
    */
   .get('/costs/by-model', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -348,7 +348,7 @@ const app = new Hono()
       console.error('Error fetching costs by model:', error);
       return c.json(
         internalServerError('Failed to fetch costs by model', 500),
-        500
+        500,
       );
     }
   })
@@ -358,7 +358,7 @@ const app = new Hono()
    * Get cost breakdown by provider
    */
   .get('/costs/by-provider', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -368,7 +368,7 @@ const app = new Hono()
       console.error('Error fetching costs by provider:', error);
       return c.json(
         internalServerError('Failed to fetch costs by provider', 500),
-        500
+        500,
       );
     }
   })
@@ -378,7 +378,7 @@ const app = new Hono()
    * Get cost breakdown by config
    */
   .get('/costs/by-config', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -388,7 +388,7 @@ const app = new Hono()
       console.error('Error fetching costs by config:', error);
       return c.json(
         internalServerError('Failed to fetch costs by config', 500),
-        500
+        500,
       );
     }
   })
@@ -398,7 +398,7 @@ const app = new Hono()
    * Get daily cost breakdown
    */
   .get('/costs/daily', zv('query', dateRangeSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate } = c.req.valid('query');
 
     try {
@@ -408,7 +408,7 @@ const app = new Hono()
       console.error('Error fetching daily costs:', error);
       return c.json(
         internalServerError('Failed to fetch daily costs', 500),
-        500
+        500,
       );
     }
   })
@@ -424,10 +424,10 @@ const app = new Hono()
       dateRangeWithFiltersSchema.extend({
         groupBy: z.enum(COST_SUMMARY_GROUP_BY).optional(),
         tagKeys: z.string().optional(),
-      })
+      }),
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithAnalytics;
+      const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
       const {
         startDate,
         endDate,
@@ -464,10 +464,10 @@ const app = new Hono()
         console.error('Error fetching cost summary:', error);
         return c.json(
           internalServerError('Failed to fetch cost summary', 500),
-          500
+          500,
         );
       }
-    }
+    },
   )
 
   /**
@@ -475,7 +475,7 @@ const app = new Hono()
    * Get request statistics for a date range with optional filters
    */
   .get('/stats', zv('query', dateRangeWithFiltersSchema), async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
     const { startDate, endDate, configId, variantId, environmentId, tags } =
       c.req.valid('query');
 
@@ -501,8 +501,8 @@ const app = new Hono()
               minLatencyMs: 0,
               successRate: 0,
             },
-            200
-          )
+            200,
+          ),
         );
       }
 
@@ -518,14 +518,14 @@ const app = new Hono()
                   ).toFixed(2)
                 : 0,
           },
-          200
-        )
+          200,
+        ),
       );
     } catch (error) {
       console.error('Error fetching request stats:', error);
       return c.json(
         internalServerError('Failed to fetch request stats', 500),
-        500
+        500,
       );
     }
   })
@@ -535,7 +535,7 @@ const app = new Hono()
    * Get distinct tag key-value pairs from all requests
    */
   .get('/tags', async (c) => {
-    const db = c.get('db') as unknown as DbWithAnalytics;
+    const db = c.get('telemetryStore') as unknown as DbWithAnalytics;
 
     try {
       const tags = await db.getDistinctTags();

@@ -1,0 +1,20 @@
+CREATE TABLE traces (
+  "id" UUID PRIMARY KEY,
+  "traceId" VARCHAR(255) NOT NULL UNIQUE,
+  "name" VARCHAR(255),
+  "sessionId" VARCHAR(255),
+  "userId" VARCHAR(255),
+  "status" VARCHAR(50) NOT NULL DEFAULT 'unset',
+  "startTime" TIMESTAMP NOT NULL,
+  "endTime" TIMESTAMP,
+  "durationMs" INTEGER,
+  "spanCount" INTEGER NOT NULL DEFAULT 0,
+  "totalInputTokens" INTEGER NOT NULL DEFAULT 0,
+  "totalOutputTokens" INTEGER NOT NULL DEFAULT 0,
+  "totalTokens" INTEGER NOT NULL DEFAULT 0,
+  "totalCost" INTEGER NOT NULL DEFAULT 0,
+  "tags" JSONB NOT NULL DEFAULT '{}'::jsonb,
+  "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+);

@@ -1,37 +1,58 @@
+import { getModelPricing, getProviderMetadata } from '@llmops/core';
+import { createGateway } from '@llmops/gateway';
 import { Hono } from 'hono';
-import { prettyJSON } from 'hono/pretty-json';
 import { HTTPException } from 'hono/http-exception';
-import { requestValidator } from './requestValidator';
+import { prettyJSON } from 'hono/pretty-json';
 import { createRequestGuardMiddleware } from './requestGuard';
-import { createGatewayAdapterMiddleware } from './gatewayAdapter';
-import { createCostTrackingMiddleware } from '@server/middlewares/costTracking';
-import gateway from '@llmops/gateway';
 
 const app = new Hono();
 
-// Middleware
 app
   .use('*', prettyJSON())
   // Health check endpoint
   .get('/health', async (c) => {
     return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
   })
-  // LLMOps request validation (x-llmops-config, Authorization)
-  .use('*', requestValidator)
-  // Request guard (extracts envSec from apiKey, CORS handling)
+  // Request guard (CORS handling)
   .use('*', createRequestGuardMiddleware())
-  // Cost tracking middleware (captures usage and costs from responses)
-  .use('*', createCostTrackingMiddleware())
-  // Adapter: translates LLMOps config to Portkey gateway format
-  .use('*', createGatewayAdapterMiddleware())
-  // Mount the gateway at root - gateway routes already have /v1 prefix
-  .route('/', gateway)
+  // Mount the in-process gateway plug. Providers come from the llmops() config
+  // (set on the context in createApp); base URLs + compat come from core's
+  // bundled getProviderMetadata; pricing comes from core's getModelPricing
+  // (live fetch from models.llmops.build, cached). Telemetry sink is built once
+  // in createApp and set on the context; the gateway streams usage/cost events
+  // to it (fire-and-forget via the stream-tee instrument). Built per request for
+  // now — cheap, and can be memoized by config later.
+  .all('/v1/*', async (c) => {
+    const gateway = createGateway({
+      providers: (c.var.inlineProviders ?? []).map((p) => ({
+        provider: p.provider,
+        slug: p.slug,
+        apiKey: p.apiKey,
+        baseURL: p.customHost,
+      })),
+      getProviderMetadata,
+      getModelPricing,
+      telemetry: c.get('telemetrySink'),
+      waitUntil: c.get('llmopsConfig').waitUntil,
+    });
+    const upstream = await gateway(c.req.raw);
+    // The gateway returns a frozen Response; Hono's downstream middleware
+    // (cors etc.) mutates c.res.headers, so re-wrap into a mutable body that
+    // preserves status + (copied) headers + the streaming body.
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: new Headers(upstream.headers),
+      // @ts-expect-error - duplex is a stable RequestInit option in Node 18+.
+      duplex: 'half',
+    });
+  })
   // Error handling
   .notFound((c) =>
     c.json(
       { error: { message: 'Not Found', type: 'invalid_request_error' } },
-      404
-    )
+      404,
+    ),
   )
   .onError((err, c) => {
     if (err instanceof HTTPException) {
@@ -39,7 +60,7 @@ app
     }
     return c.json(
       { error: { message: 'Internal Server Error', type: 'api_error' } },
-      500
+      500,
     );
   });
 

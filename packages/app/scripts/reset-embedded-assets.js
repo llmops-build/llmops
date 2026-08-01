@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const embeddedAssetsPath = join(
   __dirname,
-  '../src/server/generated/embedded-assets.ts'
+  '../src/server/generated/embedded-assets.ts',
 );
 const viteCachePath = join(__dirname, '../node_modules/.vite');
 

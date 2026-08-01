@@ -2,8 +2,9 @@
 
 import { run } from '@drizzle-team/brocli';
 import { migrateCommand } from './commands/migrate';
+import { evalCommand } from './commands/eval';
 
-const commands = [migrateCommand];
+const commands = [migrateCommand, evalCommand];
 
 run(commands, {
   name: 'llmops',

@@ -4,3 +4,6 @@ node_modules
 .sessions
 _ralph
 .mcp.json
+.context
+bin
+.DS_Store

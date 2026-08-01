@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import {
   Sidebar,
   SidebarContent,
@@ -6,64 +6,38 @@ import {
   SidebarHeader,
   SidebarItem,
 } from '@ui';
-import { Menu } from '@base-ui/react/menu';
 import { Icon } from '@client/components/icons';
 import {
   Blocks,
   BookOpen,
-  ChevronDown,
-  Database,
-  Globe,
-  LogOut,
-  MessageSquare,
   Monitor,
   Moon,
-  Network,
-  Play,
-  Settings,
   Sun,
   Telescope,
 } from 'lucide-react';
 import {
   discordIcon,
   footerLink,
-  menuItem,
-  menuItemIcon,
   menuPopup,
   menuPositioner,
   menuSection,
   menuSectionLabel,
-  menuSeparator,
-  sidebarSectionTitle,
-  sidebarSectionTitleHidden,
   themeButton,
   themeButtonActive,
   themeButtonIcon,
   themeSwitcher,
   userAvatar,
-  userEmail,
-  userMenuChevron,
   userMenuTrigger,
   userMenuTriggerCollapsed,
 } from './app-sidebar.css';
 import Discord from '@client/components/icons/discord.svg?react';
 import { useSidebarWidth } from '@client/hooks/ui/useSidebarWidth';
 import { useTheme, type Theme } from '@client/hooks/ui/useTheme';
-import { authClient } from '@client/lib/auth';
+import { Menu } from '@base-ui/react/menu';
 
-function UserMenu() {
-  const { data: session } = authClient.useSession();
+function SettingsMenu() {
   const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
   const { isCollapsed } = useSidebarWidth();
-
-  const userEmailAddress = session?.user?.email ?? '';
-  const userInitial = userEmailAddress.charAt(0).toUpperCase() || '?';
-
-  const handleLogout = async () => {
-    await authClient.signOut();
-    navigate({ to: '/signin' });
-  };
 
   const themeOptions: { value: Theme; icon: typeof Sun; label: string }[] = [
     { value: 'light', icon: Sun, label: 'Light' },
@@ -76,13 +50,7 @@ function UserMenu() {
       <Menu.Trigger
         className={`${userMenuTrigger} ${isCollapsed ? userMenuTriggerCollapsed : ''}`}
       >
-        <span className={userAvatar}>{userInitial}</span>
-        {!isCollapsed && (
-          <>
-            <span className={userEmail}>{userEmailAddress}</span>
-            <ChevronDown className={userMenuChevron} />
-          </>
-        )}
+        <span className={userAvatar}>L</span>
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner
@@ -109,11 +77,6 @@ function UserMenu() {
                 ))}
               </div>
             </div>
-            <div className={menuSeparator} />
-            <Menu.Item className={menuItem} onClick={handleLogout}>
-              <LogOut className={menuItemIcon} />
-              Logout
-            </Menu.Item>
           </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>
@@ -122,59 +85,16 @@ function UserMenu() {
 }
 
 export function AppSidebar() {
-  const { isCollapsed } = useSidebarWidth();
-
   return (
     <Sidebar>
       <SidebarHeader>
-        <UserMenu />
+        <SettingsMenu />
       </SidebarHeader>
       <SidebarContent>
         <SidebarItem asChild>
           <Link to="/">
             <Icon icon={Blocks} />
             Overview
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/settings">
-            <Icon icon={Settings} />
-            Settings
-          </Link>
-        </SidebarItem>
-        <span
-          className={`${sidebarSectionTitle} ${isCollapsed ? sidebarSectionTitleHidden : ''}`}
-        >
-          Workspace
-        </span>
-        <SidebarItem asChild>
-          <Link to="/gateway/usage">
-            <Icon icon={Network} />
-            Gateway
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/prompts">
-            <Icon icon={MessageSquare} />
-            Prompts
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/playgrounds">
-            <Icon icon={Play} />
-            Playgrounds
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/datasets">
-            <Icon icon={Database} />
-            Datasets
-          </Link>
-        </SidebarItem>
-        <SidebarItem asChild>
-          <Link to="/environments">
-            <Icon icon={Globe} />
-            Environments
           </Link>
         </SidebarItem>
         <SidebarItem asChild>

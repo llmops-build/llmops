@@ -1,6 +1,6 @@
 {
   "name": "@llmops/core",
-  "version": "0.6.10",
+  "version": "1.0.0-beta.25",
   "description": "Core LLMOps functionality and utilities",
   "type": "module",
   "license": "Apache-2.0",
@@ -31,16 +31,6 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./db": {
-      "import": {
-        "types": "./dist/db/index.d.mts",
-        "default": "./dist/db/index.mjs"
-      },
-      "require": {
-        "types": "./dist/db/index.d.cts",
-        "default": "./dist/db/index.cjs"
-      }
-    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -54,18 +44,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/utils": "^0.3.0",
-    "@llmops/gateway": "workspace:^",
-    "@neondatabase/serverless": "^1.0.2",
-    "better-auth": "^1.4.10",
     "hono": "^4.10.7",
-    "json-logic-js": "^2.0.5",
-    "kysely": "^0.28.8",
-    "kysely-neon": "^2.0.2",
     "pino": "^10.1.0"
   },
   "devDependencies": {
-    "@types/json-logic-js": "^2.0.8",
     "@types/ws": "^8.18.1"
   }
 }

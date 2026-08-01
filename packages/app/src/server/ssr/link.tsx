@@ -21,7 +21,7 @@ export const Link: FC<Options> = (options) => {
         './.vite/manifest.json',
         {
           eager: true,
-        }
+        },
       );
       for (const [, manifestFile] of Object.entries(MANIFEST)) {
         if (manifestFile['default']) {

@@ -1,9 +1,8 @@
 import { llmops } from '@llmops/sdk';
-import { Pool } from 'pg';
+import { pgStore } from '@llmops/sdk/store/pg';
+import { env } from 'node:process';
 
 export default llmops({
   basePath: '/',
-  database: new Pool({
-    connectionString: process.env.POSTGRES_URL || '',
-  }),
+  telemetry: env.POSTGRES_URL ? pgStore(env.POSTGRES_URL) : undefined,
 });

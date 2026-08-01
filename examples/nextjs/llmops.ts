@@ -1,9 +1,9 @@
 import { llmops } from '@llmops/sdk';
+import { pgStore } from '@llmops/sdk/store/pg';
 
-// For Neon, just pass the connection string directly
-// The SDK will auto-detect it as Neon and handle it appropriately
 export default llmops({
   basePath: '/api/llmops',
-  database: process.env.POSTGRES_URL || process.env.DATABASE_URL || '',
-  schema: 'llmops',
+  telemetry: (process.env.POSTGRES_URL || process.env.DATABASE_URL)
+    ? pgStore(process.env.POSTGRES_URL || process.env.DATABASE_URL!)
+    : undefined,
 });

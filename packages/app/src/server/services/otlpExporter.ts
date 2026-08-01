@@ -67,7 +67,7 @@ function toOtlpValue(value: unknown): Record<string, unknown> {
  * Convert attributes to OTLP format
  */
 function toOtlpAttributes(
-  attrs: Record<string, unknown>
+  attrs: Record<string, unknown>,
 ): Array<{ key: string; value: Record<string, unknown> }> {
   return Object.entries(attrs)
     .filter(([, v]) => v !== undefined && v !== null)
@@ -91,11 +91,8 @@ export interface OtlpExporter {
   isEnabled(): boolean;
 }
 
-export function createOtlpExporter(
-  config?: OtlpExporterConfig
-): OtlpExporter {
-  const endpoint =
-    config?.endpoint ?? process.env.LLMOPS_OTLP_ENDPOINT ?? '';
+export function createOtlpExporter(config?: OtlpExporterConfig): OtlpExporter {
+  const endpoint = config?.endpoint ?? process.env.LLMOPS_OTLP_ENDPOINT ?? '';
   const batchSize = config?.batchSize ?? 50;
   const flushIntervalMs = config?.flushIntervalMs ?? 5000;
 
@@ -177,7 +174,7 @@ export function createOtlpExporter(
 
       if (!res.ok) {
         logger.error(
-          `[OtlpExporter] Export failed: ${res.status} ${res.statusText}`
+          `[OtlpExporter] Export failed: ${res.status} ${res.statusText}`,
         );
       }
     } catch (error) {

@@ -1,6 +1,6 @@
 {
   "name": "@llmops/sdk",
-  "version": "0.6.10",
+  "version": "1.0.0-beta.25",
   "description": "An LLMOps toolkit for TypeScript applications",
   "type": "module",
   "license": "Apache-2.0",
@@ -78,6 +78,56 @@
         "default": "./dist/nextjs.cjs"
       }
     },
+    "./store/pg": {
+      "import": {
+        "types": "./dist/store/pg.d.mts",
+        "default": "./dist/store/pg.mjs"
+      },
+      "require": {
+        "types": "./dist/store/pg.d.cts",
+        "default": "./dist/store/pg.cjs"
+      }
+    },
+    "./store/d1": {
+      "import": {
+        "types": "./dist/store/d1.d.mts",
+        "default": "./dist/store/d1.mjs"
+      },
+      "require": {
+        "types": "./dist/store/d1.d.cts",
+        "default": "./dist/store/d1.cjs"
+      }
+    },
+    "./store/sqlite": {
+      "import": {
+        "types": "./dist/store/sqlite.d.mts",
+        "default": "./dist/store/sqlite.mjs"
+      },
+      "require": {
+        "types": "./dist/store/sqlite.d.cts",
+        "default": "./dist/store/sqlite.cjs"
+      }
+    },
+    "./eval": {
+      "import": {
+        "types": "./dist/eval.d.mts",
+        "default": "./dist/eval.mjs"
+      },
+      "require": {
+        "types": "./dist/eval.d.cts",
+        "default": "./dist/eval.cjs"
+      }
+    },
+    "./types": {
+      "import": {
+        "types": "./dist/types.d.mts",
+        "default": "./dist/types.mjs"
+      },
+      "require": {
+        "types": "./dist/types.d.cts",
+        "default": "./dist/types.cjs"
+      }
+    },
     "./*": "./*"
   },
   "publishConfig": {
@@ -94,8 +144,19 @@
     "@llmops/app": "workspace:^",
     "@llmops/core": "workspace:^"
   },
+  "peerDependencies": {
+    "pg": "*",
+    "better-sqlite3": "*"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true },
+    "better-sqlite3": { "optional": true }
+  },
   "devDependencies": {
+    "@tsqx/cli": "^0.0.5",
+    "@tsqx/kit": "^0.0.5",
     "@types/express": "^5.0.6",
+    "@types/pg": "^8.15.6",
     "hono": "^4.7.0"
   }
 }

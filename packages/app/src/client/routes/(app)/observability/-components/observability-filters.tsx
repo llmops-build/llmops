@@ -2,9 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Filter, ChevronDown } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent, ComboboxMultiple } from '@ui';
-import { useEnvironments } from '@client/hooks/queries/useEnvironments';
-import { useConfigList } from '@client/hooks/queries/useConfigList';
-import { useConfigVariants } from '@client/hooks/queries/useConfigVariants';
 import { useDistinctTags } from '@client/hooks/queries/useAnalytics';
 import type { ObservabilitySearchParams } from '../route';
 import * as styles from './observability-filters.css';
@@ -14,22 +11,21 @@ export function ObservabilityFilters() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: environments } = useEnvironments();
-  const { data: configs } = useConfigList();
-  // Only fetch variants when a config is selected
-  const { data: configVariants } = useConfigVariants(search.configId || '');
   const { data: distinctTags } = useDistinctTags();
 
   // Group tags by key
   const tagsByKey = useMemo(() => {
     if (!distinctTags) return {};
     return distinctTags.reduce(
-      (acc, { key, value }) => {
+      (
+        acc: Record<string, string[]>,
+        { key, value }: { key: string; value: string },
+      ) => {
         if (!acc[key]) acc[key] = [];
         acc[key].push(value);
         return acc;
       },
-      {} as Record<string, string[]>
+      {} as Record<string, string[]>,
     );
   }, [distinctTags]);
 
@@ -47,51 +43,11 @@ export function ObservabilityFilters() {
   const selectedTagCount = useMemo(() => {
     return Object.values(selectedTags).reduce(
       (sum, values) => sum + values.length,
-      0
+      0,
     );
   }, [selectedTags]);
 
-  const activeFilterCount =
-    [search.environmentId, search.configId, search.variantId].filter(Boolean)
-      .length + selectedTagCount;
-
-  const handleEnvironmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value || undefined;
-    navigate({
-      to: '.',
-      search: (prev: ObservabilitySearchParams) => ({
-        ...prev,
-        environmentId: value,
-      }),
-      replace: true,
-    });
-  };
-
-  const handleConfigChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value || undefined;
-    navigate({
-      to: '.',
-      search: (prev: ObservabilitySearchParams) => ({
-        ...prev,
-        configId: value,
-        // Clear variant when config changes
-        variantId: undefined,
-      }),
-      replace: true,
-    });
-  };
-
-  const handleVariantChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value || undefined;
-    navigate({
-      to: '.',
-      search: (prev: ObservabilitySearchParams) => ({
-        ...prev,
-        variantId: value,
-      }),
-      replace: true,
-    });
-  };
+  const activeFilterCount = selectedTagCount;
 
   const handleTagChange = useCallback(
     (key: string, values: string[]) => {
@@ -115,7 +71,7 @@ export function ObservabilityFilters() {
         replace: true,
       });
     },
-    [selectedTags, navigate]
+    [selectedTags, navigate],
   );
 
   const clearFilters = () => {
@@ -123,9 +79,6 @@ export function ObservabilityFilters() {
       to: '.',
       search: (prev: ObservabilitySearchParams) => ({
         ...prev,
-        environmentId: undefined,
-        configId: undefined,
-        variantId: undefined,
         tags: undefined,
       }),
       replace: true,
@@ -134,26 +87,7 @@ export function ObservabilityFilters() {
 
   const getDisplayText = () => {
     if (activeFilterCount === 0) return 'Filters';
-
-    const labels: string[] = [];
-    if (search.environmentId) {
-      const env = environments?.find((e) => e.id === search.environmentId);
-      if (env) labels.push(env.name);
-    }
-    if (search.configId) {
-      const config = configs?.find((c) => c.id === search.configId);
-      if (config) labels.push(config.name);
-    }
-    if (search.variantId && configVariants) {
-      const variant = configVariants.find(
-        (v) => v.variantId === search.variantId
-      );
-      if (variant) labels.push(variant.name);
-    }
-
-    if (labels.length === 1) return labels[0];
-    if (labels.length > 1) return `${labels.length} filters`;
-    return 'Filters';
+    return `${activeFilterCount} filters`;
   };
 
   return (
@@ -190,58 +124,6 @@ export function ObservabilityFilters() {
           )}
         </div>
         <div className={styles.filtersBody}>
-          <div className={styles.filterRow}>
-            <label className={styles.filterLabel}>Environment</label>
-            <select
-              className={styles.filterSelect}
-              value={search.environmentId || ''}
-              onChange={handleEnvironmentChange}
-            >
-              <option value="">All environments</option>
-              {environments?.map((env) => (
-                <option key={env.id} value={env.id}>
-                  {env.name}
-                  {env.isProd ? ' (prod)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.filterRow}>
-            <label className={styles.filterLabel}>Config</label>
-            <select
-              className={styles.filterSelect}
-              value={search.configId || ''}
-              onChange={handleConfigChange}
-            >
-              <option value="">All configs</option>
-              {configs?.map((config) => (
-                <option key={config.id} value={config.id}>
-                  {config.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.filterRow}>
-            <label className={styles.filterLabel}>Variant</label>
-            <select
-              className={styles.filterSelect}
-              value={search.variantId || ''}
-              onChange={handleVariantChange}
-              disabled={!search.configId}
-            >
-              <option value="">
-                {search.configId ? 'All variants' : 'Select a config first'}
-              </option>
-              {configVariants?.map((variant) => (
-                <option key={variant.variantId} value={variant.variantId}>
-                  {variant.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Tags section - only show if there are tags */}
           {Object.keys(tagsByKey).length > 0 && (
             <div className={styles.tagsSection}>

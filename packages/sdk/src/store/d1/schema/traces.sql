@@ -1,0 +1,20 @@
+CREATE TABLE traces (
+  "id" TEXT PRIMARY KEY,
+  "traceId" TEXT NOT NULL UNIQUE,
+  "name" TEXT,
+  "sessionId" TEXT,
+  "userId" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'unset',
+  "startTime" TEXT NOT NULL,
+  "endTime" TEXT,
+  "durationMs" INTEGER,
+  "spanCount" INTEGER NOT NULL DEFAULT 0,
+  "totalInputTokens" INTEGER NOT NULL DEFAULT 0,
+  "totalOutputTokens" INTEGER NOT NULL DEFAULT 0,
+  "totalTokens" INTEGER NOT NULL DEFAULT 0,
+  "totalCost" INTEGER NOT NULL DEFAULT 0,
+  "tags" TEXT NOT NULL DEFAULT '{}',
+  "metadata" TEXT NOT NULL DEFAULT '{}',
+  "createdAt" TEXT NOT NULL DEFAULT (datetime('now')),
+  "updatedAt" TEXT NOT NULL DEFAULT (datetime('now'))
+);

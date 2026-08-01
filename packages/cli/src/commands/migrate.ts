@@ -1,27 +1,10 @@
 import { command, string } from '@drizzle-team/brocli';
 import { logger } from '@llmops/core';
-import {
-  createDatabaseFromConnection,
-  detectDatabaseType,
-  getMigrations,
-} from '@llmops/core/db';
 import { existsSync } from 'node:fs';
 import yoctoSpinner from 'yocto-spinner';
-import chalk from 'chalk';
 import prompts from 'prompts';
 import { getConfig } from '../lib/get-config';
 
-/**
- * @fileoverview This file defines the 'migrate' command for the CLI application.
- * Steps:
- * 1. Look for package.json and @llmops/sdk in the current directory.
- * 2. Check if the @llmops/sdk version works with the current CLI version.
- * 3. If compatible, check for the config file passed as an argument.
- * 4. If the config file exists, read and parse it.
- * 5. If not passed, look for default config file locations.
- * 6. Use zod to validate the existing configuration schema.
- * 7. If valid, get the db adapter from the config.
- */
 export const migrateCommand = command({
   name: 'migrate',
   desc: 'Run database migrations based on LLMOps configuration',
@@ -60,49 +43,14 @@ export const migrateCommand = command({
       process.exit(1);
     }
 
-    if (!config.database) {
-      logger.error('No database configuration found.');
-      process.exit(1);
-    }
+    const telemetry = config.telemetry;
+    const store = Array.isArray(telemetry) ? telemetry[0] : telemetry;
 
-    // Create database connection with schema option
-    const schema = config.schema ?? 'llmops';
-    const db = await createDatabaseFromConnection(config.database, { schema });
-    if (!db) {
-      logger.error('Failed to create database connection.');
-      process.exit(1);
-    }
-
-    const dbType = detectDatabaseType(config.database);
-    if (!dbType) {
-      logger.error('Could not detect database type.');
-      process.exit(1);
-    }
-
-    const spinner = yoctoSpinner({ text: 'preparing migration...' }).start();
-    const { toBeAdded, toBeCreated, runMigrations } = await getMigrations(
-      db,
-      dbType,
-      { schema }
-    );
-
-    if (!toBeAdded.length && !toBeCreated.length) {
-      spinner.stop();
-      console.log('🚀 No migrations needed.');
-      process.exit(0);
-    }
-
-    spinner.stop();
-    console.log(`🔑 The migration will affect the following:`);
-
-    for (const table of [...toBeCreated, ...toBeAdded]) {
-      console.log(
-        '->',
-        chalk.magenta(Object.keys(table.fields).join(', ')),
-        chalk.white('fields on'),
-        chalk.yellow(`${table.table}`),
-        chalk.white('table.')
+    if (!store || !store._pool) {
+      logger.error(
+        'No telemetry store with database found. Configure pgStore in your config.',
       );
+      process.exit(1);
     }
 
     let migrate = opts.yes;
@@ -110,7 +58,7 @@ export const migrateCommand = command({
       const response = await prompts({
         type: 'confirm',
         name: 'migrate',
-        message: 'Do you want to proceed with the migration?',
+        message: 'Do you want to run pending migrations?',
         initial: false,
       });
       migrate = response.migrate;
@@ -120,10 +68,30 @@ export const migrateCommand = command({
       console.log('Migration cancelled.');
       process.exit(0);
     }
-    spinner.start('migrating...');
-    await runMigrations();
-    spinner.stop();
-    console.log('✅ Migration completed successfully.');
+
+    const spinner = yoctoSpinner({ text: 'running migrations...' }).start();
+
+    try {
+      const { runMigrations } = await import('@llmops/sdk/store/pg');
+      const { applied } = await runMigrations(
+        store._pool as import('pg').Pool,
+        store._schema ?? 'llmops',
+      );
+
+      spinner.stop();
+
+      if (applied.length === 0) {
+        console.log('🚀 No pending migrations.');
+      } else {
+        console.log(
+          `✅ Applied ${applied.length} migration(s): ${applied.join(', ')}`,
+        );
+      }
+    } catch (error) {
+      spinner.stop();
+      logger.error(`Migration failed: ${error}`);
+      process.exit(1);
+    }
 
     process.exit(0);
   },

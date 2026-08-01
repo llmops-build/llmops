@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { AlertTriangle, Info, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, TrendingUp } from 'lucide-react';
 import { Icon } from '@client/components/icons';
-import { useRequestStats, useTotalCost } from '@client/hooks/queries/useAnalytics';
-import { useProviderConfigs } from '@client/hooks/queries/useProviderConfigs';
+import {
+  useRequestStats,
+  useTotalCost,
+} from '@client/hooks/queries/useAnalytics';
 import * as styles from './insights-section.css';
 
 interface Insight {
@@ -29,7 +31,6 @@ export function InsightsSection() {
 
   const { data: stats } = useRequestStats(dateRange);
   const { data: costs } = useTotalCost(dateRange);
-  const { data: providerConfigs } = useProviderConfigs();
 
   const insights = useMemo(() => {
     const result: Insight[] = [];
@@ -51,32 +52,6 @@ export function InsightsSection() {
           actionTo: '/observability/requests',
         });
       }
-    }
-
-    // Check for no recent activity
-    if (providerConfigs && providerConfigs.length > 0) {
-      if (!stats?.totalRequests || stats.totalRequests === 0) {
-        result.push({
-          id: 'no-activity',
-          type: 'info',
-          icon: Info,
-          message: 'No API requests in the last 24 hours. Your Gateway is ready to use.',
-          actionLabel: 'View API Usage',
-          actionTo: '/gateway/usage',
-        });
-      }
-    }
-
-    // Check for no providers configured
-    if (!providerConfigs || providerConfigs.length === 0) {
-      result.push({
-        id: 'no-providers',
-        type: 'info',
-        icon: Zap,
-        message: 'Get started by adding your first LLM provider.',
-        actionLabel: 'Add Provider',
-        actionTo: '/gateway/providers',
-      });
     }
 
     // Positive insight for good performance
@@ -101,7 +76,7 @@ export function InsightsSection() {
     }
 
     return result;
-  }, [stats, costs, providerConfigs]);
+  }, [stats, costs]);
 
   if (insights.length === 0) {
     return null;

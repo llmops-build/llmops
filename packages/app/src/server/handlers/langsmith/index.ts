@@ -17,7 +17,7 @@ import {
   getDefaultPricingProvider,
   calculateCacheAwareCost,
 } from '@llmops/core';
-import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
+import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 import {
   getGlobalTraceBatchWriter,
   type TraceQueueItem,
@@ -95,8 +95,7 @@ function extractTokenUsage(run: RunCreate): TokenUsage {
   const metadata = (extra.metadata as Record<string, unknown>) ?? {};
   const invocationParams =
     (extra.invocation_params as Record<string, unknown>) ?? {};
-  const usageMeta =
-    (metadata.usage_metadata as Record<string, unknown>) ?? {};
+  const usageMeta = (metadata.usage_metadata as Record<string, unknown>) ?? {};
 
   const provider = (metadata.ls_provider as string) ?? null;
   const model =
@@ -108,7 +107,7 @@ function extractTokenUsage(run: RunCreate): TokenUsage {
   const promptTokens = Number(usageMeta.input_tokens ?? 0);
   const completionTokens = Number(usageMeta.output_tokens ?? 0);
   const totalTokens = Number(
-    usageMeta.total_tokens ?? promptTokens + completionTokens
+    usageMeta.total_tokens ?? promptTokens + completionTokens,
   );
 
   return { provider, model, promptTokens, completionTokens, totalTokens };
@@ -121,20 +120,14 @@ function extractTokenUsage(run: RunCreate): TokenUsage {
 const pricingProvider = getDefaultPricingProvider();
 
 async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
-  const traceId = run.trace_id
-    ? uuidToHex(run.trace_id)
-    : uuidToHex(run.id);
+  const traceId = run.trace_id ? uuidToHex(run.trace_id) : uuidToHex(run.id);
 
   const spanId = uuidToHex(run.id);
-  const parentSpanId = run.parent_run_id
-    ? uuidToHex(run.parent_run_id)
-    : null;
+  const parentSpanId = run.parent_run_id ? uuidToHex(run.parent_run_id) : null;
 
   const startTime = parseTimestamp(run.start_time) ?? new Date();
   const endTime = parseTimestamp(run.end_time);
-  const durationMs = endTime
-    ? endTime.getTime() - startTime.getTime()
-    : null;
+  const durationMs = endTime ? endTime.getTime() - startTime.getTime() : null;
 
   const isRootRun = !run.parent_run_id;
   const hasError = !!run.error;
@@ -162,7 +155,7 @@ async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
     try {
       const pricing = await pricingProvider.getModelPricing(
         usage.provider,
-        usage.model
+        usage.model,
       );
       if (pricing) {
         const costResult = calculateCacheAwareCost(
@@ -171,13 +164,13 @@ async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
             completionTokens: usage.completionTokens,
           },
           pricing,
-          usage.provider
+          usage.provider,
         );
         cost = costResult.totalCost;
       }
     } catch (e) {
       logger.debug(
-        `[LangSmith] Failed to calculate cost for ${usage.provider}/${usage.model}: ${e instanceof Error ? e.message : String(e)}`
+        `[LangSmith] Failed to calculate cost for ${usage.provider}/${usage.model}: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }
@@ -185,11 +178,9 @@ async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
   const attributes: Record<string, unknown> = {
     'langsmith.run_type': run.run_type,
   };
-  if (run.session_name)
-    attributes['langsmith.session_name'] = run.session_name;
+  if (run.session_name) attributes['langsmith.session_name'] = run.session_name;
   if (run.tags?.length) attributes['langsmith.tags'] = run.tags;
-  if (usage.provider)
-    attributes['gen_ai.provider.name'] = usage.provider;
+  if (usage.provider) attributes['gen_ai.provider.name'] = usage.provider;
   if (usage.model) attributes['gen_ai.request.model'] = usage.model;
 
   const span: SpanInsert = {
@@ -219,8 +210,7 @@ async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
     traceId,
     spanId,
     name: (event.name as string) ?? 'event',
-    timestamp:
-      parseTimestamp(event.time as string | number) ?? new Date(),
+    timestamp: parseTimestamp(event.time as string | number) ?? new Date(),
     attributes: event,
   }));
 
@@ -250,7 +240,7 @@ async function runCreateToQueueItem(run: RunCreate): Promise<TraceQueueItem> {
 }
 
 function runUpdateToQueueItem(
-  update: RunUpdate & { id: string }
+  update: RunUpdate & { id: string },
 ): TraceQueueItem | null {
   const traceId = update.trace_id
     ? uuidToHex(update.trace_id)
@@ -314,7 +304,7 @@ interface DbWithTraces {
   upsertTrace: (data: TraceUpsert) => Promise<void>;
   batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
   batchInsertSpanEvents: (
-    events: SpanEventInsert[]
+    events: SpanEventInsert[],
   ) => Promise<{ count: number }>;
 }
 
@@ -357,9 +347,9 @@ const app = new Hono()
       return c.json({ error: 'x-api-key header required' }, 401);
     }
 
-    const db = c.get('db') as unknown as DbWithTraces | null;
+    const db = c.get('telemetryStore') as unknown as DbWithTraces | null;
     if (!db) {
-      return c.json({ error: 'Database not configured' }, 503);
+      return c.json({ error: 'Telemetry store not configured' }, 503);
     }
 
     let body: { post?: RunCreate[]; patch?: RunUpdate[] };

@@ -14,9 +14,10 @@ function createMockDb(overrides: Record<string, unknown> = {}) {
     getRequestByRequestId: vi.fn().mockResolvedValue(undefined),
     getCostByModel: vi.fn().mockResolvedValue([]),
     getCostByProvider: vi.fn().mockResolvedValue([]),
-    getCostByConfig: vi.fn().mockResolvedValue([]),
     getDailyCosts: vi.fn().mockResolvedValue([]),
     getDistinctTags: vi.fn().mockResolvedValue([]),
+    batchInsertRequests: vi.fn().mockResolvedValue(undefined),
+    insertRequest: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -28,7 +29,8 @@ function createMockDb(overrides: Record<string, unknown> = {}) {
 function createTestApp(mockDb: ReturnType<typeof createMockDb>) {
   const app = new Hono();
   app.use('*', async (c, next) => {
-    c.set('db', mockDb);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    c.set('telemetryStore' as any, mockDb as any);
     await next();
   });
   app.route('/analytics', analyticsApp);
@@ -49,7 +51,7 @@ describe('GET /analytics/costs/summary - tagKeys parameter', () => {
   test('passes parsed tagKeys array to getCostSummary when valid JSON provided', async () => {
     const tagKeys = JSON.stringify(['orgId', 'teamName']);
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`,
     );
 
     expect(res.status).toBe(200);
@@ -63,7 +65,7 @@ describe('GET /analytics/costs/summary - tagKeys parameter', () => {
   test('passes single tagKey correctly', async () => {
     const tagKeys = JSON.stringify(['orgId']);
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`,
     );
 
     expect(res.status).toBe(200);
@@ -74,21 +76,17 @@ describe('GET /analytics/costs/summary - tagKeys parameter', () => {
   test('handles tagKeys with special characters (commas, spaces)', async () => {
     const tagKeys = JSON.stringify(['org,Id', 'team name', 'key:with:colons']);
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`,
     );
 
     expect(res.status).toBe(200);
     const args = mockDb.getCostSummary.mock.calls[0][0];
-    expect(args.tagKeys).toEqual([
-      'org,Id',
-      'team name',
-      'key:with:colons',
-    ]);
+    expect(args.tagKeys).toEqual(['org,Id', 'team name', 'key:with:colons']);
   });
 
   test('does not pass tagKeys when parameter is omitted', async () => {
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=model`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=model`,
     );
 
     expect(res.status).toBe(200);
@@ -98,7 +96,7 @@ describe('GET /analytics/costs/summary - tagKeys parameter', () => {
 
   test('ignores invalid JSON for tagKeys', async () => {
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=not-valid-json`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=not-valid-json`,
     );
 
     expect(res.status).toBe(200);
@@ -109,7 +107,7 @@ describe('GET /analytics/costs/summary - tagKeys parameter', () => {
   test('filters out empty strings from tagKeys array', async () => {
     const tagKeys = JSON.stringify(['orgId', '', 'teamName', '']);
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`,
     );
 
     expect(res.status).toBe(200);
@@ -120,7 +118,7 @@ describe('GET /analytics/costs/summary - tagKeys parameter', () => {
   test('ignores tagKeys when value is not an array', async () => {
     const tagKeys = JSON.stringify({ key: 'value' });
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=tags&tagKeys=${encodeURIComponent(tagKeys)}`,
     );
 
     expect(res.status).toBe(200);
@@ -155,7 +153,7 @@ describe('GET /analytics/costs/summary - general behavior', () => {
 
   test('returns 200 with empty array when no data', async () => {
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}`,
     );
 
     expect(res.status).toBe(200);
@@ -171,7 +169,7 @@ describe('GET /analytics/costs/summary - general behavior', () => {
     mockDb.getCostSummary.mockResolvedValue(mockData);
 
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=model`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=model`,
     );
 
     expect(res.status).toBe(200);
@@ -183,7 +181,7 @@ describe('GET /analytics/costs/summary - general behavior', () => {
     mockDb.getCostSummary.mockRejectedValue(new Error('DB error'));
 
     const res = await app.request(
-      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=model`
+      `/analytics/costs/summary?${VALID_DATE_RANGE}&groupBy=model`,
     );
 
     expect(res.status).toBe(500);

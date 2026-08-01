@@ -24,7 +24,7 @@ import {
   type TraceContext,
 } from '@server/lib/traceContext';
 import { getGlobalTraceBatchWriter } from '@server/services/traceBatchWriter';
-import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/core';
+import type { SpanInsert, SpanEventInsert, TraceUpsert } from '@llmops/sdk';
 
 const pricingProvider = getDefaultPricingProvider();
 
@@ -100,7 +100,7 @@ interface OpenAIResponse {
  */
 function transformHookResultsToGuardrailResults(
   hookResults: GatewayHookResults | undefined,
-  wasBlocked: boolean
+  wasBlocked: boolean,
 ): GuardrailResults | null {
   if (!hookResults) return null;
 
@@ -211,12 +211,12 @@ export interface CostTrackingConfig {
  */
 interface DbWithBatchInsert {
   batchInsertRequests: (
-    requests: LLMRequestData[]
+    requests: LLMRequestData[],
   ) => Promise<{ count: number }>;
   upsertTrace: (data: TraceUpsert) => Promise<void>;
   batchInsertSpans: (spans: SpanInsert[]) => Promise<{ count: number }>;
   batchInsertSpanEvents: (
-    events: SpanEventInsert[]
+    events: SpanEventInsert[],
   ) => Promise<{ count: number }>;
 }
 
@@ -230,7 +230,7 @@ interface DbWithBatchInsert {
  * - Adds x-llmops-request-id header for tracing
  */
 export function createCostTrackingMiddleware(
-  config: CostTrackingConfig = {}
+  config: CostTrackingConfig = {},
 ): MiddlewareHandler {
   const {
     enabled = true,
@@ -267,7 +267,7 @@ export function createCostTrackingMiddleware(
       (endpoint) =>
         path.endsWith(endpoint) ||
         // Handle /responses/:id pattern but not /responses/:id/input_items
-        (endpoint === '/responses' && path.match(/\/responses\/[^/]+$/))
+        (endpoint === '/responses' && path.match(/\/responses\/[^/]+$/)),
     );
 
     if (!shouldTrack) {
@@ -297,7 +297,7 @@ export function createCostTrackingMiddleware(
           streamValue: body.stream,
           model: body.model,
         },
-        'Cost tracking: parsed request body'
+        'Cost tracking: parsed request body',
       );
 
       // For streaming requests, ensure include_usage is set
@@ -325,23 +325,17 @@ export function createCostTrackingMiddleware(
       log('Failed to parse request body');
     }
 
-    // Internal SDK requests handle tracing via the OTLP exporter,
-    // so we skip gateway-level trace/span creation to avoid duplicates.
-    const isInternalRequest = c.req.header(LLMOPS_INTERNAL_HEADER) === '1';
-
     // Resolve trace context from headers
     const traceContext = resolveTraceContext(c.req);
     c.set('__traceContext', traceContext);
 
-    // Set trace response headers (skip for internal requests)
-    if (!isInternalRequest) {
-      c.header(LLMOPS_TRACE_ID_HEADER, traceContext.traceId);
-      c.header(LLMOPS_SPAN_ID_HEADER, traceContext.spanId);
-      c.header(
-        'traceparent',
-        formatTraceparent(traceContext.traceId, traceContext.spanId)
-      );
-    }
+    // Set trace response headers
+    c.header(LLMOPS_TRACE_ID_HEADER, traceContext.traceId);
+    c.header(LLMOPS_SPAN_ID_HEADER, traceContext.spanId);
+    c.header(
+      'traceparent',
+      formatTraceparent(traceContext.traceId, traceContext.spanId),
+    );
 
     // Create request context
     const context: RequestContext = {
@@ -390,8 +384,8 @@ export function createCostTrackingMiddleware(
     if (body.metadata && typeof body.metadata === 'object') {
       customTags = Object.fromEntries(
         Object.entries(body.metadata as Record<string, unknown>).filter(
-          ([k, v]) => typeof k === 'string' && typeof v === 'string'
-        )
+          ([k, v]) => typeof k === 'string' && typeof v === 'string',
+        ),
       ) as Record<string, string>;
     }
 
@@ -401,33 +395,36 @@ export function createCostTrackingMiddleware(
       return;
     }
 
-    // Skip cost tracking if no database (inline-only mode)
-    // Cost tracking requires database to store request logs
-    const db = c.get('db') as unknown as DbWithBatchInsert | null;
+    // Skip cost tracking if no telemetry store configured
+    const db = c.get('telemetryStore') as unknown as DbWithBatchInsert | null;
     if (!db) {
-      log(`Skipping cost tracking - no database configured`);
+      log(`Skipping cost tracking - no telemetry store configured`);
       return;
     }
+
+    // Get waitUntil from config (for edge runtimes like Cloudflare Workers)
+    const llmopsConfig = c.get('llmopsConfig');
+    const waitUntil = llmopsConfig?.waitUntil as ((promise: Promise<unknown>) => void) | undefined;
+
+    // Internal SDK requests already have a parent trace from the OTLP exporter.
+    // We still create spans for them but skip creating a duplicate top-level trace.
+    const isInternalRequest = c.req.header(LLMOPS_INTERNAL_HEADER) === '1';
 
     // Initialize batch writers lazily
     // Cast db to include batchInsertRequests (added by createLLMRequestsDataLayer)
     const batchWriter = getGlobalBatchWriter(
       { batchInsertRequests: (requests) => db.batchInsertRequests(requests) },
-      { flushIntervalMs, debug }
+      { flushIntervalMs, debug },
     );
 
-    // Skip trace batch writer for internal SDK requests — tracing is handled
-    // by the agents/OTLP exporter to avoid creating duplicate traces.
-    const traceBatchWriter = isInternalRequest
-      ? undefined
-      : getGlobalTraceBatchWriter(
-          {
-            upsertTrace: (data) => db.upsertTrace(data),
-            batchInsertSpans: (spans) => db.batchInsertSpans(spans),
-            batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
-          },
-          { flushIntervalMs, debug }
-        );
+    const traceBatchWriter = getGlobalTraceBatchWriter(
+      {
+        upsertTrace: (data) => db.upsertTrace(data),
+        batchInsertSpans: (spans) => db.batchInsertSpans(spans),
+        batchInsertSpanEvents: (events) => db.batchInsertSpanEvents(events),
+      },
+      { flushIntervalMs, debug },
+    );
 
     // Handle streaming vs non-streaming responses
     if (isStreaming && response.body) {
@@ -446,7 +443,7 @@ export function createCostTrackingMiddleware(
           const guardrailResults = usage?.hookResults
             ? transformHookResultsToGuardrailResults(
                 usage.hookResults,
-                statusCode === 446
+                statusCode === 446,
               )
             : null;
 
@@ -478,13 +475,15 @@ export function createCostTrackingMiddleware(
             traceContext,
             batchWriter,
             traceBatchWriter,
+            isInternalRequest,
+            waitUntil,
             trackErrors,
             log,
           });
         })
         .catch((err) => {
           logger.error(
-            `[CostTracking] Failed to process streaming usage: ${err}`
+            `[CostTracking] Failed to process streaming usage: ${err}`,
           );
         });
     } else {
@@ -516,7 +515,7 @@ export function createCostTrackingMiddleware(
             hasUsage: !!responseBody.usage,
             rawUsage: responseBody.usage,
           },
-          'Cost tracking: parsing response body'
+          'Cost tracking: parsing response body',
         );
 
         if (responseBody.usage) {
@@ -533,22 +532,22 @@ export function createCostTrackingMiddleware(
             promptTokens,
             completionTokens,
             totalTokens:
-              responseBody.usage.total_tokens || promptTokens + completionTokens,
+              responseBody.usage.total_tokens ||
+              promptTokens + completionTokens,
             cachedTokens:
               responseBody.usage.prompt_tokens_details?.cached_tokens ??
               responseBody.usage.input_tokens_details?.cached_tokens ??
               responseBody.usage.cache_read_input_tokens,
-            cacheCreationTokens:
-              responseBody.usage.cache_creation_input_tokens,
+            cacheCreationTokens: responseBody.usage.cache_creation_input_tokens,
           };
           logger.debug(
             { endpoint: context.endpoint, usage },
-            'Cost tracking: extracted usage'
+            'Cost tracking: extracted usage',
           );
         } else {
           logger.debug(
             { endpoint: context.endpoint },
-            'Cost tracking: no usage in response body'
+            'Cost tracking: no usage in response body',
           );
         }
 
@@ -558,18 +557,18 @@ export function createCostTrackingMiddleware(
           const wasBlocked = statusCode === 446;
           guardrailResults = transformHookResultsToGuardrailResults(
             responseBody.hook_results,
-            wasBlocked
+            wasBlocked,
           );
           if (guardrailResults) {
             log(
-              `Extracted guardrail results: ${guardrailResults.results.length} checks, action=${guardrailResults.action}`
+              `Extracted guardrail results: ${guardrailResults.results.length} checks, action=${guardrailResults.action}`,
             );
           }
         }
       } catch (error) {
         logger.error(
           { endpoint: context.endpoint, error },
-          'Cost tracking: failed to parse response body for usage'
+          'Cost tracking: failed to parse response body for usage',
         );
       }
 
@@ -594,6 +593,8 @@ export function createCostTrackingMiddleware(
         traceContext,
         batchWriter,
         traceBatchWriter,
+        isInternalRequest,
+        waitUntil,
         trackErrors,
         log,
       });
@@ -630,6 +631,8 @@ async function processUsageAndLog(params: {
   traceContext?: TraceContext;
   batchWriter: ReturnType<typeof getGlobalBatchWriter>;
   traceBatchWriter?: ReturnType<typeof getGlobalTraceBatchWriter>;
+  isInternalRequest?: boolean;
+  waitUntil?: (promise: Promise<unknown>) => void;
   trackErrors: boolean;
   log: (msg: string) => void;
 }): Promise<void> {
@@ -653,6 +656,8 @@ async function processUsageAndLog(params: {
     traceContext,
     batchWriter,
     traceBatchWriter,
+    isInternalRequest = false,
+    waitUntil,
     trackErrors,
     log,
   } = params;
@@ -682,7 +687,7 @@ async function processUsageAndLog(params: {
             cacheCreationTokens: usage.cacheCreationTokens,
           },
           pricing,
-          provider
+          provider,
         );
         cost = costResult.totalCost;
         inputCost = costResult.inputCost;
@@ -703,7 +708,7 @@ async function processUsageAndLog(params: {
 
   const validateUUID = (
     value: string | null,
-    fieldName: string
+    fieldName: string,
   ): string | null => {
     if (!value) return null;
     if (!UUID_REGEX.test(value)) {
@@ -715,10 +720,13 @@ async function processUsageAndLog(params: {
 
   const validConfigId = validateUUID(configId || null, 'configId');
   const validVariantId = validateUUID(variantId || null, 'variantId');
-  const validEnvironmentId = validateUUID(environmentId || null, 'environmentId');
+  const validEnvironmentId = validateUUID(
+    environmentId || null,
+    'environmentId',
+  );
   const validProviderConfigId = validateUUID(
     providerConfigId || null,
-    'providerConfigId'
+    'providerConfigId',
   );
 
   // Build request data for logging
@@ -827,7 +835,7 @@ async function processUsageAndLog(params: {
 
     const traceData: TraceUpsert = {
       traceId: traceContext.traceId,
-      name: traceContext.traceName,
+      name: traceContext.traceName || `${provider}/${model}`,
       sessionId: traceContext.sessionId,
       userId: traceContext.userId,
       status: traceStatus as 'unset' | 'ok' | 'error',
@@ -843,10 +851,33 @@ async function processUsageAndLog(params: {
       metadata: {},
     };
 
-    traceBatchWriter.enqueue({
-      span: spanData,
-      trace: traceData,
-    });
-    log(`Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`);
+    if (isInternalRequest) {
+      // Internal SDK requests: only insert the span — the OTLP/agents exporter
+      // handles the parent trace. Skipping trace upsert prevents duplicate
+      // top-level traces in the traces table.
+      traceBatchWriter.enqueue({
+        span: spanData,
+      });
+    } else {
+      // External requests: create both trace and span
+      traceBatchWriter.enqueue({
+        span: spanData,
+        trace: traceData,
+      });
+    }
+    log(
+      `Enqueued trace span ${traceContext.spanId} for trace ${traceContext.traceId}`,
+    );
+  }
+
+  // If waitUntil is provided (edge runtimes), flush in the background.
+  // The response returns immediately while the Worker stays alive for writes.
+  if (waitUntil) {
+    waitUntil(
+      Promise.all([
+        batchWriter.flush(),
+        traceBatchWriter ? traceBatchWriter.flush() : Promise.resolve(),
+      ]),
+    );
   }
 }

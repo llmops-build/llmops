@@ -24,7 +24,7 @@ interface DbWithTraces {
     offset: number;
   }>;
   getTraceWithSpans: (
-    traceId: string
+    traceId: string,
   ) => Promise<
     { trace: unknown; spans: unknown[]; events: unknown[] } | undefined
   >;
@@ -96,10 +96,10 @@ const app = new Hono()
         startDate: isoDateString.optional(),
         endDate: isoDateString.optional(),
         tags: z.string().optional(),
-      })
+      }),
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const db = c.get('telemetryStore') as unknown as DbWithTraces;
       const query = c.req.valid('query');
 
       try {
@@ -120,12 +120,9 @@ const app = new Hono()
         return c.json(successResponse(result, 200));
       } catch (error) {
         console.error('Error fetching traces:', error);
-        return c.json(
-          internalServerError('Failed to fetch traces', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to fetch traces', 500), 500);
       }
-    }
+    },
   )
 
   /**
@@ -138,10 +135,10 @@ const app = new Hono()
       'param',
       z.object({
         traceId: z.string(),
-      })
+      }),
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const db = c.get('telemetryStore') as unknown as DbWithTraces;
       const { traceId } = c.req.valid('param');
 
       try {
@@ -152,12 +149,9 @@ const app = new Hono()
         return c.json(successResponse(result, 200));
       } catch (error) {
         console.error('Error fetching trace:', error);
-        return c.json(
-          internalServerError('Failed to fetch trace', 500),
-          500
-        );
+        return c.json(internalServerError('Failed to fetch trace', 500), 500);
       }
-    }
+    },
   )
 
   /**
@@ -171,10 +165,10 @@ const app = new Hono()
       dateRangeSchema.extend({
         sessionId: z.string().optional(),
         userId: z.string().optional(),
-      })
+      }),
     ),
     async (c) => {
-      const db = c.get('db') as unknown as DbWithTraces;
+      const db = c.get('telemetryStore') as unknown as DbWithTraces;
       const { startDate, endDate, sessionId, userId } = c.req.valid('query');
 
       try {
@@ -196,8 +190,8 @@ const app = new Hono()
                 totalTokens: 0,
                 totalSpans: 0,
               },
-              200
-            )
+              200,
+            ),
           );
         }
 
@@ -206,10 +200,10 @@ const app = new Hono()
         console.error('Error fetching trace stats:', error);
         return c.json(
           internalServerError('Failed to fetch trace stats', 500),
-          500
+          500,
         );
       }
-    }
+    },
   );
 
 export default app;

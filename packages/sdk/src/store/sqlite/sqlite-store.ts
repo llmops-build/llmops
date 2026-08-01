@@ -1,0 +1,580 @@
+import { randomUUID } from 'node:crypto';
+import { createTelemetryDataset } from '../../telemetry/dataset';
+import type { TelemetryStore } from '../../telemetry/interface';
+import type {
+  CostSummaryGroupBy,
+  LLMRequestInsert,
+  SpanEventInsert,
+  SpanInsert,
+  TraceUpsert,
+} from '../../telemetry/types';
+import type { SQLiteDatabase } from './types';
+
+// ─── JSON column parser (shared with D1 store) ─────────────────────────────
+
+const JSON_COLUMNS = new Set([
+  'tags', 'metadata', 'attributes', 'guardrailResults', 'input', 'output',
+]);
+
+function parseJsonColumns<T>(row: T): T {
+  if (!row || typeof row !== 'object') return row;
+  const parsed = { ...row } as Record<string, unknown>;
+  for (const key of Object.keys(parsed)) {
+    if (JSON_COLUMNS.has(key) && typeof parsed[key] === 'string') {
+      try { parsed[key] = JSON.parse(parsed[key] as string); } catch { /* leave as-is */ }
+    }
+  }
+  return parsed as T;
+}
+
+function parseJsonRows<T>(rows: T[]): T[] {
+  return rows.map(parseJsonColumns);
+}
+
+// ─── Tag filter helper (? placeholders, same as D1) ────────────────────────
+
+function buildTagFilters(
+  tags: Record<string, string[]> | undefined,
+): { conditions: string[]; params: unknown[] } {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  if (!tags) return { conditions, params };
+
+  for (const [key, values] of Object.entries(tags)) {
+    if (values.length === 0) continue;
+    if (values.length === 1) {
+      conditions.push(`json_extract("tags", '$.' || ?) = ?`);
+      params.push(key, values[0]);
+    } else {
+      const placeholders = values.map(() => '?').join(', ');
+      conditions.push(`json_extract("tags", '$.' || ?) IN (${placeholders})`);
+      params.push(key, ...values);
+    }
+  }
+  return { conditions, params };
+}
+
+// ─── LLM Requests store ────────────────────────────────────────────────────
+
+function createSQLiteLLMRequestsStore(db: SQLiteDatabase) {
+  const insertStmt = `
+    INSERT INTO "llm_requests" (
+      "id","requestId","configId","variantId","environmentId",
+      "providerConfigId","provider","model","promptTokens",
+      "completionTokens","totalTokens","cachedTokens",
+      "cacheCreationTokens","cost","cacheSavings","inputCost",
+      "outputCost","endpoint","statusCode","latencyMs","isStreaming",
+      "userId","tags","guardrailResults","traceId","spanId",
+      "parentSpanId","sessionId","createdAt","updatedAt"
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `;
+
+  function bindRequest(req: LLMRequestInsert, now: string) {
+    return [
+      randomUUID(), req.requestId, req.configId ?? null,
+      req.variantId ?? null, req.environmentId ?? null,
+      req.providerConfigId ?? null, req.provider, req.model,
+      req.promptTokens ?? 0, req.completionTokens ?? 0, req.totalTokens ?? 0,
+      req.cachedTokens ?? 0, req.cacheCreationTokens ?? 0, req.cost ?? 0,
+      req.cacheSavings ?? 0, req.inputCost ?? 0, req.outputCost ?? 0,
+      req.endpoint, req.statusCode, req.latencyMs ?? 0,
+      req.isStreaming ? 1 : 0,
+      req.userId ?? null, JSON.stringify(req.tags ?? {}),
+      req.guardrailResults ? JSON.stringify(req.guardrailResults) : null,
+      req.traceId ?? null, req.spanId ?? null,
+      req.parentSpanId ?? null, req.sessionId ?? null, now, now,
+    ];
+  }
+
+  return {
+    batchInsertRequests: async (requests: LLMRequestInsert[]) => {
+      if (requests.length === 0) return { count: 0 };
+      const now = new Date().toISOString();
+      const stmt = db.prepare(insertStmt);
+      for (const req of requests) {
+        stmt.run(...bindRequest(req, now));
+      }
+      return { count: requests.length };
+    },
+
+    insertRequest: async (req: LLMRequestInsert) => {
+      const now = new Date().toISOString();
+      db.prepare(insertStmt).run(...bindRequest(req, now));
+      const row = db.prepare(
+        `SELECT * FROM "llm_requests" WHERE "requestId" = ?`,
+      ).get(req.requestId);
+      return row ? parseJsonColumns(row) : null;
+    },
+
+    listRequests: async (params?: {
+      limit?: number; offset?: number;
+      configId?: string; variantId?: string; environmentId?: string;
+      providerConfigId?: string; provider?: string; model?: string;
+      startDate?: Date; endDate?: Date; tags?: Record<string, string[]>;
+    }) => {
+      const {
+        limit = 100, offset = 0,
+        configId, variantId, environmentId, providerConfigId,
+        provider, model, startDate, endDate, tags,
+      } = params ?? {};
+
+      const conditions: string[] = ['1=1'];
+      const queryParams: unknown[] = [];
+
+      if (configId) { conditions.push(`"configId" = ?`); queryParams.push(configId); }
+      if (variantId) { conditions.push(`"variantId" = ?`); queryParams.push(variantId); }
+      if (environmentId) { conditions.push(`"environmentId" = ?`); queryParams.push(environmentId); }
+      if (providerConfigId) { conditions.push(`"providerConfigId" = ?`); queryParams.push(providerConfigId); }
+      if (provider) { conditions.push(`"provider" = ?`); queryParams.push(provider); }
+      if (model) { conditions.push(`"model" = ?`); queryParams.push(model); }
+      if (startDate) { conditions.push(`"createdAt" >= ?`); queryParams.push(startDate.toISOString()); }
+      if (endDate) { conditions.push(`"createdAt" <= ?`); queryParams.push(endDate.toISOString()); }
+
+      const tagFilter = buildTagFilters(tags);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+
+      const where = conditions.join(' AND ');
+
+      const countRow = db.prepare(
+        `SELECT COUNT(*) AS "total" FROM "llm_requests" WHERE ${where}`,
+      ).get(...queryParams) as { total: number } | undefined;
+      const total = countRow?.total ?? 0;
+
+      const results = db.prepare(
+        `SELECT * FROM "llm_requests" WHERE ${where} ORDER BY "createdAt" DESC LIMIT ? OFFSET ?`,
+      ).all(...queryParams, limit, offset);
+
+      return { data: parseJsonRows(results as any[]), total, limit, offset };
+    },
+
+    getRequestByRequestId: async (requestId: string) => {
+      const row = db.prepare(
+        `SELECT * FROM "llm_requests" WHERE "requestId" = ?`,
+      ).get(requestId);
+      return row ? parseJsonColumns(row) : undefined;
+    },
+
+    getTotalCost: async (params: {
+      startDate: Date; endDate: Date;
+      configId?: string; variantId?: string; environmentId?: string;
+      tags?: Record<string, string[]>;
+    }) => {
+      const conditions = [`"createdAt" >= ?`, `"createdAt" <= ?`];
+      const queryParams: unknown[] = [params.startDate.toISOString(), params.endDate.toISOString()];
+
+      if (params.configId) { conditions.push(`"configId" = ?`); queryParams.push(params.configId); }
+      if (params.variantId) { conditions.push(`"variantId" = ?`); queryParams.push(params.variantId); }
+      if (params.environmentId) { conditions.push(`"environmentId" = ?`); queryParams.push(params.environmentId); }
+
+      const tagFilter = buildTagFilters(params.tags);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+
+      const where = conditions.join(' AND ');
+      return db.prepare(`
+        SELECT
+          COALESCE(SUM("cost"), 0) AS "totalCost",
+          COALESCE(SUM("inputCost"), 0) AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0) AS "totalOutputCost",
+          COALESCE(SUM("promptTokens"), 0) AS "totalPromptTokens",
+          COALESCE(SUM("completionTokens"), 0) AS "totalCompletionTokens",
+          COALESCE(SUM("totalTokens"), 0) AS "totalTokens",
+          COALESCE(SUM("cachedTokens"), 0) AS "totalCachedTokens",
+          COALESCE(SUM("cacheSavings"), 0) AS "totalCacheSavings",
+          COUNT(*) AS "requestCount"
+        FROM "llm_requests" WHERE ${where}
+      `).get(...queryParams);
+    },
+
+    getCostByModel: async (params: { startDate: Date; endDate: Date }) => {
+      return db.prepare(`
+        SELECT "provider", "model",
+          COALESCE(SUM("cost"), 0) AS "totalCost",
+          COALESCE(SUM("inputCost"), 0) AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0) AS "totalOutputCost",
+          COALESCE(SUM("totalTokens"), 0) AS "totalTokens",
+          COUNT(*) AS "requestCount",
+          AVG("latencyMs") AS "avgLatencyMs"
+        FROM "llm_requests"
+        WHERE "createdAt" >= ? AND "createdAt" <= ?
+        GROUP BY "provider", "model"
+        ORDER BY SUM("cost") DESC
+      `).all(params.startDate.toISOString(), params.endDate.toISOString());
+    },
+
+    getCostByProvider: async (params: { startDate: Date; endDate: Date }) => {
+      return db.prepare(`
+        SELECT "provider",
+          COALESCE(SUM("cost"), 0) AS "totalCost",
+          COALESCE(SUM("inputCost"), 0) AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0) AS "totalOutputCost",
+          COALESCE(SUM("totalTokens"), 0) AS "totalTokens",
+          COUNT(*) AS "requestCount",
+          AVG("latencyMs") AS "avgLatencyMs"
+        FROM "llm_requests"
+        WHERE "createdAt" >= ? AND "createdAt" <= ?
+        GROUP BY "provider"
+        ORDER BY SUM("cost") DESC
+      `).all(params.startDate.toISOString(), params.endDate.toISOString());
+    },
+
+    getDailyCosts: async (params: { startDate: Date; endDate: Date }) => {
+      return db.prepare(`
+        SELECT date("createdAt") AS "date",
+          COALESCE(SUM("cost"), 0) AS "totalCost",
+          COALESCE(SUM("inputCost"), 0) AS "totalInputCost",
+          COALESCE(SUM("outputCost"), 0) AS "totalOutputCost",
+          COALESCE(SUM("totalTokens"), 0) AS "totalTokens",
+          COUNT(*) AS "requestCount"
+        FROM "llm_requests"
+        WHERE "createdAt" >= ? AND "createdAt" <= ?
+        GROUP BY date("createdAt")
+        ORDER BY date("createdAt") ASC
+      `).all(params.startDate.toISOString(), params.endDate.toISOString());
+    },
+
+    getCostSummary: async (params: {
+      startDate: Date; endDate: Date;
+      configId?: string; variantId?: string; environmentId?: string;
+      groupBy?: CostSummaryGroupBy; tags?: Record<string, string[]>;
+      tagKeys?: string[];
+    }) => {
+      const { startDate, endDate, groupBy, configId, variantId, environmentId, tags, tagKeys } = params;
+
+      const conditions = [`"createdAt" >= ?`, `"createdAt" <= ?`];
+      const queryParams: unknown[] = [startDate.toISOString(), endDate.toISOString()];
+
+      if (configId) { conditions.push(`"configId" = ?`); queryParams.push(configId); }
+      if (variantId) { conditions.push(`"variantId" = ?`); queryParams.push(variantId); }
+      if (environmentId) { conditions.push(`"environmentId" = ?`); queryParams.push(environmentId); }
+
+      const tagFilter = buildTagFilters(tags);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+
+      const where = conditions.join(' AND ');
+
+      if (groupBy === 'tags') {
+        const tagConditions = [...conditions];
+        const tagParams = [...queryParams];
+        if (tagKeys && tagKeys.length > 0) {
+          tagConditions.push(`json_each.key IN (${tagKeys.map(() => '?').join(',')})`);
+          tagParams.push(...tagKeys);
+        }
+        const tagWhere = tagConditions.join(' AND ');
+        return db.prepare(`
+          SELECT json_each.key || ':' || json_each.value AS "groupKey",
+                 COALESCE(SUM("cost"), 0) AS "totalCost",
+                 COUNT(*) AS "requestCount"
+          FROM "llm_requests", json_each("tags")
+          WHERE ${tagWhere}
+          GROUP BY json_each.key, json_each.value
+          ORDER BY SUM("cost") DESC
+        `).all(...tagParams);
+      }
+
+      const sqlMap: Record<string, string> = {
+        day: `SELECT date("createdAt") AS "groupKey", COALESCE(SUM("cost"),0) AS "totalCost", COUNT(*) AS "requestCount", COALESCE(SUM("totalTokens"),0) AS "totalTokens" FROM "llm_requests" WHERE ${where} GROUP BY date("createdAt") ORDER BY date("createdAt") ASC`,
+        hour: `SELECT strftime('%Y-%m-%d %H:00:00',"createdAt") AS "groupKey", COALESCE(SUM("cost"),0) AS "totalCost", COUNT(*) AS "requestCount", COALESCE(SUM("totalTokens"),0) AS "totalTokens" FROM "llm_requests" WHERE ${where} GROUP BY strftime('%Y-%m-%d %H:00:00',"createdAt") ORDER BY strftime('%Y-%m-%d %H:00:00',"createdAt") ASC`,
+        model: `SELECT "provider"||'/'||"model" AS "groupKey", COALESCE(SUM("cost"),0) AS "totalCost", COUNT(*) AS "requestCount" FROM "llm_requests" WHERE ${where} GROUP BY "provider","model" ORDER BY SUM("cost") DESC`,
+        provider: `SELECT "provider" AS "groupKey", COALESCE(SUM("cost"),0) AS "totalCost", COUNT(*) AS "requestCount" FROM "llm_requests" WHERE ${where} GROUP BY "provider" ORDER BY SUM("cost") DESC`,
+        endpoint: `SELECT COALESCE("endpoint",'unknown') AS "groupKey", COALESCE(SUM("cost"),0) AS "totalCost", COUNT(*) AS "requestCount" FROM "llm_requests" WHERE ${where} GROUP BY "endpoint" ORDER BY SUM("cost") DESC`,
+      };
+
+      const totalSql = `SELECT 'total' AS "groupKey", COALESCE(SUM("cost"),0) AS "totalCost", COUNT(*) AS "requestCount" FROM "llm_requests" WHERE ${where}`;
+      const sql = groupBy ? (sqlMap[groupBy] ?? totalSql) : totalSql;
+      return db.prepare(sql).all(...queryParams);
+    },
+
+    getRequestStats: async (params: {
+      startDate: Date; endDate: Date;
+      configId?: string; variantId?: string; environmentId?: string;
+      tags?: Record<string, string[]>;
+    }) => {
+      const conditions = [`"createdAt" >= ?`, `"createdAt" <= ?`];
+      const queryParams: unknown[] = [params.startDate.toISOString(), params.endDate.toISOString()];
+
+      if (params.configId) { conditions.push(`"configId" = ?`); queryParams.push(params.configId); }
+      if (params.variantId) { conditions.push(`"variantId" = ?`); queryParams.push(params.variantId); }
+      if (params.environmentId) { conditions.push(`"environmentId" = ?`); queryParams.push(params.environmentId); }
+
+      const tagFilter = buildTagFilters(params.tags);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+
+      const where = conditions.join(' AND ');
+      return db.prepare(`
+        SELECT
+          COUNT(*) AS "totalRequests",
+          COUNT(CASE WHEN "statusCode">=200 AND "statusCode"<300 THEN 1 END) AS "successfulRequests",
+          COUNT(CASE WHEN "statusCode">=400 THEN 1 END) AS "failedRequests",
+          COUNT(CASE WHEN "isStreaming"=1 THEN 1 END) AS "streamingRequests",
+          AVG("latencyMs") AS "avgLatencyMs",
+          MAX("latencyMs") AS "maxLatencyMs",
+          MIN("latencyMs") AS "minLatencyMs"
+        FROM "llm_requests" WHERE ${where}
+      `).get(...queryParams);
+    },
+
+    getDistinctTags: async () => {
+      return db.prepare(`
+        SELECT DISTINCT json_each.key AS key, json_each.value AS value
+        FROM "llm_requests", json_each("tags")
+        WHERE "tags" != '{}'
+        ORDER BY json_each.key, json_each.value
+      `).all();
+    },
+  };
+}
+
+// ─── Traces store ───────────────────────────────────────────────────────────
+
+function createSQLiteTracesStore(db: SQLiteDatabase) {
+  return {
+    upsertTrace: async (data: TraceUpsert): Promise<void> => {
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO "traces" (
+          "id","traceId","name","sessionId","userId","status",
+          "startTime","endTime","durationMs","spanCount",
+          "totalInputTokens","totalOutputTokens","totalTokens","totalCost",
+          "tags","metadata","createdAt","updatedAt"
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT ("traceId") DO UPDATE SET
+          "name" = COALESCE(EXCLUDED."name", "traces"."name"),
+          "sessionId" = COALESCE(EXCLUDED."sessionId", "traces"."sessionId"),
+          "userId" = COALESCE(EXCLUDED."userId", "traces"."userId"),
+          "status" = CASE
+            WHEN EXCLUDED."status" = 'error' THEN 'error'
+            WHEN EXCLUDED."status" = 'ok' AND "traces"."status" != 'error' THEN 'ok'
+            ELSE "traces"."status"
+          END,
+          "startTime" = MIN("traces"."startTime", EXCLUDED."startTime"),
+          "endTime" = MAX(
+            COALESCE("traces"."endTime", EXCLUDED."endTime"),
+            COALESCE(EXCLUDED."endTime", "traces"."endTime")
+          ),
+          "durationMs" = CAST(
+            (julianday(MAX(
+              COALESCE("traces"."endTime", EXCLUDED."endTime"),
+              COALESCE(EXCLUDED."endTime", "traces"."endTime")
+            )) - julianday(MIN("traces"."startTime", EXCLUDED."startTime")))
+            * 86400000 AS INTEGER
+          ),
+          "spanCount" = "traces"."spanCount" + EXCLUDED."spanCount",
+          "totalInputTokens" = "traces"."totalInputTokens" + EXCLUDED."totalInputTokens",
+          "totalOutputTokens" = "traces"."totalOutputTokens" + EXCLUDED."totalOutputTokens",
+          "totalTokens" = "traces"."totalTokens" + EXCLUDED."totalTokens",
+          "totalCost" = "traces"."totalCost" + EXCLUDED."totalCost",
+          "tags" = json_patch("traces"."tags", EXCLUDED."tags"),
+          "metadata" = json_patch("traces"."metadata", EXCLUDED."metadata"),
+          "updatedAt" = ?
+      `).run(
+        randomUUID(), data.traceId, data.name ?? null,
+        data.sessionId ?? null, data.userId ?? null, data.status ?? 'unset',
+        data.startTime.toISOString(), data.endTime?.toISOString() ?? null,
+        data.durationMs ?? null, data.spanCount ?? 1,
+        data.totalInputTokens ?? 0, data.totalOutputTokens ?? 0,
+        data.totalTokens ?? 0, data.totalCost ?? 0,
+        JSON.stringify(data.tags ?? {}), JSON.stringify(data.metadata ?? {}),
+        now, now,
+        now, // updatedAt in ON CONFLICT
+      );
+    },
+
+    batchInsertSpans: async (spans: SpanInsert[]) => {
+      if (spans.length === 0) return { count: 0 };
+      const now = new Date().toISOString();
+      const stmt = db.prepare(`
+        INSERT OR IGNORE INTO "spans" (
+          "id","traceId","spanId","parentSpanId","name","kind",
+          "status","statusMessage","startTime","endTime","durationMs",
+          "provider","model","promptTokens","completionTokens",
+          "totalTokens","cost","configId","variantId","environmentId",
+          "providerConfigId","requestId","source","input","output",
+          "attributes","createdAt","updatedAt"
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      `);
+      for (const s of spans) {
+        stmt.run(
+          randomUUID(), s.traceId, s.spanId,
+          s.parentSpanId ?? null, s.name, s.kind ?? 1,
+          s.status ?? 0, s.statusMessage ?? null,
+          s.startTime.toISOString(), s.endTime?.toISOString() ?? null,
+          s.durationMs ?? null, s.provider ?? null,
+          s.model ?? null, s.promptTokens ?? 0,
+          s.completionTokens ?? 0, s.totalTokens ?? 0,
+          s.cost ?? 0, s.configId ?? null,
+          s.variantId ?? null, s.environmentId ?? null,
+          s.providerConfigId ?? null, s.requestId ?? null,
+          s.source ?? 'gateway',
+          s.input != null ? JSON.stringify(s.input) : null,
+          s.output != null ? JSON.stringify(s.output) : null,
+          JSON.stringify(s.attributes ?? {}), now, now,
+        );
+      }
+      return { count: spans.length };
+    },
+
+    batchInsertSpanEvents: async (events: SpanEventInsert[]) => {
+      if (events.length === 0) return { count: 0 };
+      const now = new Date().toISOString();
+      const stmt = db.prepare(`
+        INSERT INTO "span_events" (
+          "id","traceId","spanId","name","timestamp","attributes","createdAt"
+        ) VALUES (?,?,?,?,?,?,?)
+      `);
+      for (const e of events) {
+        stmt.run(
+          randomUUID(), e.traceId, e.spanId,
+          e.name, e.timestamp.toISOString(),
+          JSON.stringify(e.attributes ?? {}), now,
+        );
+      }
+      return { count: events.length };
+    },
+
+    listTraces: async (params?: {
+      limit?: number; offset?: number;
+      sessionId?: string; userId?: string; status?: string;
+      name?: string; startDate?: Date; endDate?: Date;
+      tags?: Record<string, string[]>;
+    }) => {
+      const { limit = 50, offset = 0, sessionId, userId, status, name, startDate, endDate, tags } = params ?? {};
+
+      const conditions: string[] = ['1=1'];
+      const queryParams: unknown[] = [];
+
+      if (sessionId) { conditions.push(`"sessionId" = ?`); queryParams.push(sessionId); }
+      if (userId) { conditions.push(`"userId" = ?`); queryParams.push(userId); }
+      if (status) { conditions.push(`"status" = ?`); queryParams.push(status); }
+      if (name) { conditions.push(`"name" LIKE ?`); queryParams.push(`%${name}%`); }
+      if (startDate) { conditions.push(`"startTime" >= ?`); queryParams.push(startDate.toISOString()); }
+      if (endDate) { conditions.push(`"startTime" <= ?`); queryParams.push(endDate.toISOString()); }
+
+      const tagFilter = buildTagFilters(tags);
+      conditions.push(...tagFilter.conditions);
+      queryParams.push(...tagFilter.params);
+
+      const where = conditions.join(' AND ');
+
+      const countRow = db.prepare(
+        `SELECT COUNT(*) AS "total" FROM "traces" WHERE ${where}`,
+      ).get(...queryParams) as { total: number } | undefined;
+      const total = countRow?.total ?? 0;
+
+      const results = db.prepare(
+        `SELECT * FROM "traces" WHERE ${where} ORDER BY "startTime" DESC LIMIT ? OFFSET ?`,
+      ).all(...queryParams, limit, offset);
+
+      return { data: parseJsonRows(results as any[]), total, limit, offset };
+    },
+
+    getTraceWithSpans: async (traceId: string) => {
+      const trace = db.prepare(
+        `SELECT * FROM "traces" WHERE "traceId" = ?`,
+      ).get(traceId);
+
+      if (!trace) return undefined;
+
+      const spans = db.prepare(
+        `SELECT * FROM "spans" WHERE "traceId" = ? ORDER BY "startTime" ASC`,
+      ).all(traceId);
+
+      const events = db.prepare(
+        `SELECT * FROM "span_events" WHERE "traceId" = ? ORDER BY "timestamp" ASC`,
+      ).all(traceId);
+
+      return {
+        trace: parseJsonColumns(trace),
+        spans: parseJsonRows(spans as any[]),
+        events: parseJsonRows(events as any[]),
+      };
+    },
+
+    getTraceStats: async (params: { startDate: Date; endDate: Date; sessionId?: string; userId?: string }) => {
+      const conditions = [`"startTime" >= ?`, `"startTime" <= ?`];
+      const queryParams: unknown[] = [params.startDate.toISOString(), params.endDate.toISOString()];
+
+      if (params.sessionId) { conditions.push(`"sessionId" = ?`); queryParams.push(params.sessionId); }
+      if (params.userId) { conditions.push(`"userId" = ?`); queryParams.push(params.userId); }
+
+      const where = conditions.join(' AND ');
+      return db.prepare(`
+        SELECT
+          COUNT(*) AS "totalTraces",
+          COALESCE(AVG("durationMs"), 0) AS "avgDurationMs",
+          COUNT(CASE WHEN "status" = 'error' THEN 1 END) AS "errorCount",
+          COALESCE(SUM("totalCost"), 0) AS "totalCost",
+          COALESCE(SUM("totalTokens"), 0) AS "totalTokens",
+          COALESCE(SUM("spanCount"), 0) AS "totalSpans"
+        FROM "traces" WHERE ${where}
+      `).get(...queryParams);
+    },
+  };
+}
+
+// ─── SQLiteStore ────────────────────────────────────────────────────────────
+
+export type SQLiteStore = TelemetryStore & {
+  _db: SQLiteDatabase;
+};
+
+/**
+ * Open a SQLite database, trying better-sqlite3 first, then node:sqlite.
+ */
+function openDatabase(path: string): SQLiteDatabase {
+  // Try better-sqlite3 first
+  try {
+    const Database = require('better-sqlite3');
+    return new Database(path);
+  } catch {
+    // Not installed
+  }
+
+  // Fall back to node:sqlite (Node.js 22+)
+  try {
+    const { DatabaseSync } = require('node:sqlite');
+    return new DatabaseSync(path);
+  } catch {
+    // Not available
+  }
+
+  throw new Error(
+    'sqliteStore requires either "better-sqlite3" or Node.js 22+ (for node:sqlite). ' +
+    'Install better-sqlite3 with: pnpm add better-sqlite3',
+  );
+}
+
+/**
+ * Create a SQLite-backed telemetry store.
+ *
+ * Uses better-sqlite3 if available, falls back to node:sqlite (Node 22+).
+ *
+ * Usage:
+ * ```ts
+ * import { sqliteStore } from '@llmops/sdk/store/sqlite'
+ *
+ * const ops = llmops({
+ *   telemetry: sqliteStore('./llmops.db'),
+ * })
+ * ```
+ */
+export function createSQLiteStore(path: string): SQLiteStore {
+  const db = openDatabase(path);
+
+  // Enable WAL mode for better concurrent read performance
+  db.exec('PRAGMA journal_mode = WAL');
+
+  const requests = createSQLiteLLMRequestsStore(db);
+  const traces = createSQLiteTracesStore(db);
+
+  return {
+    ...requests,
+    ...traces,
+    dataset: (query) =>
+      createTelemetryDataset({ ...requests, ...traces }, query),
+    _db: db,
+  };
+}

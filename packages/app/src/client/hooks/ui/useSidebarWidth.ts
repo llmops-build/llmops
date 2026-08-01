@@ -47,7 +47,7 @@ export function useSidebarWidth() {
           onUpdate: (value: number) => {
             document.documentElement.style.setProperty(
               SIDEBAR_WIDTH_CSS_VAR,
-              `${value}${unit}`
+              `${value}${unit}`,
             );
           },
           onComplete: () => {
@@ -55,7 +55,7 @@ export function useSidebarWidth() {
             // Ensure final value is set correctly
             document.documentElement.style.setProperty(
               SIDEBAR_WIDTH_CSS_VAR,
-              targetWidth
+              targetWidth,
             );
           },
         });
@@ -67,7 +67,7 @@ export function useSidebarWidth() {
         setIsCollapsed(collapsed);
         document.documentElement.style.setProperty(
           SIDEBAR_WIDTH_CSS_VAR,
-          targetWidth
+          targetWidth,
         );
       }
     }
@@ -102,7 +102,7 @@ export function useSidebarWidth() {
       if (!currentWidth || currentWidth !== correctWidth) {
         document.documentElement.style.setProperty(
           SIDEBAR_WIDTH_CSS_VAR,
-          correctWidth
+          correctWidth,
         );
       }
     }

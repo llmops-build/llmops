@@ -1,6 +1,3 @@
-// Re-export the gateway app for convenience
-export { default as gateway } from '@llmops/gateway';
-
 // Export supported providers enum
 export { SupportedProviders } from './supported-providers';
 
@@ -35,3 +32,10 @@ export {
   mergeWithDefaultProviders,
   DEFAULT_PROVIDER_ENV_VARS,
 } from './default-providers';
+
+// Provider routing metadata + default resolver (config-overridable via getProviderMetadata)
+export {
+  getProviderMetadata,
+  PROVIDER_METADATA,
+  type ProviderMetadata,
+} from './metadata';
