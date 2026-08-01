@@ -11,17 +11,37 @@ import type {
  * A single-executor run is returned as-is; a variants run is expanded to
  * one entry per variant, named `${name}/${variantName}` to match how
  * evaluate() persists variant results to disk.
+ *
+ * Field-by-field construction rather than `{ ...variant, name }`: listing
+ * each field makes the copied contract visible at the call site instead of
+ * hiding it behind a spread. It has no meaningful performance advantage over
+ * a spread here — both are a one-level shallow copy of a handful of fields —
+ * and it never mutates `variant`, which spread would not have either. The
+ * tradeoff is that this list must be kept in sync by hand: unlike a spread,
+ * it will not automatically pick up a field later added to `EvaluateResult`.
  */
 export function flattenEvaluateResult<D = unknown, O = unknown>(
   result: EvaluateResult<D, O> | VariantEvaluateResult<D, O>,
 ): EvaluateResult<D, O>[] {
-  if ('variants' in result) {
-    return Object.entries(result.variants).map(([variantName, variant]) => ({
-      ...variant,
-      name: `${result.name}/${variantName}`,
-    }));
+  if (!('variants' in result)) {
+    return [result];
   }
-  return [result];
+
+  const flattened: EvaluateResult<D, O>[] = [];
+  for (const [variantName, variant] of Object.entries(result.variants)) {
+    flattened.push({
+      name: `${result.name}/${variantName}`,
+      runId: variant.runId,
+      group: variant.group,
+      scores: variant.scores,
+      durationMs: variant.durationMs,
+      count: variant.count,
+      errors: variant.errors,
+      metadata: variant.metadata,
+      results: variant.results,
+    });
+  }
+  return flattened;
 }
 
 function assertUnitInterval(value: number, label: string): void {

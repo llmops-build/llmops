@@ -363,6 +363,45 @@ describe('flattenEvaluateResult', () => {
     ]);
   });
 
+  it('copies every EvaluateResult field onto the flattened entry without mutating the source variant', () => {
+    // Deliberately named differently from what flattening will produce, so a
+    // passing assertion on the source's `name` actually proves it was not
+    // written to in place.
+    const concise = makeResult(
+      'unflattened-name',
+      { accuracy: 0.9 },
+      { group: 'nightly', metadata: { model: 'gpt-mini' }, errors: 1 },
+    );
+    const variantResult: VariantEvaluateResult = {
+      name: 'model-comparison',
+      runId: 'run-1',
+      durationMs: 1,
+      variants: { concise },
+    };
+
+    const [flattened] = flattenEvaluateResult(variantResult);
+
+    // Every field carried over correctly, renamed to the qualified form.
+    // Spelled out explicitly (not `{ ...concise, name: ... }`) so this test
+    // does not depend on the same construct the fix moved away from.
+    expect(flattened).toEqual({
+      name: 'model-comparison/concise',
+      runId: concise.runId,
+      group: concise.group,
+      scores: concise.scores,
+      durationMs: concise.durationMs,
+      count: concise.count,
+      errors: concise.errors,
+      metadata: concise.metadata,
+      results: concise.results,
+    });
+    // A fresh object, not the same reference as the source variant.
+    expect(flattened).not.toBe(concise);
+    // The source variant itself was never written to.
+    expect(concise.name).toBe('unflattened-name');
+    expect(concise.group).toBe('nightly');
+  });
+
   it('produces names that match the baseline keys a variants gate compares on', () => {
     const variantResult: VariantEvaluateResult = {
       name: 'model-comparison',

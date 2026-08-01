@@ -14,7 +14,7 @@ import {
   number as numberOption,
   string,
 } from '@drizzle-team/brocli';
-import type { EvaluateResult, GateCheck, GateResult } from '@llmops/sdk/eval';
+import type { EvaluateResult, GateResult } from '@llmops/sdk/eval';
 import { applyGate } from '@llmops/sdk/eval';
 import chalk from 'chalk';
 import {
@@ -26,45 +26,7 @@ import {
   parseMinScoreSpec,
   resolveExitCode,
 } from '../lib/gate';
-
-function describeCheck(check: GateCheck): string {
-  if (check.message) return check.message;
-
-  if (check.type === 'min-score') {
-    return `score=${check.score?.toFixed(2)} min=${check.threshold}`;
-  }
-
-  const sign = (check.delta ?? 0) >= 0 ? '+' : '';
-  return `${check.baseline?.toFixed(2)} → ${check.candidate?.toFixed(2)} (delta ${sign}${check.delta?.toFixed(2)}, max regression ${check.maxRegression})`;
-}
-
-function printGateReport(gate: GateResult) {
-  const RESET = '\x1b[0m';
-  const DIM = '\x1b[2m';
-  const BOLD = '\x1b[1m';
-  const GREEN = '\x1b[32m';
-  const RED = '\x1b[31m';
-
-  console.log(`\n${BOLD}Gate${RESET}  ${DIM}${'─'.repeat(40)}${RESET}`);
-
-  if (gate.checks.length === 0) {
-    console.log(`  ${RED}✗${RESET} ${DIM}no checks ran${RESET}`);
-  }
-
-  for (const check of gate.checks) {
-    const icon = check.passed ? `${GREEN}✓${RESET}` : `${RED}✗${RESET}`;
-    const label = check.evaluator
-      ? `${check.eval} ${DIM}›${RESET} ${check.evaluator}`
-      : check.eval;
-    console.log(`  ${icon} ${label}  ${DIM}${describeCheck(check)}${RESET}`);
-  }
-
-  console.log(
-    gate.passed
-      ? `${GREEN}Gate passed${RESET}`
-      : `${RED}Gate failed${RESET} — ${gate.checks.filter((c) => !c.passed).length} of ${gate.checks.length} check(s) did not pass`,
-  );
-}
+import { printGateReport } from '../lib/gate-report';
 
 /**
  * Find eval files from a path (file or directory).
