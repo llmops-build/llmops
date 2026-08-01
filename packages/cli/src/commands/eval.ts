@@ -14,14 +14,29 @@ import {
   number as numberOption,
   string,
 } from '@drizzle-team/brocli';
-import type { GateResult } from '@llmops/sdk/eval';
+import type { EvaluateResult, GateCheck, GateResult } from '@llmops/sdk/eval';
 import { applyGate } from '@llmops/sdk/eval';
 import chalk from 'chalk';
-import { loadLatestResults, parseMinScoreSpec } from '../lib/gate';
+import {
+  buildJsonOutput,
+  byEvalName,
+  EXIT_EVAL_ERROR,
+  loadLatestResults,
+  parseMaxRegression,
+  parseMinScoreSpec,
+  resolveExitCode,
+} from '../lib/gate';
 
-/** Exit codes: 0 = pass, 1 = eval execution error, 2 = gate check failed. */
-const EXIT_EVAL_ERROR = 1;
-const EXIT_GATE_FAILURE = 2;
+function describeCheck(check: GateCheck): string {
+  if (check.message) return check.message;
+
+  if (check.type === 'min-score') {
+    return `score=${check.score?.toFixed(2)} min=${check.threshold}`;
+  }
+
+  const sign = (check.delta ?? 0) >= 0 ? '+' : '';
+  return `${check.baseline?.toFixed(2)} → ${check.candidate?.toFixed(2)} (delta ${sign}${check.delta?.toFixed(2)}, max regression ${check.maxRegression})`;
+}
 
 function printGateReport(gate: GateResult) {
   const RESET = '\x1b[0m';
@@ -31,21 +46,23 @@ function printGateReport(gate: GateResult) {
   const RED = '\x1b[31m';
 
   console.log(`\n${BOLD}Gate${RESET}  ${DIM}${'─'.repeat(40)}${RESET}`);
+
+  if (gate.checks.length === 0) {
+    console.log(`  ${RED}✗${RESET} ${DIM}no checks ran${RESET}`);
+  }
+
   for (const check of gate.checks) {
     const icon = check.passed ? `${GREEN}✓${RESET}` : `${RED}✗${RESET}`;
-    const label = `${check.eval} ${DIM}›${RESET} ${check.evaluator}`;
-    const detail =
-      check.type === 'min-score'
-        ? check.message
-          ? check.message
-          : `score=${check.score?.toFixed(2)} min=${check.threshold}`
-        : `${check.baseline?.toFixed(2)} → ${check.candidate?.toFixed(2)}  ${DIM}(delta ${check.delta && check.delta >= 0 ? '+' : ''}${check.delta?.toFixed(2)}, max regression ${check.maxRegression})${RESET}`;
-    console.log(`  ${icon} ${label}  ${DIM}${detail}${RESET}`);
+    const label = check.evaluator
+      ? `${check.eval} ${DIM}›${RESET} ${check.evaluator}`
+      : check.eval;
+    console.log(`  ${icon} ${label}  ${DIM}${describeCheck(check)}${RESET}`);
   }
+
   console.log(
     gate.passed
       ? `${GREEN}Gate passed${RESET}`
-      : `${RED}Gate failed${RESET} — ${gate.checks.filter((c) => !c.passed).length} check(s) did not pass`,
+      : `${RED}Gate failed${RESET} — ${gate.checks.filter((c) => !c.passed).length} of ${gate.checks.length} check(s) did not pass`,
   );
 }
 
@@ -58,7 +75,7 @@ function findEvalFiles(target: string): string[] {
 
   if (!existsSync(resolved)) {
     console.error(chalk.red(`Path not found: ${target}`));
-    process.exit(1);
+    process.exit(EXIT_EVAL_ERROR);
   }
 
   const stat = statSync(resolved);
@@ -198,20 +215,38 @@ export const evalCommand = command({
   handler: async (opts) => {
     const target = opts.target;
     const jsonOutput = opts.json === true;
-    const files = findEvalFiles(target);
 
-    if (opts.maxRegression !== undefined && !opts.baseline) {
-      console.error(
-        chalk.red('--maxRegression requires --baseline to be set.'),
-      );
-      process.exit(EXIT_EVAL_ERROR);
-    }
-
+    // Validate gate configuration before touching the filesystem or running
+    // anything, so a misconfigured flag fails immediately rather than after a
+    // full (and potentially paid) eval run.
     let minScoreThresholds: Record<string, number> | undefined;
+    let maxRegression = 0;
+    let baselineResults: Record<string, EvaluateResult> | undefined;
+
     try {
+      if (opts.maxRegression !== undefined && !opts.baseline) {
+        throw new Error('--maxRegression requires --baseline to be set.');
+      }
+
       minScoreThresholds = opts.minScore
         ? parseMinScoreSpec(opts.minScore)
         : undefined;
+      maxRegression = parseMaxRegression(opts.maxRegression);
+
+      if (opts.baseline) {
+        const baselineDir = resolve(opts.baseline);
+        if (!existsSync(baselineDir)) {
+          throw new Error(`Baseline directory not found: ${opts.baseline}`);
+        }
+
+        const loaded = loadLatestResults(baselineDir);
+        if (loaded.length === 0) {
+          throw new Error(
+            `Baseline directory contains no eval results: ${opts.baseline}`,
+          );
+        }
+        baselineResults = byEvalName(loaded);
+      }
     } catch (err) {
       console.error(
         chalk.red(err instanceof Error ? err.message : String(err)),
@@ -219,14 +254,8 @@ export const evalCommand = command({
       process.exit(EXIT_EVAL_ERROR);
     }
 
-    if (opts.baseline && !existsSync(resolve(opts.baseline))) {
-      console.error(
-        chalk.red(`Baseline directory not found: ${opts.baseline}`),
-      );
-      process.exit(EXIT_EVAL_ERROR);
-    }
-
-    const gateEnabled = Boolean(minScoreThresholds || opts.baseline);
+    const gateEnabled = Boolean(minScoreThresholds || baselineResults);
+    const files = findEvalFiles(target);
 
     if (files.length === 0) {
       console.error(
@@ -234,7 +263,7 @@ export const evalCommand = command({
           `No eval files found. Create files matching *.eval.ts or *.eval.js in ${target}`,
         ),
       );
-      process.exit(1);
+      process.exit(EXIT_EVAL_ERROR);
     }
 
     if (!jsonOutput) {
@@ -280,24 +309,25 @@ export const evalCommand = command({
     // requiring --json, so thresholds and baselines work in either mode.
     let gate: GateResult | undefined;
     if (gateEnabled && !hasErrors) {
-      const currentResults = loadLatestResults(
-        resolve(opts.outputDir),
-        runStartedAt,
-      );
-      const baselineResults = opts.baseline
-        ? loadLatestResults(resolve(opts.baseline))
-        : undefined;
-
-      gate = applyGate(Object.values(currentResults), {
-        minScore: minScoreThresholds,
-        baseline: baselineResults,
-        maxRegression: opts.maxRegression ?? 0,
-      });
+      try {
+        gate = applyGate(
+          loadLatestResults(resolve(opts.outputDir), runStartedAt),
+          {
+            minScore: minScoreThresholds,
+            baseline: baselineResults,
+            maxRegression,
+          },
+        );
+      } catch (err) {
+        console.error(
+          chalk.red(err instanceof Error ? err.message : String(err)),
+        );
+        process.exit(EXIT_EVAL_ERROR);
+      }
     }
 
     if (jsonOutput) {
-      const results = jsonResults.length === 1 ? jsonResults[0] : jsonResults;
-      const output = gate ? { results, gate } : results;
+      const output = buildJsonOutput(jsonResults, gate);
       process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
     }
 
@@ -342,12 +372,9 @@ export const evalCommand = command({
       printGateReport(gate);
     }
 
-    if (hasErrors) {
-      process.exit(EXIT_EVAL_ERROR);
-    }
-
-    if (gate && !gate.passed) {
-      process.exit(EXIT_GATE_FAILURE);
+    const exitCode = resolveExitCode({ hasErrors, gate });
+    if (exitCode !== 0) {
+      process.exit(exitCode);
     }
   },
 });

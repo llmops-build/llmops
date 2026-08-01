@@ -45,14 +45,19 @@ npx @llmops/cli eval --baseline ./llmops-evals-baseline
 npx @llmops/cli eval --baseline ./llmops-evals-baseline --maxRegression 0.02
 ```
 
-Exit code `0` means every check passed, `2` means a threshold or regression check failed,
-and `1` means an eval file itself failed to run or the flags were misconfigured — a CI step
-can branch on the exit code directly:
+Exit code `0` means the gate ran and every check passed, `2` means a check failed, and `1`
+means the run could not be gated at all — an eval failed to run, or the configuration was
+invalid. A CI step can branch on the exit code directly:
 
 ```yaml
 - name: Run eval gate
   run: npx @llmops/cli eval --minScore "exactMatch=0.8" --baseline ./llmops-evals-baseline
 ```
+
+The gate fails closed: a threshold naming an evaluator that never ran, a baseline eval with
+no counterpart in this run, an eval that recorded errors, or a gate that checked nothing all
+fail rather than passing quietly. Thresholds and `--maxRegression` must be finite values in
+`[0, 1]`, and are validated before any eval executes.
 
 With `--json`, the gate result is embedded alongside the eval results as
 `{ "results": ..., "gate": { "passed": true, "checks": [...] } }`, so an agent or script can

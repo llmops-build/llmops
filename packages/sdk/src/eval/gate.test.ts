@@ -5,6 +5,7 @@ import type { EvaluateResult, VariantEvaluateResult } from './types';
 function makeResult(
   name: string,
   scores: Record<string, number>,
+  overrides: Partial<EvaluateResult> = {},
 ): EvaluateResult {
   const stats = Object.fromEntries(
     Object.entries(scores).map(([key, mean]) => [
@@ -20,6 +21,7 @@ function makeResult(
     count: 1,
     errors: 0,
     results: [],
+    ...overrides,
   };
 }
 
@@ -99,14 +101,10 @@ describe('applyGate', () => {
     expect(gate.passed).toBe(true);
   });
 
-  it('skips evals and evaluators absent from the baseline instead of failing', () => {
+  it('skips baseline evaluators absent from the candidate scores', () => {
     const gate = applyGate(
       [makeResult('new-eval', { accuracy: 0.9, extra: 1 })],
-      {
-        baseline: {
-          'new-eval': makeResult('new-eval', { accuracy: 0.9 }),
-        },
-      },
+      { baseline: { 'new-eval': makeResult('new-eval', { accuracy: 0.9 }) } },
     );
 
     expect(gate.passed).toBe(true);
@@ -128,8 +126,120 @@ describe('applyGate', () => {
     );
 
     expect(gate.passed).toBe(false);
-    expect(gate.checks).toHaveLength(3);
     expect(gate.checks.find((c) => c.eval === 'sql-gen')?.passed).toBe(false);
+  });
+
+  // ── Fail-closed behaviour ─────────────────────────────────────────────
+
+  it('fails when there are no candidate results to check at all', () => {
+    const gate = applyGate([], {
+      baseline: { 'support-bot': makeResult('support-bot', { accuracy: 0.9 }) },
+    });
+
+    expect(gate.passed).toBe(false);
+    expect(gate.checks).toContainEqual(
+      expect.objectContaining({
+        eval: 'support-bot',
+        type: 'baseline-missing',
+        passed: false,
+      }),
+    );
+  });
+
+  it('fails when no candidate eval name matches the baseline', () => {
+    const gate = applyGate([makeResult('renamed-bot', { accuracy: 0.1 })], {
+      baseline: { 'support-bot': makeResult('support-bot', { accuracy: 0.9 }) },
+    });
+
+    expect(gate.passed).toBe(false);
+    expect(
+      gate.checks.find((c) => c.type === 'baseline-missing')?.message,
+    ).toMatch(/no matching result/);
+  });
+
+  it('surfaces a dropped eval while still checking the ones that remain', () => {
+    const gate = applyGate([makeResult('kept', { accuracy: 0.9 })], {
+      baseline: {
+        kept: makeResult('kept', { accuracy: 0.9 }),
+        dropped: makeResult('dropped', { accuracy: 0.9 }),
+      },
+    });
+
+    expect(gate.passed).toBe(false);
+    expect(gate.checks.filter((c) => c.passed)).toHaveLength(1);
+    expect(
+      gate.checks.filter((c) => c.type === 'baseline-missing'),
+    ).toHaveLength(1);
+  });
+
+  it('never reports a pass when it performed no checks', () => {
+    const gate = applyGate([makeResult('unrelated', { other: 1 })], {
+      // matches nothing in the candidate, so no comparison happens
+      baseline: { unrelated: makeResult('unrelated', { missing: 1 }) },
+    });
+
+    expect(gate.checks).toHaveLength(0);
+    expect(gate.passed).toBe(false);
+  });
+
+  it('fails when a candidate eval recorded datapoint errors, even if means look fine', () => {
+    const gate = applyGate(
+      [makeResult('support-bot', { accuracy: 1 }, { count: 4, errors: 2 })],
+      { minScore: { accuracy: 0.8 } },
+    );
+
+    expect(gate.passed).toBe(false);
+    const errorCheck = gate.checks.find((c) => c.type === 'errors');
+    expect(errorCheck).toMatchObject({ passed: false, errors: 2 });
+    expect(errorCheck?.message).toMatch(/failed to produce a score/);
+  });
+
+  // ── Misconfiguration ──────────────────────────────────────────────────
+
+  it('throws when a baseline is supplied with nothing to compare against', () => {
+    expect(() =>
+      applyGate([makeResult('a', { s: 1 })], { baseline: {} }),
+    ).toThrow(/contains no eval results/);
+  });
+
+  it('throws when neither minScore nor baseline is supplied', () => {
+    expect(() => applyGate([makeResult('a', { s: 1 })], {})).toThrow(
+      /provide minScore, baseline, or both/,
+    );
+  });
+
+  it.each([
+    ['below zero', -0.1],
+    ['above one', 1.5],
+    ['not finite', Number.NaN],
+    ['infinite', Number.POSITIVE_INFINITY],
+  ])('throws for a minScore threshold %s', (_label, threshold) => {
+    expect(() =>
+      applyGate([makeResult('a', { s: 1 })], { minScore: { s: threshold } }),
+    ).toThrow(/minScore\["s"\]/);
+  });
+
+  it.each([
+    ['below zero', -0.1],
+    ['above one', 2],
+    ['not finite', Number.NaN],
+  ])('throws for a maxRegression %s', (_label, maxRegression) => {
+    expect(() =>
+      applyGate([makeResult('a', { s: 1 })], {
+        baseline: { a: makeResult('a', { s: 1 }) },
+        maxRegression,
+      }),
+    ).toThrow(/maxRegression/);
+  });
+
+  it('accepts the inclusive bounds 0 and 1', () => {
+    expect(() =>
+      applyGate([makeResult('a', { s: 1 })], {
+        minScore: { s: 0 },
+        baseline: { a: makeResult('a', { s: 1 }) },
+        maxRegression: 1,
+      }),
+    ).not.toThrow();
   });
 });
 
@@ -155,5 +265,28 @@ describe('flattenEvaluateResult', () => {
       'model-comparison/concise',
       'model-comparison/verbose',
     ]);
+  });
+
+  it('produces names that match the baseline keys a variants gate compares on', () => {
+    const variantResult: VariantEvaluateResult = {
+      name: 'model-comparison',
+      runId: 'run-2',
+      durationMs: 1,
+      variants: { concise: makeResult('ignored', { accuracy: 0.5 }) },
+    };
+
+    const gate = applyGate(flattenEvaluateResult(variantResult), {
+      baseline: {
+        'model-comparison/concise': makeResult('model-comparison/concise', {
+          accuracy: 0.9,
+        }),
+      },
+    });
+
+    expect(gate.checks).toHaveLength(1);
+    expect(gate.checks[0]).toMatchObject({
+      type: 'regression',
+      passed: false,
+    });
   });
 });

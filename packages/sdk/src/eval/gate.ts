@@ -24,10 +24,32 @@ export function flattenEvaluateResult<D = unknown, O = unknown>(
   return [result];
 }
 
+function assertUnitInterval(value: number, label: string): void {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(
+      `applyGate(): ${label} must be a finite number, got ${value}`,
+    );
+  }
+  if (value < 0 || value > 1) {
+    throw new Error(
+      `applyGate(): ${label} must be between 0 and 1, got ${value}`,
+    );
+  }
+}
+
 /**
  * Checks eval results against score thresholds and/or a baseline, for use
  * as a CI regression gate. Pure and synchronous — safe to call from a CI
  * script or the `llmops eval` CLI.
+ *
+ * The gate fails closed. It reports `passed: true` only when it actually
+ * performed checks and every one of them passed; anything it could not
+ * verify (an evaluator that never ran, a baseline eval with no candidate,
+ * an eval that recorded errors) is a failing check, not a skipped one.
+ *
+ * Throws on misconfiguration — out-of-range thresholds, or a baseline that
+ * contains no runs to compare against. Callers should treat a throw as a
+ * setup error, distinct from a failed gate.
  *
  * ```ts
  * const result = await evaluate({ ... });
@@ -42,10 +64,45 @@ export function applyGate(
   options: GateOptions,
 ): GateResult {
   const { minScore, baseline, maxRegression = 0 } = options;
+
+  if (minScore) {
+    if (Object.keys(minScore).length === 0) {
+      throw new Error('applyGate(): minScore was provided but is empty');
+    }
+    for (const [evaluator, threshold] of Object.entries(minScore)) {
+      assertUnitInterval(threshold, `minScore["${evaluator}"]`);
+    }
+  }
+
+  assertUnitInterval(maxRegression, 'maxRegression');
+
+  if (baseline && Object.keys(baseline).length === 0) {
+    throw new Error(
+      'applyGate(): baseline was provided but contains no eval results to compare against',
+    );
+  }
+
+  if (!minScore && !baseline) {
+    throw new Error('applyGate(): provide minScore, baseline, or both');
+  }
+
   const checks: GateCheck[] = [];
   const matchedThresholds = new Set<string>();
+  const candidateNames = new Set(results.map((r) => r.name));
 
   for (const result of results) {
+    // An eval that recorded errors cannot vouch for its own scores: a failed
+    // datapoint contributes 0, which can look like a passing mean elsewhere.
+    if (result.errors > 0) {
+      checks.push({
+        eval: result.name,
+        type: 'errors',
+        errors: result.errors,
+        passed: false,
+        message: `${result.errors} of ${result.count} datapoint(s) failed to produce a score`,
+      });
+    }
+
     if (minScore) {
       for (const [evaluator, threshold] of Object.entries(minScore)) {
         const stats = result.scores[evaluator];
@@ -85,6 +142,20 @@ export function applyGate(
     }
   }
 
+  // A baseline eval with no candidate means the comparison silently lost
+  // coverage — a renamed or dropped eval must not read as "no regression".
+  if (baseline) {
+    for (const baselineName of Object.keys(baseline)) {
+      if (candidateNames.has(baselineName)) continue;
+      checks.push({
+        eval: baselineName,
+        type: 'baseline-missing',
+        passed: false,
+        message: `baseline eval "${baselineName}" has no matching result in this run`,
+      });
+    }
+  }
+
   if (minScore) {
     for (const evaluator of Object.keys(minScore)) {
       if (matchedThresholds.has(evaluator)) continue;
@@ -100,7 +171,8 @@ export function applyGate(
   }
 
   return {
-    passed: checks.every((check) => check.passed),
+    // No checks means nothing was verified, which is not a pass.
+    passed: checks.length > 0 && checks.every((check) => check.passed),
     checks,
   };
 }
