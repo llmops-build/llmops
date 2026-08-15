@@ -1,5 +1,6 @@
 import { SupportedProviders } from './supported-providers';
 import type { InlineProviderConfig } from './provider-configs';
+import type { PROVIDER_METADATA } from './metadata';
 
 /**
  * Default provider configuration mapping.
@@ -18,21 +19,25 @@ interface DefaultProviderMapping {
 }
 
 /**
- * Top providers with simple API key authentication.
- * Providers requiring additional config (Azure, Bedrock, Vertex) are excluded
- * as they need endpoint/region info that can't be auto-detected.
+ * Top providers with simple API key authentication that can actually route.
+ *
+ * A provider is only auto-detected when ALL of the following hold:
+ * 1. It has an entry in {@link PROVIDER_METADATA}.
+ * 2. It either (a) is OpenAI-compatible (`openaiCompatible: true`) OR
+ *    (b) has a dedicated adapter in the gateway.
+ * 3. It has a static base URL (providers needing region/resource info like
+ *    Azure, Bedrock, Vertex are excluded).
+ *
+ * Divergent providers (Anthropic, Cohere, Replicate, …) are NOT listed here
+ * until a dedicated gateway adapter lands. They can still be used explicitly
+ * via `providers` + `config.adapters`.
  */
-const DEFAULT_PROVIDER_MAPPINGS: DefaultProviderMapping[] = [
-  // Tier 1: Most popular
+export const DEFAULT_PROVIDER_MAPPINGS: DefaultProviderMapping[] = [
+  // Tier 1: Most popular — OpenAI-compatible
   {
     provider: SupportedProviders.OPENAI,
     slug: 'openai',
     envVar: 'OPENAI_API_KEY',
-  },
-  {
-    provider: SupportedProviders.ANTHROPIC,
-    slug: 'anthropic',
-    envVar: 'ANTHROPIC_API_KEY',
   },
   {
     provider: SupportedProviders.GOOGLE,
@@ -50,12 +55,7 @@ const DEFAULT_PROVIDER_MAPPINGS: DefaultProviderMapping[] = [
     envVar: 'GROQ_API_KEY',
   },
 
-  // Tier 2: Popular alternatives
-  {
-    provider: SupportedProviders.COHERE,
-    slug: 'cohere',
-    envVar: 'COHERE_API_KEY',
-  },
+  // Tier 2: Popular alternatives — OpenAI-compatible
   {
     provider: SupportedProviders.TOGETHER_AI,
     slug: 'together',
@@ -77,7 +77,7 @@ const DEFAULT_PROVIDER_MAPPINGS: DefaultProviderMapping[] = [
     envVar: 'FIREWORKS_API_KEY',
   },
 
-  // Tier 3: Other notable providers
+  // Tier 3: Other notable providers — OpenAI-compatible
   {
     provider: SupportedProviders.OPENROUTER,
     slug: 'openrouter',
@@ -97,16 +97,6 @@ const DEFAULT_PROVIDER_MAPPINGS: DefaultProviderMapping[] = [
     provider: SupportedProviders.SAMBANOVA,
     slug: 'sambanova',
     envVar: 'SAMBANOVA_API_KEY',
-  },
-  {
-    provider: SupportedProviders.HUGGINGFACE,
-    slug: 'huggingface',
-    envVar: 'HUGGINGFACE_API_KEY',
-  },
-  {
-    provider: SupportedProviders.REPLICATE,
-    slug: 'replicate',
-    envVar: 'REPLICATE_API_TOKEN',
   },
   {
     provider: SupportedProviders.AI21,

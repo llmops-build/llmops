@@ -13,15 +13,15 @@ Learn how to integrate LLMOps into your Hono application using the official midd
 Install the required dependencies:
 
 ```bash tab="npm"
-npm install @llmops/sdk pg hono @hono/node-server
+npm install @llmops/sdk hono @hono/node-server
 ```
 
 ```bash tab="pnpm"
-pnpm add @llmops/sdk pg hono @hono/node-server
+pnpm add @llmops/sdk hono @hono/node-server
 ```
 
 ```bash tab="yarn"
-yarn add @llmops/sdk pg hono @hono/node-server
+yarn add @llmops/sdk hono @hono/node-server
 ```
 
 ## Setup
@@ -35,13 +35,9 @@ Create a `llmops.ts` file to configure your LLMOps instance:
 
 ```typescript title="llmops.ts"
 import { llmops } from '@llmops/sdk';
-import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL || '',
-  }),
 });
 ```
 
@@ -88,10 +84,10 @@ serve(
 
 ### Set environment variables
 
-Create a `.env` file with your configuration:
+Create a `.env` file with your provider API keys:
 
 ```bash title=".env"
-DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+OPENAI_API_KEY=sk-...
 ```
 
 </Step>
@@ -119,7 +115,6 @@ Once mounted, the following endpoints are available:
 | ------------------------ | --------------------- |
 | `GET /llmops/health`     | Health check endpoint |
 | `/llmops/api/genai/v1/*` | OpenAI-compatible API |
-| `GET /llmops`            | LLMOps dashboard UI   |
 
 ## Making Requests
 
@@ -129,15 +124,12 @@ Use the OpenAI SDK to make requests to your LLMOps instance:
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  baseURL: 'http://localhost:3000/llmops/api/genai',
-  apiKey: 'your-environment-secret',
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-id',
-  },
+  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+  apiKey: 'unused',
 });
 
 const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: '@openai/gpt-4o-mini',
   messages: [{ role: 'user', content: 'Hello!' }],
 });
 

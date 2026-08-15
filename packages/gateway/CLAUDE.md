@@ -2,7 +2,7 @@
 
 A tiny, in-process AI gateway — **a plug, not a proxy**. A pure `(req: Request) => Promise<Response>` handler that runs inside your process (Node / Workers / Deno / Bun). Pass-through by default; **zero runtime dependencies** in the core.
 
-**Status: rewrite in progress.** The old Portkey fork was deleted. Step 1 (current) is the zero-dependency **foundation**: a hand-rolled `Result`, the `ProviderConfig` / `RequestType` types, the `ProviderAdapter` / `EndpointConfig` contract, header utilities, and OpenAI-compatible error responses. `createGateway()` is a placeholder (501) until routing, provider resolution, pass-through execution, and telemetry land in the next steps.
+**Status: active.** The zero-dependency core is complete: routing (`resolveTarget`), pass-through execution, telemetry instrumentation, and OpenAI-compatible error responses are all implemented. Built-in adapters are added incrementally; divergent providers require an explicit adapter via `config.adapters` until a dedicated one lands.
 
 ## Conventions
 - Pure functions, composition, **no classes**.

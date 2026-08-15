@@ -69,7 +69,7 @@ const llm = new ChatOpenAI({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
   },
-  apiKey: process.env.LLMOPS_ENV_SECRET,
+  apiKey: 'unused',
   model: '@openai/gpt-4o-mini',
 });
 ```
@@ -79,29 +79,14 @@ This makes real HTTP requests to the gateway, which automatically creates traces
 #### Environment variables
 
 ```bash title=".env"
-LLMOPS_ENV_SECRET=your-environment-secret
+OPENAI_API_KEY=sk-...
 ```
 
 ### Provider Routing
 
-The `@slug/model` format routes requests through a specific provider configured in your LLMOps dashboard. The `@openai/` prefix routes through the provider with slug `openai`. You can use any provider slug configured in your environment (e.g., `@anthropic/claude-sonnet-4-20250514`, `@openrouter/google/gemini-2.0-flash`).
+The `@slug/model` format routes requests through a specific provider configured in your `providers` array. The `@openai/` prefix routes through the provider with slug `openai`. You can use any configured slug (e.g., `@openai/gpt-4o-mini`, `@groq/llama-3.3-70b`).
 
-### Config-based Routing
-
-Instead of `@slug/model`, you can route via a config ID. Configs let you define model, provider, and guardrails in the LLMOps dashboard:
-
-```typescript
-const llm = new ChatOpenAI({
-  configuration: {
-    baseURL: 'http://localhost:3000/llmops/api/genai/v1',
-    defaultHeaders: {
-      'x-llmops-config': 'your-config-id',
-    },
-  },
-  apiKey: process.env.LLMOPS_ENV_SECRET,
-  model: 'gpt-4o-mini',
-});
-```
+> **Note:** Divergent providers (e.g. `anthropic`) require a dedicated gateway adapter via `config.adapters`. Only OpenAI-compatible providers can be routed directly.
 
 ### Chat Completions
 
@@ -112,7 +97,7 @@ const llm = new ChatOpenAI({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
   },
-  apiKey: process.env.LLMOPS_ENV_SECRET,
+  apiKey: 'unused',
   model: '@openai/gpt-4o-mini',
 });
 
@@ -139,7 +124,7 @@ const embeddings = new OpenAIEmbeddings({
   configuration: {
     baseURL: 'http://localhost:3000/llmops/api/genai/v1',
   },
-  apiKey: process.env.LLMOPS_ENV_SECRET,
+  apiKey: 'unused',
   model: '@openai/text-embedding-3-small',
 });
 
@@ -257,7 +242,6 @@ LLMOps exposes a LangSmith-compatible endpoint. Set the standard LangChain traci
 ```bash title=".env"
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_ENDPOINT=http://localhost:3000/llmops/api/langsmith
-LANGCHAIN_API_KEY=your-environment-secret
 ```
 
 Then use LangChain as usual — all runs are automatically traced:
@@ -268,7 +252,7 @@ from langchain_openai import ChatOpenAI
 
 llm = ChatOpenAI(
     base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key=os.environ["LLMOPS_ENV_SECRET"],
+    api_key="unused",
     model="@openai/gpt-4o-mini",
 )
 
@@ -287,9 +271,6 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 
 exporter = OTLPSpanExporter(
     endpoint="http://localhost:3000/llmops/api/otlp/v1/traces",
-    headers={
-        "Authorization": f"Bearer {os.environ['LLMOPS_ENV_SECRET']}",
-    },
 )
 
 provider = TracerProvider()
@@ -311,7 +292,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 llm = ChatOpenAI(
     base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key=os.environ["LLMOPS_ENV_SECRET"],
+    api_key="unused",
     model="@openai/gpt-4o-mini",
 )
 
@@ -326,7 +307,7 @@ for chunk in llm.stream("Tell me a joke"):
 # Embeddings
 embeddings = OpenAIEmbeddings(
     base_url="http://localhost:3000/llmops/api/genai/v1",
-    api_key=os.environ["LLMOPS_ENV_SECRET"],
+    api_key="unused",
     model="@openai/text-embedding-3-small",
 )
 vectors = embeddings.embed_query("Hello world")

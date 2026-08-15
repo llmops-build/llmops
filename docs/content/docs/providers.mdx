@@ -4,17 +4,7 @@ description: Configure LLM providers for your LLMOps instance.
 icon: Plug
 ---
 
-LLMOps supports 70+ AI providers through its unified gateway. Providers are configured through the LLMOps dashboard, allowing you to add, update, or remove providers without code changes.
-
-## Configuring Providers
-
-1. Open the LLMOps dashboard
-2. Navigate to **Settings** → **Workspace Providers**
-3. Click **Add Provider** and select your provider
-4. Enter your API credentials
-5. Click **Save**
-
-Once configured, the provider will be available when creating variants in your configs.
+LLMOps routes requests to LLM providers through an OpenAI-compatible gateway. Providers are configured in code via the `providers` array or auto-detected from environment variables.
 
 ---
 
@@ -42,14 +32,6 @@ Access GPT-4, GPT-3.5, and other OpenAI models.
 | API Key         | Your OpenAI API key               |
 | Organization ID | OpenAI organization ID (optional) |
 | Project ID      | OpenAI project ID (optional)      |
-
-### Anthropic
-
-Access Claude 3, Claude 2, and other Anthropic models.
-
-| Field   | Description            |
-| ------- | ---------------------- |
-| API Key | Your Anthropic API key |
 
 ### Azure OpenAI
 
@@ -156,12 +138,6 @@ Fast inference for open-source models.
 | ------- | ----------------------- |
 | API Key | Your Mistral AI API key |
 
-### Cohere
-
-| Field   | Description         |
-| ------- | ------------------- |
-| API Key | Your Cohere API key |
-
 ### AI21
 
 | Field   | Description       |
@@ -224,12 +200,6 @@ OpenRouter gives you access to hundreds of models through a single API key.
 | ------- | ------------------------- |
 | API Key | Your Stability AI API key |
 
-### Replicate
-
-| Field   | Description            |
-| ------- | ---------------------- |
-| API Key | Your Replicate API key |
-
 ### Segmind
 
 | Field   | Description          |
@@ -248,37 +218,54 @@ For local models running with Ollama.
 | ----------- | ------------------------------------------------ |
 | Custom Host | Ollama endpoint (e.g., `http://localhost:11434`) |
 
-### Hugging Face
-
-| Field                  | Description                          |
-| ---------------------- | ------------------------------------ |
-| API Key                | Your Hugging Face API key            |
-| Inference Endpoint URL | Custom inference endpoint (optional) |
-
 ---
 
-## All Supported Providers
+## Supported Providers
 
-Here's the complete list of all 70+ supported providers:
+### OpenAI-Compatible (Auto-Detected)
 
-| Provider      | Key             | Provider              | Key            |
-| ------------- | --------------- | --------------------- | -------------- |
-| OpenAI        | `openai`        | Anthropic             | `anthropic`    |
-| Azure OpenAI  | `azure-openai`  | Google Gemini         | `google`       |
-| Vertex AI     | `vertex-ai`     | AWS Bedrock           | `bedrock`      |
-| AWS SageMaker | `sagemaker`     | Groq                  | `groq`         |
-| Together AI   | `together-ai`   | Fireworks AI          | `fireworks-ai` |
-| Cerebras      | `cerebras`      | SambaNova             | `sambanova`    |
-| Lambda        | `lambda`        | DeepInfra             | `deepinfra`    |
-| DeepSeek      | `deepseek`      | Mistral AI            | `mistral-ai`   |
-| Cohere        | `cohere`        | AI21                  | `ai21`         |
-| xAI           | `x-ai`          | OpenRouter            | `openrouter`   |
-| Perplexity AI | `perplexity-ai` | Jina                  | `jina`         |
-| Voyage        | `voyage`        | Nomic                 | `nomic`        |
-| Stability AI  | `stability-ai`  | Replicate             | `replicate`    |
-| Segmind       | `segmind`       | Ollama                | `ollama`       |
-| Hugging Face  | `huggingface`   | Cloudflare Workers AI | `workers-ai`   |
-| Anyscale      | `anyscale`      | Reka AI               | `reka-ai`      |
-| Moonshot      | `moonshot`      | Zhipu                 | `zhipu`        |
-| LingYi        | `lingyi`        | Nebius                | `nebius`       |
-| Oracle        | `oracle`        | Azure AI              | `azure-ai`     |
+These providers speak the OpenAI wire format and are auto-detected when their API key environment variable is set:
+
+| Provider      | Key             | Env Var                |
+| ------------- | --------------- | ---------------------- |
+| OpenAI        | `openai`        | `OPENAI_API_KEY`       |
+| Google        | `google`        | `GOOGLE_API_KEY`       |
+| Mistral AI    | `mistral-ai`    | `MISTRAL_API_KEY`      |
+| Groq          | `groq`          | `GROQ_API_KEY`         |
+| Together AI   | `together-ai`   | `TOGETHER_API_KEY`     |
+| Fireworks AI  | `fireworks-ai`  | `FIREWORKS_API_KEY`    |
+| DeepSeek      | `deepseek`      | `DEEPSEEK_API_KEY`     |
+| Perplexity AI | `perplexity-ai` | `PERPLEXITY_API_KEY`   |
+| OpenRouter    | `openrouter`    | `OPENROUTER_API_KEY`   |
+| xAI           | `x-ai`          | `XAI_API_KEY`          |
+| Cerebras      | `cerebras`      | `CEREBRAS_API_KEY`     |
+| SambaNova     | `sambanova`     | `SAMBANOVA_API_KEY`    |
+| AI21          | `ai21`          | `AI21_API_KEY`         |
+| DeepInfra     | `deepinfra`     | `DEEPINFRA_API_KEY`    |
+| Nebius        | `nebius`        | —                      |
+| Novita AI     | `novita-ai`     | —                      |
+| Moonshot      | `moonshot`      | —                      |
+| Jina          | `jina`          | —                      |
+| Inference.net | `inference-net` | —                      |
+| Upstage       | `upstage`       | —                      |
+| NScale        | `nscale`        | —                      |
+| Lemonfox AI   | `lemonfox-ai`   | —                      |
+
+### Divergent (Requires Dedicated Adapter)
+
+These providers do **not** use the OpenAI wire format. They require a dedicated gateway adapter. Until one is available, configure them explicitly with a custom adapter via `config.adapters`:
+
+| Provider     | Key               | Status                |
+| ------------ | ----------------- | --------------------- |
+| Anthropic    | `anthropic`       | Adapter pending       |
+| Cohere       | `cohere`          | Adapter pending       |
+| AWS Bedrock  | `bedrock`         | Adapter pending       |
+| Google Vertex| `vertex-ai`       | Adapter pending       |
+| Azure OpenAI | `azure-openai`    | Adapter pending       |
+| Azure AI     | `azure-ai`        | Adapter pending       |
+| Replicate    | `replicate`       | Adapter pending       |
+| Stability AI | `stability-ai`    | Adapter pending       |
+| Fal AI       | `fal-ai`          | Adapter pending       |
+| Segmind      | `segmind`         | Adapter pending       |
+
+> **Note:** The auto-detection list only includes providers that have bundled metadata and a static base URL. Providers requiring region, resource, or deployment configuration (Azure, Bedrock, Vertex) are excluded.
