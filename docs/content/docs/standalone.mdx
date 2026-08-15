@@ -155,13 +155,6 @@ http://localhost:3000/
 
 <Step>
 
-### Configure providers
-
-1. Open the dashboard at `http://localhost:3000`
-2. Go to **Settings** → **Workspace Providers**
-3. Add your LLM provider credentials (e.g., OpenRouter, OpenAI, Anthropic)
-4. Create a config to start routing requests
-
 </Step>
 </Steps>
 
@@ -219,14 +212,11 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({
   baseURL: 'http://localhost:3000/api/genai/v1',
-  apiKey: '<ENV SECRET>',
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-id',
-  },
+  apiKey: 'unused',
 });
 
 const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: '@openai/gpt-4o-mini',
   messages: [{ role: 'user', content: 'Hello!' }],
 });
 
@@ -310,9 +300,8 @@ POSTGRES_URL=postgresql://postgres:password@host.docker.internal:5432/pg_llmops
 
 ### Provider configuration
 
-- Configure providers through the dashboard UI, not environment variables
-- API keys are stored in the PostgreSQL database
-- Each workspace has independent provider configurations
+- Configure providers via the `providers` array in code or by setting provider API key environment variables
+- Provider API keys are passed directly to the gateway at runtime
 
 ## Next Steps
 

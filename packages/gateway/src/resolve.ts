@@ -1,4 +1,4 @@
-import { getAdapter } from './providers/registry';
+import { getAdapter, hasDedicatedAdapter } from './providers/registry';
 import type { ProviderAdapter } from './providers/types';
 import { ok, type Result } from './result';
 import type {
@@ -56,6 +56,18 @@ export async function resolveTarget(
       `No base URL for provider "${input.provider}" — pass "baseURL" or a getProviderMetadata resolver.`,
     );
   }
+
+  // Reject divergent providers that lack a dedicated adapter.
+  // Explicit overrides in `options.adapters` always take precedence.
+  if (meta && meta.openaiCompatible === false) {
+    if (!hasDedicatedAdapter(input.provider, options.adapters)) {
+      return invalidRequest(
+        `Provider "${input.provider}" is not OpenAI-compatible and has no dedicated adapter. ` +
+          `Pass a custom adapter via "config.adapters" or choose an OpenAI-compatible provider.`,
+      );
+    }
+  }
+
   const config: ProviderConfig = {
     provider: input.provider,
     apiKey: input.apiKey,

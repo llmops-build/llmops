@@ -6,54 +6,41 @@ icon: CloudLightning
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-Get started with LLMOps in minutes. This guide will walk you through installing the SDK, setting up a database, and making your first API request.
+Get started with LLMOps in minutes. This guide will walk you through installing the SDK, configuring providers, and making your first API request.
 
 ## Prerequisites
 
 - Node.js 18+
-- PostgreSQL database
+- An API key from at least one supported provider (e.g. OpenAI, Groq, Google)
 
 <Steps>
 <Step>
 
 ### Install the SDK
 
-Install the LLMOps SDK and PostgreSQL client:
-
 ```bash tab="npm"
-npm install @llmops/sdk pg
+npm install @llmops/sdk
 ```
 
 ```bash tab="pnpm"
-pnpm add @llmops/sdk pg
+pnpm add @llmops/sdk
 ```
 
 ```bash tab="yarn"
-yarn add @llmops/sdk pg
+yarn add @llmops/sdk
 ```
 
 </Step>
 
 <Step>
 
-### Set up the database
+### Set environment variables
 
-LLMOps requires a PostgreSQL database. You can use Docker to quickly spin one up:
+Create a `.env` file with your provider API keys:
 
-```bash
-docker run -d \
-  --name llmops-postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=llmops \
-  -p 5432:5432 \
-  postgres:16
-```
-
-Your `DATABASE_URL` will be:
-
-```bash
-DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+```bash title=".env"
+OPENAI_API_KEY=sk-...
+GROQ_API_KEY=gsk-...
 ```
 
 </Step>
@@ -66,13 +53,23 @@ Create a file called `llmops.ts` to configure LLMOps:
 
 ```typescript title="llmops.ts"
 import { llmops } from '@llmops/sdk';
-import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  database: new Pool({
-    connectionString: process.env.POSTGRES_URL || '',
-  }),
+});
+```
+
+Providers are auto-detected from environment variables. You can also declare them explicitly:
+
+```typescript title="llmops.ts"
+import { llmops } from '@llmops/sdk';
+
+export default llmops({
+  basePath: '/llmops',
+  providers: [
+    { provider: 'openai', slug: 'openai', apiKey: process.env.OPENAI_API_KEY },
+    { provider: 'groq', slug: 'groq', apiKey: process.env.GROQ_API_KEY },
+  ],
 });
 ```
 
@@ -105,18 +102,6 @@ app.listen(port, () => {
 
 <Step>
 
-### Set environment variables
-
-Create a `.env` file with your configuration:
-
-```bash title=".env"
-POSTGRES_URL=postgresql://postgres:password@localhost:5432/llmops
-```
-
-</Step>
-
-<Step>
-
 ### Start the server
 
 Run your server:
@@ -128,47 +113,22 @@ npx tsx server.ts
 Your LLMOps instance is now running at `http://localhost:3000/llmops`.
 
 </Step>
-
-<Step>
-
-### Create a config
-
-Open the LLMOps dashboard and:
-
-1. **Configure a provider**: Go to Settings → Workspace Providers and add your LLM provider (e.g., OpenRouter, OpenAI, Anthropic)
-2. **Create a config**: Create your first config to start routing requests to your LLM providers
-
-<iframe
-  width="560"
-  height="315"
-  src="https://www.youtube.com/embed/vnjfShDWuPU?si=NtRRSaHhd6Je2sIJ"
-  title="Create your first LLMOps config"
-  frameBorder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-  referrerPolicy="strict-origin-when-cross-origin"
-  allowFullScreen={true}
-></iframe>
-
-</Step>
 </Steps>
 
 ## Making your first request
 
-Once you've created a config in the LLMOps dashboard, you can make requests using the OpenAI-compatible API:
+You can make requests using the OpenAI-compatible API with the `@slug/model` routing syntax:
 
 ```typescript
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  baseURL: 'http://localhost:3000/llmops/api/genai',
-  apiKey: '',
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-id',
-  },
+  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
+  apiKey: 'unused',
 });
 
 const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: '@openai/gpt-4o-mini',
   messages: [{ role: 'user', content: 'Hello!' }],
 });
 

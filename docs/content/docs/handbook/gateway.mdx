@@ -1,6 +1,6 @@
 ---
 title: Gateway
-description: Unified API gateway for routing requests to 250+ LLM providers.
+description: Unified API gateway for routing requests to LLM providers.
 icon: Network
 ---
 
@@ -10,8 +10,8 @@ The Gateway is a unified API endpoint that routes requests to LLM providers. It 
 
 The Gateway provides:
 
-- **Unified API**: OpenAI-compatible endpoints for all providers
-- **Provider Routing**: Route requests via [configs](/docs/handbook/configs) or direct provider access
+- **Unified API**: OpenAI-compatible endpoints for routable providers
+- **Provider Routing**: Route requests via direct `@slug/model` access
 - **Resilience**: Built-in retries and fallback support
 - **Observability**: Automatic request logging and [cost tracking](/docs/handbook/observability)
 
@@ -31,36 +31,6 @@ The Gateway exposes OpenAI-compatible endpoints:
 
 ## Using the Gateway
 
-There are two ways to route requests through the Gateway:
-
-### 1. Config-Based Routing
-
-Use [configs](/docs/handbook/configs) for managed routing with environment-specific variants:
-
-```typescript
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
-  apiKey: 'your-environment-secret',
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-id',
-  },
-});
-
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini', // Can be overridden by variant
-  messages: [{ role: 'user', content: 'Hello!' }],
-});
-```
-
-This approach:
-- Routes based on your config's targeting rules
-- Applies variant settings (model, parameters, system prompt)
-- Enables A/B testing and gradual rollouts
-
-### 2. Direct Provider Access
-
 Access providers directly using the `@slug/model` format:
 
 ```typescript
@@ -70,11 +40,30 @@ const response = await openai.chat.completions.create({
 });
 ```
 
-This bypasses config routing and sends requests directly to the specified provider configuration.
+This sends requests directly to the specified provider configuration.
 
 ## Provider Configuration
 
-Configure providers in the **Gateway > Providers** section of the dashboard.
+Providers are configured in code via the `providers` array:
+
+```typescript
+import { llmops } from '@llmops/sdk';
+
+const client = llmops({
+  providers: [
+    {
+      provider: 'openai',
+      slug: 'openai-prod',
+      apiKey: process.env.OPENAI_API_KEY,
+    },
+    {
+      provider: 'groq',
+      slug: 'groq',
+      apiKey: process.env.GROQ_API_KEY,
+    },
+  ],
+});
+```
 
 ### Adding a Provider
 
@@ -82,24 +71,24 @@ Each provider configuration includes:
 
 | Field           | Description                                          |
 | --------------- | ---------------------------------------------------- |
-| **Provider**    | The LLM provider (OpenAI, Anthropic, Azure, etc.)    |
-| **Name**        | Human-readable name for this configuration           |
-| **Slug**        | Optional short ID for direct access (e.g., `openai-prod`) |
-| **Credentials** | Provider-specific authentication credentials         |
+| **provider**    | The LLM provider type (`openai`, `groq`, `google`, etc.) |
+| **slug**        | Unique routing ID (e.g., `openai-prod`)                |
+| **apiKey**      | Provider API key (optional if not required)          |
+| **baseURL**     | Override the default upstream URL (optional)         |
 
 ### Provider Credentials
 
-Different providers require different credentials:
-
-| Provider       | Required Credentials                                    |
-| -------------- | ------------------------------------------------------- |
-| **OpenAI**     | API Key, Organization (optional), Project (optional)    |
-| **Anthropic**  | API Key                                                 |
-| **Azure**      | Resource Name, Deployment ID, API Version, Auth Method  |
+| Provider       | Required Credentials              |
+| -------------- | --------------------------------- |
+| **OpenAI**     | API Key                           |
+| **Google**     | API Key                           |
+| **Groq**       | API Key                           |
+| **Mistral**    | API Key                           |
+| **Azure**      | Resource Name, Deployment ID, API Version, Auth Method |
 | **AWS Bedrock**| Access Key ID, Secret Access Key, Region                |
 | **Google Vertex** | Project ID, Region, Service Account JSON             |
-| **Groq**       | API Key                                                 |
-| **Mistral**    | API Key                                                 |
+
+> **Note:** Azure, Bedrock, and Vertex require additional configuration and are not auto-detected. Divergent providers (Anthropic, Cohere, etc.) need a dedicated adapter via `config.adapters`.
 
 ### Example: Multiple OpenAI Configurations
 
@@ -164,8 +153,7 @@ The Gateway accepts the following headers:
 
 | Header              | Description                              | Required |
 | ------------------- | ---------------------------------------- | -------- |
-| `Authorization`     | Bearer token with environment secret     | Yes      |
-| `x-llmops-config`   | Config ID for routing                    | Optional |
+| `Authorization`     | Bearer token with provider API key       | No       |
 | `Content-Type`      | Must be `application/json`               | Yes      |
 
 ## cURL Example
@@ -173,7 +161,6 @@ The Gateway accepts the following headers:
 ```bash
 curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-environment-secret" \
   -d '{
     "model": "@openai-prod/gpt-4-turbo",
     "messages": [{"role": "user", "content": "Hello!"}]

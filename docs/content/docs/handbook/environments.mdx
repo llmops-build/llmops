@@ -4,6 +4,8 @@ description: Manage deployment stages for your LLM configurations.
 icon: Globe
 ---
 
+> **Not available in v1.** Environment-based config targeting is planned for a future release. In v1, use [direct provider routing](/docs/handbook/gateway) with the `@slug/model` format.
+
 Environments represent deployment stages where your LLM configurations run. Common examples include production, staging, and development.
 
 ## Overview
@@ -11,49 +13,10 @@ Environments represent deployment stages where your LLM configurations run. Comm
 Each environment:
 
 - Has a unique name
-- Contains one secret for API authentication that can be rotated.
+- Contains authentication credentials
 - Can serve different variant configurations than other environments
 
 This allows you to safely test new model configurations in staging before promoting them to production.
-
-## Creating an Environment
-
-Navigate to the **Environments** section in the LLMOps dashboard to create a new environment.
-
-Give your environment a unique name (e.g., "Production", "Staging", "Development").
-
-## Environment Secrets
-
-Each environment has associated **secrets** that authenticate API requests. Think of them as API keys for that specific environment.
-
-When making an API request, pass the environment secret as the `apiKey` in your OpenAI client configuration. This is sent via the standard `Authorization: Bearer <secret>` header:
-
-```typescript
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  baseURL: 'http://localhost:3000/llmops/api/genai/v1',
-  apiKey: 'your-environment-secret', // Environment secret goes here
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-id',
-  },
-});
-
-const response = await openai.chat.completions.create({
-  messages: [{ role: 'user', content: 'Hello!' }],
-  model: 'gpt-4o-mini',
-});
-```
-
-Or with curl:
-
-```bash
-curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-environment-secret" \
-  -H "x-llmops-config: your-config-id" \
-  -d '{"messages": [{"role": "user", "content": "Hello!"}]}'
-```
 
 ## Example Setup
 
@@ -65,4 +28,4 @@ A typical setup might include:
 | **Staging**     | Pre-release testing before production       |
 | **Development** | Experimental configurations for developers  |
 
-Each environment can serve different [variants](/docs/handbook/variants) of the same [config](/docs/handbook/configs), allowing you to test changes safely before they reach production.
+Each environment can serve different variants of the same config, allowing you to test changes safely before they reach production.

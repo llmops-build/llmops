@@ -15,24 +15,15 @@ const configCode = (
     <span className="text-accent-11">import</span>
     {' { llmops } '}
     <span className="text-accent-11">from</span>
-    {" '@llmops/sdk';\n"}
-    <span className="text-accent-11">import</span>
-    {' { Pool } '}
-    <span className="text-accent-11">from</span>
-    {" 'pg';\n\n"}
+    {" '@llmops/sdk';\n\n"}
     <span className="text-accent-11">export default</span>
     {' llmops({\n'}
     <span className={hl} data-annotation-id="ui-db">
-      {'  database: '}
-      <span className="text-accent-11">new</span>
-      {' Pool({\n'}
+      {'  basePath: '}
+      <span className="text-accent-11">'/llmops'</span>
+      {',\n'}
     </span>
-    <span className={hl}>
-      {'    connectionString: process.env.DATABASE_URL,'}
-    </span>
-    <span className={hl}>{'  }),'}</span>
-    {'\n'}
-    <span className="text-gray-9">{'  // ...'}</span>
+    <span className={hl}>{'  // Providers auto-detected from env vars'}</span>
     {'\n});'}
   </>
 );
@@ -103,15 +94,15 @@ const FoldUI = () => {
           Explore Visually
         </h2>
         <p className="mt-3 text-gray-11 text-sm leading-relaxed max-w-xl">
-          Connect a database, mount the middleware, and a full dashboard appears
-          at /llmops.
+          Mount the middleware and start routing to providers instantly with
+          zero configuration.
         </p>
       </div>
       <div className="min-w-0">
         {/* Mobile */}
         <div className="flex flex-col gap-4 px-4 pb-8 md:hidden">
           <FoldAnnotation
-            text="Connect a Postgres database to store everything."
+            text="Zero-config setup — providers auto-detected from API key env vars."
             variant="light"
           />
           <IDEWindow tabs={[{ name: 'llmops.ts', content: configCode }]} />
@@ -157,7 +148,7 @@ const FoldUI = () => {
             </div>
             <div className="w-48 shrink-0 flex flex-col pt-8">
               <FoldAnnotation
-                text="Connect a Postgres database to store everything."
+                text="Zero-config setup — providers auto-detected from API key env vars."
                 target="ui-db"
                 variant="light"
               />

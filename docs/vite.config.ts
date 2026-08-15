@@ -148,11 +148,11 @@ function generateLLMsIndex(contentDir: string): string {
 
 > Framework-agnostic, universal LLM operations toolkit for TypeScript
 
-LLMOps is a comprehensive LLMOps toolkit that provides prompt versioning, multi-environment deployments, and an AI Gateway to access 1600+ LLMs from 70+ providers.
+LLMOps is a comprehensive LLMOps toolkit that provides an AI Gateway with auto-detected providers, observability, and evals for TypeScript applications.
 
 ## Features
 
-- AI Gateway: OpenAI-compatible API to access 1600+ LLMs from 70+ providers
+- AI Gateway: OpenAI-compatible API with auto-detected providers and explicit adapter support
 - Prompt Management: Version, test, and deploy prompts with a visual editor
 - Environment Management: Production, staging, development with secure secrets
 - Framework Agnostic: Works with Express, Hono, and more

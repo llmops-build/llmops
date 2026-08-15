@@ -14,72 +14,57 @@ Before starting, verify the following:
 - [ ] Node.js 18+ is installed
 - [ ] Project uses TypeScript
 - [ ] Project uses one of the supported frameworks mentioned in https://llmops.build/llms.txt integrations list.
-- [ ] PostgreSQL database is available (or can be set up via Docker)
+- [ ] An API key from at least one supported provider (OpenAI, Groq, Google, etc.)
 
 ## Step 1: Install Dependencies
 
-Install the LLMOps SDK and PostgreSQL client:
+Install the LLMOps SDK:
 
 ```bash
-npm install @llmops/sdk pg
+npm install @llmops/sdk
 ```
 
-If using TypeScript, also install types:
+## Step 2: Create Environment Variables
+
+Add provider API keys to `.env` file (create if it doesn't exist):
 
 ```bash
-npm install -D @types/pg
-```
-
-## Step 2: Set Up PostgreSQL Database
-
-If no PostgreSQL database exists, create one using Docker:
-
-```bash
-docker run -d \
-  --name llmops-postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=llmops \
-  -p 5432:5432 \
-  postgres:16
-```
-
-The connection string will be:
-
-```
-postgresql://postgres:password@localhost:5432/llmops
-```
-
-If a PostgreSQL database already exists, use that connection string or create a new database for LLMOps.
-
-## Step 3: Create Environment Variables
-
-Add these environment variables to `.env` file (create if it doesn't exist):
-
-```bash
-# Database
-DATABASE_URL=postgresql://postgres:password@localhost:5432/llmops
+OPENAI_API_KEY=sk-...
+GROQ_API_KEY=gsk-...
 ```
 
 Make sure `.env` is in `.gitignore`.
 
-## Step 4: Create LLMOps Configuration File
+## Step 3: Create LLMOps Configuration File
 
 Create a new file `llmops.ts` (or `llmops.config.ts`) in the project root or `src/` directory:
 
 ```typescript
 import { llmops } from '@llmops/sdk';
-import { Pool } from 'pg';
 
 export default llmops({
   basePath: '/llmops',
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL || '',
-  }),
 });
 ```
 
-## Step 5: Integrate Middleware
+Providers are auto-detected from environment variables. You can also declare them explicitly:
+
+```typescript
+import { llmops } from '@llmops/sdk';
+
+export default llmops({
+  basePath: '/llmops',
+  providers: [
+    {
+      provider: 'openai',
+      slug: 'openai',
+      apiKey: process.env.OPENAI_API_KEY,
+    },
+  ],
+});
+```
+
+## Step 4: Integrate Middleware
 
 ### For Express
 
@@ -103,7 +88,7 @@ app.use('/llmops', createLLMOpsMiddleware(llmopsClient));
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-  console.log(`LLMOps dashboard at http://localhost:${port}/llmops`);
+  console.log(`LLMOps API at http://localhost:${port}/llmops/api/genai/v1`);
 });
 ```
 
@@ -128,11 +113,11 @@ app.use('/llmops/*', createLLMOpsMiddleware(llmopsClient));
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`Server running at http://localhost:${info.port}`);
-  console.log(`LLMOps dashboard at http://localhost:${info.port}/llmops`);
+  console.log(`LLMOps API at http://localhost:${info.port}/llmops/api/genai/v1`);
 });
 ```
 
-## Step 6: Verify Installation
+## Step 5: Verify Installation
 
 1. Start the server:
 
@@ -142,35 +127,24 @@ serve({ fetch: app.fetch, port }, (info) => {
    npx tsx server.ts
    ```
 
-2. Open the LLMOps dashboard in a browser:
+2. Test the health endpoint:
 
+   ```bash
+   curl http://localhost:3000/llmops/health
    ```
-   http://localhost:3000/llmops
+
+3. Make a test request through the gateway:
+
+   ```bash
+   curl -X POST http://localhost:3000/llmops/api/genai/v1/chat/completions \
+     -H "Content-Type: application/json" \
+     -d '{
+       "model": "@openai/gpt-4o-mini",
+       "messages": [{"role": "user", "content": "Hello!"}]
+     }'
    ```
-
-3. Log in with the credentials from the config (default: `admin@llmops.local` / `password`)
-
-4. The dashboard should load and show the main interface
-
-## Step 7: Configure Providers and Create a Config
-
-To use the LLM gateway:
-
-1. Go to **Settings** → **Workspace Providers**
-2. Add your LLM provider (e.g., OpenRouter, OpenAI, Anthropic)
-3. Enter your API key and save
-4. Go to Configs section
-5. Create a new config (e.g., "My Assistant")
-6. Add a variant with your preferred model settings
-7. Note the config ID for API calls
 
 ## Troubleshooting
-
-### Database Connection Error
-
-- Verify PostgreSQL is running: `docker ps` or check your database server
-- Check DATABASE_URL is correct in `.env`
-- Ensure the database exists
 
 ### Module Not Found Errors
 
@@ -180,18 +154,24 @@ To use the LLM gateway:
 
 ### Provider API Errors
 
-- Configure providers in the dashboard under Settings → Workspace Providers
-- Verify API key is valid and has credits
-- Ensure the provider is enabled
+- Verify the provider API key is valid and has credits
+- Ensure the provider is OpenAI-compatible or has a dedicated adapter
+- Check that the provider slug in the model string matches a configured provider
+
+### Gateway Returns 400
+
+- Verify the model uses the `@slug/model` format
+- Check that the provider slug is configured in `llmops.ts` or auto-detected
+- Divergent providers (Anthropic, Cohere, etc.) require a custom adapter via `config.adapters`
 
 ## File Structure After Integration
 
 ```
 project/
-├── .env                 # Environment variables (DATABASE_URL, API keys)
+├── .env                 # Environment variables (provider API keys)
 ├── llmops.ts           # LLMOps configuration
 ├── server.ts           # Server with LLMOps middleware
-├── package.json        # Dependencies including @llmops/sdk and pg
+├── package.json        # Dependencies including @llmops/sdk
 └── ...
 ```
 
@@ -199,8 +179,7 @@ project/
 
 After completing these steps, you will have:
 
-1. LLMOps SDK installed with PostgreSQL client
-2. Database connection configured
-3. LLMOps middleware mounted at `/llmops`
-4. Dashboard accessible for managing configs and variants
-5. OpenAI-compatible API available at `/llmops/api/genai/v1/`
+1. LLMOps SDK installed
+2. OpenAI-compatible API available at `/llmops/api/genai/v1/`
+3. Provider auto-detection from environment variables
+4. Direct provider routing via `@slug/model` syntax

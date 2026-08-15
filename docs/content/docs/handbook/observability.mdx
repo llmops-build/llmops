@@ -67,14 +67,11 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({
   baseURL: 'http://localhost:3000/llmops/api/genai/v1',
-  apiKey: 'your-environment-secret',
-  defaultHeaders: {
-    'x-llmops-config': 'your-config-id',
-  },
+  apiKey: 'unused',
 });
 
 const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
+  model: '@openai/gpt-4o-mini',
   messages: [{ role: 'user', content: 'Hello!' }],
   // @ts-ignore - LLMOps extension
   metadata: {
